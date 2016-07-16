@@ -1,0 +1,7 @@
+<launch>
+
+	<node name="mocap_node" pkg="tansa" type="mocap_node" output="screen">
+		<remap from="/mocap/1/pose" to="/mavros/mocap/pose" />
+	</node>
+
+</launch>

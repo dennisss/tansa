@@ -1,0 +1,24 @@
+
+# General temporary files
+*.swp
+*.pyc
+*.o
+*.a
+*.so
+
+.DS_Store
+
+
+
+# Web
+node_modules
+
+
+# CMake
+cmake_install.cmake
+CMakeFiles
+CMakeCache.txt
+Makefile
+
+# Build output
+build

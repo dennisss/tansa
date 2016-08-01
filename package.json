@@ -7,7 +7,8 @@
 		"underscore": "1.8.3",
 		"express": "4.14.0",
 		"body-parser": "1.14.1",
-		"roslib": "0.18.0"
+		"dockerode": "2.2.10",
+		"async": "latest"
 	},
 	"devDependencies": {
 		"webpack": "v2.1.0-beta.14",

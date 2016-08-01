@@ -31,9 +31,10 @@ Coordinate Systems
 ------------------
 
 - OptiTrack Motive (TODO: Check this?)
-	- Long leg: +Z (forward)
-	- Short leg: -X (right)
-	- Up: Y
+	- "X (Pitch), Y (Yaw), Z (Roll), Right-Handed (RHS), Relative Axes (aka 'local')"
+	- Calibration square placement
+		- Long leg (+Z) should be towards front of stage
+		- Short leg (+X) should be left
 
 - ROS
 	- ENU
@@ -44,6 +45,9 @@ Coordinate Systems
 
 
 
+
+I need to be able to develop and test in simulation the linear motion stuff
+- The easy solution is to use linux, but that would be annoying at this point
 
 
 
@@ -60,13 +64,27 @@ See https://404warehouse.net/2015/12/20/autopilot-offboard-control-using-mavros-
 PX4 Needed Changes
 ------------------
 
-For LEDs,
-Make an application for px4, have it listen for vehicle_command messages and
+Description
+---
+
+We are using a PixRacer which runs the PX4 drone Firmware
+
+
+Tasks
+---
+
+- Make an application for PX4 that allows have it listen for vehicle_command messages and
+
+
+- We need to have two PWM outputs and one digital GPIO output
+
+For LEDs, we need to
 - See http://dev.px4.io/tutorial-hello-sky.html
 - See PX4/src/systemcmds/motor_ramp (https://github.com/PX4/Firmware/blob/master/src/systemcmds/motor_ramp/motor_ramp.cpp) for a good example of raw PWM control
 - See http://dev.px4.io/custom-mavlink-message.html for an intro to mavlink messages
 - Example of using vehicle_command https://github.com/PX4/Firmware/blob/master/src/drivers/gimbal/gimbal.cpp#L305
 - Grab data from type: MAV_CMD_USER_1 (https://pixhawk.ethz.ch/mavlink/)
+
 
 
 Limit the RPY rates in the mixer so that the we don't over do the throttle

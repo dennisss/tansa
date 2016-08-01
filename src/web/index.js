@@ -8,6 +8,3 @@ ReactDOM.render(
 	<App />,
 	document.getElementById('ts-root')
 );
-
-
-//require('./main');

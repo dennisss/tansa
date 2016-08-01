@@ -1,0 +1,37 @@
+docker pull ubuntu:xenial
+docker run -it ubuntu:xenial /bin/bash
+
+sh -c 'echo "deb http://packages.ros.org/ros/ubuntu xenial main" > /etc/apt/sources.list.d/ros-latest.list'
+apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 0xB01FA116
+apt-get update
+
+apt-get install ros-kinetic-ros-base
+
+rosdep init
+rosdep update
+
+echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+
+apt-get install ros-kinetic-cv-bridge
+
+apt-get install openjdk-9-jdk-headless
+
+apt-get install ros-kinetic-gazebo-ros
+
+apt-get install ros-kinetic-mavros ros-kinetic-mavros-extras
+
+
+apt-get install libprotobuf-dev libprotoc-dev protobuf-compiler libeigen3-dev
+
+apt-get install git
+apt-get install vim
+
+mkdir -p /home/user
+cd /home/user
+git clone https://github.com/PX4/Firmware.git
+
+
+For .bashrc:
+source /opt/ros/kinetic/setup.bash
+source /home/user/Firmware/integrationtests/setup_gazebo_ros.bash /home/user/Firmware/

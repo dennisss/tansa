@@ -9,6 +9,9 @@ var WorldView = React.createClass({
 
 	componentDidMount: function(){
 		this.player = new Player(ReactDOM.findDOMNode(this));
+
+		if(this.props.onPlayerReady)
+			this.props.onPlayerReady(this.player);
 	},
 
 	shouldComponentUpdate: function(){

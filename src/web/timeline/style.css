@@ -1,0 +1,31 @@
+
+.ta-timeline-row{
+	height: 30px;
+	border-bottom: 1px solid #666;
+	padding: 4px 8px;
+	position: relative;
+}
+
+
+.ta-control-btn {
+	display: inline-block;
+	padding: 0 6px;
+
+}
+
+.ta-timeline-block {
+	background-color: #0bf;
+	height: 100%;
+	width: 200px;
+	position: absolute;
+	top: 0;
+	cursor: pointer;
+}
+
+.ta-timeline-block.active {
+	background: #b6e026;
+	background: -moz-radial-gradient(center, ellipse cover, #b6e026 0%, #abdc28 100%);
+	background: -webkit-radial-gradient(center, ellipse cover, #b6e026 0%,#abdc28 100%);
+	background: radial-gradient(ellipse at center, #b6e026 0%,#abdc28 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b6e026', endColorstr='#abdc28',GradientType=1 );
+}

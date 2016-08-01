@@ -1,0 +1,12 @@
+
+.ta-prop {
+	padding: 2px 4px;
+	border-bottom: 1px solid #000;
+
+}
+
+
+.transparent-input {
+	background-color: transparent;
+	border: none;
+}

@@ -103,12 +103,17 @@ THREE.DragControls = function( _camera, _objects, _domElement ) {
 
 	this.activate();
 
+	var offset = $(_domElement).offset();
+
 	function onDocumentMouseMove( event ) {
 
 		event.preventDefault();
 
-		_mouse.x = ( event.clientX / _domElement.width ) * 2 - 1;
-		_mouse.y = - ( event.clientY / _domElement.height ) * 2 + 1;
+		var w = $(_domElement).width();
+		var h = $(_domElement).height();
+
+		_mouse.x = ( (event.clientX - offset.left) / w ) * 2 - 1;
+		_mouse.y = - ( (event.clientY - offset.top) / h ) * 2 + 1;
 
 		_raycaster.setFromCamera( _mouse, _camera );
 		var ray = _raycaster.ray;
@@ -174,6 +179,7 @@ THREE.DragControls = function( _camera, _objects, _domElement ) {
 		var intersects = _raycaster.intersectObjects( _objects );
 
 		if ( intersects.length > 0 ) {
+			console.log('hello')
 
 			_domElement.style.cursor = 'pointer';
 			_hovered = intersects[ 0 ];
@@ -193,11 +199,15 @@ THREE.DragControls = function( _camera, _objects, _domElement ) {
 
 		event.preventDefault();
 
-		_mouse.x = ( event.clientX / _domElement.width ) * 2 - 1;
-		_mouse.y = - ( event.clientY / _domElement.height ) * 2 + 1;
+		var w = $(_domElement).width();
+		var h = $(_domElement).height();
+
+		_mouse.x = ( (event.clientX - offset.left) / w ) * 2 - 1;
+		_mouse.y = - ( (event.clientY - offset.top) / h ) * 2 + 1;
 
 		_raycaster.setFromCamera( _mouse, _camera );
-		var intersects = _raycaster.intersectObjects( _objects );
+		var intersects = _raycaster.intersectObjects( _objects, true );
+		console.log(intersects)
 		var ray = _raycaster.ray;
 
 		var normal = ray.direction; // normal ray to the camera position

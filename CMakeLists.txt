@@ -7,20 +7,33 @@ find_package(catkin REQUIRED COMPONENTS
 	rospy
 	std_msgs
 	geometry_msgs
+	message_generation
+	gazebo_msgs
 )
+
+
+add_message_files(
+	FILES
+	PointArray.msg
+)
+
+generate_messages(
+	DEPENDENCIES
+	std_msgs
+)
+
 
 
 catkin_package(
-
+	CATKIN_DEPENDS message_runtime
 
 )
+
 
 
 include_directories(
 	${catkin_INCLUDE_DIRS}
 )
-
-
 
 
 add_executable(mocap_node
@@ -29,23 +42,50 @@ add_executable(mocap_node
 	src/mocap/optitrack/NatNetClient.cpp
 	src/mocap/optitrack/ClientCore.cpp
 )
-
-
 target_link_libraries(
    mocap_node
 
    ${catkin_LIBRARIES}
 )
+add_dependencies(mocap_node ${${PROJECT_NAME}_EXPORTED_TARGETS})
+# add_dependencies(your_program ${catkin_EXPORTED_TARGETS})
+
+
+
+add_executable(mocap_gazebo_node
+	src/mocap/mocap_gazebo_node.cpp
+)
+target_link_libraries(mocap_gazebo_node
+   ${catkin_LIBRARIES}
+)
+
+
+
+
 
 
 
 add_executable(offboard_test
 #	offboard2.cpp
-	offboard_ctrl.cpp
+	src/offboard_ctrl.cpp
 )
 
 target_link_libraries(
    offboard_test
 
    ${catkin_LIBRARIES}
+)
+
+add_executable(offb_node
+	src/offb_node.cpp
+)
+target_link_libraries(offb_node
+	${catkin_LIBRARIES}
+)
+
+add_executable(state_log
+	src/state_log.cpp
+)
+target_link_libraries(state_log
+	${catkin_LIBRARIES}
 )

@@ -4,8 +4,8 @@ Mocap Driver
 For OptiTrack, the NatNet SDK has been rewritten for Linux
 
 Published topics:
-- `/mocap/markers`
-- `/mocap/bodies/1/pose`
+- `/mocap/markers` : 
+- `/mocap/bodies/1/pose` : Organized by trackable id
 - `/mocap/bodies/1/name`
 
 

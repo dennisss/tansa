@@ -1,19 +1,13 @@
 <launch>
-	<!--- For starting a simulation environment --->
+	<include file="$(find px4)/launch/mavros_posix_sitl.launch">
+		<arg name="headless" value="true" />
+		<arg name="gui" value="false" />
+	</include>
 
 
-
-	<!-- Start PX4 / sitl_gazebo with gazebo_ros -->
-
-	<!-- Start rosbridge_suite -->
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
-
-
-	<!-- Start swarm node in simulation mode (this should start up instances of mavros corresponding to the gazebo models) -->
-
-	<!--
-	<node name="mocap_node" pkg="tansa" type="mocap_node" output="screen">
+	<node name="mocap_gazebo_node" pkg="tansa" type="mocap_gazebo_node">
 		<remap from="/mocap/1/pose" to="/mavros/mocap/pose" />
 	</node>
-	-->
+
+
 </launch>

@@ -1,7 +1,7 @@
 <launch>
 
 
-	<arg name="fcu_url" default="udp://:14550@192.168.1.81:14550" />
+	<arg name="fcu_url" default="udp://:14550@192.168.1.82:14550" />
 
 	<node name="mavros" pkg="mavros" type="mavros_node" output="screen">
 		<param name="fcu_url" value="$(arg fcu_url)" />

@@ -72,7 +72,7 @@ void data_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 /*
 	tansa::PointArray markers;
 	markers.points.resize(pFrameOfData->nOtherMarkers);
-	for(int i = 0; i < markers.size(); i++){
+	for(int i = 0; i < markers.points.size(); i++){
 		// TODO: I need to change coordinate systems here
 		markers.points[i].x = -pFrameOfData->OtherMarkers[i][0];
 		markers.points[i].y = pFrameOfData->OtherMarkers[i][2];
@@ -93,7 +93,9 @@ int main(int argc, char *argv[]) {
 	string client_addr;
 	n.getParam("client_addr", client_addr);
 
+	client_addr = "192.168.2.1";
 
+	cout << "Client Addr: " << client_addr << endl;
 
 	client = new NatNetClient();
 

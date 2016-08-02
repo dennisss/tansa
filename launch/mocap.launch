@@ -1,6 +1,7 @@
 <launch>
 
 	<node name="mocap_node" pkg="tansa" type="mocap_node" output="screen">
+		<param name="client_addr" value="192.168.2.1" />
 		<remap from="/mocap/1/pose" to="/mavros/mocap/pose" />
 	</node>
 

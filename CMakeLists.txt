@@ -9,7 +9,12 @@ find_package(catkin REQUIRED COMPONENTS
 	geometry_msgs
 	message_generation
 	gazebo_msgs
+	angles
+	eigen_conversions
 )
+
+find_package(Eigen3)
+
 
 
 add_message_files(
@@ -66,20 +71,21 @@ target_link_libraries(mocap_gazebo_node
 
 
 
-add_executable(offboard_test
+#add_executable(offboard_test
 #	offboard2.cpp
-	src/offboard_ctrl.cpp
-)
+#	src/offboard_ctrl.cpp
+#)
 
-target_link_libraries(
-   offboard_test
-
-   ${catkin_LIBRARIES}
-)
+#target_link_libraries(
+#   offboard_test
+#
+#   ${catkin_LIBRARIES}
+#)
 
 add_executable(offb_node
 	src/offb_node.cpp
 )
+set_target_properties(offb_node PROPERTIES COMPILE_FLAGS "-std=c++11 -g")
 target_link_libraries(offb_node
 	${catkin_LIBRARIES}
 )

@@ -58,6 +58,7 @@ int main(int argc, char **argv)
 
 	float angle = 0;
 
+
 	while(ros::ok()){
 		if( current_state.mode != "OFFBOARD" &&
 		   (ros::Time::now() - last_request > ros::Duration(5.0))){
@@ -81,9 +82,10 @@ int main(int argc, char **argv)
 
 
 		if(current_state.armed){
-			pose.pose.position.x = 1*cosf(angle) - 1;
-			pose.pose.position.y = 1*sinf(angle);
-			angle += 0.01;
+			break;
+			//pose.pose.position.x = 1*cosf(angle) - 1;
+			//pose.pose.position.y = 1*sinf(angle);
+			//angle += 0.01;
 		}
 
 
@@ -91,6 +93,8 @@ int main(int argc, char **argv)
 		rate.sleep();
 	}
 
+
+	obc.eight_path_motion(rate, VELOCITY);
 
 
 	ROS_INFO("Disarming");

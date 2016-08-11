@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 	gazebo_msgs
 	angles
 	eigen_conversions
+	mavros_msgs
 )
 
 find_package(Eigen3)
@@ -39,6 +40,7 @@ catkin_package(
 
 include_directories(
 	${catkin_INCLUDE_DIRS}
+	include
 )
 
 
@@ -94,5 +96,13 @@ add_executable(state_log
 	src/state_log.cpp
 )
 target_link_libraries(state_log
+	${catkin_LIBRARIES}
+)
+
+
+add_executable(light_node
+	src/lighting/light_node.cpp
+)
+target_link_libraries(light_node
 	${catkin_LIBRARIES}
 )

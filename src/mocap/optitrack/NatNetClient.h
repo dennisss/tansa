@@ -6,7 +6,6 @@
 #include "ClientCore.h"
 
 
-
 // NatNetClient is a complete C++ class for connecting to NatNet server applications,
 // such as NaturalPoint Arena and NaturalPoint TrackingTools.
 class NatNetClient{

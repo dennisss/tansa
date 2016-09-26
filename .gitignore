@@ -5,20 +5,15 @@
 *.o
 *.a
 *.so
+*.h.gch
 
 .DS_Store
-
-
 
 # Web
 node_modules
 
-
-# CMake
-cmake_install.cmake
-CMakeFiles
-CMakeCache.txt
-Makefile
-
 # Build output
 build
+
+# I use this for holding my flight log dumps
+log

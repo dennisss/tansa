@@ -1,6 +1,7 @@
 Installation
 ===
 
+***Note: this is all old***
 
 For MacOS
 ---

@@ -7,28 +7,35 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(Eigen3 REQUIRED)
 
-#find_package(gazebo REQUIRED)
-
-#include_directories(${GAZEBO_INCLUDE_DIRS})
-#link_directories(${GAZEBO_LIBRARY_DIRS})
-#list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
-
-#add_executable(listener listener.cc)
-#target_link_libraries(listener ${GAZEBO_LIBRARIES} pthread)
-
+find_package(gazebo REQUIRED)
 
 
 include_directories(
+	${GAZEBO_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIR}
 	include
 )
-
+link_directories(${GAZEBO_LIBRARY_DIRS})
+list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 add_executable(
 	gcs
 
 	src/gcs.cpp
-	src/vehicle.cpp
+	src/core/core.cpp
+	src/core/vehicle.cpp
+	src/core/time.cpp
+	src/core/gazebo.cpp
+	src/mocap/mocap.cpp
+	src/mocap/optitrack/ClientCore.cpp
+	src/mocap/optitrack/NatNetClient.cpp
+)
+
+target_link_libraries(
+	gcs
+
+	${GAZEBO_LIBRARIES}
+	pthread
 )
 
 

@@ -97,7 +97,7 @@ void ClientCore::start(const char *clientAddr, const char *serverAddr){
 	sa.sin_port = htons(PORT_COMMAND);
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(INADDR_ANY); // TODO: This should be the local interface ip
-	if(bind(this->cmd_socket, (const struct sockaddr*)&sa, sizeof(sa)) < 0){
+	if(::bind(this->cmd_socket, (const struct sockaddr*)&sa, sizeof(sa)) < 0){
 		printf("ClientCore: failed to bind command socket\n");
 	}
 
@@ -111,7 +111,7 @@ void ClientCore::start(const char *clientAddr, const char *serverAddr){
 	sa.sin_port = htons(PORT_DATA);
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(INADDR_ANY); // TODO: This should be the interface ip
-	if(bind(this->data_socket, (const struct sockaddr*)&sa, sizeof(sa)) < 0){
+	if(::bind(this->data_socket, (const struct sockaddr*)&sa, sizeof(sa)) < 0){
 		printf("ClientCore: failed to bind data socket\n");
 	}
 

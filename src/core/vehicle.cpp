@@ -1,7 +1,7 @@
 #include <tansa/vehicle.h>
 #include "tf.h"
 
-#include "../../Firmware/src/modules/commander/px4_custom_mode.h"
+#include "../../lib/Firmware/src/modules/commander/px4_custom_mode.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -145,8 +145,15 @@ void Vehicle::set_mode(string mode) {
 
 }
 
+void Vehicle::land() {
 
-void Vehicle::mocap_update(uint64_t t, const Vector3d &pos, const Quaterniond &orient) {
+// MAV_CMD_NAV_LAND_LOCAL
+// Set first three params to 0
+// We should also probably mark the home position
+}
+
+
+void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, uint64_t t) {
 
 	Vector3d pos_ned = enuToFromNed() * pos;
 	Quaterniond orient_ned(enuToFromNed() * orient);
@@ -233,6 +240,23 @@ void Vehicle::set_lighting(float top, float bottom) {
 	send_message(&msg);
 }
 
+void Vehicle::set_beacon(bool on) {
+	// TODO: This should wait for
+
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack(
+		255, 0,
+		&msg,
+		1, 1,
+		MAV_CMD_BEACON,
+		1, // yes we want a confirmation
+		on? 1 : 0,
+		0, 0, 0, 0, 0, 0
+	);
+
+	send_message(&msg);
+}
+
 
 void Vehicle::send_message(mavlink_message_t *msg) {
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -286,7 +310,7 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			// TODO: Update last seen time and connected status
 
-			//printf("GOT HEARTBEAT %d %d:  %d\n", hb.base_mode, hb.custom_mode, mode.main_mode);
+			printf("GOT HEARTBEAT\n");
 			break;
 
 		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
@@ -310,6 +334,14 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			break;
 
+
+		case MAVLINK_MSG_ID_STATUSTEXT:
+
+			// TODO: Also incorporate the severity
+			mavlink_statustext_t st;
+			mavlink_msg_statustext_decode(msg, &st);
+			printf("%s\n", st.text);
+			break;
 
 		// TODO: STATUSTEXT
 	}
@@ -352,9 +384,9 @@ void *vehicle_thread(void *arg) {
 			socklen_t addrlen = sizeof(struct sockaddr_in);
 			int nread = recvfrom(v->netfd, buf, 512, 0, (struct sockaddr *)&addr, &addrlen);
 
-			// TODO: Also copy over address
+			// Register the client that is sending us messages
 			v->client_addr.sin_port = addr.sin_port;
-			//printf("GOT FROM PORT %d\n", ntohs(addr.sin_port));
+			v->client_addr.sin_addr = addr.sin_addr;
 
 			if(nread > 0) {
 				for(int i = 0; i < nread; i++) {

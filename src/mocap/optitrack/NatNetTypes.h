@@ -267,7 +267,7 @@ typedef struct
 } sForcePlateData;
 
 // Single frame of data (for all tracked objects)
-typedef struct
+typedef struct sFrameOfMocapData
 {
     int32_t iFrame;                                     // host defined frame number
     int32_t nMarkerSets;                                // # of marker sets in this frame of data

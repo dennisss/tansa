@@ -5,43 +5,54 @@
 
 using namespace Eigen;
 
-// n-dimensional PID filter
-
+/**
+ * n-dimensional PID filter
+ */
+template <unsigned int N>
 class PID{
-
 public:
+
+	typedef Vector<N, double> Vector;
+
     PID();
 
     /**
 	 * Compute output of filter given the state error and change in time
 	 */
-    Vector3d compute(Vector3d e, double dt);
+    Vector &compute(Vector e, double dt);
 
 	/**
 	 * Like the regular compute but computes given a known error derivative
 	 */
-	Vector3d compute(Vector3d e, Vector3d de, double dt);
+	Vector &compute(Vector e, Vector de, double dt);
 
 
-    void setGains(Vector3d gP, Vector3d gI, Vector3d gD);
+    void setGains(Vector gP, Vector gI, Vector gD);
 
- //   void set
 
-    void setLimit(Vector3d min, Vector3d max);
+
+	void setOutputLimits(Vector min, Vector max);
+
+	/**
+	 * Sets the maximum control effect produced by the integral
+	 * This should be called after setting the gains
+	 * Note: this is not the value of the error integral, but the output when gain is applied
+	 */
+    void setWindupOutputLimit(Vector min, Vector max);
 
 
 
 private:
 
-    Vector3d gainP;
-    Vector3d gainI;
-    Vector3d gainD;
+    Vector gainP;
+    Vector gainI;
+    Vector gainD;
 
-    Vector3d lastE;
-    Vector3d sumE;
+    Vector lastE;
+    Vector sumE;
 
-	Vector3d minIntegral;
-	Vector3d maxIntegral;
+	Vector minIntegral;
+	Vector maxIntegral;
 
 };
 

@@ -2,57 +2,125 @@
 	Helpers for synchronizing the program with gazebo (in particular for timing and position purposes)
 */
 
+#include <tansa/core.h>
 #include <tansa/time.h>
+#include <tansa/vehicle.h>
 
 #include <gazebo/transport/transport.hh>
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
-
-/*
-$ gz topic -i /gazebo/default/pose/info
-Type: gazebo.msgs.PosesStamped
-
-$ gz topic -i /gazebo/default/model/info
-Type: gazebo.msgs.Model
-*/
-
 #include <iostream>
 
-/////////////////////////////////////////////////
-// Function is called everytime a message is received.
-void cb(ConstWorldStatisticsPtr &_msg)
-{
-	// Dump the message contents to stdout.
-	std::cout << _msg->DebugString();
+
+// TODO: These need to be cleaned up
+static gazebo::transport::NodePtr node;
+static gazebo::transport::SubscriberPtr world_sub;
+static gazebo::transport::SubscriberPtr poses_sub;
+static Vehicle *v;
+
+// TODO: These also come with a timestamp, so we might as well use it
+void gazebo_poses_callback(ConstPosesStampedPtr &posesStamped) {
+
+	for(int i = 0; i < posesStamped->pose_size(); ++i) {
+
+		const ::gazebo::msgs::Pose &pose = posesStamped->pose(i);
+		std::string name = pose.name();
+		if(name == std::string("iris")) {
+			const ::gazebo::msgs::Vector3d &position = pose.position();
+			const ::gazebo::msgs::Quaternion &orientation = pose.orientation();
+
+			Vector3d pos(
+				position.x(),
+				position.y(),
+				position.z()
+			);
+
+			Quaterniond orient(
+				orientation.w(),
+				orientation.x(),
+				orientation.y(),
+				orientation.z()
+			);
+
+
+			if(v != NULL) {
+				v->mocap_update(pos, orient, 0);
+			}
+
+		}
+
+	}
+
+	// std::cout << msg->DebugString();
 }
 
-/////////////////////////////////////////////////
-int main(int _argc, char **_argv)
-{
+void gazebo_stats_callback(ConstWorldStatisticsPtr &msg) {
+	std::cout << msg->sim_time().sec() << " " << msg->sim_time().nsec() << std::endl;
+	// msg->DebugString();
+
+}
+
+
+void sim_init() {
+	v = NULL;
+	node = NULL;
+}
+
+namespace tansa {
+
+void sim_connect() {
+
+	printf("Connecting to gazebo...\n");
+
 	// Load gazebo
-	gazebo::client::setup(_argc, _argv);
+	gazebo::client::setup();
 
 	// Create our node for communication
-	gazebo::transport::NodePtr node(new gazebo::transport::Node());
+	node = gazebo::transport::NodePtr(new gazebo::transport::Node());
 	node->Init();
 
-	// Listen to Gazebo world_stats topic
-	gazebo::transport::SubscriberPtr sub = node->Subscribe("~/world_stats", cb);
+	world_sub = node->Subscribe("~/world_stats", gazebo_stats_callback);
+	poses_sub = node->Subscribe("~/pose/info", gazebo_poses_callback);
+
+	printf("- done\n");
 
 	// Busy wait loop...replace with your own code as needed.
-	while (true)
-		gazebo::common::Time::MSleep(10);
+	//while (true)
+	//	gazebo::common::Time::MSleep(10);
+}
 
+
+void sim_disconnect() {
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
+
+	// Deleting reference to old Boost pointer
+	world_sub = gazebo::transport::SubscriberPtr();
+	poses_sub = gazebo::transport::SubscriberPtr();
+}
+
+void sim_track(Vehicle *veh) {
+	v = veh;
+}
+
 }
 
 /*
+This is what the data looks like:
+
+/gazebo/default/world_stats
+Type: gazebo.msgs.WorldStatistics
+
 time {
   sec: 401
   nsec: 656000000
 }
+
+
+/gazebo/default/pose/info
+Type: gazebo.msgs.PosesStamped
+
 pose {
   name: "iris"
   id: 9

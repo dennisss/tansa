@@ -9,7 +9,9 @@
 	When a trajectoy is completed,
 */
 
-
+/**
+ * Over time regulates the behavior of something: usually the vehicles motion or lighting
+ */
 class Controller {
 public:
 
@@ -26,19 +28,35 @@ class PositionController : public Controller {
 public:
 	PositionController(Vehicle *v);
 
-	void track(Trajectory *t);
+	/**
+	 * Specifies which trajectory should do followed
+	 */
+	void track(Trajectory *traj);
 
 
 	/**
 	 * This should be called 100 times a second to track the path
 	 */
-	void control(double t);
-
+	virtual void control(double t);
 
 private:
 	Vehicle *vehicle;
+	Trajectory *trajectory;
 
 	PID<3> *pid;
+};
+
+
+class HoverController : public Controller {
+public:
+	HoverController(Vehicle *v, const Point &p);
+
+	virtual void control(double t);
+
+private:
+	Vehicle *vehicle;
+	Point point;
+
 };
 
 

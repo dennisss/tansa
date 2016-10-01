@@ -28,6 +28,8 @@ add_executable(
 	src/core/time.cpp
 	src/core/gazebo.cpp
 	src/control/position.cpp
+	src/control/hover.cpp
+	src/trajectory/circle.cpp
 	src/mocap/mocap.cpp
 	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp

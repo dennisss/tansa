@@ -21,22 +21,21 @@ PositionController::PositionController(Vehicle *v) {
 	);
 }
 
+void PositionController::track(Trajectory *traj) {
+	this->trajectory = traj;
+}
+
 void PositionController::control(double t) {
 
 	printf("%.2f\n", t);
 
-	// Circle trajectory
-	double r = 2;
-	double dTheta = 40.0 * M_PI / 180.0; // radians per second
-	double theta = t * dTheta; // angle as a function of time
-	Vector3d pT(r*sin(theta), r*cos(theta), 1); //1 + t / 10.0);
-	Vector3d vT(r*dTheta*cos(theta), -r*dTheta*sin(theta), 0); //1.0 / 10.0);
-	Vector3d aT(-r*dTheta*dTheta*sin(theta), -r*dTheta*dTheta*cos(theta), 0);
+	// Evaluate trajectory
+	TrajectoryState s = trajectory->evaluate(t);
 
-	Vector3d eP = pT - vehicle->position;
-	Vector3d eV = vT - vehicle->velocity;
+	Vector3d eP = s.position - vehicle->position;
+	Vector3d eV = s.velocity - vehicle->velocity;
 
-	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + aT;
+	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + s.acceleration;
 
 	// Scale to -1 to 1 range and add hover point because PX4 doesn't take m s^-2 input but rather input proportional to thrust percentage
 	// TODO: PX4 should handle battery percentage and internal resistance calibration

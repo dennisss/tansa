@@ -2,6 +2,7 @@
 #include <tansa/time.h>
 #include <tansa/vehicle.h>
 #include <tansa/control.h>
+#include <tansa/trajectory.h>
 #include <tansa/mocap.h>
 
 #include <signal.h>
@@ -9,31 +10,12 @@
 
 #include <vector>
 
-/*
-	Listen on a port 14550 for messages.
-	When I get one, mark and recognize the MAV by it's port and ip address
-	- Maintain its heartbeat status
-	- Maintain the current mode of the vehicle
-	- We should dedicate a single thread to sending and receiving from this MAV
-
-	It will be responsible for setting new modes and sending continous
-*/
-
-
-
-/*
-	Each MAV will consist of a UDP client/server for talking to it and a single thread for receiving things like heatbeats, etc.
-
-	Everything else doesn't need to be on that thread as everything else just send mavlink messages
-*/
 
 bool running;
 
 void signal_sigint(int s) {
 	running = false;
 }
-
-
 
 int main(int argc, char *argv[]) {
 
@@ -90,6 +72,10 @@ int main(int argc, char *argv[]) {
 
 
 	PositionController posctl(&v);
+
+	CircleTrajectory circle;
+
+	posctl.track(&circle);
 
 	/*
 		General procedure

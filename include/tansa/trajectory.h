@@ -5,40 +5,58 @@
 
 using namespace Eigen;
 
-typedef Vector4d Point;
+// TODO: Should eventually be Vector4d to incorporate yaw
+typedef Vector3d Point;
 
 
-// Used for generating feasible trajectories
+// Used for determining feasibility of trajectories
 #define MAX_ACCELERATION 3
 
-/*
-	Should be a three time differentiable function
 
-	The controller will take x(t) v(t) a(t) -> a(t)
-*/
-class Trajectory {
-public:
-	virtual void evaluate(double t) = 0;
-
-	virtual Vector4d pos(double t) = 0;
-	virtual Vector4d vel(double t) = 0;
-	virtual Vector4d accel(double t) = 0;
+/**
+ * Evaluation of a trajectory at a point in time
+ */
+struct TrajectoryState {
+	Point position;
+	Point velocity;
+	Point acceleration;
 };
 
-/*
 
-*/
+/**
+ * A path that the vehicle should follow
+ * They are parametrized w.r.t. time
+ * Should be a three time differentiable function
+ */
+class Trajectory {
+public:
+	virtual TrajectoryState evaluate(double t) = 0;
+};
+
+/**
+ * Smoothly goes in a straight line through two points
+ */
 class LinearTrajectory : public Trajectory {
 public:
 
-	static LinearTrajectory &compute(Vector4d p1, double t1, Vector4d p2, double t2);
+	static LinearTrajectory &compute(Point p1, double t1, Point p2, double t2);
 
+	virtual TrajectoryState evaluate(double t);
 
 private:
-
-
+	LinearTrajectory();
 
 	// Store coefficients for x, y, z
+	VectorXd coeffs[3];
+};
+
+
+class CircleTrajectory : public Trajectory {
+public:
+	virtual TrajectoryState evaluate(double t);
+
+
+
 };
 
 

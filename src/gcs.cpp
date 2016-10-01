@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
 
 	#define STATE_TAKEOFF 0
 	#define STATE_FLYING 1
+	#define STATE_LANDING 2
 
 	int state = STATE_TAKEOFF;
 
@@ -117,24 +118,28 @@ int main(int argc, char *argv[]) {
 
 			hover.control(t);
 
-			double dist = (points[0] - v.position).norm();
-
-			if(dist < 0.1) {
+			if(hover.distance() < 0.1) {
 				start = Time::now();
 				state = STATE_FLYING;
 			}
 
-			//v.setpoint_pos(points[pointI]);
-
 		}
 		else if(state == STATE_FLYING) {
 
-			Trajectory *cur = square[(int)floor(t / 10.0)];
+			int idx = (int)floor(t / 10.0);
+
+			if(idx >= (sizeof(square) / sizeof(Trajectory *))) {
+				state = STATE_LANDING;
+				v.land();
+				continue;
+			}
+
+			Trajectory *cur = square[idx];
 			posctl.track(cur);
 			posctl.control(t);
-
-			// TODO: End condition
-			//v.setpoint_pos(Point(4,4,1));
+		}
+		else if(state == STATE_LANDING) {
+			// TODO:
 		}
 
 		i++;

@@ -13,7 +13,6 @@
 #include <iostream>
 
 
-// TODO: These need to be cleaned up
 static gazebo::transport::NodePtr node;
 static gazebo::transport::SubscriberPtr world_sub;
 static gazebo::transport::SubscriberPtr poses_sub;

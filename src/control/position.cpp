@@ -27,7 +27,7 @@ void PositionController::track(Trajectory *traj) {
 
 void PositionController::control(double t) {
 
-	printf("%.2f\n", t);
+	//printf("%.2f\n", t);
 
 	// Evaluate trajectory
 	TrajectoryState s = trajectory->evaluate(t);

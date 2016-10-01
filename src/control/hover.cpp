@@ -13,3 +13,7 @@ void HoverController::control(double t) {
 
 	vehicle->setpoint_pos(point);
 }
+
+double HoverController::distance() {
+	 return (point - vehicle->position).norm();
+}

@@ -5,8 +5,8 @@
 #include "trajectory.h"
 
 /*
-	The general idea is that every Vehicle will always have a Controller associated with it.
-	When a trajectoy is completed,
+	The general idea is that every Vehicle will always have some Controllers associated with it.
+	When a trajectoy is completed, the controller may change slightly or another controller may take over
 */
 
 /**
@@ -52,6 +52,12 @@ public:
 	HoverController(Vehicle *v, const Point &p);
 
 	virtual void control(double t);
+
+
+	/**
+	 * Get the distance to the point being kept
+	 */
+	double distance();
 
 private:
 	Vehicle *vehicle;

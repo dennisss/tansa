@@ -8,7 +8,7 @@ build:
 	cd build; cmake ..; make
 
 run: build
-	./build/bridge
+	./build/gcs
 
 clean:
 	rm -rf build

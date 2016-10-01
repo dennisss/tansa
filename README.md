@@ -44,16 +44,12 @@ For running the simulations, all dependencies on the PX4 toolchain/gazebo SITL e
 Building
 --------
 
-Run `make sim` to build the core stuff and start up the simulator
+In `lib/Firmware`, run `make posix_sitl_default gazebo` to start the simulator.
+
+Run `make run` to build the core stuff and start up the controller
 
 
 Documentation
 -------------
 
 See the `doc` folder
-
-
-
-// Need to start 'make posix_sitl_default gazebo' without actually starting it
-
-build_posix_sitl_default/src/firmware/posix/px4

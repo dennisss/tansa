@@ -53,36 +53,34 @@ int main(int argc, char *argv[]) {
 
 	vector<Vector3d> points = {
 		{0, 0, 1},
-		{2, 2, 2},
-		{-2, 2, 2},
-		{-2, -2, 2},
-		{2, -2, 2},
-		{0, 0, 2}
+		{2, 2, 1},
+		{-2, 2, 1},
+		{-2, -2, 1},
+		{2, -2, 1},
+		{0, 0, 1}
 	};
 
 
-	int pointI = 0;
+	#define STATE_TAKEOFF 0
+	#define STATE_FLYING 1
+
+	int state = STATE_TAKEOFF;
 
 	int i = 0;
-
-	Vector3d integral(0,0,0);
 
 	float level = 0;
 	float dl = 0.005;
 
-
+	HoverController hover(&v, points[0]);
 	PositionController posctl(&v);
 
-	CircleTrajectory circle;
+	//CircleTrajectory circle;
+	Trajectory *square[5];
+	for(int i = 0; i < 5; i++) {
+		square[i] = new LinearTrajectory(points[i], 10.0*i, points[i+1], 10.0*(i+1));
+	}
 
-	posctl.track(&circle);
 
-	/*
-		General procedure
-		- Arm/takeoff to preset aerial home position
-		- Execute the routine
-		- Land/disarm at current position
-	*/
 	Time start(0,0);
 	Rate r(100);
 
@@ -91,17 +89,13 @@ int main(int argc, char *argv[]) {
 		double t = Time::now().since(start).seconds();
 
 /*
-		usleep(10000);
-		continue;
-
+		Sample Lighting stuff
 
 		v.set_lighting(level, level);
 
 		level += dl;
 		if(level >= 1.0 || level <= 0.0)
 			dl = -dl;
-
-
 */
 
 
@@ -119,30 +113,28 @@ int main(int argc, char *argv[]) {
 
 
 
-		if(pointI == 0) {
-			if(pointI == points.size()){
-				break;
-			}
+		if(state == STATE_TAKEOFF) {
 
-			double dist = (points[pointI] - v.position).norm();
+			hover.control(t);
 
-
+			double dist = (points[0] - v.position).norm();
 
 			if(dist < 0.1) {
 				start = Time::now();
-				pointI++;
-
+				state = STATE_FLYING;
 			}
 
-			v.setpoint_pos(points[pointI]);
-
+			//v.setpoint_pos(points[pointI]);
 
 		}
-		else {
+		else if(state == STATE_FLYING) {
 
-			// Use Position controller
+			Trajectory *cur = square[(int)floor(t / 10.0)];
+			posctl.track(cur);
 			posctl.control(t);
 
+			// TODO: End condition
+			//v.setpoint_pos(Point(4,4,1));
 		}
 
 		i++;

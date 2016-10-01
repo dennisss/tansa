@@ -1,3 +1,23 @@
+#include <tansa/trajectory.h>
+
+#include <iostream>
+#include <cassert>
+#include <CGAL/basic.h>
+#include <CGAL/QP_models.h>
+#include <CGAL/QP_functions.h>
+// choose exact integral type
+#ifdef CGAL_USE_GMP
+#include <CGAL/Gmpz.h>
+typedef CGAL::Gmpz ET;
+#else
+#include <CGAL/MP_Float.h>
+typedef CGAL::MP_Float ET;
+#endif
+// program and solution types
+typedef CGAL::Quadratic_program<int> Program; // TODO: This will need to change
+typedef CGAL::Quadratic_program_solution<ET> Solution;
+
+
 /*
 	Contains the generator of a minimum snap trajectory through points in the differentially flat space [x, y, z, yaw]
 	See 'Polynomial Trajectory Planning for Quadrotor Flight' by Richter et. al. for a full derivation.
@@ -20,12 +40,18 @@ void compute_min_snap(const vector<Vector4d> &x, const vector<double> &t) {
 
 	int M = x.size(); // number of segments
 
+	if(t.size() != M + 1) {
+		printf("Wrong number of times provided\n");
+		return;
+	}
 
 	/*
 		Our QP is of the form:
 		argmin p^T Q p
 		s.t. A p - b = 0
 	*/
+
+	int R = 4;
 
 	// The whole cost matrix for a single axis
 	// Note: this stays the same for each axis as this is only dependent on n, m, and t
@@ -37,7 +63,7 @@ void compute_min_snap(const vector<Vector4d> &x, const vector<double> &t) {
 
 		// The order of the derivative we are minimizing
 		// Currently the cost of all other derivates is 0
-		int r = 4;
+		int r = R;
 
 		for(int i = 0; i < N; i++) { // i is the current row
 			for(int l = 0; l < N; l++) {
@@ -66,37 +92,20 @@ void compute_min_snap(const vector<Vector4d> &x, const vector<double> &t) {
 
 
 	// Build constraints (one axis at a time)
-	int nc = ; // Number of contraints
-
+	// Of the form Ax = b
+	// - start and stop: pos, vel, accel, jerk constraints
+	// - continuitity of all intermediate positions derivatives
+	// -> (M+1)*r
+	int nc = (M+1)*R; // Number of contraints
 
 	MatrixXd A(nc, N * M);
-	VectorXd b(N * M);
-
-}
+	VectorXd b(nc);
 
 
 
-// Exmple code for solving the QP:
 
+	// Solving the quadratic program
 
-#include <iostream>
-#include <cassert>
-#include <CGAL/basic.h>
-#include <CGAL/QP_models.h>
-#include <CGAL/QP_functions.h>
-// choose exact integral type
-#ifdef CGAL_USE_GMP
-#include <CGAL/Gmpz.h>
-typedef CGAL::Gmpz ET;
-#else
-#include <CGAL/MP_Float.h>
-typedef CGAL::MP_Float ET;
-#endif
-// program and solution types
-typedef CGAL::Quadratic_program<int> Program;
-typedef CGAL::Quadratic_program_solution<ET> Solution;
-
-int main() {
 	// by default, we have a nonnegative QP with Ax <= b
 	Program qp(CGAL::SMALLER, true, 0, false, 0);
 
@@ -115,4 +124,5 @@ int main() {
 	// output solution
 	std::cout << s;
 	return 0;
+
 }

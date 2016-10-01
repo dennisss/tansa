@@ -39,12 +39,14 @@ public:
 class LinearTrajectory : public Trajectory {
 public:
 
-	static LinearTrajectory &compute(Point p1, double t1, Point p2, double t2);
+	LinearTrajectory(Point x1, double t1, Point x2, double t2);
+
+//	static LinearTrajectory &compute(Point p1, double t1, Point p2, double t2);
 
 	virtual TrajectoryState evaluate(double t);
 
 private:
-	LinearTrajectory();
+//	LinearTrajectory();
 
 	// Store coefficients for x, y, z
 	VectorXd coeffs[3];

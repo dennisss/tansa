@@ -1,5 +1,7 @@
-
+#include <tansa/core.h>
+#include <tansa/time.h>
 #include <tansa/vehicle.h>
+#include <tansa/control.h>
 #include <tansa/mocap.h>
 
 #include <signal.h>
@@ -35,9 +37,15 @@ void signal_sigint(int s) {
 
 int main(int argc, char *argv[]) {
 
+	bool mocap_enabled = false,
+		 sim_enabled = true;
+
+	// TODO: Parse arguments here
+	// -mocap to start mocap
+	// -sim to use gazebo listeners
+
 	tansa::init();
 
-	signal(SIGINT, signal_sigint);
 
 	Mocap *mocap = NULL;
 
@@ -45,7 +53,12 @@ int main(int argc, char *argv[]) {
 	v.connect();
 
 
-	if(start_mocap) {
+	// TODO: Ensure only one of these is enabled at a time
+	if(sim_enabled) {
+		tansa::sim_connect();
+		tansa::sim_track(&v);
+	}
+	if(mocap_enabled) {
 		string client_addr = "192.168.2.1";
 		mocap = new Mocap();
 		mocap->connect(client_addr);
@@ -53,8 +66,8 @@ int main(int argc, char *argv[]) {
 	}
 
 
-
 	running = true;
+	signal(SIGINT, signal_sigint);
 
 	vector<Vector3d> points = {
 		{0, 0, 1},
@@ -69,12 +82,41 @@ int main(int argc, char *argv[]) {
 	int pointI = 0;
 
 	int i = 0;
-	double t = 0;
 
 	Vector3d integral(0,0,0);
 
+	float level = 0;
+	float dl = 0.005;
+
+
+	PositionController posctl(&v);
+
+	/*
+		General procedure
+		- Arm/takeoff to preset aerial home position
+		- Execute the routine
+		- Land/disarm at current position
+	*/
+	Time start(0,0);
+	Rate r(100);
 
 	while(running) {
+
+		double t = Time::now().since(start).seconds();
+
+/*
+		usleep(10000);
+		continue;
+
+
+		v.set_lighting(level, level);
+
+		level += dl;
+		if(level >= 1.0 || level <= 0.0)
+			dl = -dl;
+
+
+*/
 
 
 		// Lower frequency state management
@@ -92,60 +134,47 @@ int main(int argc, char *argv[]) {
 
 
 		if(pointI == 0) {
+			if(pointI == points.size()){
+				break;
+			}
+
 			double dist = (points[pointI] - v.position).norm();
 
-			if(dist < 0.1)
+
+
+			if(dist < 0.1) {
+				start = Time::now();
 				pointI++;
 
+			}
+
 			v.setpoint_pos(points[pointI]);
+
+
 		}
 		else {
 
-			// Circle trajectory
-			double r = 2;
-			double dTheta = 18.0 * M_PI / 180.0; // radians per second
-			double theta = t * dTheta; // angle as a function of time
-			Vector3d pT(r*sin(theta), r*cos(theta), 1 + t / 10.0);
-			Vector3d vT(r*dTheta*cos(theta), -r*dTheta*sin(theta), 1.0 / 10.0);
-			Vector3d aT(-r*dTheta*dTheta*sin(theta), -r*dTheta*dTheta*cos(theta), 0);
-
-			Vector3d eP = pT - v.position;
-			Vector3d eV = vT - v.velocity;
-
-			// PD gains
-			Vector3d Kp(1.0, 1.0, 1.0);
-			Vector3d Kd(0.1, 0.1, 0.3);
-			Vector3d Ki(0, 0, 0);
-
-			Vector3d a = Kp.cwiseProduct(eP) + Kd.cwiseProduct(eV) + Ki.cwiseProduct(integral);
-			a = a / (9.8 / 0.5) + Vector3d(0, 0, 0.5);
-			//a.x() = 0;
-			//a.y() = 0;
-			printf("A: %.2f %.2f %.2f\n", a.x(), a.y(), a.z());
-			v.setpoint_accel(a);
-
-			integral = integral + eP;
+			// Use Position controller
+			posctl.control(t);
 
 		}
 
-	//	send_setpoint();
-	//	usleep(100);
-
-	//	if(i++ % 10 == 0) {
-	//		send_heartbeat();
-	//		if(i < 500)
-	//			send_set_mode();
-	//		else
-	//			send_arm();
-	//	}
-
 		i++;
-		t += 0.01;
-		usleep(10000); // 100hz
+
+		r.sleep();
 	}
 
+
+
+	// Cleanup
+	if(sim_enabled) {
+		tansa::sim_disconnect();
+	}
+
+
+
 	// Stop all vehicles
-	v.stop();
+	v.disconnect();
 
 	printf("Done!\n");
 

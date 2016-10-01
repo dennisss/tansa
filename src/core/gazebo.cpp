@@ -43,10 +43,10 @@ void gazebo_poses_callback(ConstPosesStampedPtr &posesStamped) {
 				orientation.z()
 			);
 
-
-			if(v != NULL) {
-				v->mocap_update(pos, orient, 0);
-			}
+			// Not needed as the simulation has ground truth odometry
+		//	if(v != NULL) {
+		//		v->mocap_update(pos, orient, 0);
+		//	}
 
 		}
 
@@ -55,10 +55,19 @@ void gazebo_poses_callback(ConstPosesStampedPtr &posesStamped) {
 	// std::cout << msg->DebugString();
 }
 
-void gazebo_stats_callback(ConstWorldStatisticsPtr &msg) {
-	std::cout << msg->sim_time().sec() << " " << msg->sim_time().nsec() << std::endl;
-	// msg->DebugString();
+bool gazebo_registered = false;
+Time gazebo_last_time(0,0);
 
+void gazebo_stats_callback(ConstWorldStatisticsPtr &msg) {
+	Time t(msg->sim_time().sec(), msg->sim_time().nsec());
+	Time rt(msg->real_time().sec(), msg->real_time().nsec());
+
+//	Time rt = Time::realNow();
+//	if(gazebo_registered) {
+	Time::setTime(t, t.seconds() / rt.seconds());
+//	}
+
+//	gazebo_last_time =
 }
 
 
@@ -70,6 +79,9 @@ void sim_init() {
 namespace tansa {
 
 void sim_connect() {
+
+	// Hold time at 0 until it is initialized
+	Time::setTime(Time(0,0), 0);
 
 	printf("Connecting to gazebo...\n");
 

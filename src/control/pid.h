@@ -2,32 +2,67 @@
 #define TANSA_PID_H_
 
 #include <Eigen/Dense>
+#include <float.h>
 
-using namespace Eigen;
 
 /**
  * n-dimensional PID filter
  */
 template <unsigned int N>
-class PID{
+class PID {
 public:
 
-	typedef Vector<N, double> Vector;
+	typedef Eigen::Matrix<double, N, 1> Vector;
 
-    PID();
+    PID() {
+		sumE = Vector::Zero();
+		lastE = Vector::Zero();
+
+		for(int i = 0; i < N; i++) {
+			minIntegral(i) = DBL_MIN;
+			maxIntegral(i) = DBL_MAX;
+		}
+	}
 
     /**
 	 * Compute output of filter given the state error and change in time
 	 */
-    Vector &compute(Vector e, double dt);
+    inline Vector compute(Vector e, double dt) {
+		Vector de = (e - lastE) / dt;
+		lastE = e;
+
+		return compute(e, de, dt);
+	}
 
 	/**
 	 * Like the regular compute but computes given a known error derivative
 	 */
-	Vector &compute(Vector e, Vector de, double dt);
+	inline Vector compute(Vector e, Vector de, double dt) {
+		// Update integral
+		sumE += dt*e;
+
+		// Check limits
+		for(unsigned int i = 0; i < N; i++) {
+			if(sumE(i) > maxIntegral(i))
+				sumE(i) = maxIntegral(i);
+			else if(sumE(i) < minIntegral(i))
+				sumE(i) = minIntegral(i);
+		}
+
+		// Compute control output
+		Vector out = gainP.cwiseProduct(e) + gainI.cwiseProduct(sumE) + gainD.cwiseProduct(de);
+
+		// TODO: Contrain to output limits
+
+		return out;
+	}
 
 
-    void setGains(Vector gP, Vector gI, Vector gD);
+    void setGains(Vector gP, Vector gI, Vector gD) {
+		this->gainP = gP;
+		this->gainI = gI;
+		this->gainD = gD;
+	}
 
 
 
@@ -51,11 +86,13 @@ private:
     Vector lastE;
     Vector sumE;
 
+	Vector minTotal;
+	Vector maxTotal;
+
 	Vector minIntegral;
 	Vector maxIntegral;
 
 };
-
 
 
 

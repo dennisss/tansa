@@ -19,7 +19,11 @@
 mavlink_system_t mavlink_system;
 
 
-Vehicle::Vehicle() {
+Vehicle::Vehicle() :
+	lastHeartbeatSent(0,0),
+	lastTimesyncSent(0,0),
+	lastSystimeSent(0,0),
+	lastHeartbeatReceived(0,0) {
 
 	// TODO: Same as above
 	mavlink_system.sysid = 255;
@@ -27,7 +31,22 @@ Vehicle::Vehicle() {
 
 }
 
+int forwardfd = 0;
+struct sockaddr_in forward_addr;
+
 int Vehicle::connect(int port) {
+
+	if((forwardfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("cannot create socket");
+		return 1;
+	}
+
+	memset((char *)&forward_addr, 0, sizeof(client_addr));
+	forward_addr.sin_family = AF_INET;
+	forward_addr.sin_port = htons(14551);
+	inet_pton(AF_INET, "127.0.0.1", &forward_addr.sin_addr);
+
+
 	if((netfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("cannot create socket");
 		return 1;
@@ -155,8 +174,13 @@ void Vehicle::land() {
 
 void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, uint64_t t) {
 
+	Matrix3d m;
+	m << 1, 0, 0,
+		 0, -1, 0,
+		 0, 0, -1;
+
 	Vector3d pos_ned = enuToFromNed() * pos;
-	Quaterniond orient_ned(enuToFromNed() * orient);
+	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * Quaterniond(m) * orient;
 
 	float q[4];
 	q[0] = orient_ned.w();
@@ -189,13 +213,13 @@ void Vehicle::setpoint_pos(const Vector3d &pos) {
 		0,
 		1, 1, // target
 		MAV_FRAME_LOCAL_NED,
-		0b0000111111111000, //
+		0b0000101111111000, //
 		pos_ned.x(),
 		pos_ned.y(),
 		pos_ned.z(),
 		0,0,0,
 		0,0,0,
-		0,0
+		1.58,0
 	);
 
 	send_message(&msg);
@@ -290,7 +314,6 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			mavlink_msg_heartbeat_decode(msg, &hb);
 
 			this->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED? true: false;
-			this->connected = true;
 
 			px4_custom_mode custom_mode;
 			custom_mode.data = hb.custom_mode;
@@ -307,10 +330,12 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 				default: mode = "unknown";
 			}
 
+			lastHeartbeatReceived = Time::now();
+			if(!this->connected) {
+				printf("[Vehicle] Connected!\n");
+				this->connected = true;
+			}
 
-			// TODO: Update last seen time and connected status
-
-			printf("GOT HEARTBEAT\n");
 			break;
 
 		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
@@ -321,7 +346,7 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			this->position = enuToFromNed() * Vector3d(lp.x, lp.y, lp.z);
 			this->velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
 
-			//printf("POS: %.2f %.2f %.2f\n", position.x(), position.y(), position.z());
+//			printf("POS: %.2f %.2f %.2f\n", lp.x, lp.y, lp.z);
 
 			break;
 
@@ -343,7 +368,18 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			printf("%s\n", st.text);
 			break;
 
-		// TODO: STATUSTEXT
+		case MAVLINK_MSG_ID_SYSTEM_TIME: {
+			mavlink_system_time_t st;
+			mavlink_msg_system_time_decode(msg, &st);
+			//printf("%llu %llu\n", st.time_unix_usec, Time::now().micros());
+
+			// TODO: Simply log it to determine if the vehicle has adjusted its time correctly
+			break;
+		}
+
+		case MAVLINK_MSG_ID_TIMESYNC:
+			handle_message_timesync(msg);
+			break;
 	}
 
 }
@@ -399,11 +435,34 @@ void *vehicle_thread(void *arg) {
 						//printf("\nReceived packet: SYS: %d, COMP: %d, LEN: %d, MSG ID: %d\n", msg.sysid, msg.compid, msg.len, msg.msgid);
 					}
 				}
+
+				sendto(forwardfd, buf, nread, 0, (struct sockaddr *) &forward_addr, addrlen);
 			}
 		}
 
 
-		// Send heartbeat at most every 0.5 seconds
+		// Send all broadcasts: heartbeat every 1 second, system_time every 2 seconds and time sync every 2 seconds
+		Time now = Time::now();
+
+
+		if(v->connected && now.since(v->lastHeartbeatReceived).seconds() >= 2) {
+			v->connected = false;
+			printf("[Vehicle] Timed out!\n");
+		}
+
+		if(now.since(v->lastHeartbeatSent).seconds() >= 1) {
+			v->send_heartbeat();
+			v->lastHeartbeatSent = now;
+		}
+		if(now.since(v->lastSystimeSent).seconds() >= 2) {
+			v->send_systime();
+			v->lastSystimeSent = now;
+		}
+		if(now.since(v->lastTimesyncSent).seconds() >= 2) {
+			v->send_timesync(0, now.nanos());
+			v->lastTimesyncSent = now;
+		}
+
 
 	}
 

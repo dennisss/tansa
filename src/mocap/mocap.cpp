@@ -37,14 +37,13 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 
 	Mocap *inst = (Mocap *) pUserData;
 
-	uint64_t t = 0; //tansa::Time::now().micros(); // TODO: Replace with the mocap timestamp
+	uint64_t t = Time::now().micros(); // TODO: Replace with the mocap timestamp
 
 	for(int i = 0; i < pFrameOfData->nRigidBodies; i++){
 
 		sRigidBodyData *rb = &pFrameOfData->RigidBodies[i];
 
 		int id = rb->ID;
-
 
 		// TODO: If there is an unidentified body, use active IR beacon to find correspondences (do this in another thread?)
 		// Only continue if a key exists for this rigid body
@@ -61,7 +60,7 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 
 
 		// Conversion from default Optitrack coordinate system to ENU
-		// Invert x and swap y & z
+		// Invert x and swap y & z (for version 1.7+)
 		Vector3d pos(
 			-rb->x,
 			rb->z,
@@ -75,21 +74,25 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 			rb->qy
 		);
 
-
 		inst->tracked[id]->mocap_update(pos, quat, t);
+
+
 	}
 
 
 /*
-	tansa::PointArray markers;
-	markers.points.resize(pFrameOfData->nOtherMarkers);
-	for(int i = 0; i < markers.points.size(); i++){
-		// TODO: I need to change coordinate systems here
-		markers.points[i].x = -pFrameOfData->OtherMarkers[i][0];
-		markers.points[i].y = pFrameOfData->OtherMarkers[i][2];
-		markers.points[i].z = pFrameOfData->OtherMarkers[i][1];
+	// Grab other markers that were triangulated but not
+	vector<Vector3d> markers;
+	markers.resize(pFrameOfData->nOtherMarkers);
+	for(int i = 0; i < markers.size(); i++) {
+		markers[i] = Vector3d(
+			-pFrameOfData->OtherMarkers[i][0],
+			pFrameOfData->OtherMarkers[i][2],
+			pFrameOfData->OtherMarkers[i][1]
+		);
 	}
-	markerPub.publish(markers);
 */
+	// Markers is now the full
+
 
 }

@@ -1,6 +1,12 @@
 #ifndef TANSA_TRAJECTORY_H_
 #define TANSA_TRAJECTORY_H_
 
+#include <Eigen/Dense>
+
+using namespace Eigen;
+
+typedef Vector4d Point;
+
 
 // Used for generating feasible trajectories
 #define MAX_ACCELERATION 3
@@ -12,6 +18,8 @@
 */
 class Trajectory {
 public:
+	virtual void evaluate(double t) = 0;
+
 	virtual Vector4d pos(double t) = 0;
 	virtual Vector4d vel(double t) = 0;
 	virtual Vector4d accel(double t) = 0;
@@ -26,7 +34,11 @@ public:
 	static LinearTrajectory &compute(Vector4d p1, double t1, Vector4d p2, double t2);
 
 
+private:
 
+
+
+	// Store coefficients for x, y, z
 };
 
 

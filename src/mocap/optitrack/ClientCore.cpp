@@ -194,6 +194,8 @@ void *data_server(void *arg){
 
 		cc->unpack(szData);
 	}
+
+	return NULL;
 }
 
 void *cmd_server(void *arg){
@@ -672,7 +674,7 @@ void ClientCore::unpackDataDescs(char *ptr){
 
 
 		int type = 0; memcpy(&type, ptr, 4); ptr += 4;
-		printf("Type : %d\n", i, type);
+		DEBUG("Type %d: %d\n", i, type);
 		desc.type = type;
 
 		if(type == Descriptor_MarkerSet){   // markerset

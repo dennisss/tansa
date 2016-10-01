@@ -120,11 +120,12 @@ void NatNetClient::SendMessage1(char* szMessage){
 
 int NatNetClient::SendMessageAndWait(char* szMessage, void** ppServerResponse, int* pResponseSize){
 
-
+	return 0;
 }
 
 int NatNetClient::SendMessageAndWait(char* szMessage, int tries, int timeout, void** ppServerResponse, int* pResponseSize){
 
+	return 0;
 }
 
 /**
@@ -135,6 +136,7 @@ int NatNetClient::SendMessageAndWait(char* szMessage, int tries, int timeout, vo
  */
 int NatNetClient::GetServerDescription(sServerDescription *pServerDescription){
 
+	return 0;
 }
 
 /**
@@ -145,7 +147,7 @@ int NatNetClient::GetServerDescription(sServerDescription *pServerDescription){
  */
 int NatNetClient::GetDataDescriptions(sDataDescriptions** pDataDescriptions){
 
-
+	return 0;
 }
 
 /**

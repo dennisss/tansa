@@ -24,9 +24,12 @@ add_executable(
 	src/gcs.cpp
 	src/core/core.cpp
 	src/core/vehicle.cpp
+	src/core/vehicle_time.cpp
 	src/core/time.cpp
 	src/core/gazebo.cpp
+	src/control/position.cpp
 	src/mocap/mocap.cpp
+	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp
 	src/mocap/optitrack/NatNetClient.cpp
 )

@@ -2,12 +2,10 @@
 	Contains the generator of a minimum snap trajectory through points in the differentially flat space [x, y, z, yaw]
 	See 'Polynomial Trajectory Planning for Quadrotor Flight' by Richter et. al. for a full derivation.
 
-
 	Given:
 	- A desired polynomial order
 	- A set of points [p0, pN]
 	- Desired velocities through v0 and vN
-
 */
 
 

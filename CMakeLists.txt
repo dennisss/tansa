@@ -29,6 +29,7 @@ add_executable(
 	src/core/gazebo.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
+	src/trajectory/polynomial.cpp
 	src/trajectory/linear.cpp
 	src/trajectory/circle.cpp
 	src/mocap/mocap.cpp

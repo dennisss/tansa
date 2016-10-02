@@ -1,27 +1,26 @@
 #include <tansa/trajectory.h>
 
 
-/*
-	Circles are characterized by:
-	- radius
-	- normal vector
-	- center
-	- start angle  and start time
-	- end angle  and end time
+CircleTrajectory::CircleTrajectory(const Point &origin, double radius, double theta1, double t1, double theta2, double t2)
+	: Trajectory(t1, t2) {
 
-*/
+	this->origin = origin;
+	this->radius = radius;
+
+	this->theta1 = theta1;
+	this->dtheta = (theta2 - theta1) / (t2 - t1);
+}
 
 
 TrajectoryState CircleTrajectory::evaluate(double t) {
 
 	TrajectoryState s;
 
-	double r = 2;
-	double dTheta = 40.0 * M_PI / 180.0; // radians per second
-	double theta = t * dTheta; // angle as a function of time
-	s.position = Point(r*sin(theta), r*cos(theta), 1); //1 + t / 10.0);
-	s.velocity = Point(r*dTheta*cos(theta), -r*dTheta*sin(theta), 0); //1.0 / 10.0);
-	s.acceleration = Point(-r*dTheta*dTheta*sin(theta), -r*dTheta*dTheta*cos(theta), 0);
+	double theta = ((t - t1) * dtheta) + theta1; // angle as a function of time
+
+	s.position = Point(radius*sin(theta), radius*cos(theta), 0) + origin; //1 + t / 10.0);
+	s.velocity = Point(radius*dtheta*cos(theta), -radius*dtheta*sin(theta), 0); //1.0 / 10.0);
+	s.acceleration = Point(-radius*dtheta*dtheta*sin(theta), -radius*dtheta*dtheta*cos(theta), 0);
 
 	return s;
 }

@@ -15,7 +15,7 @@ void init();
 
 void sim_connect();
 void sim_disconnect();
-void sim_track(Vehicle *veh);
+void sim_track(Vehicle *veh, int id);
 
 }
 

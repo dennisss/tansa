@@ -10,43 +10,57 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
-#include <iostream>
+#include <string.h>
 
+#include <map>
 
 static gazebo::transport::NodePtr node;
 static gazebo::transport::SubscriberPtr world_sub;
 static gazebo::transport::SubscriberPtr poses_sub;
-static Vehicle *v;
+
+static std::map<int, Vehicle *> tracked;
+
 
 // TODO: These also come with a timestamp, so we might as well use it
 void gazebo_poses_callback(ConstPosesStampedPtr &posesStamped) {
 
 	for(int i = 0; i < posesStamped->pose_size(); ++i) {
-
 		const ::gazebo::msgs::Pose &pose = posesStamped->pose(i);
 		std::string name = pose.name();
-		if(name == std::string("iris")) {
-			const ::gazebo::msgs::Vector3d &position = pose.position();
-			const ::gazebo::msgs::Quaternion &orientation = pose.orientation();
 
-			Vector3d pos(
-				position.x(),
-				position.y(),
-				position.z()
-			);
+		int id = -1;
+		if(strncmp(name.c_str(), "vehicle_", 8) == 0 && name.length() == 9) {
+			id = atoi(name.c_str() + 8);
+		}
 
-			Quaterniond orient(
-				orientation.w(),
-				orientation.x(),
-				orientation.y(),
-				orientation.z()
-			);
 
-			// Not needed as the simulation has ground truth odometry
-		//	if(v != NULL) {
-		//		v->mocap_update(pos, orient, 0);
-		//	}
+		if(tracked.count(id) == 0){
+			continue;
+		}
 
+
+		Vehicle *v = tracked[id];
+
+
+
+		const ::gazebo::msgs::Vector3d &position = pose.position();
+		const ::gazebo::msgs::Quaternion &orientation = pose.orientation();
+
+		Vector3d pos(
+			position.x(),
+			position.y(),
+			position.z()
+		);
+
+		Quaterniond orient(
+			orientation.w(),
+			orientation.x(),
+			orientation.y(),
+			orientation.z()
+		);
+
+		if(v != NULL) {
+			v->mocap_update(pos, orient, Time::now().micros()); // TODO: Use sim time
 		}
 
 	}
@@ -71,7 +85,6 @@ void gazebo_stats_callback(ConstWorldStatisticsPtr &msg) {
 
 
 void sim_init() {
-	v = NULL;
 	node = NULL;
 }
 
@@ -111,8 +124,8 @@ void sim_disconnect() {
 	poses_sub = gazebo::transport::SubscriberPtr();
 }
 
-void sim_track(Vehicle *veh) {
-	v = veh;
+void sim_track(Vehicle *veh, int id) {
+	tracked[id] = veh;
 }
 
 }

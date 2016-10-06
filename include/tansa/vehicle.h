@@ -30,7 +30,7 @@ public:
 	Vehicle();
 
 
-	int connect(int port = 14550);
+	int connect(int lport = 14550, int rport = 14555);
 
 	int disconnect();
 
@@ -70,6 +70,7 @@ public:
 	void mocap_update(const Vector3d &pos, const Quaterniond &orient, uint64_t t);
 
 
+	// TODO: Change these to use Point
 	// By default, this will preserve the yaw
 	void setpoint_pos(const Vector3d &p);
 
@@ -104,6 +105,7 @@ private:
 	bool running = false; // Whether or not the server is running for this drone
 
 	int netfd = 0;
+	mavlink_channel_t channel;
 
 	pthread_t thread = NULL;
 

@@ -45,5 +45,14 @@ target_link_libraries(
 	pthread
 )
 
-
 set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++11")
+
+
+
+add_library(
+	gazebo_swarm SHARED
+
+	src/gazebo/swarm_plugin.cpp
+)
+
+target_link_libraries(gazebo_swarm ${GAZEBO_LIBRARIES})

@@ -17,7 +17,7 @@ port_step=10
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 root_path="$SCRIPT_DIR/.." # Root of this repository
 
-rc_script="config/gazebo/iris"
+rc_script="config/gazebo/x340"
 tmp_path=${root_path}/tmp
 
 echo "Killing running instances"

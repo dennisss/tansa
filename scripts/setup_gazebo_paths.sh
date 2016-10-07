@@ -10,5 +10,5 @@ SRC=$(pwd)/lib/Firmware
 export GAZEBO_PLUGIN_PATH=${BUILD}/build_gazebo:$(pwd)/build:${GAZEBO_PLUGIN_PATH}
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${SRC}/Tools/sitl_gazebo/Build/msgs/:${BUILD}/build_gazebo
 
-export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:${SRC}/Tools/sitl_gazebo/models
+export GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:${SRC}/Tools/sitl_gazebo/models:$(pwd)/config/gazebo/models
 export GAZEBO_MODEL_DATABASE_URI=""

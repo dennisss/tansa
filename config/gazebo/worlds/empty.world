@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
-	<!—- Empty world based on on PX4/sitl_gazebo/worlds/empty.world -—>
 
 	<world name="default">
 		<plugin filename="libgazebo_swarm.so" name="gazebo_swarm"/>

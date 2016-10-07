@@ -16,6 +16,12 @@ node_modules
 build
 build_*
 
+# Compiled 3d printer instructions
+*.gcode
+
+# Compiled Gazebo descriptions
+*.sdf
+
 # Folder for storing temporary files
 tmp
 

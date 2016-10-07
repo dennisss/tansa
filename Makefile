@@ -5,6 +5,7 @@
 build:
 	git submodule update --init
 	mkdir -p build
+	rm config/gazebo/models/x340/x340.sdf
 	cd build; cmake ..; make
 
 run: build

@@ -1,7 +1,9 @@
+# TODO: Change to Generic X configuration
+
 uorb start
 param load
 param set MAV_TYPE 2
-param set SYS_AUTOSTART 4010
+param set SYS_AUTOSTART 4001
 param set SYS_RESTART_TYPE 2
 dataman start
 param set BAT_N_CELLS 3
@@ -67,7 +69,7 @@ position_estimator_inav start
 #local_position_estimator start
 mc_pos_control start
 mc_att_control start
-mixer load /dev/pwm_output0 ROMFS/px4fmu_common/mixers/quad_w.main.mix
+mixer load /dev/pwm_output0 ROMFS/px4fmu_common/mixers/quad_x.main.mix
 
 # Main link to the control server
 mavlink start -u _MAINPORT_ -r 4000000 -o _MAINPORTO_ -m magic

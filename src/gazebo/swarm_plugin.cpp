@@ -35,7 +35,7 @@ namespace gazebo {
 			json homePositions = json::parse(jstr);
 
 
-			std::ifstream t("lib/Firmware/Tools/sitl_gazebo/models/iris/iris.sdf");
+			std::ifstream t("config/gazebo/models/x340/x340.sdf");
 			std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
 			sdf::SDF file;

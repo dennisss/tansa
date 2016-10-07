@@ -22,8 +22,6 @@ void signal_sigint(int s) {
 #define STATE_LANDING 2
 
 
-
-Rate r(100);
 int multidrone_main() {
 
 	tansa::init();
@@ -90,6 +88,7 @@ int multidrone_main() {
 
 	int planI = 0;
 
+	Rate r(100);
 	while(running) {
 		// Check for state transitions
 		if(state == STATE_TAKEOFF) {

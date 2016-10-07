@@ -1,3 +1,7 @@
+#JOCS: JOCS Open Choreography Schema
+Examples as well as documentation of what's going on in each line are listed below
+
+### Six Drones Moving in Two Groups
 ```javascript
 // JOCS: JOCS Open Choreography Schema
 {
@@ -72,6 +76,132 @@
           },
           "duration": 5.00,
           "drones": [1,3,5]
+        }
+      ]
+    }
+  ]
+}
+```
+
+
+###One drone moving in a circle then square
+Documentation regarding things that were already explained above were left out in this documentation
+```javascript
+{
+  "drones": [
+    {
+      "startPosition" : [0, 0, 1],
+      "id": 0
+    }
+  ],
+  "chor": [
+    {
+      "time": 0.0,
+      "action": [
+        {
+          // A "transition" action does not have any "data" specifications.
+          // In code, we gather how long a transition should take, and calculate
+          // the relevant data to actually perform the transition.
+          "type": "transition", 
+
+          // However, "data" should not be null, just empty.
+          "data": {},
+
+          "duration": 5.0,
+          "drones": [0]
+        }
+      ]
+    },
+    {
+      "time": 5.0,
+      "action": [
+        {
+          "type": "circle",
+          "data":
+          {
+            // origin represents the center of the circle
+            "origin": [0,0,1],
+            // radius is in stored "meters", and will be read as a double in the code
+            "radius": 2,
+            // theta1 represents the spot on the circle to begin, in degrees
+            "theta1": 0,
+            // theta2 represents the spot on the circle to cease this trajectory on, in degrees
+            "theta2": 360
+          },
+          "duration": 15,
+          "drones": [0]
+        }
+      ]
+    },
+    {
+      "time": 20.0,
+      "action": [
+        {
+          "type": "transition",
+          "data": {},
+          "duration": 2.5,
+          "drones": [0]
+        }
+      ]
+    },
+    {
+      "time": 22.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            // In a line, unique data needed are the start point and end point
+            "start": [2, 2, 1],
+            "end": [2, -2, 1]
+          },
+          "duration": 5,
+          "drones": [0]
+        }
+      ]
+    },
+    {
+      "time": 27.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            "start": [2, -2, 1],
+            "end": [-2, -2, 1]
+          },
+          "duration": 5,
+          "drones": [0]
+        }
+      ]
+    },
+    {
+      "time": 32.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            "start": [-2, -2, 1],
+            "end": [-2, 2, 1]
+          },
+          "duration": 5,
+          "drones": [0]
+        }
+      ]
+    },
+    {
+      "time": 37.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            "start": [-2, 2, 1],
+            "end": [0, 0, 1]
+          },
+          "duration": 5,
+          "drones": [0]
         }
       ]
     }

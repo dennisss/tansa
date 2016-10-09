@@ -10,14 +10,9 @@ PositionController::PositionController(Vehicle *v) {
 	pid = new PID<3>();
 
 	pid->setGains(
-		Vector3d(9.0, 9.0, 9.0), // p
-		Vector3d(0, 0, 0), // i
-		Vector3d(1.0, 1.0, 1.0) // d
-
-
-	//	Point(1.0, 1.0, 1.0, 0), // p
-	//	Point(0, 0, 0, 0), // i
-	//	Point(0.1, 0.1, 0.3, 0) // d
+		Point(2.0, 2.0, 2.0), // p
+		Point(0, 0, 0), // i
+		Point(0.5, 0.5, 0.5) // d
 	);
 }
 
@@ -29,6 +24,8 @@ void PositionController::control(double t) {
 
 	//printf("%.2f\n", t);
 
+	double hover = 0.47; // 0.51
+
 	// Evaluate trajectory
 	TrajectoryState s = trajectory->evaluate(t);
 
@@ -39,7 +36,7 @@ void PositionController::control(double t) {
 
 	// Scale to -1 to 1 range and add hover point because PX4 doesn't take m s^-2 input but rather input proportional to thrust percentage
 	// TODO: PX4 should handle battery percentage and internal resistance calibration
-	a = a / (9.8 / 0.5) + Vector3d(0, 0, 0.51);
+	a = a / (9.8 / hover) + Vector3d(0, 0, hover);
 
 	vehicle->setpoint_accel(a);
 

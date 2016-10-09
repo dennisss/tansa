@@ -4,6 +4,7 @@
 #include <tansa/control.h>
 #include <tansa/trajectory.h>
 #include <tansa/mocap.h>
+#include <tansa/gazebo.h>
 
 #include <signal.h>
 #include <unistd.h>
@@ -26,35 +27,59 @@ int multidrone_main() {
 
 	tansa::init();
 
-
 	vector<Vector3d> homes = {
+		{0, 0, 0},
+		{0, 1, 0},
+
+	/*
 		{0, -5, 1},
 		{0, -3, 1},
 		{0, -1, 1},
 		{0, 1, 1},
 		{0, 3, 1},
 		{0, 5, 1}
+	*/
 	};
 
+	Mocap *mocap;
+	GazeboConnector *gazebo;
 
-	tansa::sim_connect();
+	if(true) {
+		string client_addr = "192.168.2.1";
+		Mocap *mocap = new Mocap();
+		mocap->connect(client_addr);
 
-	vector<Vehicle *> vehicles(6);
-	for(int i = 0; i < 6; i++) {
+	}
+	else {
+		GazeboConnector *gazebo = new GazeboConnector();
+		gazebo->connect();
+		// TODO: Spawn
+	}
+
+	int n = 2;
+
+
+	vector<Vehicle *> vehicles(n);
+	for(int i = 0; i < n; i++) {
 		vehicles[i] = new Vehicle();
 		vehicles[i]->connect(14550 + i*10, 14555 + i*10);
-		tansa::sim_track(vehicles[i], i);
+		if(true) {
+			mocap->track(vehicles[i], i+1);
+		}
+		else {
+			gazebo->track(vehicles[i], i);
+		}
 	}
 
 
-	vector<HoverController *> hovers(6);
-	for(int i = 0; i < 6; i++) {
+	vector<HoverController *> hovers(n);
+	for(int i = 0; i < n; i++) {
 		hovers[i] = new HoverController(vehicles[i], homes[i] + Vector3d(0, 0, 1));
 	}
 
 
-	vector<PositionController *> posctls(6);
-	for(int i = 0; i < 6; i++) {
+	vector<PositionController *> posctls(n);
+	for(int i = 0; i < n; i++) {
 		posctls[i] = new PositionController(vehicles[i]);
 	}
 
@@ -77,8 +102,6 @@ int multidrone_main() {
 	}
 
 
-
-
 	int state = STATE_TAKEOFF;
 	running = true;
 	signal(SIGINT, signal_sigint);
@@ -90,10 +113,13 @@ int multidrone_main() {
 
 	Rate r(100);
 	while(running) {
+		r.sleep();
+		continue;
+
 		// Check for state transitions
 		if(state == STATE_TAKEOFF) {
 			bool allGood = true;
-			for(int vi = 0; vi < 6; vi++) {
+			for(int vi = 0; vi < n; vi++) {
 				if(hovers[vi]->distance() > 0.1) {
 					allGood = false;
 					break;
@@ -108,12 +134,13 @@ int multidrone_main() {
 
 
 		// Do the control loops
-		for(int vi = 0; vi < 6; vi++) {
+		for(int vi = 0; vi < n; vi++) {
 			Vehicle &v = *vehicles[vi];
 
 			if(state == STATE_TAKEOFF) {
 				// Lower frequency state management
 				if(i % 50 == 0) {
+
 					if(v.mode != "offboard") {
 						v.set_mode("offboard");
 						printf("Setting mode\n");
@@ -122,6 +149,7 @@ int multidrone_main() {
 						v.arm(true);
 						printf("Arming mode\n");
 					}
+
 				}
 
 
@@ -163,10 +191,10 @@ int multidrone_main() {
 
 int main(int argc, char *argv[]) {
 
-	return multidrone_main();
+	//return multidrone_main();
 
-	bool mocap_enabled = false,
-		 sim_enabled = true;
+	bool mocap_enabled = true,
+		 sim_enabled = false;
 
 	// TODO: Parse arguments here
 	// -mocap to start mocap
@@ -176,6 +204,7 @@ int main(int argc, char *argv[]) {
 
 
 	Mocap *mocap = NULL;
+	GazeboConnector *gazebo = NULL;
 
 	Vehicle v;
 	v.connect();
@@ -183,8 +212,11 @@ int main(int argc, char *argv[]) {
 
 	// TODO: Ensure only one of these is enabled at a time
 	if(sim_enabled) {
-		tansa::sim_connect();
-		tansa::sim_track(&v, 0);
+		gazebo = new GazeboConnector();
+		gazebo->connect();
+		gazebo->spawn({ {0,0,0} });
+		gazebo->track(&v, 0);
+		sleep(10); // Waiting for simulation to sync
 	}
 	if(mocap_enabled) {
 		string client_addr = "192.168.2.1";
@@ -198,10 +230,10 @@ int main(int argc, char *argv[]) {
 
 	// Points of a square
 	vector<Point> points = {
-		{2, 2, 1},
-		{2, -2, 1},
-		{-2, -2, 1},
-		{-2, 2, 1},
+		{1, 1, 1},
+		{1, -1, 1},
+		{-1, -1, 1},
+		{-1, 1, 1},
 		{0, 0, 1}
 	};
 
@@ -228,7 +260,7 @@ int main(int argc, char *argv[]) {
 	double curT = 0.0; // Last time added to the plan (just used in the planning phase)
 
 
-	CircleTrajectory circle(Point(0,0,1), 2, 0, 5.0, 2.0*M_PI, 20.0);
+	CircleTrajectory circle(Point(0,0,1), 1, 0, 5.0, 2.0*M_PI, 20.0);
 	TrajectoryState cS = circle.evaluate(circle.startTime());
 	TrajectoryState cE = circle.evaluate(circle.endTime());
 
@@ -261,6 +293,9 @@ int main(int argc, char *argv[]) {
 	Rate r(100);
 
 	while(running) {
+		//r.sleep();
+		//continue;
+
 /*
 		Sample Lighting stuff
 
@@ -288,9 +323,11 @@ int main(int argc, char *argv[]) {
 
 			hover.control(0.0);
 
+			printf("%.2f\n", hover.distance());
 			if(hover.distance() < 0.1) {
 				start = Time::now();
 				state = STATE_FLYING;
+				printf("Flying...\n");
 			}
 
 		}
@@ -311,6 +348,7 @@ int main(int argc, char *argv[]) {
 			posctl.control(t);
 		}
 		else if(state == STATE_LANDING) {
+			//h2->control(0.0);
 			// TODO:
 		}
 
@@ -323,7 +361,7 @@ int main(int argc, char *argv[]) {
 
 	// Cleanup
 	if(sim_enabled) {
-		tansa::sim_disconnect();
+		gazebo->disconnect();
 	}
 
 

@@ -37,7 +37,7 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 
 	Mocap *inst = (Mocap *) pUserData;
 
-	uint64_t t = Time::now().micros(); // TODO: Replace with the mocap timestamp
+	Time t = Time::now(); // TODO: Replace with the mocap timestamp
 
 	for(int i = 0; i < pFrameOfData->nRigidBodies; i++){
 

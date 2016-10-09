@@ -2,7 +2,7 @@
 # Based on PX4/Tools/sitl_multiple_run.sh with modifications for starting with simulator etc.
 
 # Number of vehicles to spawn
-num=6
+num=$1
 
 sim_port=14561
 
@@ -23,21 +23,6 @@ tmp_path=${root_path}/tmp
 echo "Killing running instances"
 pkill px4
 sleep 1
-
-
-
-echo "Starting Gazebo"
-source ${root_path}/scripts/setup_gazebo_paths.sh
-
-gzserver ${root_path}/config/gazebo/worlds/empty.world &
-SIM_PID=`echo $!`
-
-if [[ ! -n "$HEADLESS" ]]; then
-	gzclient --verbose &
-	GUI_PID=`echo $!`
-fi
-
-
 
 
 mkdir -p $tmp_path
@@ -88,8 +73,3 @@ echo "Killing everything"
 
 pkill px4
 sleep 1
-
-kill -9 $SIM_PID
-if [[ ! -n "$HEADLESS" ]]; then
-	kill -9 $GUI_PID
-fi

@@ -5,7 +5,7 @@
 build:
 	git submodule update --init
 	mkdir -p build
-	rm config/gazebo/models/x340/x340.sdf
+	rm -f config/gazebo/models/x340/x340.sdf
 	cd build; cmake ..; make
 
 run: build
@@ -26,4 +26,4 @@ build_firmware:
 
 # Starts an empty sim
 sim: build_firmware build
-	./scripts/start_sim.sh
+	./scripts/start_gazebo.sh

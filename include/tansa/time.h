@@ -24,7 +24,7 @@ public:
 	/**
 	 * Get how much time has elapsed since the other point
 	 */
-	Time since(const Time &other);
+	Time since(const Time &other) const;
 
 	/**
 	 * Get time elapsed since the start of the program
@@ -39,7 +39,7 @@ public:
 	/**
 	 * Gets the time value in microseconds
 	 */
-	uint64_t micros();
+	uint64_t micros() const;
 
 	/**
 	 * Gets the time value in milliseconds

@@ -13,15 +13,20 @@
 #include "gazebo/physics/physics.hh"
 #include "gazebo/transport/transport.hh"
 
+#include "spawn.pb.h"
+
+#include <signal.h>
+#include <unistd.h>
 #include <string>
 #include <fstream>
 #include <streambuf>
 
+#include <boost/shared_ptr.hpp>
+
 #include <iostream>
 
-#include "json.hpp"
-
-using json = nlohmann::json;
+typedef const boost::shared_ptr<const tansa::msgs::SpawnRequest> SpawnRequestPtr;
+typedef const boost::shared_ptr<const gazebo::msgs::Pose> PosePtr;
 
 
 namespace gazebo {
@@ -29,10 +34,27 @@ namespace gazebo {
 	public:
 		void Load(physics::WorldPtr _parent, sdf::ElementPtr _sdf) {
 
-			std::ifstream ht("config/home.json");
-			std::string jstr((std::istreambuf_iterator<char>(ht)), std::istreambuf_iterator<char>());
+			node = transport::NodePtr(new transport::Node());
+			world = _parent;
 
-			json homePositions = json::parse(jstr);
+			node->Init(world->GetName());
+			spawnSub = node->Subscribe("~/spawn", &SwarmPlugin::spawn_callback, this);
+
+		}
+
+
+		void spawn_callback(SpawnRequestPtr &msg) {
+
+			world->SetPaused(true);
+
+			// Remove all old vehicle models
+			std::vector<physics::ModelPtr> models = world->GetModels();
+			for(int i = 0; i < models.size(); i++) {
+				std::string name = models[i]->GetName();
+				if(strncmp(name.c_str(), "vehicle_", 8) == 0) {
+					world->RemoveModel(models[i]);
+				}
+			}
 
 
 			std::ifstream t("config/gazebo/models/x340/x340.sdf");
@@ -57,25 +79,64 @@ namespace gazebo {
 
 			sdf::ElementPtr port = plugin->GetElement("mavlink_udp_port");
 
-			for(int i = 0; i < homePositions.size(); i++) {
+
+			for(int i = 0; i < msg->vehicles_size(); i++) {
+				const tansa::msgs::SpawnRequest_Vehicle &v = msg->vehicles(i);
 
 				model->GetAttribute("name")->Set("vehicle_" + std::to_string(i));
 
-				std::string p = "";
-				for(int j = 0; j < 6; j++) {
-					p += std::to_string(homePositions[i][j].get<double>()) + " ";
-				}
-
-				std::cout << p << std::endl;
+				std::string p = std::to_string(v.pos().x()) + " " +
+								std::to_string(v.pos().y()) + " " +
+								std::to_string(v.pos().z()) + " " +
+								std::to_string(v.orient().x()) + " " +
+								std::to_string(v.orient().y()) + " " +
+								std::to_string(v.orient().z());
 
 				pose->Set<std::string>(p);
 				port->Set<int>(14561 + 10*i);
-				_parent->InsertModelSDF(file);
+				world->InsertModelSDF(file);
 			}
+
+			world->SetPaused(false);
+
+			start_sitl(msg->vehicles_size());
+
 
 		}
 
+
+		void stop_sitl() {
+			if(sitl_process == 0)
+				return;
+
+			kill(sitl_process, SIGINT);
+			waitpid(sitl_process, NULL, 0);
+		}
+
+		void start_sitl(int n) {
+			int p = fork();
+			if(p == 0) { // Child
+				char *const argv[] = { "/bin/bash", "scripts/start_sim.sh", "1", NULL};
+
+				execv("/bin/bash", argv);
+
+				exit(0);
+				return;
+			}
+
+			sitl_process = p;
+		}
+
+
 	private:
+
+		transport::NodePtr node;
+		transport::SubscriberPtr spawnSub;
+		physics::WorldPtr world;
+
+		transport::SubscriberPtr world_sub;
+
+		int sitl_process = 0;
 
 	};
 

@@ -22,6 +22,7 @@ static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 
 Vehicle::Vehicle() :
+	stateTime(0,0),
 	lastHeartbeatSent(0,0),
 	lastTimesyncSent(0,0),
 	lastSystimeSent(0,0),
@@ -176,7 +177,20 @@ void Vehicle::land() {
 }
 
 
-void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, uint64_t t) {
+void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t) {
+
+
+	// Update state (only compute velocity if initialized)
+	if(stateTime.nanos() > 0) {
+		Time dt = t.since(stateTime);
+		Vector3d v = (pos - this->position) / dt.seconds();
+		double a = 0.8;
+		this->velocity = v + (1.0 - a)*this->velocity;
+	}
+	this->position = pos;
+	this->stateTime = t;
+
+
 
 	Matrix3d m;
 	m << 1, 0, 0,
@@ -195,7 +209,7 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, uint6
 	mavlink_message_t msg;
 	mavlink_msg_att_pos_mocap_pack_chan(
 		255, 0, channel, &msg,
-		t,
+		t.micros(),
 		q,
 		pos_ned.x(),
 		pos_ned.y(),
@@ -348,8 +362,10 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			mavlink_local_position_ned_t lp;
 			mavlink_msg_local_position_ned_decode(msg, &lp);
 
+/*
 			this->position = enuToFromNed() * Vector3d(lp.x, lp.y, lp.z);
 			this->velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
+*/
 
 //			printf("POS: %.2f %.2f %.2f\n", lp.x, lp.y, lp.z);
 

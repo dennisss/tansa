@@ -67,7 +67,7 @@ public:
 	/**
 	 * Fuses motion capture information into the current position estimate
 	 */
-	void mocap_update(const Vector3d &pos, const Quaterniond &orient, uint64_t t);
+	void mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t);
 
 
 	// TODO: Change these to use Point
@@ -89,7 +89,7 @@ public:
 	Vector3d position;
 	Vector3d velocity;
 	Quaterniond orientation;
-
+	Time stateTime;
 
 private:
 

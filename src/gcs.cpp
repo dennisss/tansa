@@ -237,8 +237,8 @@ int main(int argc, char *argv[]) {
 
 //	return multidrone_main();
 
-	bool mocap_enabled = true,
-		 sim_enabled = false;
+	bool mocap_enabled = false,
+		 sim_enabled = true;
 
 	// TODO: Parse arguments here
 	// -mocap to start mocap

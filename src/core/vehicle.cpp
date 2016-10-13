@@ -40,7 +40,7 @@ Vehicle::Vehicle() :
 int forwardfd = 0;
 struct sockaddr_in forward_addr;
 
-int Vehicle::connect(int lport, int rport) {
+int Vehicle::connect(int lport, int rport, const char *laddr, const char *raddr) {
 
 //	if((forwardfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 //		perror("cannot create socket");

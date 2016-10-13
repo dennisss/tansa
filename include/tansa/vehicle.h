@@ -29,8 +29,13 @@ public:
 	 */
 	Vehicle();
 
-
-	int connect(int lport = 14550, int rport = 14555);
+	/**
+	 * Connect to the vehicle using the specified ports and ip address
+	 *
+	 * @param laddr the ip address of the local interface on which to listen for messages
+	 * @param raddr the ip address of the remote vehicle. if null, then this will be determined by the first message received matching the given ports
+	 */
+	int connect(int lport = 14550, int rport = 14555, const char *laddr = NULL, const char *raddr = NULL);
 
 	int disconnect();
 

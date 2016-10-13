@@ -6,7 +6,7 @@
 //#include "ClientCore.h"
 //#include "NatNetTypes.h"
 
-#define DEFAULT_MULTICAST_ADDRESS		"224.0.0.1"
+#define DEFAULT_MULTICAST_ADDRESS		"239.255.42.99"     // IANA, local network
 #define DEFAULT_PORT_COMMAND            1510
 #define DEFAULT_PORT_DATA  			    1511
 
@@ -22,10 +22,8 @@ NatNetClient::NatNetClient() : NatNetClient(ConnectionType_Multicast){}
  * Creates a new instance of a NatNet Client using the specified connection protocol.
  */
 NatNetClient::NatNetClient(int iType){
-
-	// TODO: Also set the member multicast address
-
-	this->m_pClientCore = new ClientCore();
+	this->m_pClientCore = new ClientCore(iType);
+	this->m_pClientCore->setMulticastAddress(DEFAULT_MULTICAST_ADDRESS);
 	this->m_iConnectionType = iType;
 }
 
@@ -35,10 +33,10 @@ NatNetClient::~NatNetClient(){
 	delete this->m_pClientCore;
 }
 
-int NatNetClient::Initialize(char* szLocalAddress, char* szServerAddress){
+int NatNetClient::Initialize(const char *szLocalAddress, const char *szServerAddress){
 	return this->Initialize(szLocalAddress, szServerAddress, DEFAULT_PORT_COMMAND);
 }
-int NatNetClient::Initialize(char* szLocalAddress, char* szServerAddress, int HostCommandPort) {
+int NatNetClient::Initialize(const char *szLocalAddress, const char *szServerAddress, int HostCommandPort) {
 	return this->Initialize(szLocalAddress, szServerAddress, HostCommandPort, DEFAULT_PORT_DATA);
 }
 
@@ -52,9 +50,9 @@ int NatNetClient::Initialize(char* szLocalAddress, char* szServerAddress, int Ho
  * @param HostDataPort server data port (default = 1511)
  * @return 0 if successful, error code otherwise
  */
-int NatNetClient::Initialize(char* szLocalAddress, char* szServerAddress, int HostCommandPort, int HostDataPort){
+int NatNetClient::Initialize(const char *szLocalAddress, const char *szServerAddress, int HostCommandPort, int HostDataPort){
 
-	this->m_pClientCore->start(szLocalAddress, szServerAddress); // TODO: pass in arguments
+	this->m_pClientCore->start(szLocalAddress, szServerAddress, HostCommandPort, HostDataPort);
 	return 0;
 }
 
@@ -165,8 +163,8 @@ sFrameOfMocapData* NatNetClient::GetLastFrameOfData(){
  *
  * @param szCommand application defined Message string
  */
-void NatNetClient::SetMulticastAddress(char* szMulticast){
-
+void NatNetClient::SetMulticastAddress(const char *szMulticast){
+	this->m_pClientCore->setMulticastAddress(szMulticast);
 }
 
 

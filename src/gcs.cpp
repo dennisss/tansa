@@ -18,9 +18,10 @@ void signal_sigint(int s) {
 	running = false;
 }
 
-#define STATE_TAKEOFF 0
-#define STATE_FLYING 1
-#define STATE_LANDING 2
+#define STATE_INIT 0
+#define STATE_TAKEOFF 1
+#define STATE_FLYING 2
+#define STATE_LANDING 3
 
 
 int multidrone_main() {
@@ -28,8 +29,8 @@ int multidrone_main() {
 	tansa::init();
 
 	vector<Vector3d> homes = {
-		{0, 0, 0},
-		{0, 1, 0},
+		{-1, 0, 1},
+		{1, 0, 1},
 
 	/*
 		{0, -5, 1},
@@ -45,9 +46,10 @@ int multidrone_main() {
 	GazeboConnector *gazebo;
 
 	if(true) {
-		string client_addr = "192.168.2.1";
-		Mocap *mocap = new Mocap();
-		mocap->connect(client_addr);
+		string client_addr = "192.168.1.161";
+		string server_addr = "192.168.1.150";
+		mocap = new Mocap();
+		mocap->connect(client_addr, server_addr);
 
 	}
 	else {
@@ -71,10 +73,11 @@ int multidrone_main() {
 		}
 	}
 
+	sleep(4);
 
 	vector<HoverController *> hovers(n);
 	for(int i = 0; i < n; i++) {
-		hovers[i] = new HoverController(vehicles[i], homes[i] + Vector3d(0, 0, 1));
+		hovers[i] = new HoverController(vehicles[i], homes[i]);
 	}
 
 
@@ -86,9 +89,9 @@ int multidrone_main() {
 
 
 	// Generate trajectories
-	vector<vector<Trajectory *> > paths(6);
-	for(int i = 0; i < 6; i++) {
-		Vector3d mag(3, 0, 0);
+	vector<vector<Trajectory *> > paths(n);
+	for(int i = 0; i < n; i++) {
+		Vector3d mag(0, 1.5, 0);
 		if(i % 2 == 0)
 			mag *= -1;
 
@@ -101,8 +104,13 @@ int multidrone_main() {
 
 	}
 
+	vector<Trajectory *> takeoffs(n);
+	for(int i = 0; i < n; i++) {
+		takeoffs[i] = new LinearTrajectory(vehicles[i]->position, 0, homes[i], 10.0);
+	}
 
-	int state = STATE_TAKEOFF;
+
+	int state = STATE_INIT;
 	running = true;
 	signal(SIGINT, signal_sigint);
 
@@ -111,13 +119,43 @@ int multidrone_main() {
 
 	int planI = 0;
 
+	printf("running...\n");
+
 	Rate r(100);
 	while(running) {
-		r.sleep();
-		continue;
+
+		//r.sleep();
+		//continue;
+
+		double t = Time::now().since(start).seconds();
+
 
 		// Check for state transitions
-		if(state == STATE_TAKEOFF) {
+		if(state == STATE_INIT) {
+
+			bool allGood = true;
+			for(int vi = 0; vi < n; vi++) {
+				if(vehicles[vi]->mode != "offboard" || !vehicles[vi]->armed) {
+					allGood = false;
+					break;
+				}
+			}
+
+			if(allGood) {
+				start = Time::now();
+				state = STATE_TAKEOFF;
+				continue;
+			}
+
+		}
+		else if(state == STATE_TAKEOFF) {
+			if(t >= 10.0) {
+				state = STATE_FLYING;
+				start = Time::now();
+				continue;
+			}
+
+			/*
 			bool allGood = true;
 			for(int vi = 0; vi < n; vi++) {
 				if(hovers[vi]->distance() > 0.1) {
@@ -130,6 +168,7 @@ int multidrone_main() {
 				start = Time::now();
 				state = STATE_FLYING;
 			}
+			*/
 		}
 
 
@@ -137,7 +176,8 @@ int multidrone_main() {
 		for(int vi = 0; vi < n; vi++) {
 			Vehicle &v = *vehicles[vi];
 
-			if(state == STATE_TAKEOFF) {
+
+			if(state == STATE_INIT) {
 				// Lower frequency state management
 				if(i % 50 == 0) {
 
@@ -149,15 +189,19 @@ int multidrone_main() {
 						v.arm(true);
 						printf("Arming mode\n");
 					}
-
 				}
 
 
-				hovers[vi]->control(0.0);
+				// Do nothing
+				vehicles[vi]->setpoint_accel(Vector3d(0,0,0));
+			}
+			else if(state == STATE_TAKEOFF) {
+				posctls[vi]->track(takeoffs[vi]);
+				posctls[vi]->control(t);
+
 			}
 			else if(state == STATE_FLYING) {
 
-				double t = Time::now().since(start).seconds();
 				if(t >= paths[vi][planI]->endTime())
 					planI++;
 
@@ -191,7 +235,7 @@ int multidrone_main() {
 
 int main(int argc, char *argv[]) {
 
-	//return multidrone_main();
+//	return multidrone_main();
 
 	bool mocap_enabled = true,
 		 sim_enabled = false;
@@ -219,10 +263,16 @@ int main(int argc, char *argv[]) {
 		sleep(10); // Waiting for simulation to sync
 	}
 	if(mocap_enabled) {
-		string client_addr = "192.168.2.1";
+		string client_addr = "192.168.1.161";
+		string server_addr = "192.168.1.150";
+
 		mocap = new Mocap();
-		mocap->connect(client_addr);
+		mocap->connect(client_addr, server_addr);
 		mocap->track(&v, 1);
+
+		// TODO: Have a better check for mocap initialization/health
+		sleep(4);
+
 	}
 
 	running = true;
@@ -241,7 +291,7 @@ int main(int argc, char *argv[]) {
 	Point home(0, 0, 1);
 
 
-	int state = STATE_TAKEOFF;
+	int state = STATE_INIT;
 
 	int i = 0;
 
@@ -260,7 +310,7 @@ int main(int argc, char *argv[]) {
 	double curT = 0.0; // Last time added to the plan (just used in the planning phase)
 
 
-	CircleTrajectory circle(Point(0,0,1), 1, 0, 5.0, 2.0*M_PI, 20.0);
+	CircleTrajectory circle(Point(0,0,1), 1, 0, 5.0, 2.0*M_PI, 10.0);
 	TrajectoryState cS = circle.evaluate(circle.startTime());
 	TrajectoryState cE = circle.evaluate(circle.endTime());
 
@@ -289,6 +339,8 @@ int main(int argc, char *argv[]) {
 	}
 
 
+	Trajectory *takeoff = new LinearTrajectory(v.position, 0, home, 10);
+
 	Time start(0,0);
 	Rate r(100);
 
@@ -307,7 +359,7 @@ int main(int argc, char *argv[]) {
 */
 
 
-		if(state == STATE_TAKEOFF) {
+		if(state == STATE_INIT) {
 
 			// Lower frequency state management
 			if(i % 50 == 0) {
@@ -319,17 +371,29 @@ int main(int argc, char *argv[]) {
 					v.arm(true);
 					printf("Arming mode\n");
 				}
+				else {
+					state = STATE_TAKEOFF;
+					start = Time::now();
+				}
 			}
 
-			hover.control(0.0);
+			posctl.track(takeoff);
+			posctl.control(0);
 
-			printf("%.2f\n", hover.distance());
-			if(hover.distance() < 0.1) {
+		}
+		else if(state == STATE_TAKEOFF) {
+
+			double t = Time::now().since(start).seconds();
+
+			posctl.track(takeoff);
+			posctl.control(t);
+
+
+			if(t >= 10.0) {
 				start = Time::now();
 				state = STATE_FLYING;
 				printf("Flying...\n");
 			}
-
 		}
 		else if(state == STATE_FLYING) {
 

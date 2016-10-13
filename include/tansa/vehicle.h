@@ -126,6 +126,7 @@ private:
 	Time lastHeartbeatSent;
 	Time lastTimesyncSent;
 	Time lastSystimeSent;
+	Time lastStateSent;
 };
 
 /**

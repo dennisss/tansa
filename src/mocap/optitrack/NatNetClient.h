@@ -8,16 +8,16 @@
 
 // NatNetClient is a complete C++ class for connecting to NatNet server applications,
 // such as NaturalPoint Arena and NaturalPoint TrackingTools.
-class NatNetClient{
+class NatNetClient {
 public:
 
 	NatNetClient();
 	NatNetClient(int iType);
 	~NatNetClient();
 
-	int Initialize(char* szLocalAddress, char* szServerAddress);
-	int Initialize(char* szLocalAddress, char* szServerAddress, int HostCommandPort);
-	int Initialize(char* szLocalAddress, char* szServerAddress, int HostCommandPort, int HostDataPort);
+	int Initialize(const char *szLocalAddress, const char *szServerAddress);
+	int Initialize(const char *szLocalAddress, const char *szServerAddress, int HostCommandPort);
+	int Initialize(const char *szLocalAddress, const char *szServerAddress, int HostCommandPort, int HostDataPort);
 	int Uninitialize();
 	void NatNetVersion(unsigned char Version[4]);
 	void SetVerbosityLevel(int level);
@@ -33,7 +33,7 @@ public:
 	int GetDataDescriptions(sDataDescriptions** pDataDescriptions);
 	sFrameOfMocapData* GetLastFrameOfData();
 
-	void SetMulticastAddress(char* szMulticast);
+	void SetMulticastAddress(const char *szMulticast);
 
 	bool DecodeTimecode(unsigned int inTimecode, unsigned int inTimecodeSubframe, int* hour, int* minute, int* second, int* frame, int* subframe);
 	bool TimecodeStringify(unsigned int inTimecode, unsigned int inTimecodeSubframe, char *Buffer, int BufferSize);

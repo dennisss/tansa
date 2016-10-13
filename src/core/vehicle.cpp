@@ -26,7 +26,8 @@ Vehicle::Vehicle() :
 	lastHeartbeatSent(0,0),
 	lastTimesyncSent(0,0),
 	lastSystimeSent(0,0),
-	lastHeartbeatReceived(0,0) {
+	lastHeartbeatReceived(0,0),
+	lastStateSent(0,0) {
 
 	// TODO: Same as above
 	mavlink_system.sysid = 255;
@@ -205,6 +206,14 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	q[1] = orient_ned.x();
 	q[2] = orient_ned.y();
 	q[3] = orient_ned.z();
+
+
+	// Send at 50Hz
+	if(t.since(lastStateSent).seconds() < 0.02) {
+		return;
+	}
+
+	lastStateSent = t;
 
 	mavlink_message_t msg;
 	mavlink_msg_att_pos_mocap_pack_chan(

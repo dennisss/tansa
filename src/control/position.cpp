@@ -10,9 +10,9 @@ PositionController::PositionController(Vehicle *v) {
 	pid = new PID<3>();
 
 	pid->setGains(
-		Point(2.0, 2.0, 2.0), // p
+		Point(4.4, 4.4, 4.4), // p
 		Point(0, 0, 0), // i
-		Point(0.5, 0.5, 0.5) // d
+		Point(0.8, 0.8, 0.8) // d
 	);
 }
 
@@ -24,7 +24,7 @@ void PositionController::control(double t) {
 
 	//printf("%.2f\n", t);
 
-	double hover = 0.47; // 0.51
+	double hover = 0.45; // 0.51
 
 	// Evaluate trajectory
 	TrajectoryState s = trajectory->evaluate(t);

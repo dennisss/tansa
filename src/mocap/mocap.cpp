@@ -3,7 +3,7 @@
 #include <tansa/time.h>
 
 #include "optitrack/NatNetClient.h"
-
+#include "optitrack/NatNetTypes.h"
 
 Mocap::Mocap() {
 
@@ -11,10 +11,10 @@ Mocap::Mocap() {
 }
 
 
-int Mocap::connect(string iface_addr) {
-	client = new NatNetClient();
+int Mocap::connect(string iface_addr, string server_addr) {
+	client = new NatNetClient(ConnectionType_Unicast);
 
-	if(client->Initialize((char *)iface_addr.c_str(), NULL) != 0){
+	if(client->Initialize((char *)iface_addr.c_str(), server_addr.c_str()) != 0){
 		delete client;
 		return 1;
 	}

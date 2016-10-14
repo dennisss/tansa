@@ -37,8 +37,7 @@ add_executable(
 	src/mocap/optitrack/ClientCore.cpp
 	src/mocap/optitrack/NatNetClient.cpp
     src/jocs/jocsParser.cpp
-
-)
+	src/jocs/action.cpp)
 
 target_link_libraries(
 	gcs

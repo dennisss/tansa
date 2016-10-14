@@ -26,6 +26,8 @@ std::vector<Vehicle> Jocs::parseVehicles(const nlohmann::json &data) {
 	return std::vector<Vehicle>();
 }
 //TODO: implement this. will be similar to parse vehicle
+// Input will be the whole jocs file body under "chor" section of json
+// Output will be vector of actions
 std::vector<int> Jocs::parseActions(const nlohmann::json &data) {
 
 }

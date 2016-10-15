@@ -20,29 +20,15 @@ const std::string Jocs::CIRCLE_RADIUS_KEY = "radius";
 const std::string Jocs::CIRCLE_THETA1_KEY = "theta1";
 const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
 
-//Parses a Jocs file
-Choreography Jocs::Parse(const std::string &jocsPath) {
+std::vector<std::unique_ptr<Action>> Jocs::Parse(const std::string &jocsPath) {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
 	auto rawJson = nlohmann::json::parse(jocsData);
 	std::vector<std::unique_ptr<Action>> actions;
 	parseActions(rawJson, actions);
-}
-//On hold for now. Still working on how to represent vehicles and grouping
-std::vector<Vehicle> Jocs::parseVehicles(const nlohmann::json &data) {
-	//Get array of drones and its size
-	auto drones = data[DRONE_KEY];
-	auto length = drones.size();
-	for (int i = 0; i < length; i++) {
-		//TODO: Actually create vehicle here instead of this placeholder drone object
-		auto drone = parseDrone(drones[i]);
-	}
-	//TODO: Fill in this vector
-	return std::vector<Vehicle>();
+	return std::move(actions);
 }
 
-// Input will be the whole jocs file body under "chor" section of json
-// Output will be vector of actions
 void Jocs::parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<Action>>& actions) {
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	//This must be an array
@@ -52,17 +38,9 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<
 	for(int i = 0; i < length; i++){
 		parseAction(actionsJson[i], actions);
 	}
-	std::cout << actions[3]->GetEndTime() << std::endl;
 }
 
-Drone Jocs::parseDrone(const nlohmann::json::reference data) {
-	Point start(data[HOME_KEY][0], data[HOME_KEY][1], data[HOME_KEY][2]);
-	Drone d(start, data[ID_KEY]);
-	return d;
-}
-//Untested, but it compiles. Example way of parsing jocs actions.
 void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::unique_ptr<Action>>& actions){
-
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
@@ -70,7 +48,8 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 		auto actionsArrayElement = actionsArray[i];
 		double duration = actionsArrayElement[DURATION_KEY];
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
-		//TODO: Assuming no grouping right now. Will have to adjust this with groups
+		//TODO: Assuming no grouping right now. Will have to make this a loop to create actions for each drone and calc offset
+		assert(actionsArrayElement[DRONE_ARRAY_KEY].is_array());
 		unsigned drone = actionsArrayElement[DRONE_ARRAY_KEY][0];
 		//Switch on type of Action
 		switch (type) {
@@ -94,7 +73,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 
 				actions.push_back(std::move(std::make_unique<MotionAction>(
-						drone, std::make_unique<LinearTrajectory>(start, startTime, end, startTime + duration))));
+						drone, std::move(std::make_unique<LinearTrajectory>(start, startTime, end, startTime + duration)))));
 				break;
 			}
 			//Circle Action
@@ -107,7 +86,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 				double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
 				double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
 				actions.push_back(std::move(std::make_unique<MotionAction>(
-						drone, std::make_unique<CircleTrajectory>(origin, radius, theta1, startTime, theta2, startTime + duration))));
+						drone, std::move(std::make_unique<CircleTrajectory>(origin, radius, theta1, startTime, theta2, startTime + duration)))));
 				break;
 			}
 			default: {
@@ -116,6 +95,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 		}
 	}
 }
+
 ActionTypes Jocs::convertToActionType(const std::string& data){
 	if(data == "transition")
 		return ActionTypes::Transition;

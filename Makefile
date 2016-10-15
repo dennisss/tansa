@@ -3,7 +3,7 @@
 .PHONY: build
 
 build:
-	git submodule update --init
+	git submodule update --init --recursive
 	mkdir -p build
 	cd build; cmake ..; make
 

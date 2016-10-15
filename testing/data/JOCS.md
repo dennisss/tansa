@@ -56,8 +56,8 @@ Examples as well as documentation of what's going on in each line are listed bel
           // Values in this will differ based on action type
           "data":
           {
-            "startPointOffset": [0, 0, 0], // Offset is in respect to each drone's "home" location defined above
-            "endPointOffset": [-3, 0, 0] // This (and the line above) will be ADDED to the "home" location of each respective drone
+            "startPointCenter": [0, 0, 0], // Offset is in respect to each drone's "home" location defined above
+            "endPointCenter": [-3, 0, 0] // This (and the line above) will be ADDED to the "home" location of each respective drone
           },
           
           // Duration of this trajectory in s
@@ -71,8 +71,8 @@ Examples as well as documentation of what's going on in each line are listed bel
           "type": "line",
           "data":
           {
-            "startPointOffset": [0, 0, 0],
-            "endPointOffset": [3, 0, 0]
+            "startPointCenter": [0, 0, 0],
+            "endPointCenter": [3, 0, 0]
           },
           "duration": 5.00,
           "drones": [1,3,5]
@@ -120,7 +120,7 @@ Documentation regarding things that were already explained above were left out i
           "data":
           {
             // origin represents the center of the circle
-            "origin": [0,0,1],
+            "originPointCenter": [0,0,1],
             // radius is in stored "meters", and will be read as a double in the code
             "radius": 2,
             // theta1 represents the spot on the circle to begin, in degrees
@@ -152,8 +152,8 @@ Documentation regarding things that were already explained above were left out i
           "data":
           {
             // In a line, unique data needed are the start point and end point
-            "start": [2, 2, 1],
-            "end": [2, -2, 1]
+            "startPointCenter": [2, 2, 1],
+            "endPointCenter": [2, -2, 1]
           },
           "duration": 5,
           "drones": [0]
@@ -167,8 +167,8 @@ Documentation regarding things that were already explained above were left out i
           "type": "line",
           "data":
           {
-            "start": [2, -2, 1],
-            "end": [-2, -2, 1]
+            "startPointCenter": [2, -2, 1],
+            "endPointCenter": [-2, -2, 1]
           },
           "duration": 5,
           "drones": [0]
@@ -182,8 +182,8 @@ Documentation regarding things that were already explained above were left out i
           "type": "line",
           "data":
           {
-            "start": [-2, -2, 1],
-            "end": [-2, 2, 1]
+            "startPointCenter": [-2, -2, 1],
+            "endPointCenter": [-2, 2, 1]
           },
           "duration": 5,
           "drones": [0]
@@ -197,8 +197,8 @@ Documentation regarding things that were already explained above were left out i
           "type": "line",
           "data":
           {
-            "start": [-2, 2, 1],
-            "end": [0, 0, 1]
+            "startPointCenter": [-2, 2, 1],
+            "endPointCenter": [0, 0, 1]
           },
           "duration": 5,
           "drones": [0]

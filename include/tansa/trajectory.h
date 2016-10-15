@@ -107,4 +107,19 @@ private:
 };
 
 
+/**
+ * Stays at one point. Mainly just for testing.
+ */
+class PointTrajectory : public Trajectory {
+public:
+	PointTrajectory(const Point &p);
+
+	virtual TrajectoryState evaluate(double t);
+
+private:
+	Point p;
+
+};
+
+
 #endif

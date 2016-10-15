@@ -12,11 +12,6 @@
 #include <arpa/inet.h>
 
 
-
-#define MULTICAST_ADDRESS		"239.255.42.99"     // IANA, local network
-#define PORT_COMMAND            1510
-#define PORT_DATA  			    1511
-
 #define DEBUG(...)
 //printf(__VA_ARGS__)
 
@@ -34,7 +29,8 @@ using namespace std;
 
 
 
-ClientCore::ClientCore(){
+ClientCore::ClientCore(int type) : lastping(0,0) {
+	this->type = type;
 
 	running = false;
 
@@ -75,8 +71,12 @@ int create_socket(){
 
 
 
-void ClientCore::start(const char *clientAddr, const char *serverAddr){
+void ClientCore::start(const char *clientAddr, const char *serverAddr, int cmdPort, int dataPort){
 
+	this->cmd_port = cmdPort;
+	this->data_port = dataPort;
+	this->server_addr = serverAddr;
+	this->client_addr = clientAddr;
 
 	int optval;
 
@@ -86,15 +86,18 @@ void ClientCore::start(const char *clientAddr, const char *serverAddr){
 
 	this->cmd_socket = create_socket();
 
-	// Enable broadcasting
-	optval = 1;
-	if(setsockopt(this->cmd_socket, SOL_SOCKET, SO_BROADCAST, (void *)&optval, sizeof(optval)) == -1) {
-		perror("setsockopt (SO_BROADCAST)");
-		exit(1);
+	if(type == ConnectionType_Multicast) {
+		// Enable broadcasting
+		optval = 1;
+		if(setsockopt(this->cmd_socket, SOL_SOCKET, SO_BROADCAST, (void *)&optval, sizeof(optval)) == -1) {
+			perror("setsockopt (SO_BROADCAST)");
+			exit(1);
+		}
 	}
 
+
 	// Bind to command address
-	sa.sin_port = htons(PORT_COMMAND);
+	sa.sin_port = htons(cmd_port);
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(INADDR_ANY); // TODO: This should be the local interface ip
 	if(::bind(this->cmd_socket, (const struct sockaddr*)&sa, sizeof(sa)) < 0){
@@ -108,28 +111,29 @@ void ClientCore::start(const char *clientAddr, const char *serverAddr){
 	this->data_socket = create_socket();
 
 	// Bind to data address
-	sa.sin_port = htons(PORT_DATA);
+	sa.sin_port = htons(data_port);
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(INADDR_ANY); // TODO: This should be the interface ip
 	if(::bind(this->data_socket, (const struct sockaddr*)&sa, sizeof(sa)) < 0){
 		printf("ClientCore: failed to bind data socket\n");
 	}
 
+	if(type == ConnectionType_Multicast) {
+		// Join multicast group
+		ip_mreq mreq;
 
-	// Join multicast group
-	ip_mreq mreq;
+		inet_pton(AF_INET, multicast_addr.c_str(),  &mreq.imr_multiaddr); //&this->multi_addr.sin_addr);
+		//mreq.imr_multiaddr = this->multi_addr.sin_addr;
 
-	inet_pton(AF_INET, MULTICAST_ADDRESS,  &mreq.imr_multiaddr); //&this->multi_addr.sin_addr);
-	//mreq.imr_multiaddr = this->multi_addr.sin_addr;
+		int r;
 
-	int r;
+		inet_pton(AF_INET, clientAddr, &mreq.imr_interface.s_addr);
+		//mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+		r = setsockopt(this->data_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)); // TODO: Error check this
 
-	inet_pton(AF_INET, clientAddr, &mreq.imr_interface.s_addr);
-	//mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-	r = setsockopt(this->data_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)); // TODO: Error check this
-
-	if(r < 0){
-		printf("Failed to join multicast group!\n");
+		if(r < 0){
+			printf("Failed to join multicast group!\n");
+		}
 	}
 
 
@@ -154,7 +158,11 @@ void ClientCore::start(const char *clientAddr, const char *serverAddr){
 		printf("ClientCore: failed to create command thread\n");
 	}
 
-
+	if(type == ConnectionType_Unicast) {
+		// Initial ping to connect to server
+		this->ping();
+		lastping = Time::now();
+	}
 }
 
 void ClientCore::stop(){
@@ -180,19 +188,46 @@ void *data_server(void *arg){
 	struct sockaddr_in sa;
 	socklen_t addr_len = sizeof(struct sockaddr_in);
 
+
+	struct pollfd fds[1];
+	int nfds = 1;
+
+	// First descriptor for udp socket
+	fds[0].fd = cc->data_socket;
+	fds[0].events = POLLIN;
+
+	int res;
+
 	while(cc->running){
-		int r = recvfrom(cc->data_socket, szData, sizeof(szData), 0, (sockaddr *)&sa, &addr_len);
 
-		if(r == 0){
-			continue;
+		res = poll(fds, nfds, 50);
+		if(res < 0) {
+			// Error
 		}
-		else if(r < 0){
-			continue;
+		else if(res == 0) {
+			// timeout
+		}
+		else if(fds[0].revents & POLLIN) {
+			int r = recvfrom(cc->data_socket, szData, sizeof(szData), 0, (sockaddr *)&sa, &addr_len);
+
+			if(r == 0){
+				continue;
+			}
+			else if(r < 0){
+				continue;
+			}
+
+			cc->unpack(szData);
 		}
 
-//		cout << "Got data" << endl;
 
-		cc->unpack(szData);
+		// Every half second, send a ping request
+		Time t = Time::now();
+		if(t.since(cc->lastping).seconds() >= 0.5) {
+			cc->ping();
+			cc->lastping = t;
+		}
+
 	}
 
 	return NULL;
@@ -253,6 +288,11 @@ void *cmd_server(void *arg){
 		case NAT_MESSAGESTRING:
 			printf("[Client] Received message: %s\n", PacketIn.Data.szData);
 			break;
+		case NAT_PING:
+			printf("Pinged...\n");
+			break;
+		default:
+			printf("Got %d\n", PacketIn.iMessage);
 		}
 	}
 
@@ -271,10 +311,12 @@ void ClientCore::sendPacket(sPacket *packet){
 	memset(&sa, 0, sizeof(sa));
 
 	sa.sin_family = AF_INET;
-	sa.sin_port = htons(PORT_COMMAND);
-	sa.sin_addr.s_addr = INADDR_BROADCAST; // TODO: This should be the address of the server
+	sa.sin_port = htons(cmd_port);
 
-	int res = sendto(this->cmd_socket, &packet, 4 + packet->nDataBytes, 0, (struct sockaddr *)&sa, sizeof(struct sockaddr_in));
+	inet_pton(AF_INET, server_addr.c_str(), &sa.sin_addr);
+//	sa.sin_addr.s_addr = INADDR_BROADCAST; // TODO: This should be the address of the server
+
+	int res = sendto(this->cmd_socket, packet, 4 + packet->nDataBytes, 0, (struct sockaddr *)&sa, sizeof(struct sockaddr_in));
 
 
 	if(res == -1){
@@ -762,7 +804,7 @@ void ClientCore::unpackDataDescs(char *ptr){
 
 	}   // next dataset
 
-	printf("End Packet\n-------------\n");
+	DEBUG("End Packet\n-------------\n");
 
 }
 

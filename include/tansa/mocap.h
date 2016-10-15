@@ -21,7 +21,7 @@ public:
 	 *
 	 * @param iface_addr local ip address of the network interface through which the data is being streamed
 	 */
-	int connect(string iface_addr);
+	int connect(string iface_addr, string server_addr);
 
 
 	int disconnect();

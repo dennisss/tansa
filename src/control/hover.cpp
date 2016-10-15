@@ -15,5 +15,9 @@ void HoverController::control(double t) {
 }
 
 double HoverController::distance() {
-	 return (point - vehicle->position).norm();
+	VectorXd e(6);
+	e << (point - vehicle->position),
+	     (Vector3d(0,0,0) - vehicle->velocity);
+
+	return e.norm();
 }

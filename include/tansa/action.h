@@ -28,12 +28,12 @@ public:
 	 * @virtual
 	 * @return Double representing the seconds after initialization that this action should start at
 	 */
-	virtual double GetStartTime() = 0;
+	virtual double GetStartTime() const = 0;
 	/**
 	 * @virtual
 	 * @return Double representing the seconds after initialization that this action should end at
 	 */
-	virtual double GetEndTime() = 0;
+	virtual double GetEndTime() const = 0;
 
 	/**
 	 * @return Id of drone this action refers to
@@ -56,9 +56,9 @@ class EmptyAction : public Action {
 public:
     EmptyAction(DroneId id, double s, double e): Action(id), startTime(s), endTime(e) {}
 
-    virtual double GetStartTime() { return startTime; }
+    virtual double GetStartTime() const { return startTime; }
 
-    virtual double GetEndTime() { return endTime; }
+    virtual double GetEndTime() const { return endTime; }
 
 private:
     double startTime;
@@ -76,11 +76,11 @@ public:
 	 * TODO: Do we need this? If we do then path needs to be a shared_ptr
 	 * @return Trajectory object that this object contains
 	 */
-	//std::unique_ptr<Trajectory> GetPath();
+	inline TrajectoryState GetPathState(double t){ return path->evaluate(t); }
 
-	virtual double GetStartTime() { return path->startTime(); }
+	virtual double GetStartTime() const { return path->startTime(); }
 
-	virtual double GetEndTime() { return path->endTime(); }
+	virtual double GetEndTime() const { return path->endTime(); }
 
 private:
 	std::unique_ptr<Trajectory> path;

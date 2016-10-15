@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!--
+	This file is derived from PX4/sitl_gazebo's iris_base.xacro
+	See that repo for specific licensing details
+-->
+
+<robot name="tansa-x340" xmlns:xacro="http://ros.org/wiki/xacro">
+	<!-- Properties that can be assigned at build time as arguments.
+	Is there a reason not to make all properties arguments?
+	-->
+	<xacro:arg name='mavlink_addr' default='INADDR_ANY' />
+	<xacro:arg name='mavlink_udp_port' default='14560' />
+	<xacro:arg name='visual_material' default='DarkGrey' />
+
+	<!-- macros for gazebo plugins, sensors -->
+	<xacro:include filename="$(arg rotors_description_dir)/urdf/component_snippets.xacro" />
+
+	<!-- Instantiate x340 "mechanics" -->
+	<xacro:include filename="x340.xacro" />
+
+	<!-- Instantiate mavlink telemetry interface. -->
+	<xacro:mavlink_interface_macro
+		namespace="${namespace}"
+		imu_sub_topic="/imu"
+		mavlink_addr="INADDR_ANY"
+		mavlink_udp_port="14560"
+		>
+	</xacro:mavlink_interface_macro>
+
+
+	<!-- Mount an ADIS16448 IMU. -->
+	<xacro:imu_plugin_macro
+		namespace="${namespace}"
+		imu_suffix=""
+		parent_link="base_link"
+		imu_topic="/imu"
+		mass_imu_sensor="0.015"
+		gyroscope_noise_density="0.0003394"
+		gyroscopoe_random_walk="0.000038785"
+		gyroscope_bias_correlation_time="1000.0"
+		gyroscope_turn_on_bias_sigma="0.0087"
+		accelerometer_noise_density="0.004"
+		accelerometer_random_walk="0.006"
+		accelerometer_bias_correlation_time="300.0"
+		accelerometer_turn_on_bias_sigma="0.1960"
+		>
+		<inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" />
+		<origin xyz="0 0 0" rpy="0 0 0" />
+	</xacro:imu_plugin_macro>
+
+</robot>

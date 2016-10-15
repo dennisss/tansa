@@ -114,8 +114,8 @@ typedef struct
 // note : only used by clients who are depacketizing NatNet packets directly
 typedef struct
 {
-    unsigned short iMessage;                // message ID (e.g. NAT_FRAMEOFDATA)
-    unsigned short nDataBytes;              // Num bytes in payload
+    uint16_t iMessage;                // message ID (e.g. NAT_FRAMEOFDATA)
+    uint16_t nDataBytes;              // Num bytes in payload
     union
     {
         unsigned char  cData[MAX_PACKETSIZE];

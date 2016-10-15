@@ -16,35 +16,41 @@
 
 // TODO: Move this to a better spot
 // The ground control system represented by this program
-mavlink_system_t mavlink_system;
+static mavlink_system_t mavlink_system;
+
+static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 
 Vehicle::Vehicle() :
+	stateTime(0,0),
 	lastHeartbeatSent(0,0),
 	lastTimesyncSent(0,0),
 	lastSystimeSent(0,0),
-	lastHeartbeatReceived(0,0) {
+	lastHeartbeatReceived(0,0),
+	lastStateSent(0,0) {
 
 	// TODO: Same as above
 	mavlink_system.sysid = 255;
 	mavlink_system.compid = MAV_COMP_ID_ALL;
 
+	this->channel = nextChannel;
+	nextChannel = (mavlink_channel_t) ((int)channel + 1);
 }
 
 int forwardfd = 0;
 struct sockaddr_in forward_addr;
 
-int Vehicle::connect(int port) {
+int Vehicle::connect(int lport, int rport, const char *laddr, const char *raddr) {
 
-	if((forwardfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		perror("cannot create socket");
-		return 1;
-	}
+//	if((forwardfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+//		perror("cannot create socket");
+//		return 1;
+//	}
 
-	memset((char *)&forward_addr, 0, sizeof(client_addr));
-	forward_addr.sin_family = AF_INET;
-	forward_addr.sin_port = htons(14551);
-	inet_pton(AF_INET, "127.0.0.1", &forward_addr.sin_addr);
+//	memset((char *)&forward_addr, 0, sizeof(client_addr));
+//	forward_addr.sin_family = AF_INET;
+//	forward_addr.sin_port = htons(14550);
+//	inet_pton(AF_INET, "127.0.0.1", &forward_addr.sin_addr);
 
 
 	if((netfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -55,7 +61,7 @@ int Vehicle::connect(int port) {
 	memset((char *)&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_addr.sin_port = htons(port);
+	server_addr.sin_port = htons(lport);
 
 	if (::bind(netfd, (struct sockaddr *) &server_addr, (socklen_t) sizeof(server_addr)) < 0) {
 		perror("bind failed");
@@ -73,10 +79,10 @@ int Vehicle::connect(int port) {
 	}
 
 
-	// By default send to 127.0.0.1:14555
+	// By default send to 127.0.0.1:rport
 	memset((char *)&client_addr, 0, sizeof(client_addr));
 	client_addr.sin_family = AF_INET;
-	client_addr.sin_port = htons(14555);
+	client_addr.sin_port = htons(rport);
 	inet_pton(AF_INET, "127.0.0.1", &client_addr.sin_addr);
 
 	running = true;
@@ -172,7 +178,20 @@ void Vehicle::land() {
 }
 
 
-void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, uint64_t t) {
+void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t) {
+
+
+	// Update state (only compute velocity if initialized)
+	if(stateTime.nanos() > 0) {
+		Time dt = t.since(stateTime);
+		Vector3d v = (pos - this->position) / dt.seconds();
+		double a = 0.8;
+		this->velocity = v + (1.0 - a)*this->velocity;
+	}
+	this->position = pos;
+	this->stateTime = t;
+
+
 
 	Matrix3d m;
 	m << 1, 0, 0,
@@ -180,7 +199,7 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, uint6
 		 0, 0, -1;
 
 	Vector3d pos_ned = enuToFromNed() * pos;
-	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * Quaterniond(m) * orient;
+	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(m);
 
 	float q[4];
 	q[0] = orient_ned.w();
@@ -188,10 +207,18 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, uint6
 	q[2] = orient_ned.y();
 	q[3] = orient_ned.z();
 
+
+	// Send at 50Hz
+	if(t.since(lastStateSent).seconds() < 0.02) {
+		return;
+	}
+
+	lastStateSent = t;
+
 	mavlink_message_t msg;
-	mavlink_msg_att_pos_mocap_pack(
-		255, 0, &msg,
-		t,
+	mavlink_msg_att_pos_mocap_pack_chan(
+		255, 0, channel, &msg,
+		t.micros(),
 		q,
 		pos_ned.x(),
 		pos_ned.y(),
@@ -207,8 +234,8 @@ void Vehicle::setpoint_pos(const Vector3d &pos) {
 	Vector3d pos_ned = enuToFromNed() * pos;
 
 	mavlink_message_t msg;
-	mavlink_msg_set_position_target_local_ned_pack(
-		255, 0, // origin
+	mavlink_msg_set_position_target_local_ned_pack_chan(
+		255, 0, channel, // origin
 		&msg,
 		0,
 		1, 1, // target
@@ -219,7 +246,7 @@ void Vehicle::setpoint_pos(const Vector3d &pos) {
 		pos_ned.z(),
 		0,0,0,
 		0,0,0,
-		1.58,0
+		0,0
 	);
 
 	send_message(&msg);
@@ -230,8 +257,8 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 	Vector3d accel_ned = enuToFromNed() * accel;
 
 	mavlink_message_t msg;
-	mavlink_msg_set_position_target_local_ned_pack(
-		255, 0, // origin
+	mavlink_msg_set_position_target_local_ned_pack_chan(
+		255, 0, channel, // origin
 		&msg,
 		0,
 		1, 1, // target
@@ -250,8 +277,8 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 
 void Vehicle::set_lighting(float top, float bottom) {
 	mavlink_message_t msg;
-	mavlink_msg_command_long_pack(
-		255, 0,
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
 		&msg,
 		1, 1,
 		MAV_CMD_DO_SET_SERVO,
@@ -268,8 +295,8 @@ void Vehicle::set_beacon(bool on) {
 	// TODO: This should wait for
 
 	mavlink_message_t msg;
-	mavlink_msg_command_long_pack(
-		255, 0,
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
 		&msg,
 		1, 1,
 		MAV_CMD_BEACON,
@@ -284,6 +311,7 @@ void Vehicle::set_beacon(bool on) {
 
 void Vehicle::send_message(mavlink_message_t *msg) {
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+	//mavlink_finalize_message_chan(msg, mavlink_system.sysid, mavlink_system.compid, this->channel, msg->len);
 	uint16_t len = mavlink_msg_to_send_buffer(buf, msg);
 	sendto(netfd, buf, len, 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
 }
@@ -300,7 +328,7 @@ void Vehicle::send_heartbeat() {
 	uint8_t system_state = MAV_STATE_STANDBY;
 
 	// Pack the message
-	mavlink_msg_heartbeat_pack(mavlink_system.sysid, mavlink_system.compid, &msg, system_type, autopilot_type, system_mode, custom_mode, system_state);
+	mavlink_msg_heartbeat_pack_chan(mavlink_system.sysid, mavlink_system.compid, channel, &msg, system_type, autopilot_type, system_mode, custom_mode, system_state);
 
 	send_message(&msg);
 }
@@ -343,8 +371,10 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			mavlink_local_position_ned_t lp;
 			mavlink_msg_local_position_ned_decode(msg, &lp);
 
+/*
 			this->position = enuToFromNed() * Vector3d(lp.x, lp.y, lp.z);
 			this->velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
+*/
 
 //			printf("POS: %.2f %.2f %.2f\n", lp.x, lp.y, lp.z);
 
@@ -426,17 +456,16 @@ void *vehicle_thread(void *arg) {
 
 			if(nread > 0) {
 				for(int i = 0; i < nread; i++) {
+					// TODO: Pick comm channel based on the ip/port from which the data was received
 
-					if(mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
+					if(mavlink_parse_char(v->channel, buf[i], &msg, &status)) {
 
 						v->handle_message(&msg);
 
-						// Packet received
-						//printf("\nReceived packet: SYS: %d, COMP: %d, LEN: %d, MSG ID: %d\n", msg.sysid, msg.compid, msg.len, msg.msgid);
 					}
 				}
 
-				sendto(forwardfd, buf, nread, 0, (struct sockaddr *) &forward_addr, addrlen);
+//				sendto(forwardfd, buf, nread, 0, (struct sockaddr *) &forward_addr, addrlen);
 			}
 		}
 

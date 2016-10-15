@@ -53,7 +53,7 @@ public:
 private:
 	/**
 	 * Parse all actions in a given Jocs json object
-	 * @param data Jocs json data
+	 * @param data [in] Jocs json data
 	 * @param actions [out] Will be filled with actions
 	 */
 	static void parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<Action>>& actions);

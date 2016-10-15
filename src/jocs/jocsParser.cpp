@@ -7,15 +7,15 @@ const std::string Jocs::HOME_KEY = "startPosition";
 const std::string Jocs::DRONE_KEY = "drones";
 const std::string Jocs::ID_KEY = "id";
 const std::string Jocs::CHOREOGRAPHY_KEY = "chor";
-const std::string Jocs::STARTPOS_KEY = "start";
-const std::string Jocs::ENDPOS_KEY = "end";
+const std::string Jocs::STARTPOS_KEY = "startPointCenter";
+const std::string Jocs::ENDPOS_KEY = "endPointCenter";
 const std::string Jocs::DURATION_KEY = "duration";
 const std::string Jocs::ACTION_ROOT_KEY = "action";
 const std::string Jocs::ACTION_TIME_KEY = "time";
 const std::string Jocs::ACTION_TYPE_KEY = "type";
 const std::string Jocs::DRONE_ARRAY_KEY = "drones";
 const std::string Jocs::ACTION_DATA_KEY = "data";
-const std::string Jocs::CIRCLE_ORIGIN_KEY = "origin";
+const std::string Jocs::CIRCLE_ORIGIN_KEY = "originPointCenter";
 const std::string Jocs::CIRCLE_RADIUS_KEY = "radius";
 const std::string Jocs::CIRCLE_THETA1_KEY = "theta1";
 const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
@@ -41,9 +41,27 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<
 	for(int i = 0; i < length; i++){
 		parseAction(actionsJson[i], actions);
 	}
-
+	//Sort the vector by start time. If there are times that overlap, this could get out of order
+	std::sort(actions.begin(), actions.end(), [](const unique_ptr<Action>& lhs, const unique_ptr<Action>& rhs){
+		return lhs->GetStartTime() < rhs->GetStartTime();
+	});
 	// Go back and review actions such that transitions can be created with polynomial trajectories
-
+	for(int i = 0; i < actions.size(); i++){
+		if(!actions[i]->IsCalculated()){
+			if(i > 0) {
+				auto& ref = reinterpret_cast<unique_ptr<MotionAction>&>(actions[i-1]);
+				auto& next = reinterpret_cast<unique_ptr<MotionAction>&>(actions[i+1]);
+				double thisStart = actions[i]->GetStartTime();
+				double thisEnd = actions[i]->GetEndTime();
+				auto state = ref->GetPathState(ref->GetEndTime());
+				ref.reset(new MotionAction(
+						ref->GetDrone(),
+						std::move(std::unique_ptr<PolynomialTrajectory>(PolynomialTrajectory::compute({state.position, state.velocity, state.acceleration},thisStart,{}, thisEnd)))));
+			} else{
+				//TODO: Handle the case of the first action being a transition where our initial velocity and acceleration are 0 and position is equal to home.
+			}
+		}
+	}
 
 	//std::cout << actions[3]->GetEndTime() << std::endl; // debug
 }

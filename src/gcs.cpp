@@ -235,6 +235,7 @@ int multidrone_main() {
 
 int main(int argc, char *argv[]) {
 
+	tansa::Jocs::Parse("singleDrone.jocs");
 //	return multidrone_main();
 	bool mocap_enabled = false,
 		 sim_enabled = true;

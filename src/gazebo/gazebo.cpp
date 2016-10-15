@@ -2,6 +2,7 @@
 	Helpers for synchronizing the program with gazebo (in particular for timing and position purposes)
 */
 
+#include <tansa/gazebo.h>
 #include <tansa/core.h>
 #include <tansa/time.h>
 #include <tansa/vehicle.h>
@@ -10,43 +11,60 @@
 #include <gazebo/msgs/msgs.hh>
 #include <gazebo/gazebo_client.hh>
 
-#include <iostream>
+#include "../../build/src/gazebo/msgs/spawn.pb.h"
 
+#include <string.h>
+
+#include <map>
 
 static gazebo::transport::NodePtr node;
 static gazebo::transport::SubscriberPtr world_sub;
 static gazebo::transport::SubscriberPtr poses_sub;
-static Vehicle *v;
+static gazebo::transport::PublisherPtr spawn_pub;
+
+static std::map<int, Vehicle *> tracked;
+
 
 // TODO: These also come with a timestamp, so we might as well use it
 void gazebo_poses_callback(ConstPosesStampedPtr &posesStamped) {
 
 	for(int i = 0; i < posesStamped->pose_size(); ++i) {
-
 		const ::gazebo::msgs::Pose &pose = posesStamped->pose(i);
 		std::string name = pose.name();
-		if(name == std::string("iris")) {
-			const ::gazebo::msgs::Vector3d &position = pose.position();
-			const ::gazebo::msgs::Quaternion &orientation = pose.orientation();
 
-			Vector3d pos(
-				position.x(),
-				position.y(),
-				position.z()
-			);
+		int id = -1;
+		if(strncmp(name.c_str(), "vehicle_", 8) == 0 && name.length() == 9) {
+			id = atoi(name.c_str() + 8);
+		}
 
-			Quaterniond orient(
-				orientation.w(),
-				orientation.x(),
-				orientation.y(),
-				orientation.z()
-			);
 
-			// Not needed as the simulation has ground truth odometry
-		//	if(v != NULL) {
-		//		v->mocap_update(pos, orient, 0);
-		//	}
+		if(tracked.count(id) == 0){
+			continue;
+		}
 
+
+		Vehicle *v = tracked[id];
+
+
+
+		const ::gazebo::msgs::Vector3d &position = pose.position();
+		const ::gazebo::msgs::Quaternion &orientation = pose.orientation();
+
+		Vector3d pos(
+			position.x(),
+			position.y(),
+			position.z()
+		);
+
+		Quaterniond orient(
+			orientation.w(),
+			orientation.x(),
+			orientation.y(),
+			orientation.z()
+		);
+
+		if(v != NULL) {
+			v->mocap_update(pos, orient, Time::now()); // TODO: Use sim time
 		}
 
 	}
@@ -70,14 +88,12 @@ void gazebo_stats_callback(ConstWorldStatisticsPtr &msg) {
 }
 
 
-void sim_init() {
-	v = NULL;
+GazeboConnector::GazeboConnector() {
 	node = NULL;
 }
 
-namespace tansa {
 
-void sim_connect() {
+void GazeboConnector::connect() {
 
 	// Hold time at 0 until it is initialized
 	Time::setTime(Time(0,0), 0);
@@ -94,57 +110,44 @@ void sim_connect() {
 	world_sub = node->Subscribe("~/world_stats", gazebo_stats_callback);
 	poses_sub = node->Subscribe("~/pose/info", gazebo_poses_callback);
 
-	printf("- done\n");
+	spawn_pub = node->Advertise<tansa::msgs::SpawnRequest>("~/spawn");
+	spawn_pub->WaitForConnection();
 
-	// Busy wait loop...replace with your own code as needed.
-	//while (true)
-	//	gazebo::common::Time::MSleep(10);
+
 }
 
 
-void sim_disconnect() {
+void GazeboConnector::disconnect() {
 	// Make sure to shut everything down.
 	gazebo::client::shutdown();
 
 	// Deleting reference to old Boost pointer
 	world_sub = gazebo::transport::SubscriberPtr();
 	poses_sub = gazebo::transport::SubscriberPtr();
+	spawn_pub = gazebo::transport::PublisherPtr();
 }
 
-void sim_track(Vehicle *veh) {
-	v = veh;
+void GazeboConnector::track(Vehicle *v, int id) {
+	tracked[id] = v;
 }
 
+void GazeboConnector::spawn(const vector<Point> &homes) {
+
+	tansa::msgs::SpawnRequest req;
+
+	for(int i = 0; i < homes.size(); i++) {
+		tansa::msgs::SpawnRequest_Vehicle *v = req.add_vehicles();
+		v->set_id(i);
+		gazebo::msgs::Vector3d *pos = v->mutable_pos();
+		gazebo::msgs::Vector3d *orient = v->mutable_orient();
+		pos->set_x(homes[i].x());
+		pos->set_y(homes[i].y());
+		pos->set_z(homes[i].z());
+
+		orient->set_x(0);
+		orient->set_y(0);
+		orient->set_z(0);
+	}
+
+	spawn_pub->Publish(req);
 }
-
-/*
-This is what the data looks like:
-
-/gazebo/default/world_stats
-Type: gazebo.msgs.WorldStatistics
-
-time {
-  sec: 401
-  nsec: 656000000
-}
-
-
-/gazebo/default/pose/info
-Type: gazebo.msgs.PosesStamped
-
-pose {
-  name: "iris"
-  id: 9
-  position {
-    x: -0.024945740985096335
-    y: -0.11384451968496838
-    z: 0.1048481907237855
-  }
-  orientation {
-    x: 0.00023967189251883982
-    y: -4.1931681713546753e-05
-    z: 0.0046669999686749725
-    w: -0.999989079895581
-  }
-}
-*/

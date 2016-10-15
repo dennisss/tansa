@@ -14,6 +14,16 @@ node_modules
 
 # Build output
 build
+build_*
+
+# Compiled 3d printer instructions
+*.gcode
+
+# Compiled Gazebo descriptions
+*.sdf
+
+# Folder for storing temporary files
+tmp
 
 # I use this for holding my flight log dumps
 log

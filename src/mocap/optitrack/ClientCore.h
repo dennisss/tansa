@@ -3,10 +3,12 @@
 
 #include "NatNetTypes.h"
 
+#include <tansa/time.h>
+
 #include <pthread.h>
 
 #include <vector>
-
+#include <string>
 
 // Tracks memory allocations so that garbage collection is easier
 class Memory {
@@ -32,7 +34,7 @@ class ClientCore {
 
 public:
 
-	ClientCore();
+	ClientCore(int type);
 	~ClientCore();
 
 
@@ -40,7 +42,7 @@ public:
 		Setup all the sockets and start the data servers
 		clientAddr should be the address on the same interface as the server
 	*/
-	void start(const char *clientAddr, const char *serverAddr);
+	void start(const char *clientAddr, const char *serverAddr, int cmdPort, int dataPort);
 	void stop();
 
 
@@ -60,6 +62,7 @@ public:
 	void sendPacket(sPacket *packet);
 
 
+	void setMulticastAddress(std::string multicast_addr) { this->multicast_addr = multicast_addr; };
 
 
 //	struct sockaddr_in multi_addr;
@@ -71,6 +74,7 @@ public:
 	sDataDescriptions *dataDescs;
 
 private:
+	int type;
 
 	bool running;
 
@@ -79,7 +83,16 @@ private:
 	int cmd_socket;
 	pthread_t cmd_thread;
 
+	// ip/port on this computer to
+	//struct sockaddr_in client_addr;
+	int cmd_port;
+	int data_port;
+	std::string client_addr;
+	std::string server_addr;
 
+	std::string multicast_addr;
+
+	Time lastping;
 
 	void unpack(char *pData);
 	void unpackFrame(char *ptr);

@@ -13,6 +13,6 @@ For networking, we use the following network configurations:
 ![](system-overview.png)
 
 
-When calibrating the motion system, the below coordinate system should be marked with tape on the ground. This will represent the (0,0) origin for all manuevers performed. Note that +Y is along the long end of the CS200 calibration square.
+When calibrating the motion system, the below coordinate system should be marked with tape on the ground. This will represent the (0,0) origin for all maneuvers performed. Note that +Y is along the long end of the CS200 calibration square. When defining the rigid bodies in Motive, make sure that the drone is pointing in the calibration direction specified below.
 
-![](coordinate-frame.png)
+![](coordinate-frame.jpg)

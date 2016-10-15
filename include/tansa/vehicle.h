@@ -29,8 +29,13 @@ public:
 	 */
 	Vehicle();
 
-
-	int connect(int port = 14550);
+	/**
+	 * Connect to the vehicle using the specified ports and ip address
+	 *
+	 * @param laddr the ip address of the local interface on which to listen for messages
+	 * @param raddr the ip address of the remote vehicle. if null, then this will be determined by the first message received matching the given ports
+	 */
+	int connect(int lport = 14550, int rport = 14555, const char *laddr = NULL, const char *raddr = NULL);
 
 	int disconnect();
 
@@ -67,9 +72,10 @@ public:
 	/**
 	 * Fuses motion capture information into the current position estimate
 	 */
-	void mocap_update(const Vector3d &pos, const Quaterniond &orient, uint64_t t);
+	void mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t);
 
 
+	// TODO: Change these to use Point
 	// By default, this will preserve the yaw
 	void setpoint_pos(const Vector3d &p);
 
@@ -88,7 +94,7 @@ public:
 	Vector3d position;
 	Vector3d velocity;
 	Quaterniond orientation;
-
+	Time stateTime;
 
 private:
 
@@ -104,6 +110,7 @@ private:
 	bool running = false; // Whether or not the server is running for this drone
 
 	int netfd = 0;
+	mavlink_channel_t channel;
 
 	pthread_t thread = NULL;
 
@@ -124,6 +131,7 @@ private:
 	Time lastHeartbeatSent;
 	Time lastTimesyncSent;
 	Time lastSystimeSent;
+	Time lastStateSent;
 };
 
 /**

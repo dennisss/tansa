@@ -1,0 +1,14 @@
+package tansa.msgs;
+
+import "vector3d.proto";
+
+// Message for telling the swarm plugin
+message SpawnRequest {
+	message Vehicle {
+		required int32 id = 1;
+		required gazebo.msgs.Vector3d pos = 2;
+		required gazebo.msgs.Vector3d orient = 3;
+	}
+
+	repeated Vehicle vehicles = 1;
+}

@@ -109,7 +109,7 @@ void Time::setTime(const Time &t, double factor) {
 	simFactor = factor;
 }
 
-Time Time::since(const Time &other) {
+Time Time::since(const Time &other) const {
 	Time diff;
 	timespec_subtract(&diff.val, &other.val, &this->val);
 	return diff;
@@ -123,7 +123,7 @@ uint64_t Time::nanos() {
 	return (uint64_t) val.tv_nsec + ((uint64_t) val.tv_sec * 1000000000);
 }
 
-uint64_t Time::micros() {
+uint64_t Time::micros() const {
 	return ((uint64_t) val.tv_nsec / 1000) + ((uint64_t) val.tv_sec * 1000000);
 }
 

@@ -24,7 +24,7 @@
           "type": "circle",
           "data":
           {
-            "origin": [0,0,1],
+            "originPointCenter": [0,0,1],
             "radius": 2,
             "theta1": 0,
             "theta2": 360
@@ -52,8 +52,8 @@
           "type": "line",
           "data":
           {
-            "start": [2, 2, 1],
-            "end": [2, -2, 1]
+            "startPointCenter": [2, 2, 1],
+            "endPointCenter": [2, -2, 1]
           },
           "duration": 5,
           "drones": [0]
@@ -67,8 +67,8 @@
           "type": "line",
           "data":
           {
-            "start": [2, -2, 1],
-            "end": [-2, -2, 1]
+            "startPointCenter": [2, -2, 1],
+            "endPointCenter": [-2, -2, 1]
           },
           "duration": 5,
           "drones": [0]
@@ -82,8 +82,8 @@
           "type": "line",
           "data":
           {
-            "start": [-2, -2, 1],
-            "end": [-2, 2, 1]
+            "startPointCenter": [-2, -2, 1],
+            "endPointCenter": [-2, 2, 1]
           },
           "duration": 5,
           "drones": [0]
@@ -97,8 +97,8 @@
           "type": "line",
           "data":
           {
-            "start": [-2, 2, 1],
-            "end": [0, 0, 1]
+            "startPointCenter": [-2, 2, 1],
+            "endPointCenter": [0, 0, 1]
           },
           "duration": 5,
           "drones": [0]

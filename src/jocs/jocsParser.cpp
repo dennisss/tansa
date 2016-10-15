@@ -33,11 +33,19 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	//This must be an array
 	assert(actionsJson.is_array());
+
+	// This length is temporary but really this is the smallest it would ever be, if only one action is sent at
+	// any given time
 	auto length = actionsJson.size();
 	actions.reserve(length);
 	for(int i = 0; i < length; i++){
 		parseAction(actionsJson[i], actions);
 	}
+
+	// Go back and review actions such that transitions can be created with polynomial trajectories
+
+
+	//std::cout << actions[3]->GetEndTime() << std::endl; // debug
 }
 
 void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::unique_ptr<Action>>& actions){

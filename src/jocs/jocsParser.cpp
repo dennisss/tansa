@@ -68,6 +68,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 	double startTime = data[ACTION_TIME_KEY];
 	for(int i = 0; i < actionsArray.size(); i++) {
 		auto actionsArrayElement = actionsArray[i];
+		double duration = actionsArrayElement[DURATION_KEY];
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
 		//TODO: Assuming no grouping right now. Will have to adjust this with groups
 		unsigned drone = actionsArrayElement[DRONE_ARRAY_KEY][0];
@@ -77,10 +78,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 			case ActionTypes::Transition: {
 				// Actual calculation will be processed after this loop
 				// For now, there is no trajectory !
-				double duration = actionsArrayElement[DURATION_KEY]; // This will be taken out of the switch after merge
-
 				actions.push_back(std::move(std::make_unique<EmptyAction>(drone, startTime, startTime + duration)));
-
 				break;
 			}
 			//Simple line action
@@ -95,8 +93,6 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
 						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 
-				double duration = actionsArrayElement[DURATION_KEY];
-
 				actions.push_back(std::move(std::make_unique<MotionAction>(
 						drone, std::make_unique<LinearTrajectory>(start, startTime, end, startTime + duration))));
 				break;
@@ -110,7 +106,6 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 				double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
 				double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
 				double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
-				double duration = actionsArrayElement[DURATION_KEY];
 				actions.push_back(std::move(std::make_unique<MotionAction>(
 						drone, std::make_unique<CircleTrajectory>(origin, radius, theta1, startTime, theta2, startTime + duration))));
 				break;

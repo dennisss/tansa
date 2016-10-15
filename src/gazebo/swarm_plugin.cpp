@@ -20,6 +20,7 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <sys/wait.h>
 
 #include <boost/shared_ptr.hpp>
 

@@ -9,58 +9,60 @@
 #include <memory>
 
 namespace tansa {
-	typedef unsigned DroneId;
-	enum class LightId {TOP, BOT};
-	class Action {
-	public:
-		Action(DroneId id) : droneId(id) {}
 
-		virtual double GetStartTime() = 0;
+typedef unsigned DroneId;
+enum class LightId {TOP, BOT};
+class Action {
+public:
+	Action(DroneId id) : droneId(id) {}
 
-		virtual double GetEndTime() = 0;
+	virtual double GetStartTime() = 0;
 
-		DroneId GetDrone() { return droneId; }
+	virtual double GetEndTime() = 0;
 
-		bool IsCalculated() { return isCalculated; }
+	DroneId GetDrone() { return droneId; }
 
-	protected:
-		DroneId droneId;
-		bool isCalculated;
-	};
+	bool IsCalculated() { return isCalculated; }
 
-	class MotionAction : Action {
-	public:
-		MotionAction(DroneId id, std::unique_ptr<Trajectory> t) : Action(id), path(std::move(t)) { isCalculated = true;}
+protected:
+	DroneId droneId;
+	bool isCalculated;
+};
 
-		std::unique_ptr<Trajectory> GetPath();
+class MotionAction : Action {
+public:
+	MotionAction(DroneId id, std::unique_ptr<Trajectory> t) : Action(id), path(std::move(t)) { isCalculated = true;}
 
-		virtual double GetStartTime() { return path->startTime(); }
+	std::unique_ptr<Trajectory> GetPath();
 
-		virtual double GetEndTime() { return path->endTime(); }
+	virtual double GetStartTime() { return path->startTime(); }
 
-	private:
-		std::unique_ptr<Trajectory> path;
-	};
+	virtual double GetEndTime() { return path->endTime(); }
 
-	class LightAction : Action {
-	public:
-		LightAction(double s, double e, DroneId id, double i, LightId l) :  Action(id),
-				startTime(s), endTime(e), intensity(i), lightId(l) {isCalculated = true;}
+private:
+	std::unique_ptr<Trajectory> path;
+};
 
-		virtual double GetStartTime() { return startTime; }
+class LightAction : Action {
+public:
+	LightAction(double s, double e, DroneId id, double i, LightId l) :  Action(id),
+			startTime(s), endTime(e), intensity(i), lightId(l) { isCalculated = true; }
 
-		virtual double GetEndTime() { return endTime; }
+	virtual double GetStartTime() { return startTime; }
 
-		double GetIntensity() { return intensity; }
+	virtual double GetEndTime() { return endTime; }
 
-		LightId GetLightId() { return lightId; }
+	double GetIntensity() { return intensity; }
 
-	private:
-		double startTime;
-		double endTime;
-		double intensity;
-		LightId lightId;
-	};
+	LightId GetLightId() { return lightId; }
+
+private:
+	double startTime;
+	double endTime;
+	double intensity;
+	LightId lightId;
+};
+
 }
 
 #endif //TANSA_ACTION_H

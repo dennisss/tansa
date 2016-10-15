@@ -12,26 +12,37 @@
 #include "tansa/vehicle.h"
 #include "tansa/core.h"
 #include "tansa/trajectory.h"
-
+namespace tansa {
 //PLACEHOLDER CHOREOGRAPHY CLASS
-class Choreography{Choreography(){}};
+class Choreography {
+	Choreography() {}
+};
+
 //Placeholder
-struct Drone{
-	Drone(Point p, unsigned droneId): startingPoint(p), id(droneId){}
+struct Drone {
+	Drone(Point p, unsigned droneId) : startingPoint(p), id(droneId) {}
+
 	Point startingPoint;
 	unsigned id;
 };
+
 //Static Jocs parsing class for reading actions and drones out of a jocs file
-class Jocs{
+class Jocs {
 public:
 	static const std::string HOME_KEY;
 	static const std::string DRONE_KEY;
-	static Choreography Parse(const std::string& jocsPath);
+	static const std::string ID_KEY;
+
+	static Choreography Parse(const std::string &jocsPath);
+
 private:
-	static std::vector<Vehicle> parseVehicles(const nlohmann::json& data);
+	static std::vector<Vehicle> parseVehicles(const nlohmann::json &data);
+
 	//placeholder template. This should return action but dont' have action class yet. Was complaining about
 	//empty class as template so just used int.
-	static std::vector<int> parseActions(const nlohmann::json& data);
+	static std::vector<int> parseActions(const nlohmann::json &data);
+
 	static Drone parseDrone(nlohmann::json::reference data);
 };
+}
 #endif //TANSA_JOCSPARSER_H

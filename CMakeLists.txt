@@ -47,4 +47,4 @@ target_link_libraries(
 )
 
 
-set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++1y")

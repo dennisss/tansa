@@ -8,11 +8,18 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "json.hpp"
 #include "tansa/vehicle.h"
 #include "tansa/core.h"
 #include "tansa/trajectory.h"
+#include "tansa/action.h"
 namespace tansa {
+enum ActionTypes : unsigned{
+	Transition = 0,
+	Line = 1,
+	Circle = 2,
+};
 //PLACEHOLDER CHOREOGRAPHY CLASS
 class Choreography {
 	Choreography() {}
@@ -32,6 +39,15 @@ public:
 	static const std::string HOME_KEY;
 	static const std::string DRONE_KEY;
 	static const std::string ID_KEY;
+	static const std::string CHOREOGRAPHY_KEY;
+	static const std::string STARTPOS_KEY;
+	static const std::string ENDPOS_KEY;
+	static const std::string DURATION_KEY;
+	static const std::string ACTION_ROOT_KEY;
+	static const std::string ACTION_TIME_KEY;
+	static const std::string ACTION_TYPE_KEY;
+	static const std::string DRONE_ARRAY_KEY;
+	static const std::string ACTION_DATA_KEY;
 
 	static Choreography Parse(const std::string &jocsPath);
 
@@ -40,9 +56,11 @@ private:
 
 	//placeholder template. This should return action but dont' have action class yet. Was complaining about
 	//empty class as template so just used int.
-	static std::vector<int> parseActions(const nlohmann::json &data);
+	static void parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<Action>>& actions);
 
-	static Drone parseDrone(nlohmann::json::reference data);
+	static Drone parseDrone(const nlohmann::json::reference data);
+	static void parseAction(const nlohmann::json::reference data, std::vector<std::unique_ptr<Action>>& actions);
+	static ActionTypes convertToActionType(const std::string& data);
 };
 }
 #endif //TANSA_JOCSPARSER_H

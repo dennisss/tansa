@@ -29,7 +29,7 @@ protected:
 	bool isCalculated;
 };
 
-class MotionAction : Action {
+class MotionAction : public Action {
 public:
 	MotionAction(DroneId id, std::unique_ptr<Trajectory> t) : Action(id), path(std::move(t)) { isCalculated = true;}
 
@@ -43,7 +43,7 @@ private:
 	std::unique_ptr<Trajectory> path;
 };
 
-class LightAction : Action {
+class LightAction : public Action {
 public:
 	LightAction(double s, double e, DroneId id, double i, LightId l) :  Action(id),
 			startTime(s), endTime(e), intensity(i), lightId(l) { isCalculated = true; }

@@ -6,16 +6,25 @@ namespace tansa {
 const std::string Jocs::HOME_KEY = "startPosition";
 const std::string Jocs::DRONE_KEY = "drones";
 const std::string Jocs::ID_KEY = "id";
+const std::string Jocs::CHOREOGRAPHY_KEY = "chor";
+const std::string Jocs::STARTPOS_KEY = "start";
+const std::string Jocs::ENDPOS_KEY = "end";
+const std::string Jocs::DURATION_KEY = "duration";
+const std::string Jocs::ACTION_ROOT_KEY = "action";
+const std::string Jocs::ACTION_TIME_KEY = "time";
+const std::string Jocs::ACTION_TYPE_KEY = "type";
+const std::string Jocs::DRONE_ARRAY_KEY = "drones";
+const std::string Jocs::ACTION_DATA_KEY = "data";
 
 //Parses a Jocs file
 Choreography Jocs::Parse(const std::string &jocsPath) {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
 	auto rawJson = nlohmann::json::parse(jocsData);
-	auto actions = parseActions(rawJson);
-	auto vehicles = parseVehicles(rawJson);
+	std::vector<std::unique_ptr<Action>> actions;
+	parseActions(rawJson, actions);
 }
-
+//On hold for now. Still working on how to represent vehicles and grouping
 std::vector<Vehicle> Jocs::parseVehicles(const nlohmann::json &data) {
 	//Get array of drones and its size
 	auto drones = data[DRONE_KEY];
@@ -28,16 +37,76 @@ std::vector<Vehicle> Jocs::parseVehicles(const nlohmann::json &data) {
 	return std::vector<Vehicle>();
 }
 
-//TODO: implement this. will be similar to parse vehicle
 // Input will be the whole jocs file body under "chor" section of json
 // Output will be vector of actions
-std::vector<int> Jocs::parseActions(const nlohmann::json &data) {
-
+void Jocs::parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<Action>>& actions) {
+	auto actionsJson = data[CHOREOGRAPHY_KEY];
+	//This must be an array
+	assert(actionsJson.is_array());
+	auto length = actionsJson.size();
+	actions.reserve(length);
+	for(int i = 0; i < length; i++){
+		parseAction(actionsJson[i], actions);
+	}
+	std::cout << actions[3]->GetEndTime() << std::endl;
 }
 
-Drone Jocs::parseDrone(nlohmann::json::reference data) {
+Drone Jocs::parseDrone(const nlohmann::json::reference data) {
 	Point start(data[HOME_KEY][0], data[HOME_KEY][1], data[HOME_KEY][2]);
 	Drone d(start, data[ID_KEY]);
 	return d;
+}
+//Untested, but it compiles. Example way of parsing jocs actions.
+void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::unique_ptr<Action>>& actions){
+
+	auto actionsArray = data[ACTION_ROOT_KEY];
+	assert(actionsArray.is_array());
+	for(int i = 0; i < actionsArray.size(); i++) {
+		auto actionsArrayElement = actionsArray[i];
+		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
+		double startTime = data[ACTION_TIME_KEY];
+		//TODO: Assuming no grouping right now. Will have to adjust this with groups
+		unsigned drone = actionsArrayElement[DRONE_ARRAY_KEY][0];
+
+		//Switch on type of Action
+		switch (type) {
+			//Transitional case: Put a placeholder action to be post-processed away
+			case ActionTypes::Transition: {
+				break;
+			}
+			//Simple line action
+			case ActionTypes::Line: {
+				Point start(
+						actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][0],
+						actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][1],
+						actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][2]);
+
+				Point end(actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][0],
+						  actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
+						  actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
+
+				double duration = actionsArrayElement[DURATION_KEY];
+
+				actions.push_back(std::move(std::make_unique<MotionAction>(
+						drone, std::make_unique<LinearTrajectory>(start, startTime, end, startTime + duration))));
+				break;
+			}
+			//Circle Action
+			case ActionTypes::Circle: {
+				break;
+			}
+			default: {
+				break;
+			}
+		}
+	}
+}
+ActionTypes Jocs::convertToActionType(const std::string& data){
+	if(data == "transition")
+		return ActionTypes::Transition;
+	else if (data == "line")
+		return ActionTypes::Line;
+	else if (data == "circle")
+		return ActionTypes::Circle;
 }
 }

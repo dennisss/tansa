@@ -40,7 +40,7 @@ target_link_libraries(
 	pthread
 )
 
-set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
 
@@ -87,4 +87,3 @@ add_custom_command(OUTPUT ${models_dir}/x340/x340.sdf
 )
 
 add_custom_target(sdf ALL DEPENDS ${models_dir}/x340/x340.sdf)
->>>>>>> master

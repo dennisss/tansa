@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include <vector>
-
+#include <tansa/jocsParser.h>
 
 bool running;
 
@@ -19,6 +19,7 @@ void signal_sigint(int s) {
 
 int main(int argc, char *argv[]) {
 
+	tansa::Jocs::Parse("singleDrone.jocs");
 	bool mocap_enabled = false,
 		 sim_enabled = true;
 

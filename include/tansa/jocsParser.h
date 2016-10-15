@@ -48,6 +48,10 @@ public:
 	static const std::string ACTION_TYPE_KEY;
 	static const std::string DRONE_ARRAY_KEY;
 	static const std::string ACTION_DATA_KEY;
+	static const std::string CIRCLE_ORIGIN_KEY;
+	static const std::string CIRCLE_RADIUS_KEY;
+	static const std::string CIRCLE_THETA1_KEY;
+	static const std::string CIRCLE_THETA2_KEY;
 
 	static Choreography Parse(const std::string &jocsPath);
 

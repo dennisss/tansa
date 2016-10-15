@@ -75,6 +75,12 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::un
 		switch (type) {
 			//Transitional case: Put a placeholder action to be post-processed away
 			case ActionTypes::Transition: {
+				// Actual calculation will be processed after this loop
+				// For now, there is no trajectory !
+				double duration = actionsArrayElement[DURATION_KEY]; // This will be taken out of the switch after merge
+
+				actions.push_back(std::move(std::make_unique<EmptyAction>(drone, startTime, startTime + duration)));
+
 				break;
 			}
 			//Simple line action

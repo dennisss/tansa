@@ -26,12 +26,25 @@ public:
 
 protected:
 	DroneId droneId;
-	bool isCalculated;
+	bool isCalculated = false;
+};
+
+class EmptyAction : public Action {
+public:
+    EmptyAction(DroneId id, double s, double e): Action(id), startTime(s), endTime(e) {}
+
+    virtual double GetStartTime() { return startTime; }
+
+    virtual double GetEndTime() { return endTime; }
+
+private:
+    double startTime;
+    double endTime;
 };
 
 class MotionAction : public Action {
 public:
-	MotionAction(DroneId id, std::unique_ptr<Trajectory> t) : Action(id), path(std::move(t)) { isCalculated = true;}
+	MotionAction(DroneId id, std::unique_ptr<Trajectory> t) : Action(id), path(std::move(t)) { isCalculated = true; }
 
 	std::unique_ptr<Trajectory> GetPath();
 

@@ -56,8 +56,6 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 					// Calculate previous and next motion to generate what's needed for the transition
 					MotionAction *ref = FindPreviousAction(actions[i][j].GetDrone(), actions, i);
 					MotionAction *next = FindNextAction(actions[i][j].GetDrone(), actions, i);
-					// TODO: it should be possible that the previous time doesn't have the drone in it,
-					// since different timeslots can command different drones. Must continue search to find drone.
 
 					// Get states from the previous and next state that were found
 					auto startState = ref->GetPathState(ref->GetEndTime());

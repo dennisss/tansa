@@ -49,21 +49,21 @@ public:
 	 * @param jocsPath String containing path from working directory to jocsFile
 	 * @return A vector containing unique_ptrs to Actions
 	 */
-	static std::vector<std::unique_ptr<Action>> Parse(const std::string &jocsPath);
+	static std::vector<Action*> Parse(const std::string &jocsPath);
 private:
 	/**
 	 * Parse all actions in a given Jocs json object
 	 * @param data [in] Jocs json data
 	 * @param actions [out] Will be filled with actions
 	 */
-	static void parseActions(const nlohmann::json &data, std::vector<std::unique_ptr<Action>>& actions);
+	static void parseActions(const nlohmann::json &data, std::vector<Action*>& actions);
 	/**
 	 * Parses a singular action array
 	 * @private
 	 * @param data Json data containing a reference to an action
 	 * @param actions [out] Will be filled with actions
 	 */
-	static void parseAction(const nlohmann::json::reference data, std::vector<std::unique_ptr<Action>>& actions);
+	static void parseAction(const nlohmann::json::reference data, std::vector<Action*>& actions);
 	/**
 	 * Converts from string to ActionTypes enum
 	 * @private

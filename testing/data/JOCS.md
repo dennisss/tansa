@@ -204,6 +204,20 @@ Documentation regarding things that were already explained above were left out i
           "drones": [0]
         }
       ]
+    },
+    {
+    "time": 42.5,
+    "action": [
+     {
+       "type": "hover",
+       "data":
+       {
+         "startPointCenter": [-2, 2, 1]
+       },
+       "duration": 5,
+       "drones": [0]
+     }
+    ]
     }
   ]
 }

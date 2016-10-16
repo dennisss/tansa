@@ -20,52 +20,65 @@ const std::string Jocs::CIRCLE_RADIUS_KEY = "radius";
 const std::string Jocs::CIRCLE_THETA1_KEY = "theta1";
 const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
 
-std::vector<Action*> Jocs::Parse(const std::string &jocsPath) {
+std::vector< vector<Action*> > Jocs::Parse(const std::string &jocsPath) {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
 	auto rawJson = nlohmann::json::parse(jocsData);
-	std::vector<Action*> actions;
+	std::vector< vector<Action*> > actions;
 	parseActions(rawJson, actions);
 	return actions;
 }
 
-void Jocs::parseActions(const nlohmann::json &data, std::vector<Action*>& actions) {
+void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*> >& actions) {
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	//This must be an array
 	assert(actionsJson.is_array());
 
-	// This length is temporary but really this is the smallest it would ever be, if only one action is sent at
-	// any given time
 	auto length = actionsJson.size();
 	actions.reserve(length);
+
+	// For each timeslot, gather actions in a vector and add as entry in "actions" 2d vector
 	for(int i = 0; i < length; i++){
 		parseAction(actionsJson[i], actions);
 	}
-	//Sort the vector by start time. If there are times that overlap, this could get out of order
-	std::sort(actions.begin(), actions.end(), [](const Action* lhs, const Action* rhs){
-		return lhs->GetStartTime() < rhs->GetStartTime();
-	});
+
 	// Go back and review actions such that transitions can be created with polynomial trajectories
 	for(int i = 0; i < actions.size(); i++){
-		if(!actions[i]->IsCalculated()){
-			if(i > 0) {
-				MotionAction* ref = static_cast<MotionAction*>(actions[i-1]);
-				MotionAction* next = static_cast<MotionAction*>(actions[i+1]);
-				double thisStart = actions[i]->GetStartTime();
-				double thisEnd = actions[i]->GetEndTime();
-				auto state = ref->GetPathState(ref->GetEndTime());
-				auto endState = next->GetPathState(next->GetStartTime());
-				//Cleanup object and replace with a new motionaction
-				delete actions[i];
-				actions[i]= new MotionAction(ref->GetDrone(),
-						std::move(std::unique_ptr<PolynomialTrajectory>(
-								PolynomialTrajectory::compute(
-										{state.position, state.velocity, state.acceleration},
-										thisStart,
-										{endState.position, endState.velocity, endState.acceleration},
-										thisEnd))));
-			} else{
-				//TODO: Handle the case of the first action being a transition where our initial velocity and acceleration are 0 and position is equal to home.
+
+		// Each entry in "actions" has a vector full of the actions that occur at that time
+		for (int j=0; j < actions[i].size(); j++){
+			if(!actions[i][j]->IsCalculated()){
+				if(i == 0){
+					//TODO: Handle the case of the first action being a transition where our initial velocity and acceleration are 0 and position is equal to home.
+				} else if (i == (actions[i].size() - 1)){
+					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
+				} else{
+					// Calculate previous and next motion to generate what's needed for the transition
+					MotionAction *ref = FindPreviousAction(actions[i][j].GetDrone(), actions, i);
+					MotionAction *next = FindNextAction(actions[i][j].GetDrone(), actions, i);
+					// TODO: it should be possible that the previous time doesn't have the drone in it,
+					// since different timeslots can command different drones. Must continue search to find drone.
+
+					// Get states from the previous and next state that were found
+					auto startState = ref->GetPathState(ref->GetEndTime());
+					auto endState = next->GetPathState(next->GetStartTime());
+
+					// Store start and end time from EmptyAction to carry over to MotionAction's trajectory
+					double thisStart = actions[i][j]->GetStartTime();
+					double thisEnd = actions[i][j]->GetEndTime();
+
+					// Cleanup object and replace with a new MotionAction
+					delete actions[i][j];
+					actions[i][j] = new MotionAction(actions[i][j]->GetDrone(),
+													 std::move(std::unique_ptr<PolynomialTrajectory>(
+															 PolynomialTrajectory::compute(
+																	 {startState.position, startState.velocity,
+																	  startState.acceleration},
+																	 thisStart,
+																	 {endState.position, endState.velocity,
+																	  endState.acceleration},
+																	 thisEnd))));
+				}
 			}
 		}
 	}
@@ -134,5 +147,44 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 		return ActionTypes::Line;
 	else if (data == "circle")
 		return ActionTypes::Circle;
+}
+
+//TODO: maybe instead of returning a pointer we take it as a parameter which we modify?
+MotionAction* Jocs::FindPreviousAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation) {
+	for(int i = currentLocation-1; i >= 0; i--){
+		MotionAction* actionFound = nullptr;
+		bool success = FindMotionForDrone(id, actions[i], actionFound);
+		if (success) {
+			return actionFound;
+		}
+	}
+	// This means there never *was* a previous motion for this drone
+	//TODO: maybe should throw exception here?
+	return nullptr;
+}
+
+//TODO: maybe instead of returning a pointer we take it as a parameter which we modify?
+MotionAction* Jocs::FindNextAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation) {
+	for(int i = currentLocation+1; i < actions.size(); i++){
+		MotionAction* actionFound = nullptr;
+		bool success = FindMotionForDrone(id, actions[i], actionFound);
+		if (success) {
+			return actionFound;
+		}
+	}
+	// This means there never *will be* a next motion for this drone
+	//TODO: maybe should throw exception here?
+	return nullptr;
+}
+
+bool Jocs::FindMotionForDrone(DroneId id, vector<Action*> curActions, MotionAction& actionFound) {
+	for(int i = 0; i < curActions.size(); i++){
+		if (curActions[i].GetDrone() == id) {
+			// We found the drone we were looking for *wink wink*
+			actionFound = static_cast<MotionAction*>(curActions[i]);
+			return true;
+		}
+	}
+	return false; // This means that the previous time didn't have the drone in it.
 }
 }

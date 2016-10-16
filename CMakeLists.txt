@@ -60,6 +60,7 @@ add_executable(
 
 	test/main.cpp
 	test/core/time.cpp
+	test/mocap/registration.cpp
 )
 set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
 target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)

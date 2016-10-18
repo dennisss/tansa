@@ -31,13 +31,16 @@ std::vector< vector<Action*> > Jocs::Parse(const std::string &jocsPath) {
 
 void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*> >& actions) {
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
+	auto drones = data[DRONE_ARRAY_KEY];
+	assert(drones.is_array());
 	//This must be an array
 	assert(actionsJson.is_array());
-
+	auto droneLength = drones.size();
 	auto length = actionsJson.size();
-	actions.reserve(length);
+	//allocate space for each subarray for each drone.
+	actions.resize(droneLength);
 
-	// For each timeslot, gather actions in a vector and add as entry in "actions" 2d vector
+	// For each drone, gather actions in a vector and add as entry in "actions" 2d vector
 	for(int i = 0; i < length; i++){
 		parseAction(actionsJson[i], actions);
 	}
@@ -48,17 +51,17 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 		// Each entry in "actions" has a vector full of the actions that occur at that time
 		for (int j=0; j < actions[i].size(); j++){
 			if(!actions[i][j]->IsCalculated()){
-				if(i == 0){
+				if(j == 0){
 					//TODO: Handle the case of the first action being a transition where our initial velocity and acceleration are 0 and position is equal to home.
-				} else if (i == (actions[i].size() - 1)){
+				} else if (j == (actions[i].size() - 1)){
 					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
 				} else{
 					// Calculate previous and next motion to generate what's needed for the transition
-					MotionAction *ref = FindPreviousAction(actions[i][j]->GetDrone(), actions, i);
-					MotionAction *next = FindNextAction(actions[i][j]->GetDrone(), actions, i);
+					MotionAction *prev = static_cast<MotionAction*>(actions[i][j-1]);
+					MotionAction *next = static_cast<MotionAction*>(actions[i][j+1]);
 
 					// Get states from the previous and next state that were found
-					auto startState = ref->GetPathState(ref->GetEndTime());
+					auto startState = prev->GetPathState(prev->GetEndTime());
 					auto endState = next->GetPathState(next->GetStartTime());
 
 					// Store start and end time from EmptyAction to carry over to MotionAction's trajectory
@@ -148,7 +151,7 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 }
 
 //TODO: maybe instead of returning a pointer we take it as a parameter which we modify?
-MotionAction* Jocs::FindPreviousAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation) {
+MotionAction* Jocs::FindPreviousAction(DroneId id, std::vector<std::vector<Action*> >& actions, int currentLocation) {
 	for(int i = currentLocation-1; i >= 0; i--){
 		MotionAction* actionFound = nullptr;
 		bool success = FindMotionForDrone(id, actions[i], &actionFound);
@@ -162,7 +165,7 @@ MotionAction* Jocs::FindPreviousAction(DroneId id, std::vector< vector<Action*> 
 }
 
 //TODO: maybe instead of returning a pointer we take it as a parameter which we modify?
-MotionAction* Jocs::FindNextAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation) {
+MotionAction* Jocs::FindNextAction(DroneId id, std::vector<std::vector<Action*>>& actions, int currentLocation) {
 	for(int i = currentLocation+1; i < actions.size(); i++){
 		MotionAction* actionFound = nullptr;
 		bool success = FindMotionForDrone(id, actions[i], &actionFound);

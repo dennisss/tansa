@@ -79,7 +79,7 @@ private:
 	 * @param currentLocation The start time we want to find the previous action before
 	 * @return Action that ends at the time that a drone's current actions starts
 	 */
-	static MotionAction* FindPreviousAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation);
+	static MotionAction* FindPreviousAction(DroneId id, std::vector< std::vector<Action*> >& actions, int currentLocation);
 	/**
 	 * Cycles 2D vector to find the action directly after a current action for a specific drone
 	 * @private
@@ -88,7 +88,7 @@ private:
 	 * @param currentLocation The start time we want to find the next action after
 	 * @return Action that starts at the time that a drone's current actions ends
 	 */
-	static MotionAction* FindNextAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation);
+	static MotionAction* FindNextAction(DroneId id, std::vector< std::vector<Action*>>& actions, int currentLocation);
 	/**
 	 * Cycles Action vector to find the Action pertaining to a specific drone id
 	 * @private

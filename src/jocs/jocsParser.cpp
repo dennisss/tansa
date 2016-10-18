@@ -54,8 +54,8 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
 				} else{
 					// Calculate previous and next motion to generate what's needed for the transition
-					MotionAction *ref = FindPreviousAction(actions[i][j].GetDrone(), actions, i);
-					MotionAction *next = FindNextAction(actions[i][j].GetDrone(), actions, i);
+					MotionAction *ref = FindPreviousAction(actions[i][j]->GetDrone(), actions, i);
+					MotionAction *next = FindNextAction(actions[i][j]->GetDrone(), actions, i);
 
 					// Get states from the previous and next state that were found
 					auto startState = ref->GetPathState(ref->GetEndTime());
@@ -82,7 +82,7 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	}
 }
 
-void Jocs::parseAction(const nlohmann::json::reference data, std::vector<Action*>& actions){
+void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions){
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
@@ -99,7 +99,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<Action*
 			case ActionTypes::Transition: {
 				// Actual calculation will be processed after this loop
 				// For now, there is no trajectory !
-				actions.push_back(new EmptyAction(drone, startTime, startTime + duration));
+				actions[drone].push_back(new EmptyAction(drone, startTime, startTime + duration));
 				break;
 			}
 			//Simple line action
@@ -114,7 +114,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<Action*
 						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
 						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 
-				actions.push_back(new MotionAction(
+				actions[drone].push_back(new MotionAction(
 						drone, std::move(std::make_unique<LinearTrajectory>(start, startTime, end, startTime + duration))));
 				break;
 			}
@@ -127,7 +127,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<Action*
 				double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
 				double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
 				double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
-				actions.push_back(new MotionAction(
+				actions[drone].push_back(new MotionAction(
 						drone, std::move(std::make_unique<CircleTrajectory>(origin, radius, theta1, startTime, theta2, startTime + duration))));
 				break;
 			}
@@ -151,7 +151,7 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 MotionAction* Jocs::FindPreviousAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation) {
 	for(int i = currentLocation-1; i >= 0; i--){
 		MotionAction* actionFound = nullptr;
-		bool success = FindMotionForDrone(id, actions[i], actionFound);
+		bool success = FindMotionForDrone(id, actions[i], &actionFound);
 		if (success) {
 			return actionFound;
 		}
@@ -165,7 +165,7 @@ MotionAction* Jocs::FindPreviousAction(DroneId id, std::vector< vector<Action*> 
 MotionAction* Jocs::FindNextAction(DroneId id, std::vector< vector<Action*> >& actions, int currentLocation) {
 	for(int i = currentLocation+1; i < actions.size(); i++){
 		MotionAction* actionFound = nullptr;
-		bool success = FindMotionForDrone(id, actions[i], actionFound);
+		bool success = FindMotionForDrone(id, actions[i], &actionFound);
 		if (success) {
 			return actionFound;
 		}
@@ -175,11 +175,11 @@ MotionAction* Jocs::FindNextAction(DroneId id, std::vector< vector<Action*> >& a
 	return nullptr;
 }
 
-bool Jocs::FindMotionForDrone(DroneId id, vector<Action*> curActions, MotionAction& actionFound) {
+bool Jocs::FindMotionForDrone(DroneId id, vector<Action*> curActions, MotionAction** actionFound) {
 	for(int i = 0; i < curActions.size(); i++){
-		if (curActions[i].GetDrone() == id) {
+		if (curActions[i]->GetDrone() == id) {
 			// We found the drone we were looking for *wink wink*
-			actionFound = static_cast<MotionAction*>(curActions[i]);
+			*actionFound = static_cast<MotionAction*>(curActions[i]);
 			return true;
 		}
 	}

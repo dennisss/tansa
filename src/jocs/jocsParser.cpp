@@ -26,16 +26,24 @@ std::vector< vector<Action*> > Jocs::Parse(const std::string &jocsPath) {
 	auto rawJson = nlohmann::json::parse(jocsData);
 	std::vector< vector<Action*> > actions;
 	parseActions(rawJson, actions);
+
 	return actions;
 }
 
 void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*> >& actions) {
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	auto drones = data[DRONE_ARRAY_KEY];
+	std::vector<Point> droneHomes;
 	assert(drones.is_array());
 	//This must be an array
 	assert(actionsJson.is_array());
 	auto droneLength = drones.size();
+	droneHomes.resize(droneLength);
+	for(int i = 0; i < droneLength; i++){
+		droneHomes[i] = Point(drones[i][HOME_KEY][0],
+							  drones[i][HOME_KEY][1],
+							  drones[i][HOME_KEY][2]);
+	}
 	auto length = actionsJson.size();
 	//allocate space for each subarray for each drone.
 	actions.resize(droneLength);
@@ -51,7 +59,21 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 		// Each entry in "actions" has a vector full of the actions that occur at that time
 		for (int j=0; j < actions[i].size(); j++){
 			if(!actions[i][j]->IsCalculated()){
+				double thisStart = actions[i][j]->GetStartTime();
+				double thisEnd = actions[i][j]->GetEndTime();
 				if(j == 0){
+					MotionAction *next = static_cast<MotionAction*>(actions[i][j+1]);
+					auto endState = next->GetPathState(next->GetStartTime());
+					std::cout << endState.velocity << std::endl;
+					delete actions[i][j];
+					actions[i][j] = new MotionAction(i,
+						PolynomialTrajectory::compute(
+							{droneHomes[i]},
+							thisStart,
+							{endState.position,endState.velocity, endState.acceleration},
+							thisEnd
+						)
+					);
 					//TODO: Handle the case of the first action being a transition where our initial velocity and acceleration are 0 and position is equal to home.
 				} else if (j == (actions[i].size() - 1)){
 					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
@@ -63,22 +85,20 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 					// Get states from the previous and next state that were found
 					auto startState = prev->GetPathState(prev->GetEndTime());
 					auto endState = next->GetPathState(next->GetStartTime());
-
-					// Store start and end time from EmptyAction to carry over to MotionAction's trajectory
-					double thisStart = actions[i][j]->GetStartTime();
-					double thisEnd = actions[i][j]->GetEndTime();
+					std::cout << startState.velocity << std::endl;
+					std::cout << endState.velocity << std::endl;
 
 					// Cleanup object and replace with a new MotionAction
 					delete actions[i][j];
-					actions[i][j] = new MotionAction(actions[i][j]->GetDrone(),
-													 std::move(std::unique_ptr<PolynomialTrajectory>(
-															 PolynomialTrajectory::compute(
-																	 {startState.position, startState.velocity,
-																	  startState.acceleration},
-																	 thisStart,
-																	 {endState.position, endState.velocity,
-																	  endState.acceleration},
-																	 thisEnd))));
+					actions[i][j] = new MotionAction(i, PolynomialTrajectory::compute(
+							 {startState.position, startState.velocity,
+							  startState.acceleration},
+							 thisStart,
+							 {endState.position, endState.velocity,
+							  endState.acceleration},
+							 thisEnd
+						 )
+					);
 				}
 			}
 		}
@@ -118,7 +138,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 
 				actions[drone].push_back(new MotionAction(
-						drone, std::move(std::make_unique<LinearTrajectory>(start, startTime, end, startTime + duration))));
+						drone, new LinearTrajectory(start, startTime, end, startTime + duration)));
 				break;
 			}
 			//Circle Action
@@ -129,9 +149,11 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 						actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][2]);
 				double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
 				double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
+				theta1 = (theta1 * M_PI)/180.0;
 				double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
+				theta2 = (theta2 * M_PI)/180.0;
 				actions[drone].push_back(new MotionAction(
-						drone, std::move(std::make_unique<CircleTrajectory>(origin, radius, theta1, startTime, theta2, startTime + duration))));
+						drone, new CircleTrajectory(origin, radius, theta1, startTime, theta2, startTime + duration)));
 				break;
 			}
 			default: {

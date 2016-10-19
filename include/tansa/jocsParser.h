@@ -23,7 +23,6 @@ enum ActionTypes : unsigned{
 
 /**
  * Class representing the
- * @static
  */
 class Jocs {
 public:

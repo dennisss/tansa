@@ -24,6 +24,7 @@ public:
 	 * @param id Id of the drone this action refers to
 	 */
 	Action(DroneId id) : droneId(id) {}
+	virtual ~Action(){}
 	/**
 	 * @virtual
 	 * @return Double representing the seconds after initialization that this action should start at
@@ -70,20 +71,19 @@ private:
  */
 class MotionAction : public Action {
 public:
-	MotionAction(DroneId id, std::unique_ptr<Trajectory> t) : Action(id), path(std::move(t)) { isCalculated = true; }
+	MotionAction(DroneId id, Trajectory* t) : Action(id), path(t) { isCalculated = true; }
+	virtual ~MotionAction(){ delete path; }
 
-	/**
-	 * TODO: Do we need this? If we do then path needs to be a shared_ptr
-	 * @return Trajectory object that this object contains
-	 */
 	inline TrajectoryState GetPathState(double t){ return path->evaluate(t); }
+
+	inline Trajectory* GetPath(){return path;}
 
 	virtual double GetStartTime() const { return path->startTime(); }
 
 	virtual double GetEndTime() const { return path->endTime(); }
 
 private:
-	std::unique_ptr<Trajectory> path;
+	Trajectory* path;
 };
 
 /**

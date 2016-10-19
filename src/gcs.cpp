@@ -11,7 +11,8 @@
 
 #include <vector>
 #include <tansa/jocsParser.h>
-
+#include <tansa/action.h>
+using namespace tansa;
 bool running;
 
 void signal_sigint(int s) {
@@ -235,7 +236,7 @@ int multidrone_main() {
 
 int main(int argc, char *argv[]) {
 
-	tansa::Jocs::Parse("singleDrone.jocs");
+	auto actions = tansa::Jocs::Parse("singleDrone.jocs");
 //	return multidrone_main();
 	bool mocap_enabled = false,
 		 sim_enabled = true;
@@ -398,7 +399,7 @@ int main(int argc, char *argv[]) {
 		else if(state == STATE_FLYING) {
 
 			double t = Time::now().since(start).seconds();
-			if(t >= plan[planI]->endTime())
+			/*if(t >= plan[planI]->endTime())
 				planI++;
 
 			if(planI >= plan.size()) {
@@ -407,7 +408,15 @@ int main(int argc, char *argv[]) {
 				continue;
 			}
 
-			Trajectory *cur = plan[planI];
+			Trajectory *cur = plan[planI];*/
+			Trajectory *cur = static_cast<MotionAction*>(actions[0][planI])->GetPath();
+			if(t >= actions[0][planI]->GetEndTime())
+				planI++;
+			if(planI >= actions.size()){
+				state = STATE_LANDING;
+				v.land();
+				continue;
+			}
 			posctl.track(cur);
 			posctl.control(t);
 		}

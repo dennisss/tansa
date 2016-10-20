@@ -5,6 +5,12 @@ Examples as well as documentation of what's going on in each line are listed bel
 ```javascript
 // JOCS: JOCS Open Choreography Schema
 {
+  "units":
+    {
+      "length": "meters",
+      "time": "seconds",
+      "angle": "degrees"
+    }
   // Stores starting data for each drone present
   "drones": [ 
     {

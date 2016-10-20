@@ -1,4 +1,10 @@
 {
+  "units":
+  {
+    "length": "meters",
+    "time": "seconds",
+    "angle": "degrees"
+  },
   "drones": [
     {
       "startPosition" : [0, 0, 1],

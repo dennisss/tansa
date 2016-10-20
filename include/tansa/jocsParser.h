@@ -42,34 +42,45 @@ public:
 	static const std::string CIRCLE_RADIUS_KEY;
 	static const std::string CIRCLE_THETA1_KEY;
 	static const std::string CIRCLE_THETA2_KEY;
+	static const std::string UNITS_KEY;
+	static const double FEET_TO_METERS;
+	static const double DEGREES_TO_RADIANS;
+	Jocs(std::string jocsPath) : jocsPath(std::move(jocsPath)){}
 	/**
 	 * Parses a given Jocs file
 	 * @public
 	 * @param jocsPath String containing path from working directory to jocsFile
 	 * @return A vector containing unique_ptrs to Actions
 	 */
-	static std::vector<std::vector<Action*>> Parse(const std::string &jocsPath);
+	 std::vector<std::vector<Action*>> Parse();
+private:
+	std::string jocsPath;
+	bool needConvertToMeters = false;
+	bool needConvertToRadians = false;
+	std::vector<Point> homes;
+
+
 private:
 	/**
 	 * Parse all actions in a given Jocs json object
 	 * @param data [in] Jocs json data
 	 * @param actions [out] Will be filled with actions
 	 */
-	static void parseActions(const nlohmann::json &data, std::vector<std::vector<Action*>>& actions);
+	 void parseActions(const nlohmann::json &data, std::vector<std::vector<Action*>>& actions);
 	/**
 	 * Parses a singular action array
 	 * @private
 	 * @param data Json data containing a reference to an action
 	 * @param actions [out] Will be filled with actions
 	 */
-	static void parseAction(const nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions);
+	 void parseAction(const nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions);
 	/**
 	 * Converts from string to ActionTypes enum
 	 * @private
 	 * @param data A string containing the ascii representation of an ActionType
 	 * @return Action type as the enum
 	 */
-	static ActionTypes convertToActionType(const std::string& data);
+	 ActionTypes convertToActionType(const std::string& data);
 	/**
 	 * Cycles 2D vector to find the action directly previous to a current action for a specific drone
 	 * @private
@@ -78,7 +89,7 @@ private:
 	 * @param currentLocation The start time we want to find the previous action before
 	 * @return Action that ends at the time that a drone's current actions starts
 	 */
-	static MotionAction* FindPreviousAction(DroneId id, std::vector< std::vector<Action*> >& actions, int currentLocation);
+	 MotionAction* FindPreviousAction(DroneId id, std::vector< std::vector<Action*> >& actions, int currentLocation);
 	/**
 	 * Cycles 2D vector to find the action directly after a current action for a specific drone
 	 * @private
@@ -87,7 +98,7 @@ private:
 	 * @param currentLocation The start time we want to find the next action after
 	 * @return Action that starts at the time that a drone's current actions ends
 	 */
-	static MotionAction* FindNextAction(DroneId id, std::vector< std::vector<Action*>>& actions, int currentLocation);
+	 MotionAction* FindNextAction(DroneId id, std::vector< std::vector<Action*>>& actions, int currentLocation);
 	/**
 	 * Cycles Action vector to find the Action pertaining to a specific drone id
 	 * @private
@@ -96,7 +107,7 @@ private:
 	 * @param actionFound The Action within curActions which applies to the intended drone id
 	 * @return Action that starts at the time that a drone's current actions ends
 	 */
-	static bool FindMotionForDrone(DroneId id, vector<Action*> curActions, MotionAction** actionFound);
+	 bool FindMotionForDrone(DroneId id, vector<Action*> curActions, MotionAction** actionFound);
 };
 }
 #endif //TANSA_JOCSPARSER_H

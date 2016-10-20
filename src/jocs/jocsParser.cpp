@@ -19,11 +19,19 @@ const std::string Jocs::CIRCLE_ORIGIN_KEY = "originPointCenter";
 const std::string Jocs::CIRCLE_RADIUS_KEY = "radius";
 const std::string Jocs::CIRCLE_THETA1_KEY = "theta1";
 const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
+const std::string Jocs::UNITS_KEY = "units";
 
-std::vector< vector<Action*> > Jocs::Parse(const std::string &jocsPath) {
+const double Jocs::FEET_TO_METERS = 0.3048;
+const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
+
+
+std::vector< vector<Action*> > Jocs::Parse() {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
 	auto rawJson = nlohmann::json::parse(jocsData);
+	auto units = rawJson[UNITS_KEY];
+	needConvertToMeters = (units["length"] == "feet");
+	needConvertToRadians = (units["angle"] == "degrees");
 	std::vector< vector<Action*> > actions;
 	parseActions(rawJson, actions);
 	return actions;
@@ -32,14 +40,14 @@ std::vector< vector<Action*> > Jocs::Parse(const std::string &jocsPath) {
 void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*> >& actions) {
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	auto drones = data[DRONE_ARRAY_KEY];
-	std::vector<Point> droneHomes;
+
 	assert(drones.is_array());
 	//This must be an array
 	assert(actionsJson.is_array());
 	auto droneLength = drones.size();
-	droneHomes.resize(droneLength);
+	homes.resize(droneLength);
 	for(int i = 0; i < droneLength; i++){
-		droneHomes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2]);
+		homes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2]);
 	}
 	auto length = actionsJson.size();
 	//allocate space for each subarray for each drone.
@@ -62,13 +70,12 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 					delete actions[i][j];
 					actions[i][j] = new MotionAction(i,
 						PolynomialTrajectory::compute(
-							{droneHomes[i]},
+							{homes[i]},
 							thisStart,
 							{endState.position,endState.velocity, endState.acceleration},
 							thisEnd
 						)
 					);
-					//TODO: Handle the case of the first action being a transition where our initial velocity and acceleration are 0 and position is equal to home.
 				} else if (j == (actions[i].size() - 1)){
 					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
 				} else{
@@ -105,11 +112,15 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
 		//TODO: Assuming no grouping right now. Will have to make this a loop to create actions for each drone and calc offset
 		assert(actionsArrayElement[DRONE_ARRAY_KEY].is_array());
-		struct Drone {
-			Point start;
-			unsigned id;
-		};
+		//Assuming that the center will be the first drone listed in the array.
 		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];
+		unsigned centerDroneIndex = actions[drones[0]].size();
+		double conversionFactor = 1.0;
+		if(needConvertToMeters){
+			conversionFactor = FEET_TO_METERS;
+		}
+
+
 		assert(drones.is_array());
 		for (int j = 0; j < drones.size(); j++) {
 			unsigned drone = j;
@@ -124,10 +135,12 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][0],
 							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][1],
 							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][2]);
+					start*=conversionFactor;
 					Point end(
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][0],
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
+					end*=conversionFactor;
 					actions[drone].push_back(new MotionAction(
 							drone, new LinearTrajectory(start, startTime, end, startTime + duration)));
 					break;
@@ -137,11 +150,17 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][0],
 							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][1],
 							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][2]);
+					origin*=conversionFactor;
 					double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
 					double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
-					theta1 = (theta1 * M_PI) / 180.0;
+					radius*=conversionFactor;
+
+
 					double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
-					theta2 = (theta2 * M_PI) / 180.0;
+					if(needConvertToRadians) {
+						theta1 = (theta1 * M_PI) / 180.0;
+						theta2 = (theta2 * M_PI) / 180.0;
+					}
 					actions[drone].push_back(new MotionAction(
 							drone,
 							new CircleTrajectory(origin, radius, theta1, startTime, theta2, startTime + duration)));

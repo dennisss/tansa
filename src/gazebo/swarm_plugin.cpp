@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
+#include <string>
 
 typedef const boost::shared_ptr<const tansa::msgs::SpawnRequest> SpawnRequestPtr;
 typedef const boost::shared_ptr<const gazebo::msgs::Pose> PosePtr;
@@ -117,9 +118,13 @@ namespace gazebo {
 		void start_sitl(int n) {
 			int p = fork();
 			if(p == 0) { // Child
-				char *const argv[] = { "/bin/bash", "scripts/start_sim.sh", "1", NULL};
+				char *const bash = (char *const) "/bin/bash";
+				char *const script = (char *const) "scripts/start_sim.sh";
+				char num[16];
+				strcpy(num, std::to_string(n).c_str());
+				char *const argv[] = { bash, script, num, NULL};
 
-				execv("/bin/bash", argv);
+				execv(bash, argv);
 
 				exit(0);
 				return;

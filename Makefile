@@ -11,6 +11,9 @@ build:
 run: build
 	./build/gcs
 
+test: build
+	cd build; ./test_tansa # make test
+
 clean:
 	rm -rf build
 	rm -rf build_firmware

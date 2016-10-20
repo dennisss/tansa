@@ -49,6 +49,25 @@ set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
 add_subdirectory(src/gazebo)
 
 
+######## Test Suite ########
+
+enable_testing()
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+
+add_executable(
+	test_tansa
+
+	test/main.cpp
+	test/core/time.cpp
+	test/mocap/registration.cpp
+)
+set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
+target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)
+
+add_test(TansaTests test_tansa)
+
 
 ######## CLI Demo ########
 

@@ -26,7 +26,6 @@ std::vector< vector<Action*> > Jocs::Parse(const std::string &jocsPath) {
 	auto rawJson = nlohmann::json::parse(jocsData);
 	std::vector< vector<Action*> > actions;
 	parseActions(rawJson, actions);
-
 	return actions;
 }
 
@@ -40,23 +39,18 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	auto droneLength = drones.size();
 	droneHomes.resize(droneLength);
 	for(int i = 0; i < droneLength; i++){
-		droneHomes[i] = Point(drones[i][HOME_KEY][0],
-							  drones[i][HOME_KEY][1],
-							  drones[i][HOME_KEY][2]);
+		droneHomes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2]);
 	}
 	auto length = actionsJson.size();
 	//allocate space for each subarray for each drone.
 	actions.resize(droneLength);
-
 	// For each drone, gather actions in a vector and add as entry in "actions" 2d vector
 	for(int i = 0; i < length; i++){
 		parseAction(actionsJson[i], actions);
 	}
-
 	// Go back and review actions such that transitions can be created with polynomial trajectories
 	for(int i = 0; i < actions.size(); i++){
-
-		// Each entry in "actions" has a vector full of the actions that occur at that time
+		// Each entry in "actions" has a vector full of actions for that drone
 		for (int j=0; j < actions[i].size(); j++){
 			if(!actions[i][j]->IsCalculated()){
 				double thisStart = actions[i][j]->GetStartTime();
@@ -81,21 +75,15 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 					// Calculate previous and next motion to generate what's needed for the transition
 					MotionAction *prev = static_cast<MotionAction*>(actions[i][j-1]);
 					MotionAction *next = static_cast<MotionAction*>(actions[i][j+1]);
-
 					// Get states from the previous and next state that were found
 					auto startState = prev->GetPathState(prev->GetEndTime());
 					auto endState = next->GetPathState(next->GetStartTime());
-					std::cout << startState.velocity << std::endl;
-					std::cout << endState.velocity << std::endl;
-
 					// Cleanup object and replace with a new MotionAction
 					delete actions[i][j];
 					actions[i][j] = new MotionAction(i, PolynomialTrajectory::compute(
-							 {startState.position, startState.velocity,
-							  startState.acceleration},
+							 {startState.position, startState.velocity, startState.acceleration},
 							 thisStart,
-							 {endState.position, endState.velocity,
-							  endState.acceleration},
+							 {endState.position, endState.velocity, endState.acceleration},
 							 thisEnd
 						 )
 					);
@@ -109,55 +97,59 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
+
 	for(int i = 0; i < actionsArray.size(); i++) {
+		bool isGroup = false;
 		auto actionsArrayElement = actionsArray[i];
 		double duration = actionsArrayElement[DURATION_KEY];
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
 		//TODO: Assuming no grouping right now. Will have to make this a loop to create actions for each drone and calc offset
 		assert(actionsArrayElement[DRONE_ARRAY_KEY].is_array());
-		unsigned drone = actionsArrayElement[DRONE_ARRAY_KEY][0];
-		//Switch on type of Action
-		switch (type) {
-			//Transitional case: Put a placeholder action to be post-processed away
-			case ActionTypes::Transition: {
-				// Actual calculation will be processed after this loop
-				// For now, there is no trajectory !
-				actions[drone].push_back(new EmptyAction(drone, startTime, startTime + duration));
-				break;
-			}
-			//Simple line action
-			case ActionTypes::Line: {
-				Point start(
-						actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][0],
-						actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][1],
-						actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][2]);
-
-				Point end(
-						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][0],
-						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
-						actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
-
-				actions[drone].push_back(new MotionAction(
-						drone, new LinearTrajectory(start, startTime, end, startTime + duration)));
-				break;
-			}
-			//Circle Action
-			case ActionTypes::Circle: {
-				Point origin(
-						actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][0],
-						actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][1],
-						actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][2]);
-				double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
-				double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
-				theta1 = (theta1 * M_PI)/180.0;
-				double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
-				theta2 = (theta2 * M_PI)/180.0;
-				actions[drone].push_back(new MotionAction(
-						drone, new CircleTrajectory(origin, radius, theta1, startTime, theta2, startTime + duration)));
-				break;
-			}
-			default: {
-				break;
+		struct Drone {
+			Point start;
+			unsigned id;
+		};
+		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];
+		assert(drones.is_array());
+		for (int j = 0; j < drones.size(); j++) {
+			unsigned drone = j;
+			switch (type) {
+				case ActionTypes::Transition: {
+					// Actual calculation will be processed after this loop
+					actions[drone].push_back(new EmptyAction(drone, startTime, startTime + duration));
+					break;
+				}
+				case ActionTypes::Line: {
+					Point start(
+							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][0],
+							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][1],
+							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][2]);
+					Point end(
+							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][0],
+							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
+							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
+					actions[drone].push_back(new MotionAction(
+							drone, new LinearTrajectory(start, startTime, end, startTime + duration)));
+					break;
+				}
+				case ActionTypes::Circle: {
+					Point origin(
+							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][0],
+							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][1],
+							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][2]);
+					double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
+					double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
+					theta1 = (theta1 * M_PI) / 180.0;
+					double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
+					theta2 = (theta2 * M_PI) / 180.0;
+					actions[drone].push_back(new MotionAction(
+							drone,
+							new CircleTrajectory(origin, radius, theta1, startTime, theta2, startTime + duration)));
+					break;
+				}
+				default: {
+					break;
+				}
 			}
 		}
 	}

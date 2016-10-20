@@ -409,14 +409,15 @@ int main(int argc, char *argv[]) {
 			}
 
 			Trajectory *cur = plan[planI];*/
-			Trajectory *cur = static_cast<MotionAction*>(actions[0][planI])->GetPath();
+
 			if(t >= actions[0][planI]->GetEndTime())
 				planI++;
-			if(planI >= actions.size()){
+			if(planI >= actions[0].size()){
 				state = STATE_LANDING;
 				v.land();
 				continue;
 			}
+			Trajectory *cur = static_cast<MotionAction*>(actions[0][planI])->GetPath();
 			posctl.track(cur);
 			posctl.control(t);
 		}

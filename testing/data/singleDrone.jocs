@@ -1,0 +1,169 @@
+{
+  "units":
+  {
+    "length": "meters",
+    "time": "seconds",
+    "angle": "degrees"
+  },
+  "drones": [
+    {
+      "startPosition" : [0, 0, 1],
+      "id": 0
+    }
+  ],
+  "chor": [
+    {
+      "time": 0.0,
+      "action": [
+        {
+          "type": "transition",
+          "data": {},
+          "duration": 5.0,
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": 5.0,
+      "action": [
+        {
+          "type": "circle",
+          "data":
+          {
+            "originPointCenter": [0,0,1],
+            "radius": 2,
+            "theta1": 0,
+            "theta2": 360
+          },
+          "duration": 15,
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": 20.0,
+      "action": [
+        {
+          "type": "transition",
+          "data": {},
+          "duration": 2.5,
+          "drones": [
+            {
+            "id":0,
+            "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": 22.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            "startPointCenter": [2, 2, 1],
+            "endPointCenter": [2, -2, 1]
+          },
+          "duration": 5,
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": 27.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            "startPointCenter": [2, -2, 1],
+            "endPointCenter": [-2, -2, 1]
+          },
+          "duration": 5,
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": 32.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            "startPointCenter": [-2, -2, 1],
+            "endPointCenter": [-2, 2, 1]
+          },
+          "duration": 5,
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": 37.5,
+      "action": [
+        {
+          "type": "line",
+          "data":
+          {
+            "startPointCenter": [-2, 2, 1],
+            "endPointCenter": [0, 0, 1]
+          },
+          "duration": 5,
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "time": 42.5,
+      "action": [
+        {
+          "type": "hover",
+          "data":
+          {
+            "startPointCenter": [-2, 2, 1]
+          },
+          "duration": 5,
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

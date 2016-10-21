@@ -31,7 +31,8 @@ add_library(
 	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp
 	src/mocap/optitrack/NatNetClient.cpp
-)
+    src/jocs/jocsParser.cpp
+	src/jocs/action.cpp)
 
 target_link_libraries(
 	tansa
@@ -39,7 +40,7 @@ target_link_libraries(
 	pthread
 )
 
-set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
 
@@ -47,6 +48,25 @@ set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++11")
 
 add_subdirectory(src/gazebo)
 
+
+######## Test Suite ########
+
+enable_testing()
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+
+add_executable(
+	test_tansa
+
+	test/main.cpp
+	test/core/time.cpp
+	test/mocap/registration.cpp
+)
+set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
+target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)
+
+add_test(TansaTests test_tansa)
 
 
 ######## CLI Demo ########
@@ -66,7 +86,7 @@ target_link_libraries(
 	tansa_gazebo
 )
 
-set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
 

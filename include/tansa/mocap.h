@@ -4,6 +4,7 @@
 #include "vehicle.h"
 
 #include <map>
+#include <vector>
 
 class NatNetClient;
 struct sFrameOfMocapData;
@@ -43,5 +44,9 @@ private:
 
 };
 
+
+void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> &c);
+void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, vector<unsigned> &c);
+void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t);
 
 #endif

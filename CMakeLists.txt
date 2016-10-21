@@ -43,6 +43,23 @@ target_link_libraries(
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
+######## Headers and libraries for prebuilt socket.io client ########
+
+include_directories(
+	lib/socket.io-client-cpp/build/include
+)
+
+link_directories(
+	lib/socket.io-client-cpp/build/lib/Release
+)
+
+target_link_libraries(
+	tansa
+
+	sioclient
+)
+
+
 
 ######## Extensions ########
 

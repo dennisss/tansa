@@ -72,33 +72,6 @@ private:
 	 * @return Action type as the enum
 	 */
 	 ActionTypes convertToActionType(const std::string& data);
-	/**
-	 * Cycles 2D vector to find the action directly previous to a current action for a specific drone
-	 * @private
-	 * @param id The id of the drone we want to search for actions for
-	 * @param actions The 2d array full of actions organized by their start time
-	 * @param currentLocation The start time we want to find the previous action before
-	 * @return Action that ends at the time that a drone's current actions starts
-	 */
-	 MotionAction* FindPreviousAction(DroneId id, std::vector< std::vector<Action*> >& actions, int currentLocation);
-	/**
-	 * Cycles 2D vector to find the action directly after a current action for a specific drone
-	 * @private
-	 * @param id The id of the drone we want to search for actions for
-	 * @param actions The 2d array full of actions organized by their start time
-	 * @param currentLocation The start time we want to find the next action after
-	 * @return Action that starts at the time that a drone's current actions ends
-	 */
-	 MotionAction* FindNextAction(DroneId id, std::vector< std::vector<Action*>>& actions, int currentLocation);
-	/**
-	 * Cycles Action vector to find the Action pertaining to a specific drone id
-	 * @private
-	 * @param id The id of the drone we want to search for actions for
-	 * @param curActions The vector full of actions at the same start time
-	 * @param actionFound The Action within curActions which applies to the intended drone id
-	 * @return Action that starts at the time that a drone's current actions ends
-	 */
-	 bool FindMotionForDrone(DroneId id, vector<Action*> curActions, MotionAction** actionFound);
 };
 }
 #endif //TANSA_JOCSPARSER_H

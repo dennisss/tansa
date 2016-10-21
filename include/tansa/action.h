@@ -18,6 +18,8 @@ enum ActionTypes : unsigned{
 	Transition = 0,
 	Line = 1,
 	Circle = 2,
+	Hover = 3,
+	Light = 4,
 };
 
 typedef unsigned DroneId;
@@ -33,7 +35,7 @@ public:
 	/**
 	 * @param id Id of the drone this action refers to
 	 */
-	Action(DroneId id) : droneId(id) {}
+	Action(DroneId id, ActionTypes type) : droneId(id), type(type) {}
 	virtual ~Action(){}
 	/**
 	 * @virtual
@@ -55,8 +57,10 @@ public:
 	 * @return false if action needs to be calculated in post-process step
 	 */
 	inline bool IsCalculated() { return isCalculated; }
+	inline ActionTypes GetActionType() { return type; }
 
 protected:
+	ActionTypes type;
 	DroneId droneId;
 	bool isCalculated = false;
 };
@@ -65,7 +69,7 @@ protected:
  */
 class EmptyAction : public Action {
 public:
-    EmptyAction(DroneId id, double s, double e): Action(id), startTime(s), endTime(e) {}
+    EmptyAction(DroneId id, double s, double e): Action(id,ActionTypes::Transition), startTime(s), endTime(e){}
 
     virtual double GetStartTime() const { return startTime; }
 
@@ -81,7 +85,7 @@ private:
  */
 class MotionAction : public Action {
 public:
-	MotionAction(DroneId id, Trajectory* t) : Action(id), path(t) { isCalculated = true; }
+	MotionAction(DroneId id, Trajectory* t, ActionTypes type) : Action(id, type), path(t) { isCalculated = true; }
 	virtual ~MotionAction(){ delete path; }
 
 	inline TrajectoryState GetPathState(double t){ return path->evaluate(t); }
@@ -101,7 +105,7 @@ private:
  */
 class LightAction : public Action {
 public:
-	LightAction(double s, double e, DroneId id, double i, LightId l) :  Action(id),
+	LightAction(double s, double e, DroneId id, double i, LightId l) :  Action(id, ActionTypes::Light),
 			startTime(s), endTime(e), intensity(i), lightId(l) { isCalculated = true; }
 
 	virtual double GetStartTime() { return startTime; }

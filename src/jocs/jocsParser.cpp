@@ -63,36 +63,40 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 				double thisStart = actions[i][j]->GetStartTime();
 				double thisEnd = actions[i][j]->GetEndTime();
 				if(j == 0){
-					MotionAction *next = static_cast<MotionAction*>(actions[i][j+1]);
-					auto endState = next->GetPathState(next->GetStartTime());
-					std::cout << endState.velocity << std::endl;
-					delete actions[i][j];
-					actions[i][j] = new MotionAction(i,
-						PolynomialTrajectory::compute(
-							{homes[i]},
-							thisStart,
-							{endState.position,endState.velocity, endState.acceleration},
-							thisEnd
-						)
-					);
+						MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
+						auto endState = next->GetPathState(next->GetStartTime());
+						std::cout << endState.velocity << std::endl;
+						delete actions[i][j];
+						actions[i][j] = new MotionAction(i,
+							 PolynomialTrajectory::compute(
+									 {homes[i]},
+									 thisStart,
+									 {endState.position, endState.velocity,
+									  endState.acceleration},
+									 thisEnd
+							 ),
+							 ActionTypes::Transition
+						);
 				} else if (j == (actions[i].size() - 1)){
 					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
 				} else{
-					// Calculate previous and next motion to generate what's needed for the transition
-					MotionAction *prev = static_cast<MotionAction*>(actions[i][j-1]);
-					MotionAction *next = static_cast<MotionAction*>(actions[i][j+1]);
-					// Get states from the previous and next state that were found
-					auto startState = prev->GetPathState(prev->GetEndTime());
-					auto endState = next->GetPathState(next->GetStartTime());
-					// Cleanup object and replace with a new MotionAction
-					delete actions[i][j];
-					actions[i][j] = new MotionAction(i, PolynomialTrajectory::compute(
-							 {startState.position, startState.velocity, startState.acceleration},
-							 thisStart,
-							 {endState.position, endState.velocity, endState.acceleration},
-							 thisEnd
-						 )
-					);
+
+						// Calculate previous and next motion to generate what's needed for the transition
+						MotionAction *prev = static_cast<MotionAction *>(actions[i][j - 1]);
+						MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
+						// Get states from the previous and next state that were found
+						auto startState = prev->GetPathState(prev->GetEndTime());
+						auto endState = next->GetPathState(next->GetStartTime());
+						// Cleanup object and replace with a new MotionAction
+						delete actions[i][j];
+						actions[i][j] = new MotionAction(i, PolynomialTrajectory::compute(
+								{startState.position, startState.velocity, startState.acceleration},
+								thisStart,
+								{endState.position, endState.velocity, endState.acceleration},
+								thisEnd
+														 ),
+								ActionTypes::Transition
+						);
 				}
 			}
 		}
@@ -132,7 +136,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 					end*=conversionFactor;
 					actions[drone].push_back(new MotionAction(
-							drone, new LinearTrajectory(start + offset, startTime, end + offset, startTime + duration)));
+							drone, new LinearTrajectory(start + offset, startTime, end + offset, startTime + duration), ActionTypes::Line));
 					break;
 				}
 				case ActionTypes::Circle: {
@@ -151,7 +155,23 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 					}
 					actions[drone].push_back(new MotionAction(
 							drone,
-							new CircleTrajectory(origin + offset, radius, theta1, startTime, theta2, startTime + duration)));
+							new CircleTrajectory(origin + offset, radius, theta1, startTime, theta2, startTime + duration),
+							ActionTypes::Circle
+					));
+					break;
+				}
+				case ActionTypes::Hover:{
+					Point hoverPoint(
+							actionsArrayElement[ACTION_DATA_KEY]["startPointCenter"][0],
+							actionsArrayElement[ACTION_DATA_KEY]["startPointCenter"][1],
+							actionsArrayElement[ACTION_DATA_KEY]["startPointCenter"][2]
+					);
+					hoverPoint*=conversionFactor;
+					actions[drone].push_back(new MotionAction(
+							drone,
+							new LinearTrajectory(hoverPoint + offset, startTime, hoverPoint + offset, startTime + duration),
+							ActionTypes::Hover
+					));
 					break;
 				}
 				default: {
@@ -169,44 +189,7 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 		return ActionTypes::Line;
 	else if (data == "circle")
 		return ActionTypes::Circle;
-}
-
-//TODO: maybe instead of returning a pointer we take it as a parameter which we modify?
-MotionAction* Jocs::FindPreviousAction(DroneId id, std::vector<std::vector<Action*> >& actions, int currentLocation) {
-	for(int i = currentLocation-1; i >= 0; i--){
-		MotionAction* actionFound = nullptr;
-		bool success = FindMotionForDrone(id, actions[i], &actionFound);
-		if (success) {
-			return actionFound;
-		}
-	}
-	// This means there never *was* a previous motion for this drone
-	//TODO: maybe should throw exception here?
-	return nullptr;
-}
-
-//TODO: maybe instead of returning a pointer we take it as a parameter which we modify?
-MotionAction* Jocs::FindNextAction(DroneId id, std::vector<std::vector<Action*>>& actions, int currentLocation) {
-	for(int i = currentLocation+1; i < actions.size(); i++){
-		MotionAction* actionFound = nullptr;
-		bool success = FindMotionForDrone(id, actions[i], &actionFound);
-		if (success) {
-			return actionFound;
-		}
-	}
-	// This means there never *will be* a next motion for this drone
-	//TODO: maybe should throw exception here?
-	return nullptr;
-}
-
-bool Jocs::FindMotionForDrone(DroneId id, vector<Action*> curActions, MotionAction** actionFound) {
-	for(int i = 0; i < curActions.size(); i++){
-		if (curActions[i]->GetDrone() == id) {
-			// We found the drone we were looking for *wink wink*
-			*actionFound = static_cast<MotionAction*>(curActions[i]);
-			return true;
-		}
-	}
-	return false; // This means that the previous time didn't have the drone in it.
+	else if (data == "hover")
+		return ActionTypes::Hover;
 }
 }

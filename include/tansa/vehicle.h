@@ -2,6 +2,7 @@
 #define TANSA_VEHICLE_H_
 
 #include "time.h"
+#include "estimation.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -91,10 +92,7 @@ public:
 	string mode;
 
 	// Physical State : used for visualization and trajectory control
-	Vector3d position;
-	Vector3d velocity;
-	Quaterniond orientation;
-	Time stateTime;
+	State state;
 
 private:
 

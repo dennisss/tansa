@@ -97,7 +97,7 @@ PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, dou
 		VectorXd b = VectorXd::Zero(n);
 
 		// Adding in constraints
-		// If they are now specified, we will set them them to 0 (else the system will be undersatisfied)
+		// If they are none specified, we will set them them to 0 (else the system will be underconstrained)
 		for(int j = 0; j < c1.size(); j++) {
 			b(j) = c1[j](i);
 		}

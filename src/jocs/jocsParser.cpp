@@ -24,7 +24,6 @@ const std::string Jocs::UNITS_KEY = "units";
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
 
-
 std::vector< vector<Action*> > Jocs::Parse() {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
@@ -104,26 +103,17 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
-
 	for(int i = 0; i < actionsArray.size(); i++) {
-		bool isGroup = false;
 		auto actionsArrayElement = actionsArray[i];
 		double duration = actionsArrayElement[DURATION_KEY];
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
-		//TODO: Assuming no grouping right now. Will have to make this a loop to create actions for each drone and calc offset
 		assert(actionsArrayElement[DRONE_ARRAY_KEY].is_array());
-		//Assuming that the center will be the first drone listed in the array.
 		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];
-		unsigned centerDroneIndex = actions[drones[0]].size();
-		double conversionFactor = 1.0;
-		if(needConvertToMeters){
-			conversionFactor = FEET_TO_METERS;
-		}
-
-
+		double conversionFactor = needConvertToMeters ? FEET_TO_METERS : 1.0;
 		assert(drones.is_array());
 		for (int j = 0; j < drones.size(); j++) {
-			unsigned drone = j;
+			unsigned drone = drones[j][ID_KEY];
+			Point offset(drones[j]["offset"][0],drones[j]["offset"][1],drones[j]["offset"][2]);
 			switch (type) {
 				case ActionTypes::Transition: {
 					// Actual calculation will be processed after this loop
@@ -142,7 +132,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 					end*=conversionFactor;
 					actions[drone].push_back(new MotionAction(
-							drone, new LinearTrajectory(start, startTime, end, startTime + duration)));
+							drone, new LinearTrajectory(start + offset, startTime, end + offset, startTime + duration)));
 					break;
 				}
 				case ActionTypes::Circle: {
@@ -154,16 +144,14 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 					double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
 					double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
 					radius*=conversionFactor;
-
-
 					double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
 					if(needConvertToRadians) {
-						theta1 = (theta1 * M_PI) / 180.0;
-						theta2 = (theta2 * M_PI) / 180.0;
+						theta1 = theta1 * DEGREES_TO_RADIANS;
+						theta2 = theta2 * DEGREES_TO_RADIANS;
 					}
 					actions[drone].push_back(new MotionAction(
 							drone,
-							new CircleTrajectory(origin, radius, theta1, startTime, theta2, startTime + duration)));
+							new CircleTrajectory(origin + offset, radius, theta1, startTime, theta2, startTime + duration)));
 					break;
 				}
 				default: {

@@ -19,7 +19,12 @@
           "type": "transition",
           "data": {},
           "duration": 5.0,
-          "drones": [0]
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
         }
       ]
     },
@@ -36,7 +41,12 @@
             "theta2": 360
           },
           "duration": 15,
-          "drones": [0]
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
         }
       ]
     },
@@ -47,7 +57,12 @@
           "type": "transition",
           "data": {},
           "duration": 2.5,
-          "drones": [0]
+          "drones": [
+            {
+            "id":0,
+            "offset":[0,0,0]
+            }
+          ]
         }
       ]
     },
@@ -62,7 +77,12 @@
             "endPointCenter": [2, -2, 1]
           },
           "duration": 5,
-          "drones": [0]
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
         }
       ]
     },
@@ -77,7 +97,12 @@
             "endPointCenter": [-2, -2, 1]
           },
           "duration": 5,
-          "drones": [0]
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
         }
       ]
     },
@@ -92,7 +117,12 @@
             "endPointCenter": [-2, 2, 1]
           },
           "duration": 5,
-          "drones": [0]
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
         }
       ]
     },
@@ -107,7 +137,12 @@
             "endPointCenter": [0, 0, 1]
           },
           "duration": 5,
-          "drones": [0]
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
         }
       ]
     },
@@ -121,7 +156,12 @@
             "startPointCenter": [-2, 2, 1]
           },
           "duration": 5,
-          "drones": [0]
+          "drones": [
+            {
+              "id":0,
+              "offset":[0,0,0]
+            }
+          ]
         }
       ]
     }

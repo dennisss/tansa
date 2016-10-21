@@ -27,8 +27,15 @@ void signal_sigint(int s) {
 
 int multidrone_main() {
 
+	bool shouldUseMocap = false;
 	tansa::init();
-
+	auto data = Jocs("multiDrone.jocs");
+	auto actions = data.Parse();
+	auto jocsHomes = data.GetHomes();
+	std::vector<Point> spawns = jocsHomes;
+	for(auto& s : spawns){
+		s.z() = 0;
+	}
 	vector<Vector3d> homes = {
 		{-1, 0, 1},
 		{1, 0, 1},
@@ -46,7 +53,7 @@ int multidrone_main() {
 	Mocap *mocap;
 	GazeboConnector *gazebo;
 
-	if(true) {
+	if(shouldUseMocap) {
 		string client_addr = "192.168.1.161";
 		string server_addr = "192.168.1.150";
 		mocap = new Mocap();
@@ -54,19 +61,19 @@ int multidrone_main() {
 
 	}
 	else {
-		GazeboConnector *gazebo = new GazeboConnector();
+		gazebo = new GazeboConnector();
 		gazebo->connect();
-		// TODO: Spawn
+		gazebo->spawn(spawns);
 	}
 
-	int n = 2;
+	int n = jocsHomes.size();
 
 
 	vector<Vehicle *> vehicles(n);
 	for(int i = 0; i < n; i++) {
 		vehicles[i] = new Vehicle();
 		vehicles[i]->connect(14550 + i*10, 14555 + i*10);
-		if(true) {
+		if(shouldUseMocap) {
 			mocap->track(vehicles[i], i+1);
 		}
 		else {
@@ -107,18 +114,27 @@ int multidrone_main() {
 
 	vector<Trajectory *> takeoffs(n);
 	for(int i = 0; i < n; i++) {
-		takeoffs[i] = new LinearTrajectory(vehicles[i]->position, 0, homes[i], 10.0);
+		takeoffs[i] = new LinearTrajectory(vehicles[i]->position, 0, jocsHomes[i], 10.0);
 	}
 
-
-	int state = STATE_INIT;
+	int numLanded = 0;
+	std::vector<int> states;
+	states.resize(n);
+	for(auto& state : states){
+		state = STATE_INIT;
+	}
 	running = true;
 	signal(SIGINT, signal_sigint);
 
 	int i = 0;
 	Time start(0,0);
 
-	int planI = 0;
+	std::vector<int> plans;
+	plans.resize(n);
+	//This might zero memory already have to check if this is necessary
+	for(auto& p : plans){
+		p = 0;
+	}
 
 	printf("running...\n");
 
@@ -132,7 +148,7 @@ int multidrone_main() {
 
 
 		// Check for state transitions
-		if(state == STATE_INIT) {
+		if(states[0] == STATE_INIT) {
 
 			bool allGood = true;
 			for(int vi = 0; vi < n; vi++) {
@@ -144,14 +160,18 @@ int multidrone_main() {
 
 			if(allGood) {
 				start = Time::now();
-				state = STATE_TAKEOFF;
+				for(auto& state :states) {
+					state = STATE_TAKEOFF;
+				}
 				continue;
 			}
 
 		}
-		else if(state == STATE_TAKEOFF) {
+		else if(states[0] == STATE_TAKEOFF) {
 			if(t >= 10.0) {
-				state = STATE_FLYING;
+				for(auto& state : states){
+					state = STATE_FLYING;
+				}
 				start = Time::now();
 				continue;
 			}
@@ -178,7 +198,7 @@ int multidrone_main() {
 			Vehicle &v = *vehicles[vi];
 
 
-			if(state == STATE_INIT) {
+			if(states[vi] == STATE_INIT) {
 				// Lower frequency state management
 				if(i % 50 == 0) {
 
@@ -196,30 +216,29 @@ int multidrone_main() {
 				// Do nothing
 				vehicles[vi]->setpoint_accel(Vector3d(0,0,0));
 			}
-			else if(state == STATE_TAKEOFF) {
+			else if(states[vi] == STATE_TAKEOFF) {
 				posctls[vi]->track(takeoffs[vi]);
 				posctls[vi]->control(t);
-
 			}
-			else if(state == STATE_FLYING) {
+			else if(states[vi] == STATE_FLYING) {
 
-				if(t >= paths[vi][planI]->endTime())
-					planI++;
-
-				if(planI >= paths[vi].size()) {
-					state = STATE_LANDING;
-					v.land();
-					continue;
+				if(t >= actions[vi][plans[vi]]->GetEndTime()) {
+					if(plans[vi] == actions[vi].size()-1) {
+						states[vi] = STATE_LANDING;
+						v.land();
+						numLanded++;
+						if(numLanded == n){
+							running = false;
+						}
+						continue;
+					}
+					plans[vi]++;
 				}
-
-				Trajectory *cur = paths[vi][planI];
+				Trajectory *cur = static_cast<MotionAction*>(actions[vi][plans[vi]])->GetPath();
 				posctls[vi]->track(cur);
 				posctls[vi]->control(t);
 			}
-
-
 		}
-
 		r.sleep();
 		i++;
 	}
@@ -227,7 +246,9 @@ int multidrone_main() {
 
 
 
-
+	if(!shouldUseMocap){
+		gazebo->disconnect();
+	}
 
 	return 0;
 
@@ -236,9 +257,10 @@ int multidrone_main() {
 
 int main(int argc, char *argv[]) {
 
+
+	return multidrone_main();
 	auto data = tansa::Jocs("singleDrone.jocs");
 	auto actions = data.Parse();
-//	return multidrone_main();
 	bool mocap_enabled = false,
 		 sim_enabled = true;
 

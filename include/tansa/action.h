@@ -10,6 +10,16 @@
 
 namespace tansa {
 
+/**
+ * Type representing the different actions in jocs
+ * @enum
+ */
+enum ActionTypes : unsigned{
+	Transition = 0,
+	Line = 1,
+	Circle = 2,
+};
+
 typedef unsigned DroneId;
 /**
  * @enum Defines the different lights on the drone

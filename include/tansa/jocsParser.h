@@ -12,16 +12,6 @@
 #include "tansa/action.h"
 namespace tansa {
 /**
- * Type representing the different actions in jocs
- * @enum
- */
-enum ActionTypes : unsigned{
-	Transition = 0,
-	Line = 1,
-	Circle = 2,
-};
-
-/**
  * Class representing the
  */
 class Jocs {
@@ -52,13 +42,14 @@ public:
 	 * @param jocsPath String containing path from working directory to jocsFile
 	 * @return A vector containing unique_ptrs to Actions
 	 */
-	 std::vector<std::vector<Action*>> Parse();
+	std::vector<std::vector<Action*>> Parse();
+	inline std::vector<Point> GetHomes(){ return homes; }
+
 private:
 	std::string jocsPath;
 	bool needConvertToMeters = false;
 	bool needConvertToRadians = false;
 	std::vector<Point> homes;
-
 
 private:
 	/**

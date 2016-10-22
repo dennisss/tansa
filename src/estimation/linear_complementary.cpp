@@ -10,23 +10,19 @@ void LinearComplementaryEstimator::predict(State &s, ControlInput u, const Time 
 
 	Vector3d a_xyz = u.segment<3>(0);
 
-	Vector3d x = (dt*dt / 2.0) * a_xyz + dt * v.velocity + s.position;
-	Vector3d v =  dt * a_xyz + v.velocity;
+	Vector3d x = (dt*dt / 2.0) * a_xyz + dt * s.velocity + s.position;
+	Vector3d v =  dt * a_xyz + s.velocity;
 
 	s.position = x;
 	s.velocity = v;
 	s.time = t;
 }
 
-void correct(const State &s, Vector3d x, Vector3d v) {
-	Vector3d c(
-		0.90,
-		0.90,
-		0.90
-	);
+void LinearComplementaryEstimator::correct(State &s, const Vector3d &x, const Vector3d &v, const Time &t) {
 
-	Vector3d cm = Vector3d::Ones() - c;
+	double cP = 0.99;
+	double cV = 0.80;
 
-	s.position = c*x + cm*s.position;
-	s.velocity = c*v + cm*s.velocity;
+	s.position = cP*x + (1.0 - cP)*s.position;
+	s.velocity = cV*v + (1.0 - cV)*s.velocity;
 }

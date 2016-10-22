@@ -22,7 +22,8 @@ static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 
 Vehicle::Vehicle() :
-	stateTime(0,0),
+	lastControlInput(0,0,0),
+	lastControlTime(0,0),
 	lastHeartbeatSent(0,0),
 	lastTimesyncSent(0,0),
 	lastSystimeSent(0,0),
@@ -180,17 +181,19 @@ void Vehicle::land() {
 
 void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t) {
 
-
 	// Update state (only compute velocity if initialized)
-	if(stateTime.nanos() > 0) {
-		Time dt = t.since(stateTime);
-		Vector3d v = (pos - this->position) / dt.seconds();
-		double a = 0.8;
-		this->velocity = v + (1.0 - a)*this->velocity;
+	Vector3d v(0,0,0);
+	if(state.time.nanos() > 0) {
+		Time dt = t.since(state.time);
+		v = (pos - this->state.position) / dt.seconds();
 	}
-	this->position = pos;
-	this->stateTime = t;
 
+
+	// Forward predict upto mocap time
+	// TODO: there may be a few overlapping control inputs so keep a list of control inputs
+	this->estimator.predict(this->state, lastControlInput, t);
+
+	this->estimator.correct(this->state, pos, v, t);
 
 
 	Matrix3d m;
@@ -231,6 +234,8 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 
 void Vehicle::setpoint_pos(const Vector3d &pos) {
 
+	lastControlInput = Vector3d(0,0,0);
+
 	Vector3d pos_ned = enuToFromNed() * pos;
 
 	mavlink_message_t msg;
@@ -253,6 +258,10 @@ void Vehicle::setpoint_pos(const Vector3d &pos) {
 }
 
 void Vehicle::setpoint_accel(const Vector3d &accel) {
+
+	lastControlInput = accel;
+	// TODO: Once the state is forward predicted, use that time
+	lastControlTime = Time::now();
 
 	Vector3d accel_ned = enuToFromNed() * accel;
 

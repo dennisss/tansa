@@ -93,6 +93,7 @@ public:
 
 	// Physical State : used for visualization and trajectory control
 	State state;
+	LinearComplementaryEstimator estimator;
 
 private:
 
@@ -114,6 +115,10 @@ private:
 
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
+
+
+	ControlInput lastControlInput;
+	Time lastControlTime;
 
 
 	Time lastHeartbeatReceived;

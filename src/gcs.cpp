@@ -114,7 +114,7 @@ int multidrone_main() {
 
 	vector<Trajectory *> takeoffs(n);
 	for(int i = 0; i < n; i++) {
-		takeoffs[i] = new LinearTrajectory(vehicles[i]->position, 0, jocsHomes[i], 10.0);
+		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, jocsHomes[i], 10.0);
 	}
 
 	int numLanded = 0;
@@ -363,7 +363,7 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	Trajectory *takeoff = new LinearTrajectory(v.position, 0, home, 10);
+	Trajectory *takeoff = new LinearTrajectory(v.state.position, 0, home, 10);
 
 	Time start(0,0);
 	Rate r(100);

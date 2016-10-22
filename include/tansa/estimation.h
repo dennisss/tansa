@@ -11,6 +11,8 @@ using namespace Eigen;
 typedef Vector3d ControlInput;
 
 struct State {
+	State() : time(0,0) {};
+
 
 	Vector3d position;
 	Vector3d velocity;
@@ -38,7 +40,7 @@ public:
 	/**
 	 * Update the state given an observation at a certain time
 	 */
-	void correct(State &s, const &Vector3d x, const Vector3d &v, const Time &t)
+	void correct(State &s, const Vector3d &x, const Vector3d &v, const Time &t);
 
 
 };

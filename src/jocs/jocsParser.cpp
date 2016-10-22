@@ -1,6 +1,7 @@
 //
 // Created by kyle on 10/12/16.
 //
+#include <regex>
 #include "tansa/jocsParser.h"
 namespace tansa {
 const std::string Jocs::HOME_KEY = "startPosition";
@@ -27,6 +28,10 @@ const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
 Jocs Jocs::Parse(std::string jocsPath) {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
+	//For some reason this regex didn't like the end of line $...but does work without it
+	jocsData = std::move(std::regex_replace(jocsData, std::regex("//.*"), ""));
+	std::cout << jocsData << std::endl;
+	assert(jocsData.find("//") == std::string::npos);
 	auto rawJson = nlohmann::json::parse(jocsData);
 	auto units = rawJson[UNITS_KEY];
 	bool needConvertToMeters = (units["length"] == "feet");
@@ -103,7 +108,7 @@ void Jocs::parseActions(const nlohmann::json &data) {
 	}
 }
 
-void Jocs::parseAction(const nlohmann::json::reference data){
+void Jocs::parseAction(nlohmann::json::reference data){
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];

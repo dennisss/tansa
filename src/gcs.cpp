@@ -29,7 +29,7 @@ int multidrone_main() {
 
 	bool shouldUseMocap = false;
 	tansa::init();
-	auto jocsData = Jocs::Parse("multiDrone.jocs");
+	auto jocsData = Jocs::Parse("choreography_line_data.jocs");
 	auto actions = jocsData.GetActions();
 	auto jocsHomes = jocsData.GetHomes();
 	std::vector<Point> spawns = jocsHomes;

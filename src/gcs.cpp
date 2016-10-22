@@ -25,6 +25,29 @@ void signal_sigint(int s) {
 #define STATE_LANDING 3
 
 
+/* For sending a system state update to the gui */
+void send_status_message() {
+	Time t = Time::now();
+
+	sio::message::ptr obj = sio::object_message::create();
+	obj->get_map()["type"] = sio::string_message::create("status");
+	obj->get_map()["time"] = sio::double_message::create(t.seconds());
+
+	sio::message::list li(obj);
+	tansa::send_message(li);
+
+}
+
+void on_message(sio::message::ptr const& data) {
+	string type = data->get_map()["type"]->get_string();
+
+	if(type == "play") {
+		printf("Playing...\n");
+	}
+
+}
+
+
 int multidrone_main() {
 
 	bool shouldUseMocap = false;
@@ -263,7 +286,7 @@ int main(int argc, char *argv[]) {
 	auto data = tansa::Jocs("testing/data/singleDrone.jocs");
 	auto actions = data.Parse();
 	bool mocap_enabled = false,
-		 sim_enabled = false;
+		 sim_enabled = true;
 
 	// TODO: Parse arguments here
 	// -mocap to start mocap
@@ -375,13 +398,7 @@ int main(int argc, char *argv[]) {
 
 		// Regular status message
 		if(i % 20 == 0) {
-			Time t = Time::now();
-
-			sio::message::ptr obj = sio::object_message::create();
-			obj->get_map()["time"] = sio::double_message::create(t.seconds());
-
-			sio::message::list li(obj);
-			tansa::send_message(li);
+			send_status_message();
 		}
 
 /*

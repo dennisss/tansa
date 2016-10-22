@@ -35,7 +35,6 @@ module.exports = function(server){
 
 		// Just broadcast all received messages to all other clients
 		socket.on('msg', function(data) {
-			console.log('GOT MESSAGE')
 			socket.broadcast.emit('msg', data);
 		})
 

@@ -30,9 +30,19 @@ void messaging_init() {
 namespace tansa {
 
 void send_message(sio::message::list const& msglist) {
-	cout << "..." << endl;
 	sio::socket::ptr sock = h.socket();
 	sock->emit("msg", msglist);
 }
+
+void on_message(tansa_message_listener l) {
+
+	sio::socket::ptr sock = h.socket();
+
+	sock->on("msg", sio::socket::event_listener_aux([&](string const& name, sio::message::ptr const& data, bool isAck, sio::message::list &ack_resp) {
+		l(data);
+	}));
+
+}
+
 
 }

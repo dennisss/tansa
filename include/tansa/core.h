@@ -3,6 +3,8 @@
 
 #include <sio_message.h>
 
+typedef void (*tansa_message_listener)(sio::message::ptr const& data);
+
 namespace tansa {
 
 

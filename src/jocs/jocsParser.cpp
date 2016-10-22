@@ -103,7 +103,7 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	}
 }
 
-void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions){
+void Jocs::parseAction(nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions){
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];

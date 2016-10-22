@@ -64,7 +64,7 @@ private:
 	 * @param data Json data containing a reference to an action
 	 * @param actions [out] Will be filled with actions
 	 */
-	 void parseAction(const nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions);
+	 void parseAction(nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions);
 	/**
 	 * Converts from string to ActionTypes enum
 	 * @private

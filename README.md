@@ -51,6 +51,12 @@ Alternatively, run `make sim` to start up a multidrone simulator
 Run `make run` to build the core stuff and start up the controller
 
 
+UI
+--
+
+Before doing `make run`, do `make server`. Then see the UI at `http://127.0.0.1:3000`
+
+
 Documentation
 -------------
 

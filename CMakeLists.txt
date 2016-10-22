@@ -12,36 +12,6 @@ include_directories(
 	include
 )
 
-######## Main Tansa Library ########
-
-add_library(
-	tansa SHARED
-
-	src/core/core.cpp
-	src/core/vehicle.cpp
-	src/core/vehicle_time.cpp
-	src/core/time.cpp
-	src/control/position.cpp
-	src/control/hover.cpp
-	src/trajectory/polynomial.cpp
-	src/trajectory/linear.cpp
-	src/trajectory/circle.cpp
-	src/trajectory/point.cpp
-	src/mocap/mocap.cpp
-	src/mocap/registration.cpp
-	src/mocap/optitrack/ClientCore.cpp
-	src/mocap/optitrack/NatNetClient.cpp
-    src/jocs/jocsParser.cpp
-	src/jocs/action.cpp)
-
-target_link_libraries(
-	tansa
-
-	pthread
-)
-
-set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
-
 
 ######## Headers and libraries for prebuilt socket.io client ########
 
@@ -53,11 +23,43 @@ link_directories(
 	lib/socket.io-client-cpp/build/lib/Release
 )
 
+
+######## Main Tansa Library ########
+
+add_library(
+	tansa SHARED
+
+	src/core/core.cpp
+	src/core/vehicle.cpp
+	src/core/vehicle_time.cpp
+	src/core/time.cpp
+	src/core/messaging.cpp
+	src/control/position.cpp
+	src/control/hover.cpp
+	src/trajectory/polynomial.cpp
+	src/trajectory/linear.cpp
+	src/trajectory/circle.cpp
+	src/trajectory/point.cpp
+	src/mocap/mocap.cpp
+	src/mocap/registration.cpp
+	src/mocap/optitrack/ClientCore.cpp
+	src/mocap/optitrack/NatNetClient.cpp
+    src/jocs/jocsParser.cpp
+	src/jocs/action.cpp
+)
+
 target_link_libraries(
 	tansa
 
+	pthread
+
 	sioclient
+	boost_system-mt
+	boost_date_time-mt
+	boost_random-mt
 )
+
+set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
 

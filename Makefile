@@ -8,6 +8,9 @@ build:
 	rm -f config/gazebo/models/x340/x340.sdf
 	cd build; cmake ..; make
 
+server:
+	node ./src/server
+
 run: build
 	./build/gcs
 
@@ -30,3 +33,9 @@ build_firmware:
 # Starts an empty sim
 sim: build_firmware build
 	./scripts/start_gazebo.sh
+
+
+build_socketio_cpp:
+	git submodule update --init --recursive
+	mkdir -p build_socketio_cpp
+	cd build_socketio_cpp; cmake ../lib/socket.io-client-cpp; make install

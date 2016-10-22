@@ -132,7 +132,7 @@ int multidrone_main() {
 	std::vector<int> plans;
 	plans.resize(n);
 	//This might zero memory already have to check if this is necessary
-	for(auto& p : plans){
+	for(auto& p : plans) {
 		p = 0;
 	}
 
@@ -257,12 +257,13 @@ int multidrone_main() {
 
 int main(int argc, char *argv[]) {
 
+//	return multidrone_main();
 
-	return multidrone_main();
-	auto data = tansa::Jocs("singleDrone.jocs");
+
+	auto data = tansa::Jocs("testing/data/singleDrone.jocs");
 	auto actions = data.Parse();
 	bool mocap_enabled = false,
-		 sim_enabled = true;
+		 sim_enabled = false;
 
 	// TODO: Parse arguments here
 	// -mocap to start mocap
@@ -371,6 +372,17 @@ int main(int argc, char *argv[]) {
 	while(running) {
 		//r.sleep();
 		//continue;
+
+		// Regular status message
+		if(i % 20 == 0) {
+			Time t = Time::now();
+
+			sio::message::ptr obj = sio::object_message::create();
+			obj->get_map()["time"] = sio::double_message::create(t.seconds());
+
+			sio::message::list li(obj);
+			tansa::send_message(li);
+		}
 
 /*
 		Sample Lighting stuff

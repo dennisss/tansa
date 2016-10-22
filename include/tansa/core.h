@@ -1,6 +1,8 @@
 #ifndef TANSA_CORE_H_
 #define TANSA_CORE_H_
 
+#include <sio_message.h>
+
 namespace tansa {
 
 
@@ -9,6 +11,7 @@ namespace tansa {
  */
 void init();
 
+void send_message(sio::message::list const& msglist);
 
 }
 

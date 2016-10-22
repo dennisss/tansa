@@ -32,7 +32,8 @@ add_library(
 	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp
 	src/mocap/optitrack/NatNetClient.cpp
-)
+    src/jocs/jocsParser.cpp
+	src/jocs/action.cpp)
 
 target_link_libraries(
 	tansa
@@ -40,7 +41,7 @@ target_link_libraries(
 	pthread
 )
 
-set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
 
@@ -86,7 +87,7 @@ target_link_libraries(
 	tansa_gazebo
 )
 
-set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
 

@@ -27,3 +27,6 @@ tmp
 
 # I use this for holding my flight log dumps
 log
+
+# IDE Files from CLion
+.idea/

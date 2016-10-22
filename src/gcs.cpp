@@ -29,9 +29,9 @@ int multidrone_main() {
 
 	bool shouldUseMocap = false;
 	tansa::init();
-	auto data = Jocs("multiDrone.jocs");
-	auto actions = data.Parse();
-	auto jocsHomes = data.GetHomes();
+	auto jocsData = Jocs::Parse("multiDrone.jocs");
+	auto actions = jocsData.GetActions();
+	auto jocsHomes = jocsData.GetHomes();
 	std::vector<Point> spawns = jocsHomes;
 	for(auto& s : spawns){
 		s.z() = 0;
@@ -259,8 +259,8 @@ int main(int argc, char *argv[]) {
 
 
 	return multidrone_main();
-	auto data = tansa::Jocs("singleDrone.jocs");
-	auto actions = data.Parse();
+	auto data = tansa::Jocs::Parse("singleDrone.jocs");
+	auto actions = data.GetActions();
 	bool mocap_enabled = false,
 		 sim_enabled = true;
 

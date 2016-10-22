@@ -35,21 +35,22 @@ public:
 	static const std::string UNITS_KEY;
 	static const double FEET_TO_METERS;
 	static const double DEGREES_TO_RADIANS;
-	Jocs(std::string jocsPath) : jocsPath(std::move(jocsPath)){}
+	Jocs(bool convertMeters, bool convertRadians) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians){}
 	/**
 	 * Parses a given Jocs file
 	 * @public
 	 * @param jocsPath String containing path from working directory to jocsFile
 	 * @return A vector containing unique_ptrs to Actions
 	 */
-	std::vector<std::vector<Action*>> Parse();
-	inline std::vector<Point> GetHomes(){ return homes; }
+	static Jocs Parse(std::string jocsPath);
+	inline std::vector<Point> GetHomes() const { return homes; }
+	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
 
 private:
-	std::string jocsPath;
 	bool needConvertToMeters = false;
 	bool needConvertToRadians = false;
 	std::vector<Point> homes;
+	std::vector<std::vector<Action*>> actions;
 
 private:
 	/**
@@ -57,14 +58,14 @@ private:
 	 * @param data [in] Jocs json data
 	 * @param actions [out] Will be filled with actions
 	 */
-	 void parseActions(const nlohmann::json &data, std::vector<std::vector<Action*>>& actions);
+	 void parseActions(const nlohmann::json &data);
 	/**
 	 * Parses a singular action array
 	 * @private
 	 * @param data Json data containing a reference to an action
 	 * @param actions [out] Will be filled with actions
 	 */
-	 void parseAction(const nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions);
+	 void parseAction(const nlohmann::json::reference data);
 	/**
 	 * Converts from string to ActionTypes enum
 	 * @private

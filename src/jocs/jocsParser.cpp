@@ -24,19 +24,19 @@ const std::string Jocs::UNITS_KEY = "units";
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
 
-std::vector< vector<Action*> > Jocs::Parse() {
+Jocs Jocs::Parse(std::string jocsPath) {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
 	auto rawJson = nlohmann::json::parse(jocsData);
 	auto units = rawJson[UNITS_KEY];
-	needConvertToMeters = (units["length"] == "feet");
-	needConvertToRadians = (units["angle"] == "degrees");
-	std::vector< vector<Action*> > actions;
-	parseActions(rawJson, actions);
-	return actions;
+	bool needConvertToMeters = (units["length"] == "feet");
+	bool needConvertToRadians = (units["angle"] == "degrees");
+	auto ret = Jocs(needConvertToMeters, needConvertToRadians);
+	ret.parseActions(rawJson);
+	return ret;
 }
 
-void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*> >& actions) {
+void Jocs::parseActions(const nlohmann::json &data) {
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	auto drones = data[DRONE_ARRAY_KEY];
 
@@ -53,7 +53,7 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	actions.resize(droneLength);
 	// For each drone, gather actions in a vector and add as entry in "actions" 2d vector
 	for(unsigned i = 0; i < length; i++){
-		parseAction(actionsJson[i], actions);
+		parseAction(actionsJson[i]);
 	}
 	// Go back and review actions such that transitions can be created with polynomial trajectories
 	for(unsigned i = 0; i < actions.size(); i++){
@@ -103,7 +103,7 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	}
 }
 
-void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions){
+void Jocs::parseAction(const nlohmann::json::reference data){
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];

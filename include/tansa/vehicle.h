@@ -2,6 +2,7 @@
 #define TANSA_VEHICLE_H_
 
 #include "time.h"
+#include "estimation.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -91,10 +92,8 @@ public:
 	string mode;
 
 	// Physical State : used for visualization and trajectory control
-	Vector3d position;
-	Vector3d velocity;
-	Quaterniond orientation;
-	Time stateTime;
+	State state;
+	LinearComplementaryEstimator estimator;
 
 private:
 
@@ -116,6 +115,10 @@ private:
 
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
+
+
+	ControlInput lastControlInput;
+	Time lastControlTime;
 
 
 	Time lastHeartbeatReceived;

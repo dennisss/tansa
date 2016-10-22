@@ -1,4 +1,5 @@
 
+CONFIG_PATH="src/config.json"
 
 .PHONY: build
 
@@ -9,7 +10,7 @@ build:
 	cd build; cmake ..; make
 
 run: build
-	./build/gcs
+	./build/gcs $(CONFIG_PATH)
 
 test: build
 	cd build; ./test_tansa # make test

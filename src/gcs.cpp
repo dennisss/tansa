@@ -1,17 +1,18 @@
-#include <tansa/core.h>
-#include <tansa/time.h>
-#include <tansa/vehicle.h>
+#include <tansa/action.h>
 #include <tansa/control.h>
-#include <tansa/trajectory.h>
-#include <tansa/mocap.h>
+#include <tansa/core.h>
 #include <tansa/gazebo.h>
+#include <tansa/jocsParser.h>
+#include <tansa/mocap.h>
+#include <tansa/time.h>
+#include <tansa/trajectory.h>
+#include <tansa/vehicle.h>
 
 #include <signal.h>
 #include <unistd.h>
 
 #include <vector>
-#include <tansa/jocsParser.h>
-#include <tansa/action.h>
+
 using namespace tansa;
 bool running;
 
@@ -24,12 +25,34 @@ void signal_sigint(int s) {
 #define STATE_FLYING 2
 #define STATE_LANDING 3
 
+struct hardware_config {
+	string clientAddress;
+	string serverAddress;
+};
 
-int multidrone_main() {
+int multidrone_main(int argc, char *argv[]) {
 
-	bool shouldUseMocap = false;
+	assert(argc == 2);
+	string configPath = argv[1];
+
+	ifstream configStream(configPath);
+	if (!configStream) throw "Unable to read config file!";
+
+	/// Parse the config file
+	std::string configData((std::istreambuf_iterator<char>(configStream)), std::istreambuf_iterator<char>());
+	nlohmann::json rawJson = nlohmann::json::parse(configData);
+	hardware_config config;
+	string jocsPath = rawJson["jocsPath"];
+	bool useMocap = rawJson["useMocap"];
+
+	if (useMocap) {
+		nlohmann::json hardwareConfig = rawJson["hardwareConfig"];
+		config.clientAddress = hardwareConfig["clientAddress"];
+		config.serverAddress = hardwareConfig["serverAddress"];
+	}
+
 	tansa::init();
-	auto data = Jocs("multiDrone.jocs");
+	auto data = Jocs(jocsPath);
 	auto actions = data.Parse();
 	auto jocsHomes = data.GetHomes();
 	std::vector<Point> spawns = jocsHomes;
@@ -53,14 +76,10 @@ int multidrone_main() {
 	Mocap *mocap;
 	GazeboConnector *gazebo;
 
-	if(shouldUseMocap) {
-		string client_addr = "192.168.1.161";
-		string server_addr = "192.168.1.150";
+	if (useMocap) {
 		mocap = new Mocap();
-		mocap->connect(client_addr, server_addr);
-
-	}
-	else {
+		mocap->connect(config.clientAddress, config.serverAddress);
+	} else {
 		gazebo = new GazeboConnector();
 		gazebo->connect();
 		gazebo->spawn(spawns);
@@ -73,10 +92,9 @@ int multidrone_main() {
 	for(int i = 0; i < n; i++) {
 		vehicles[i] = new Vehicle();
 		vehicles[i]->connect(14550 + i*10, 14555 + i*10);
-		if(shouldUseMocap) {
+		if (useMocap) {
 			mocap->track(vehicles[i], i+1);
-		}
-		else {
+		} else {
 			gazebo->track(vehicles[i], i);
 		}
 	}
@@ -243,10 +261,9 @@ int multidrone_main() {
 		i++;
 	}
 
+	/// Cleanup
 
-
-
-	if(!shouldUseMocap){
+	if (!useMocap) {
 		gazebo->disconnect();
 	}
 
@@ -257,8 +274,7 @@ int multidrone_main() {
 
 int main(int argc, char *argv[]) {
 
-
-	return multidrone_main();
+	return multidrone_main(argc, argv);
 	auto data = tansa::Jocs("singleDrone.jocs");
 	auto actions = data.Parse();
 	bool mocap_enabled = false,

@@ -23,10 +23,10 @@ static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 Vehicle::Vehicle() :
 	stateTime(0,0),
+	lastHeartbeatReceived(0,0),
 	lastHeartbeatSent(0,0),
 	lastTimesyncSent(0,0),
 	lastSystimeSent(0,0),
-	lastHeartbeatReceived(0,0),
 	lastStateSent(0,0) {
 
 	// TODO: Same as above
@@ -100,7 +100,7 @@ int Vehicle::disconnect() {
 	close(netfd);
 	pthread_join(thread, NULL);
 	netfd = 0;
-	thread = NULL;
+	thread = 0;
 	return 0;
 }
 

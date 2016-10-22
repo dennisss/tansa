@@ -16,7 +16,7 @@ using namespace Eigen;
 
 inline Vector3d centroid(const vector<Vector3d> &ps) {
 	Vector3d c = Vector3d::Zero();
-	for(int i = 0; i < ps.size(); i++) {
+	for(unsigned i = 0; i < ps.size(); i++) {
 		c = c + ps[i];
 	}
 
@@ -33,7 +33,7 @@ void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &b
 	Vector3d cA = centroid(as), cB = centroid(bs);
 
 	MatrixXd Ac(as.size(), 3), Bc(bs.size(), 3);
-	for(int i = 0; i < as.size(); i++){
+	for(unsigned i = 0; i < as.size(); i++){
 		Ac.block<1,3>(i, 0) = as[i] - cA;
 		Bc.block<1,3>(i, 0) = bs[i] - cB;
 	}
@@ -80,7 +80,7 @@ void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3
 	Vector3d cA = centroid(as), cB = centroid(bs);
 
 	MatrixXd Ac(as.size(), 3), Bc(bs.size(), 3);
-	for(int i = 0; i < as.size(); i++){
+	for(unsigned i = 0; i < as.size(); i++){
 		Ac.block<1,3>(i, 0) = as[i] - cA;
 		Bc.block<1,3>(i, 0) = bs[i] - cB;
 	}

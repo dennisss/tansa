@@ -45,20 +45,20 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	assert(actionsJson.is_array());
 	auto droneLength = drones.size();
 	homes.resize(droneLength);
-	for(int i = 0; i < droneLength; i++){
+	for(unsigned i = 0; i < droneLength; i++){
 		homes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2]);
 	}
 	auto length = actionsJson.size();
 	//allocate space for each subarray for each drone.
 	actions.resize(droneLength);
 	// For each drone, gather actions in a vector and add as entry in "actions" 2d vector
-	for(int i = 0; i < length; i++){
+	for(unsigned i = 0; i < length; i++){
 		parseAction(actionsJson[i], actions);
 	}
 	// Go back and review actions such that transitions can be created with polynomial trajectories
-	for(int i = 0; i < actions.size(); i++){
+	for(unsigned i = 0; i < actions.size(); i++){
 		// Each entry in "actions" has a vector full of actions for that drone
-		for (int j=0; j < actions[i].size(); j++){
+		for (unsigned j=0; j < actions[i].size(); j++){
 			if(!actions[i][j]->IsCalculated()){
 				double thisStart = actions[i][j]->GetStartTime();
 				double thisEnd = actions[i][j]->GetEndTime();
@@ -107,7 +107,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
-	for(int i = 0; i < actionsArray.size(); i++) {
+	for(unsigned i = 0; i < actionsArray.size(); i++) {
 		auto actionsArrayElement = actionsArray[i];
 		double duration = actionsArrayElement[DURATION_KEY];
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
@@ -115,7 +115,7 @@ void Jocs::parseAction(const nlohmann::json::reference data, std::vector<std::ve
 		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];
 		double conversionFactor = needConvertToMeters ? FEET_TO_METERS : 1.0;
 		assert(drones.is_array());
-		for (int j = 0; j < drones.size(); j++) {
+		for (unsigned j = 0; j < drones.size(); j++) {
 			unsigned drone = drones[j][ID_KEY];
 			Point offset(drones[j]["offset"][0],drones[j]["offset"][1],drones[j]["offset"][2]);
 			switch (type) {
@@ -191,5 +191,6 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 		return ActionTypes::Circle;
 	else if (data == "hover")
 		return ActionTypes::Hover;
+	return ActionTypes::None;
 }
 }

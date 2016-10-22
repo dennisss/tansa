@@ -18,7 +18,7 @@ public:
 		sumE = Vector::Zero();
 		lastE = Vector::Zero();
 
-		for(int i = 0; i < N; i++) {
+		for(unsigned i = 0; i < N; i++) {
 			minIntegral(i) = DBL_MIN;
 			maxIntegral(i) = DBL_MAX;
 		}

@@ -40,7 +40,7 @@ target_link_libraries(
 	pthread
 )
 
-set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
+set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")
 
 
 

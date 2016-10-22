@@ -37,7 +37,7 @@ public:
 		this->t1 = t1;
 		this->t2 = t2;
 	}
-
+	virtual ~Trajectory(){}
 	virtual TrajectoryState evaluate(double t) = 0;
 
 	inline double startTime() { return this->t1; }
@@ -54,7 +54,7 @@ class PolynomialTrajectory : public Trajectory {
 public:
 
 	PolynomialTrajectory(const VectorXd c[], double t1, double t2);
-
+	virtual ~PolynomialTrajectory(){}
 	/**
 	 * Computes an 'optimal' polynomial trajectory between two times given some constraints on the derivatives of the start and end points
 	 */
@@ -76,7 +76,7 @@ class LinearTrajectory : public Trajectory {
 public:
 
 	LinearTrajectory(Point x1, double t1, Point x2, double t2);
-	~LinearTrajectory();
+	virtual ~LinearTrajectory();
 
 	virtual TrajectoryState evaluate(double t);
 
@@ -94,7 +94,7 @@ private:
 class CircleTrajectory : public Trajectory {
 public:
 	CircleTrajectory(const Point &origin, double radius, double theta1, double t1, double theta2, double t2);
-
+	virtual ~CircleTrajectory(){}
 	virtual TrajectoryState evaluate(double t);
 
 
@@ -113,7 +113,7 @@ private:
 class PointTrajectory : public Trajectory {
 public:
 	PointTrajectory(const Point &p);
-
+	virtual ~PointTrajectory(){}
 	virtual TrajectoryState evaluate(double t);
 
 private:

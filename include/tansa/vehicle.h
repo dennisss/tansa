@@ -112,7 +112,7 @@ private:
 	int netfd = 0;
 	mavlink_channel_t channel;
 
-	pthread_t thread = NULL;
+	pthread_t thread = 0;
 
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;

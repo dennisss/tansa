@@ -54,6 +54,8 @@ namespace gazebo {
 			for(int i = 0; i < models.size(); i++) {
 				std::string name = models[i]->GetName();
 				if(strncmp(name.c_str(), "vehicle_", 8) == 0) {
+					// TODO: This doesn't work
+					// See issue: https://bitbucket.org/osrf/gazebo/issues/1629/removing-model-from-plugin-crashes-with
 					world->RemoveModel(models[i]);
 				}
 			}
@@ -101,6 +103,7 @@ namespace gazebo {
 
 			world->SetPaused(false);
 
+			stop_sitl();
 			start_sitl(msg->vehicles_size());
 
 

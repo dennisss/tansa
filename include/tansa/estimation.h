@@ -11,7 +11,7 @@ using namespace Eigen;
 typedef Vector3d ControlInput;
 
 struct State {
-	State() : time(0,0) {};
+	State() : position(0,0,0), velocity(0,0,0), orientation(1,0,0,0), time(0,0) {};
 
 
 	Vector3d position;

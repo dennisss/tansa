@@ -18,6 +18,14 @@ using namespace std;
 
 #define MAV_CMD_BEACON MAV_CMD_USER_1
 
+
+struct BatteryStatus {
+	double voltage = -1;
+	double percent = -1;
+
+};
+
+
 /**
  * Reprents a single remote quadcopter connected via UDP
  */
@@ -58,6 +66,13 @@ public:
 	 */
 	void land();
 
+
+	/**
+	 * Immediately kill motors.
+	 * It may be wise to send this multiple times in case of packet loss
+	 */
+	void terminate();
+
 	/**
 	 * Sets the brightness of the LEDs on the drone
 	 *
@@ -94,6 +109,8 @@ public:
 	// Physical State : used for visualization and trajectory control
 	State state;
 	LinearComplementaryEstimator estimator;
+
+	BatteryStatus battery;
 
 private:
 

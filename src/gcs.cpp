@@ -48,24 +48,12 @@ int main(int argc, char *argv[]) {
 	tansa::init();
 	auto data = Jocs(jocsPath);
 	auto actions = data.Parse();
-	auto jocsHomes = data.GetHomes();
-	std::vector<Point> spawns = jocsHomes;
+	auto homes = data.GetHomes();
+	std::vector<Point> spawns = homes;
 	for(auto& s : spawns){
 		s.z() = 0;
 	}
-	vector<Vector3d> homes = {
-		{-1, 0, 1},
-		{1, 0, 1},
 
-	/*
-		{0, -5, 1},
-		{0, -3, 1},
-		{0, -1, 1},
-		{0, 1, 1},
-		{0, 3, 1},
-		{0, 5, 1}
-	*/
-	};
 
 	Mocap *mocap;
 	GazeboConnector *gazebo;
@@ -77,10 +65,10 @@ int main(int argc, char *argv[]) {
 		gazebo = new GazeboConnector();
 		gazebo->connect();
 		gazebo->spawn(spawns);
-		sleep(10); // Waiting for simulation to sync
 	}
 
-	int n = jocsHomes.size();
+
+	int n = homes.size();
 
 
 	vector<Vehicle *> vehicles(n);
@@ -95,7 +83,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// TODO: Have a better check for mocap initialization/health
-	sleep(4);
+	sleep(10);
 
 	vector<HoverController *> hovers(n);
 	for(int i = 0; i < n; i++) {
@@ -109,26 +97,9 @@ int main(int argc, char *argv[]) {
 	}
 
 
-
-	// Generate trajectories
-	vector<vector<Trajectory *> > paths(n);
-	for(int i = 0; i < n; i++) {
-		Vector3d mag(0, 1.5, 0);
-		if(i % 2 == 0)
-			mag *= -1;
-
-		paths[i].push_back(new LinearTrajectory(homes[i], 0, homes[i] + mag, 5));
-		paths[i].push_back(new LinearTrajectory(homes[i] + mag, 5, homes[i] - mag, 10));
-		paths[i].push_back(new LinearTrajectory(homes[i] - mag, 10, homes[i] + mag, 15));
-		paths[i].push_back(new LinearTrajectory(homes[i] + mag, 15, homes[i] - mag, 20));
-		paths[i].push_back(new LinearTrajectory(homes[i] - mag, 20, homes[i] + mag, 25));
-		paths[i].push_back(new LinearTrajectory(homes[i] + mag, 25, homes[i] - mag, 30));
-
-	}
-
 	vector<Trajectory *> takeoffs(n);
 	for(int i = 0; i < n; i++) {
-		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, jocsHomes[i], 10.0);
+		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[i], 10.0);
 	}
 
 	int numLanded = 0;

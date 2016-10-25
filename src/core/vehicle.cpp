@@ -172,10 +172,26 @@ void Vehicle::set_mode(string mode) {
 }
 
 void Vehicle::land() {
+	// TODO: Use set_position_target_local_ned
+	// From PX4: bool is_land_sp = (bool)(set_position_target_local_ned.type_mask & 0x2000);
+	// See: http://discuss.px4.io/t/px4-hidden-flight-bitmasks/1371
+}
 
-// MAV_CMD_NAV_LAND_LOCAL
-// Set first three params to 0
-// We should also probably mark the home position
+void Vehicle::terminate() {
+
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
+		&msg,
+		1, 1,
+		MAV_CMD_DO_FLIGHTTERMINATION,
+		0,
+		2.0f, // kill motors in PX4 commander
+		0, 0, 0, 0, 0, 0
+	);
+
+	send_message(&msg);
+
 }
 
 
@@ -391,6 +407,10 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 		case MAVLINK_MSG_ID_SYS_STATUS:
 			// We mainly need to know the battery level
+			mavlink_sys_status_t ss;
+			mavlink_msg_sys_status_decode(msg, &ss);
+			battery.voltage = ss.voltage_battery / 1000.0;
+			battery.percent = ss.battery_remaining / 100.0;
 
 			break;
 

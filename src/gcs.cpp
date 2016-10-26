@@ -121,12 +121,8 @@ int main(int argc, char *argv[]) {
 
 	Time start(0,0);
 
-	std::vector<int> plans;
-	plans.resize(n);
-	//This might zero memory already have to check if this is necessary
-	for(auto& p : plans){
-		p = 0;
-	}
+	// Index of the current action running for each drone (initially running the 0th)
+	std::vector<int> plans(n, 0);
 
 	printf("running...\n");
 
@@ -246,15 +242,21 @@ int main(int argc, char *argv[]) {
 
 	/// Cleanup
 
-	if (!useMocap) {
+	if (useMocap) {
+		mocap->disconnect();
+		delete mocap;
+	}
+	else {
 		gazebo->disconnect();
+		delete gazebo;
 	}
 
 
 	// Stop all vehicles
 	for(int vi = 0; vi < n; vi++) {
-		Vehicle &v = *vehicles[vi];
-		v.disconnect();
+		Vehicle *v = vehicles[vi];
+		v->disconnect();
+		delete v;
 	}
 
 	printf("Done!\n");

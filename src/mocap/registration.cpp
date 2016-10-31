@@ -12,6 +12,7 @@ using namespace Eigen;
 
 */
 
+namespace tansa {
 
 
 inline Vector3d centroid(const vector<Vector3d> &ps) {
@@ -140,5 +141,8 @@ void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3
 
 
 	//cout << P << endl;
+
+}
+
 
 }

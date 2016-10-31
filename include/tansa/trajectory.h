@@ -7,7 +7,10 @@
 using namespace Eigen;
 using namespace std;
 
-#define PointDims 3
+
+namespace tansa {
+
+const unsigned PointDims = 3;
 // TODO: Should eventually be Vector4d to incorporate yaw
 typedef Vector3d Point;
 
@@ -161,5 +164,7 @@ private:
 	double secondsPerBeat;
 };
 
+
+}
 
 #endif

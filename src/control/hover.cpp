@@ -1,5 +1,7 @@
 #include <tansa/control.h>
 
+namespace tansa {
+
 #include "pid.h"
 
 
@@ -51,4 +53,6 @@ double HoverController::distance() {
 	     (Vector3d(0,0,0) - vehicle->state.velocity);
 
 	return e.norm();
+}
+
 }

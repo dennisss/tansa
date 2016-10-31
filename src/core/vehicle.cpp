@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 
+namespace tansa {
 
 // TODO: Move this to a better spot
 // The ground control system represented by this program
@@ -585,4 +586,6 @@ void *vehicle_thread(void *arg) {
 	}
 
 	return NULL;
+}
+
 }

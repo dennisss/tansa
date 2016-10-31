@@ -1,6 +1,7 @@
 #include <tansa/trajectory.h>
 #include "utils.h"
 
+namespace tansa {
 
 PolynomialTrajectory::PolynomialTrajectory(const VectorXd c[], double t1, double t2)
  	: Trajectory(t1, t2) {
@@ -80,4 +81,6 @@ PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, dou
 	}
 
 	return new PolynomialTrajectory(xs, t1, t2);
+}
+
 }

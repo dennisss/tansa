@@ -17,6 +17,8 @@
 using namespace Eigen;
 using namespace std;
 
+namespace tansa {
+
 #define MAV_CMD_BEACON MAV_CMD_USER_1
 
 #define GRAVITY_MS 9.8
@@ -189,6 +191,9 @@ private:
  * Don't use this directly. This is used internally by the Vehicle class
  */
 void *vehicle_thread(void *arg);
+
+
+}
 
 
 #endif

@@ -7,6 +7,7 @@
 #include "optitrack/NatNetClient.h"
 #include "optitrack/NatNetTypes.h"
 
+namespace tansa {
 
 static Vector3d lastPosition(0,0,0);
 static bool found = false;
@@ -15,7 +16,6 @@ static Quaterniond startOrient;
 static int frameI = 0;
 
 static Vector3d velocity(0,0,0);
-
 
 Mocap::Mocap() {
 
@@ -49,7 +49,7 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 
 	Mocap *inst = (Mocap *) pUserData;
 
-	Time t = Time::now(); // TODO: Replace with the mocap timestamp
+	tansa::Time t = Time::now(); // TODO: Replace with the mocap timestamp
 
 	for(int i = 0; i < pFrameOfData->nRigidBodies; i++){
 
@@ -197,4 +197,6 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 		beaconOn = false;
 	}
 	*/
+}
+
 }

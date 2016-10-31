@@ -6,6 +6,8 @@
 
 using namespace std;
 
+namespace tansa {
+
 /*
 	Linear trajectories go from point x1 @ t1 to point x2 @ t2 in the smoothest way possible
 	The velocity and acceleration at the end points should be 0
@@ -37,4 +39,6 @@ LinearTrajectory::~LinearTrajectory() {
 
 TrajectoryState LinearTrajectory::evaluate(double t) {
 	return inner->evaluate(t);
+}
+
 }

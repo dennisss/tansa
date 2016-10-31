@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <time.h>
 
+namespace tansa {
+
 /**
  * An implementation of a common way to represent and measure
  */
@@ -93,5 +95,7 @@ private:
 
 // TODO: Add in Timer class
 
+
+}
 
 #endif

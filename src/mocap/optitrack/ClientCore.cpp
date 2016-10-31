@@ -161,7 +161,7 @@ void ClientCore::start(const char *clientAddr, const char *serverAddr, int cmdPo
 	if(type == ConnectionType_Unicast) {
 		// Initial ping to connect to server
 		this->ping();
-		lastping = Time::now();
+		lastping = tansa::Time::now();
 	}
 }
 
@@ -222,7 +222,7 @@ void *data_server(void *arg){
 
 
 		// Every half second, send a ping request
-		Time t = Time::now();
+		tansa::Time t = tansa::Time::now();
 		if(t.since(cc->lastping).seconds() >= 0.5) {
 			cc->ping();
 			cc->lastping = t;

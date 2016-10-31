@@ -2,6 +2,8 @@
 
 #include "pid.h"
 
+namespace tansa {
+
 // TODO: Integrate forward the position, velocity and time based on connection latency (so that commmands are accurate for the cmoment at which they are received)
 
 PositionController::PositionController(Vehicle *v) {
@@ -36,4 +38,6 @@ void PositionController::control(double t) {
 	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + s.acceleration;
 
 	vehicle->setpoint_accel(a);
+}
+
 }

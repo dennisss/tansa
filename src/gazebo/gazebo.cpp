@@ -17,6 +17,9 @@
 
 #include <map>
 
+
+namespace tansa {
+
 static gazebo::transport::NodePtr node;
 static gazebo::transport::SubscriberPtr world_sub;
 static gazebo::transport::SubscriberPtr poses_sub;
@@ -150,4 +153,6 @@ void GazeboConnector::spawn(const vector<Point> &homes) {
 	}
 
 	spawn_pub->Publish(req);
+}
+
 }

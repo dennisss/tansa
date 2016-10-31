@@ -92,7 +92,7 @@ private:
 
 	std::string multicast_addr;
 
-	Time lastping;
+	tansa::Time lastping;
 
 	void unpack(char *pData);
 	void unpackFrame(char *ptr);

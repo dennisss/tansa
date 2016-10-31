@@ -7,6 +7,8 @@
 #include <map>
 #include <vector>
 
+namespace tansa {
+
 /**
  * For connecting to a running Gazebo simulation
  */
@@ -26,5 +28,6 @@ public:
 };
 
 
+}
 
 #endif

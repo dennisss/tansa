@@ -20,16 +20,8 @@ namespace tansa {
 LinearTrajectory::LinearTrajectory(Point x1, double t1, Point x2, double t2)
  	: Trajectory(t1, t2) {
 
-
 	// Constrain only initial and final positions
-
-	vector<Point> c1(1);
-	c1[0] = x1;
-
-	vector<Point> c2(1);
-	c2[0] = x2;
-
-	inner = PolynomialTrajectory::compute(c1, t1, c2, t2);
+	inner = PolynomialTrajectory::compute({x1}, t1, {x2}, t2);
 }
 
 LinearTrajectory::~LinearTrajectory() {

@@ -52,6 +52,14 @@ protected:
 
 };
 
+/**
+ * Concatenation of many temporally offset trajectories
+ */
+class PiecewiseTrajectory : public Trajectory {
+public:
+
+
+}
 
 class PolynomialTrajectory : public Trajectory {
 public:
@@ -163,6 +171,22 @@ private:
 
 	double secondsPerBeat;
 };
+
+
+/**
+ * Does a spiral in the z direction. Implemented as an normalized circle with a moving center trajectory
+ */
+class SpiralTrajectory : public Trajectory {
+public:
+
+
+	virtual TrajectoryState evaluate(double t);
+
+
+private:
+	LinearTrajectory *center;
+	CircleTrajectory *circle;
+}
 
 
 }

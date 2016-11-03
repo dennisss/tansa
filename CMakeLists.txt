@@ -23,6 +23,7 @@ add_library(
 	src/core/time.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
+	src/estimation/linear_complementary.cpp
 	src/trajectory/polynomial.cpp
 	src/trajectory/linear.cpp
 	src/trajectory/circle.cpp

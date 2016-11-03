@@ -30,7 +30,6 @@ Jocs Jocs::Parse(std::string jocsPath) {
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
 	//For some reason this regex didn't like the end of line $...but does work without it
 	jocsData = std::move(std::regex_replace(jocsData, std::regex("//.*"), ""));
-	std::cout << jocsData << std::endl;
 	assert(jocsData.find("//") == std::string::npos);
 	auto rawJson = nlohmann::json::parse(jocsData);
 	auto units = rawJson[UNITS_KEY];

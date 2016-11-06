@@ -71,7 +71,7 @@ PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, dou
 	dts2[0] = tvec2;
 
 	// Differentiate
-	for(int i = 1; i < dts1.size(); i++) {
+	for(unsigned i = 1; i < dts1.size(); i++) {
 		dts1[i] = diffvec(tvec1, i);
 		dts2[i] = diffvec(tvec2, i);
 	}
@@ -79,10 +79,10 @@ PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, dou
 
 	// Setup 'A' in Ax = b : it is common for all axes
 	MatrixXd A(n, n); // First three rows are position, velocity, acceleration of first point. Last three for second point
-	for(int i = 0; i < dts1.size(); i++) {
+	for(unsigned i = 0; i < dts1.size(); i++) {
 		A.block(i, 0, 1, n) = dts1[i].transpose();
 	}
-	for(int i = 0; i < dts2.size(); i++) {
+	for(unsigned i = 0; i < dts2.size(); i++) {
 		A.block(i + dts1.size(), 0, 1, n) = dts2[i].transpose();
 	}
 
@@ -92,16 +92,17 @@ PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, dou
 	VectorXd xs[PointDims];
 
 	// Compute for each axis
-	for(int i = 0; i < PointDims; i++) {
+	for(unsigned i = 0; i < PointDims; i++) {
 
 		VectorXd b = VectorXd::Zero(n);
 
 		// Adding in constraints
-		// If they are now specified, we will set them them to 0 (else the system will be undersatisfied)
-		for(int j = 0; j < c1.size(); j++) {
+
+		// If they are now specified, we will set them them to 0 (else the system will be underconstrained)
+		for(unsigned j = 0; j < c1.size(); j++) {
 			b(j) = c1[j](i);
 		}
-		for(int j = 0; j < c2.size(); j++) {
+		for(unsigned j = 0; j < c2.size(); j++) {
 			b(j + dts1.size()) = c2[j](i);
 		}
 

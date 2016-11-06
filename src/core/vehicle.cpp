@@ -22,11 +22,12 @@ static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 
 Vehicle::Vehicle() :
-	stateTime(0,0),
+	lastControlInput(0,0,0),
+	lastControlTime(0,0),
+	lastHeartbeatReceived(0,0),
 	lastHeartbeatSent(0,0),
 	lastTimesyncSent(0,0),
 	lastSystimeSent(0,0),
-	lastHeartbeatReceived(0,0),
 	lastStateSent(0,0) {
 
 	// TODO: Same as above
@@ -100,7 +101,7 @@ int Vehicle::disconnect() {
 	close(netfd);
 	pthread_join(thread, NULL);
 	netfd = 0;
-	thread = NULL;
+	thread = 0;
 	return 0;
 }
 
@@ -171,26 +172,44 @@ void Vehicle::set_mode(string mode) {
 }
 
 void Vehicle::land() {
+	// TODO: Use set_position_target_local_ned
+	// From PX4: bool is_land_sp = (bool)(set_position_target_local_ned.type_mask & 0x2000);
+	// See: http://discuss.px4.io/t/px4-hidden-flight-bitmasks/1371
+}
 
-// MAV_CMD_NAV_LAND_LOCAL
-// Set first three params to 0
-// We should also probably mark the home position
+void Vehicle::terminate() {
+
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
+		&msg,
+		1, 1,
+		MAV_CMD_DO_FLIGHTTERMINATION,
+		0,
+		2.0f, // kill motors in PX4 commander
+		0, 0, 0, 0, 0, 0
+	);
+
+	send_message(&msg);
+
 }
 
 
 void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t) {
 
-
 	// Update state (only compute velocity if initialized)
-	if(stateTime.nanos() > 0) {
-		Time dt = t.since(stateTime);
-		Vector3d v = (pos - this->position) / dt.seconds();
-		double a = 0.8;
-		this->velocity = v + (1.0 - a)*this->velocity;
+	Vector3d v(0,0,0);
+	if(state.time.nanos() > 0) {
+		Time dt = t.since(state.time);
+		v = (pos - this->state.position) / dt.seconds();
 	}
-	this->position = pos;
-	this->stateTime = t;
 
+
+	// Forward predict upto mocap time
+	// TODO: there may be a few overlapping control inputs so keep a list of control inputs
+	this->estimator.predict(this->state, lastControlInput, t);
+
+	this->estimator.correct(this->state, pos, v, t);
 
 
 	Matrix3d m;
@@ -231,6 +250,8 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 
 void Vehicle::setpoint_pos(const Vector3d &pos) {
 
+	lastControlInput = Vector3d(0,0,0);
+
 	Vector3d pos_ned = enuToFromNed() * pos;
 
 	mavlink_message_t msg;
@@ -253,6 +274,10 @@ void Vehicle::setpoint_pos(const Vector3d &pos) {
 }
 
 void Vehicle::setpoint_accel(const Vector3d &accel) {
+
+	lastControlInput = accel;
+	// TODO: Once the state is forward predicted, use that time
+	lastControlTime = Time::now();
 
 	Vector3d accel_ned = enuToFromNed() * accel;
 
@@ -382,6 +407,10 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 		case MAVLINK_MSG_ID_SYS_STATUS:
 			// We mainly need to know the battery level
+			mavlink_sys_status_t ss;
+			mavlink_msg_sys_status_decode(msg, &ss);
+			battery.voltage = ss.voltage_battery / 1000.0;
+			battery.percent = ss.battery_remaining / 100.0;
 
 			break;
 

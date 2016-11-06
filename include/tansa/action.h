@@ -15,11 +15,12 @@ namespace tansa {
  * @enum
  */
 enum ActionTypes : unsigned{
-	Transition = 0,
-	Line = 1,
-	Circle = 2,
-	Hover = 3,
-	Light = 4,
+	None = 0,
+	Transition = 1,
+	Line = 2,
+	Circle = 3,
+	Hover = 4,
+	Light = 5,
 };
 
 typedef unsigned DroneId;
@@ -60,8 +61,8 @@ public:
 	inline ActionTypes GetActionType() { return type; }
 
 protected:
-	ActionTypes type;
 	DroneId droneId;
+	ActionTypes type;
 	bool isCalculated = false;
 };
 /**
@@ -70,7 +71,7 @@ protected:
 class EmptyAction : public Action {
 public:
     EmptyAction(DroneId id, double s, double e): Action(id,ActionTypes::Transition), startTime(s), endTime(e){}
-
+	virtual ~EmptyAction(){}
     virtual double GetStartTime() const { return startTime; }
 
     virtual double GetEndTime() const { return endTime; }
@@ -107,7 +108,7 @@ class LightAction : public Action {
 public:
 	LightAction(double s, double e, DroneId id, double i, LightId l) :  Action(id, ActionTypes::Light),
 			startTime(s), endTime(e), intensity(i), lightId(l) { isCalculated = true; }
-
+	virtual ~LightAction(){}
 	virtual double GetStartTime() { return startTime; }
 
 	virtual double GetEndTime() { return endTime; }

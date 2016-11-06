@@ -1,6 +1,7 @@
 //
 // Created by kyle on 10/12/16.
 //
+#include <regex>
 #include "tansa/jocsParser.h"
 namespace tansa {
 const std::string Jocs::HOME_KEY = "startPosition";
@@ -24,19 +25,22 @@ const std::string Jocs::UNITS_KEY = "units";
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
 
-std::vector< vector<Action*> > Jocs::Parse() {
+Jocs Jocs::Parse(std::string jocsPath) {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
+	//For some reason this regex didn't like the end of line $...but does work without it
+	jocsData = std::move(std::regex_replace(jocsData, std::regex("//.*"), ""));
+	assert(jocsData.find("//") == std::string::npos);
 	auto rawJson = nlohmann::json::parse(jocsData);
 	auto units = rawJson[UNITS_KEY];
-	needConvertToMeters = (units["length"] == "feet");
-	needConvertToRadians = (units["angle"] == "degrees");
-	std::vector< vector<Action*> > actions;
-	parseActions(rawJson, actions);
-	return actions;
+	bool needConvertToMeters = (units["length"] == "feet");
+	bool needConvertToRadians = (units["angle"] == "degrees");
+	auto ret = Jocs(needConvertToMeters, needConvertToRadians);
+	ret.parseActions(rawJson);
+	return ret;
 }
 
-void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*> >& actions) {
+void Jocs::parseActions(const nlohmann::json &data) {
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	auto drones = data[DRONE_ARRAY_KEY];
 
@@ -45,20 +49,20 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	assert(actionsJson.is_array());
 	auto droneLength = drones.size();
 	homes.resize(droneLength);
-	for(int i = 0; i < droneLength; i++){
+	for(unsigned i = 0; i < droneLength; i++){
 		homes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2]);
 	}
 	auto length = actionsJson.size();
 	//allocate space for each subarray for each drone.
 	actions.resize(droneLength);
 	// For each drone, gather actions in a vector and add as entry in "actions" 2d vector
-	for(int i = 0; i < length; i++){
-		parseAction(actionsJson[i], actions);
+	for(unsigned i = 0; i < length; i++){
+		parseAction(actionsJson[i]);
 	}
 	// Go back and review actions such that transitions can be created with polynomial trajectories
-	for(int i = 0; i < actions.size(); i++){
+	for(unsigned i = 0; i < actions.size(); i++){
 		// Each entry in "actions" has a vector full of actions for that drone
-		for (int j=0; j < actions[i].size(); j++){
+		for (unsigned j=0; j < actions[i].size(); j++){
 			if(!actions[i][j]->IsCalculated()){
 				double thisStart = actions[i][j]->GetStartTime();
 				double thisEnd = actions[i][j]->GetEndTime();
@@ -103,11 +107,11 @@ void Jocs::parseActions(const nlohmann::json &data, std::vector< vector<Action*>
 	}
 }
 
-void Jocs::parseAction(nlohmann::json::reference data, std::vector<std::vector<Action*>>& actions){
+void Jocs::parseAction(nlohmann::json::reference data){
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
-	for(int i = 0; i < actionsArray.size(); i++) {
+	for(unsigned i = 0; i < actionsArray.size(); i++) {
 		auto actionsArrayElement = actionsArray[i];
 		double duration = actionsArrayElement[DURATION_KEY];
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
@@ -115,7 +119,7 @@ void Jocs::parseAction(nlohmann::json::reference data, std::vector<std::vector<A
 		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];
 		double conversionFactor = needConvertToMeters ? FEET_TO_METERS : 1.0;
 		assert(drones.is_array());
-		for (int j = 0; j < drones.size(); j++) {
+		for (unsigned j = 0; j < drones.size(); j++) {
 			unsigned drone = drones[j][ID_KEY];
 			Point offset(drones[j]["offset"][0],drones[j]["offset"][1],drones[j]["offset"][2]);
 			switch (type) {
@@ -191,5 +195,6 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 		return ActionTypes::Circle;
 	else if (data == "hover")
 		return ActionTypes::Hover;
+	return ActionTypes::None;
 }
 }

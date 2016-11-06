@@ -1,4 +1,5 @@
 
+CONFIG_PATH="src/config.json"
 
 .PHONY: build
 
@@ -12,7 +13,7 @@ server:
 	node ./src/server
 
 run: build
-	./build/gcs
+	./build/gcs $(CONFIG_PATH)
 
 test: build
 	cd build; ./test_tansa # make test

@@ -2,6 +2,7 @@
 #define TANSA_VEHICLE_H_
 
 #include "time.h"
+#include "estimation.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -16,6 +17,14 @@ using namespace Eigen;
 using namespace std;
 
 #define MAV_CMD_BEACON MAV_CMD_USER_1
+
+
+struct BatteryStatus {
+	double voltage = -1;
+	double percent = -1;
+
+};
+
 
 /**
  * Reprents a single remote quadcopter connected via UDP
@@ -57,6 +66,13 @@ public:
 	 */
 	void land();
 
+
+	/**
+	 * Immediately kill motors.
+	 * It may be wise to send this multiple times in case of packet loss
+	 */
+	void terminate();
+
 	/**
 	 * Sets the brightness of the LEDs on the drone
 	 *
@@ -91,10 +107,10 @@ public:
 	string mode;
 
 	// Physical State : used for visualization and trajectory control
-	Vector3d position;
-	Vector3d velocity;
-	Quaterniond orientation;
-	Time stateTime;
+	State state;
+	LinearComplementaryEstimator estimator;
+
+	BatteryStatus battery;
 
 private:
 
@@ -112,10 +128,14 @@ private:
 	int netfd = 0;
 	mavlink_channel_t channel;
 
-	pthread_t thread = NULL;
+	pthread_t thread = 0;
 
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
+
+
+	ControlInput lastControlInput;
+	Time lastControlTime;
 
 
 	Time lastHeartbeatReceived;

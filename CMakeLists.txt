@@ -36,6 +36,7 @@ add_library(
 	src/core/messaging.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
+	src/estimation/linear_complementary.cpp
 	src/trajectory/polynomial.cpp
 	src/trajectory/linear.cpp
 	src/trajectory/circle.cpp
@@ -59,7 +60,7 @@ target_link_libraries(
 	boost_random-mt
 )
 
-set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y")
+set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")
 
 
 

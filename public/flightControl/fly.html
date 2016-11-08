@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+        <meta name='mobile-web-app-capable' content='yes'>
+        <meta name='apple-mobile-web-app-capable' content='yes'>
+        <meta name='apple-mobile-web-app-status-bar-style' content='black'>
+        <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui'>
+        <meta name="theme-color" content="#0f9d58">
+
+        <title>Drone Controller</title>
+
+        <!-- Material Design fonts -->
+        <link async rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+        <link async href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+        <!-- Bootstrap -->
+        <link async href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Bootstrap Material Design -->
+        <link async href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/css/bootstrap-material-design.css" rel="stylesheet">
+        <link async href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/css/ripples.min.css" rel="stylesheet">
+
+		<!-- Snackbar.js -->
+		<link href="https://fezvrasta.github.io/snackbarjs/dist/snackbar.min.css" rel="stylesheet">		
+		
+        <!-- Font Awesome -->
+        <link async rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+        <!-- JavaScript/jQuery Dependencies -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/ripples.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.7/js/material.min.js"></script>
+		<style>
+			button.btn.btn-fab.actionFab {
+				border-radius: 50%;
+				font-size: 15vmin;
+				height: 30vmin;
+				margin: auto;
+				min-width: 56px;
+				width: 30vmin;
+				padding: 0;
+				overflow: hidden;
+				-webkit-box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+				box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+				position: relative;
+				line-height: normal;
+				background-color: white;
+			}
+			.status {
+				font-size: 5vmin;
+			}
+			.gap {
+				padding-bottom: 15px;
+			}
+			body {
+				font-size: 2.5vw;
+			}
+			h1 {
+				font-size: 5vh;
+			}
+			div.container-fluid {
+				margin:  3vmin;
+			}
+			.true {
+				color: green;
+			}
+			.tralse {
+				color: yellow;
+			}
+			.false {
+				color: red;
+			}
+			.droneData > div {
+				font-size: 2.5vw;
+			}
+			.noMargin {
+				margin: 0 !important;
+			}
+			.droneLog {
+				font-size:  2vw !important;
+			}
+		</style>
+</head>
+<body>
+<h1 class="text-center">Dancing Drones Control Board</h1>
+<div class="container-fluid">
+	<div class="text-center gap row">
+		<div class="col-md-3 col-sm-6 text-center">
+			<button id="playDrones" type="button" class="btn btn-fab actionFab"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
+			<br><br>
+		</div>
+		<div class="col-md-3 col-sm-6 text-center">
+			<button id="pauseDrones" type="button" class="btn btn-fab actionFab"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
+			<br><br>
+		</div>
+		<div class="col-md-3 col-sm-6 text-center">
+			<button id="stopDrones" type="button" class="btn btn-fab actionFab"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
+			<br><br>
+		</div>
+		<div class="col-md-3 col-sm-6 text-center">
+			<button id="killDrones" type="button" class="btn btn-fab actionFab"><i class="fa fa-ambulance" aria-hidden="true"></i></button>
+			<br><br>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-4 text-center">
+			MoCap:&nbsp;&nbsp;<i class="fa fa-binoculars moCapStatus" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-4 text-center">
+			Playing:&nbsp;&nbsp;<i class="fa fa-circle playStatus" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-4 text-center">
+			Run Time:&nbsp;&nbsp;<span id="runTime">1:00:00</span>
+		</div>
+	</div>
+	<br>
+	<div class="row droneData">
+		<div class="col-sm-1">
+			<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID">1</span>
+		</div>
+		<div class="col-sm-3 text-center">
+			Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-3 text-center">
+			Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-3 text-center">
+			Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-2 text-center">
+			<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
+		</div>
+	</div>
+	<div class="row droneData">
+		<div class="col-sm-1">
+			<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID">2</span>
+		</div>
+		<div class="col-sm-3 text-center">
+			Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-3 text-center">
+			Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-3 text-center">
+			Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
+		</div>
+		<div class="col-sm-2 text-center">
+			<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
+		</div>
+	</div>
+</div>
+<script>
+$.material.init();
+
+// Test for Colors - Remove for Prod
+$(".moCapStatus").addClass("true");
+setFalse($(".playStatus"));
+setFalse($(".tracking"));
+setFalse($(".connected"));
+setFalse($(".armed"));
+
+// Event Listeners
+
+$("#playDrones").click(function () {
+	setTrue($(".playStatus"));
+	armDrones();
+	trackDrones();
+	connectToDrones();
+});
+
+$("#pauseDrones").click(function () {
+	setTralse($(".playStatus"));
+});
+
+
+$("#stopDrones").click(function () {
+	setFalse($(".playStatus"));
+	disarm();
+});
+
+
+$("#killDrones").click(function () {
+	setFalse($(".playStatus"));
+	disarm();
+});
+
+function armDrones() {
+	setTrue($(".armed"));
+}
+function trackDrones() {
+	setTrue($(".tracking"));
+}
+function connectToDrones() {
+	setTrue($(".connected"));
+}
+
+function disarm() {
+	setFalse($(".armed"));
+}
+
+function setTrue(item) {
+	item.removeClass("false tralse").addClass("true");
+}
+
+function setTralse(item) {
+	item.removeClass("false true").addClass("tralse");
+}
+
+function setFalse(item) {
+	item.removeClass("true tralse").addClass("false");	
+}
+</script>
+</body>
+</html>

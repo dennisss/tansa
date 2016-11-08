@@ -55,6 +55,7 @@ target_link_libraries(
 	pthread
 
 	sioclient
+	boost_system
 	${Boost_LIBRARIES}
 )
 

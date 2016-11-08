@@ -9,6 +9,9 @@ build: build_socketio_cpp
 	rm -f config/gazebo/models/x340/x340.sdf
 	cd build; cmake ..; make
 
+runSim: 
+	./scripts/start_gazebo.sh
+
 server:
 	node ./src/server
 

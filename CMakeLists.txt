@@ -4,7 +4,7 @@ project(tansa)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
-
+find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(
@@ -20,7 +20,7 @@ include_directories(
 )
 
 link_directories(
-	lib/socket.io-client-cpp/build/lib/Release
+	build_socketio_cpp
 )
 
 
@@ -55,9 +55,7 @@ target_link_libraries(
 	pthread
 
 	sioclient
-	boost_system-mt
-	boost_date_time-mt
-	boost_random-mt
+	${Boost_LIBRARIES}
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")

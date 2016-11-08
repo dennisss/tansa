@@ -1,7 +1,7 @@
 
 CONFIG_PATH="src/config.json"
 
-.PHONY: build
+.PHONY: build build_firmware build_socketio_cpp
 
 build: build_socketio_cpp
 	git submodule update --init --recursive

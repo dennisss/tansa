@@ -48,7 +48,7 @@ In `lib/Firmware`, run `make posix_sitl_default gazebo` to start the simulator.
 
 Alternatively, run `make sim` to start up a multidrone simulator
 
-Run `make run` to build the core stuff and start up the controller
+Run `make run` to build the core stuff and start up the controller. Make sure that config.json has the right filepaths, and the right ip addresses if not using simulator.
 
 
 Documentation

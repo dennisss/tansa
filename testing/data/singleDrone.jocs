@@ -11,6 +11,11 @@
       "id": 0
     }
   ],
+ "theater_volume": {
+   "min": [-1.5,-1.5,-1.5],
+   "max": [1.5,1.5,1.5]
+ },
+  "repeat":1,
   "chor": [
     {
       "time": 0.0,
@@ -22,7 +27,8 @@
           "drones": [
             {
               "id":0,
-              "offset":[0,0,0]
+              "startOffset":[0,0,0],
+              "endOffset":[0,0,0]
             }
           ]
         }
@@ -35,8 +41,8 @@
           "type": "circle",
           "data":
           {
-            "originPointCenter": [0,0,1],
-            "radius": 2,
+            "originPoint": [0,0,1],
+            "radius": 1,
             "theta1": 0,
             "theta2": 360
           },
@@ -44,7 +50,8 @@
           "drones": [
             {
               "id":0,
-              "offset":[0,0,0]
+              "startOffset":[0,0,0],
+              "endOffset":[0,0,0]
             }
           ]
         }
@@ -59,8 +66,9 @@
           "duration": 2.5,
           "drones": [
             {
-            "id":0,
-            "offset":[0,0,0]
+              "id":0,
+              "startOffset":[0,0,0],
+              "endOffset":[0,0,0]
             }
           ]
         }
@@ -73,14 +81,15 @@
           "type": "line",
           "data":
           {
-            "startPointCenter": [2, 2, 1],
-            "endPointCenter": [2, -2, 1]
+            "startPoint": [1, 1, 1],
+            "endPoint": [1, -1, 1]
           },
           "duration": 5,
           "drones": [
             {
               "id":0,
-              "offset":[0,0,0]
+              "startOffset":[0,0,0],
+              "endOffset":[0,0,0]
             }
           ]
         }
@@ -93,14 +102,15 @@
           "type": "line",
           "data":
           {
-            "startPointCenter": [2, -2, 1],
-            "endPointCenter": [-2, -2, 1]
+            "startPoint": [1, -1, 1],
+            "endPoint": [-1, -1, 1]
           },
           "duration": 5,
           "drones": [
             {
               "id":0,
-              "offset":[0,0,0]
+              "startOffset":[0,0,0],
+              "endOffset":[0,0,0]
             }
           ]
         }
@@ -113,14 +123,15 @@
           "type": "line",
           "data":
           {
-            "startPointCenter": [-2, -2, 1],
-            "endPointCenter": [-2, 2, 1]
+            "startPoint": [-1, -1, 1],
+            "endPoint": [-1, 1, 1]
           },
           "duration": 5,
           "drones": [
             {
               "id":0,
-              "offset":[0,0,0]
+              "startOffset":[0,0,0],
+              "endOffset":[0,0,0]
             }
           ]
         }
@@ -133,33 +144,15 @@
           "type": "line",
           "data":
           {
-            "startPointCenter": [-2, 2, 1],
-            "endPointCenter": [0, 0, 1]
+            "startPoint": [-1, 1, 1],
+            "endPoint": [0, 0, 1]
           },
           "duration": 5,
           "drones": [
             {
               "id":0,
-              "offset":[0,0,0]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "time": 42.5,
-      "action": [
-        {
-          "type": "hover",
-          "data":
-          {
-            "startPointCenter": [-2, 2, 1]
-          },
-          "duration": 5,
-          "drones": [
-            {
-              "id":0,
-              "offset":[0,0,0]
+              "startOffset":[0,0,0],
+              "endOffset":[0,0,0]
             }
           ]
         }

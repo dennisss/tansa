@@ -51,6 +51,12 @@ Alternatively, run `make sim` to start up a multidrone simulator
 Run `make run` to build the core stuff and start up the controller. Make sure that config.json has the right filepaths, and the right ip addresses if not using simulator.
 
 
+UI
+--
+
+Before doing `make run`, do `make server`. Then see the UI at `http://127.0.0.1:3000`
+
+
 Documentation
 -------------
 

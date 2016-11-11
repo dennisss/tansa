@@ -5,3 +5,6 @@
 [submodule "include/mavlink"]
 	path = include/mavlink
 	url = https://github.com/mavlink/c_library_v1.git
+[submodule "lib/socket.io-client-cpp"]
+	path = lib/socket.io-client-cpp
+	url = https://github.com/socketio/socket.io-client-cpp.git

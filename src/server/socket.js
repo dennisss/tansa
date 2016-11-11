@@ -25,13 +25,18 @@
 
 module.exports = function(server){
 
-	var io = require('socket.io')(server, {
+	var io = require('socket.io')(server /* , {
 		path: '/api/socket',
 		serveClient: false
-	});
+	} */);
 
-	io.on('connection', function (socket) {
+	io.on('connection', function(socket) {
+		console.log('Client Connected!');
 
+		// Just broadcast all received messages to all other clients
+		socket.on('msg', function(data) {
+			socket.broadcast.emit('msg', data);
+		})
 
 	});
 

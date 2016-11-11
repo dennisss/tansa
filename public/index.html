@@ -9,19 +9,53 @@
 
 	<title>Tansa</title>
 
-	<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans&amp;subset=latin,greek">
-	<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-	<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-	<link rel="stylesheet" type="text/css" href="http://127.0.0.1:4200/assets/web.css">
 </head>
 <body>
 
-	<div id="ts-root">
+	<div id="test">
 	</div>
 
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" crossorigin="anonymous"></script>
-	<script src="http://127.0.0.1:4200/assets/web.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+		var socket = io();
+
+		// This should receive data a few times a second
+		socket.on('msg', function(data) {
+			/*
+				data will probably be of the form:
+				{
+					type: 'stats',
+					time: 3.25, // in seconds
+					vehicles: [
+						{
+							id: 0,
+							tracking: true,
+							connected: true,
+							armed: true
+							...
+
+						}
+
+					],
+					global: {
+						playing: false,
+						mocap_connected: true
+						...					
+					}
+
+				}
+			*/
+
+			$('#test').text(JSON.stringify(data, null, 4));
+
+		});
+
+		// To hit play, do socket.emit('msg', {type: 'play'});
+
+
+	</script>
+
 </body>
 </html>

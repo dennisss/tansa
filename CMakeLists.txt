@@ -4,13 +4,25 @@ project(tansa)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
-
+find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(
 	${EIGEN3_INCLUDE_DIR}
 	include
 )
+
+
+######## Headers and libraries for prebuilt socket.io client ########
+
+include_directories(
+	lib/socket.io-client-cpp/build/include
+)
+
+link_directories(
+	build_socketio_cpp
+)
+
 
 ######## Main Tansa Library ########
 
@@ -21,6 +33,7 @@ add_library(
 	src/core/vehicle.cpp
 	src/core/vehicle_time.cpp
 	src/core/time.cpp
+	src/core/messaging.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
 	src/estimation/linear_complementary.cpp
@@ -33,12 +46,17 @@ add_library(
 	src/mocap/optitrack/ClientCore.cpp
 	src/mocap/optitrack/NatNetClient.cpp
     src/jocs/jocsParser.cpp
-	src/jocs/action.cpp)
+	src/jocs/action.cpp
+)
 
 target_link_libraries(
 	tansa
 
 	pthread
+
+	sioclient
+	boost_system
+	${Boost_LIBRARIES}
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")

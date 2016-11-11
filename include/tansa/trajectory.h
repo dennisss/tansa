@@ -37,7 +37,7 @@ public:
 		this->t1 = t1;
 		this->t2 = t2;
 	}
-	virtual ~Trajectory(){}
+	virtual ~Trajectory() {};
 	virtual TrajectoryState evaluate(double t) = 0;
 
 	inline double startTime() { return this->t1; }

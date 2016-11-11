@@ -25,6 +25,30 @@ struct hardware_config {
 	string serverAddress;
 };
 
+
+/* For sending a system state update to the gui */
+void send_status_message() {
+	Time t = Time::now();
+
+	sio::message::ptr obj = sio::object_message::create();
+	obj->get_map()["type"] = sio::string_message::create("status");
+	obj->get_map()["time"] = sio::double_message::create(t.seconds());
+
+	sio::message::list li(obj);
+	tansa::send_message(li);
+
+}
+
+void on_message(sio::message::ptr const& data) {
+	string type = data->get_map()["type"]->get_string();
+
+	if(type == "play") {
+		printf("Playing...\n");
+	}
+
+}
+
+
 int main(int argc, char *argv[]) {
 
 	assert(argc == 2);
@@ -136,6 +160,11 @@ int main(int argc, char *argv[]) {
 		double t = Time::now().since(start).seconds();
 
 
+		// Regular status message
+		if(i % 20 == 0) {
+			send_status_message();
+		}
+
 		// Check for state transitions
 		if(states[0] == STATE_INIT) {
 
@@ -242,7 +271,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	/// Cleanup
-
 	if (useMocap) {
 		mocap->disconnect();
 		delete mocap;

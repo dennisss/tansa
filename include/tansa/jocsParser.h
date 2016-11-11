@@ -66,6 +66,7 @@ private:
 	 * @param actions [out] Will be filled with actions
 	 */
 	 void parseAction(nlohmann::json::reference data);
+
 	/**
 	 * Converts from string to ActionTypes enum
 	 * @private

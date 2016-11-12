@@ -3,6 +3,7 @@
 //
 #include "tansa/jocsParser.h"
 #include <regex>
+#include <algorithm>
 namespace tansa {
 const std::string Jocs::HOME_KEY = "startPosition";
 const std::string Jocs::ID_KEY = "id";
@@ -54,6 +55,51 @@ Jocs Jocs::Parse(std::string jocsPath) {
 	unsigned repeat = rawJson[REPEAT_KEY];
 	auto ret = Jocs(needConvertToMeters, needConvertToRadians, repeat);
 	ret.parseActions(rawJson);
+	auto actions = ret.GetActions();
+	auto homes = ret.GetHomes();
+	auto floatComp = [](double a, double b) -> bool { return fabs(a-b) < 0.1; };
+	auto pointComp = [](Point a, Point b) -> bool { return fabs((a-b).norm()) < 0.1; };
+	try {
+		for (unsigned j = 0; j < actions.size(); j++) {
+			auto startPoint = homes[j];
+			double startTime = 0.0;
+			//Sort actions for each drone based on start time
+			std::sort(actions[j].begin(), actions[j].end(),
+					  [](Action *const &lhs, Action *const &rhs) { return lhs->GetStartTime() < rhs->GetStartTime(); });
+			for (unsigned i = 0; i < actions[j].size(); i++) {
+				//Check temporal continuity
+				Action *a = actions[j][i];
+				double sTime = a->GetStartTime();
+				double eTime = a->GetEndTime();
+				if (!floatComp(sTime, startTime)) {
+					throw new std::runtime_error(
+							"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
+							std::to_string(sTime) + " and end time: " + std::to_string(eTime));
+				}
+				startTime = eTime;
+				//Check spatial continuity
+				if (a->GetActionType() != ActionTypes::Light) {
+					auto ma = static_cast<MotionAction *>(a);
+					auto actionStart = ma->GetStartPoint();
+					if (!pointComp(actionStart, startPoint)) {
+						throw new std::runtime_error(
+								"Spatial Discontinuity for Drone: " + std::to_string(j) + ". Jumping from point: " +
+								"[" + std::to_string(startPoint.x()) + " " + std::to_string(startPoint.y()) + " " +
+								std::to_string(startPoint.z()) + "]" +
+								" to point: " "[" + std::to_string(actionStart.x()) + " " +
+								std::to_string(actionStart.y()) + " " + std::to_string(actionStart.z()) + "]" + "\n"
+								+ "at start time: " + std::to_string(sTime)
+						);
+					}
+					startPoint = ma->GetEndPoint();
+				}
+
+			}
+		}
+	} catch (std::runtime_error* e){
+		std::cerr << e->what() << std::endl;
+
+	}
 	return ret;
 }
 

@@ -4,7 +4,6 @@
 #include "tansa/jocsParser.h"
 #include <regex>
 namespace tansa {
-const std::string Jocs::DRONE_KEY = "drones";
 const std::string Jocs::HOME_KEY = "startPosition";
 const std::string Jocs::ID_KEY = "id";
 
@@ -29,6 +28,7 @@ const std::string Jocs::DURATION_KEY = "duration";
 const std::string Jocs::DRONE_ARRAY_KEY = "drones";
 const std::string Jocs::DRONE_START_OFF_KEY = "startOffset";
 const std::string Jocs::DRONE_END_OFF_KEY = "endOffset";
+const std::string Jocs::DRONE_OFF_KEY = "totalOffset"; // TODO: use this for circles and hovers
 
 const std::string Jocs::ACTION_DATA_KEY = "data";
 const std::string Jocs::STARTPOS_KEY = "startPoint";

@@ -9,4 +9,7 @@ Explain what's changing: go over any special cases, unusual behavior, open quest
   - [ ] Test Sub Case 1
 - [ ] Test Case 2
 
+#### :heavy_check_mark: Verification
+- [ ] Checked for memory leaks
+
 #### :popcorn: Relevant Gif

@@ -93,7 +93,6 @@ Jocs Jocs::Parse(std::string jocsPath) {
 					}
 					startPoint = ma->GetEndPoint();
 				}
-
 			}
 		}
 	} catch (std::runtime_error e){

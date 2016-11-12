@@ -153,8 +153,10 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 
 		for (unsigned j = 0; j < drones.size(); j++) {
 			unsigned drone = drones[j][ID_KEY];
-			Point offset(drones[j][DRONE_START_OFF_KEY][0],drones[j][DRONE_START_OFF_KEY][1],drones[j][DRONE_START_OFF_KEY][2]);
-			offset*=conversionFactor;
+			Point startOffset(drones[j][DRONE_START_OFF_KEY][0],drones[j][DRONE_START_OFF_KEY][1],drones[j][DRONE_START_OFF_KEY][2]);
+			Point endOffset(drones[j][DRONE_END_OFF_KEY][0],drones[j][DRONE_END_OFF_KEY][1],drones[j][DRONE_END_OFF_KEY][2]);
+			startOffset*=conversionFactor;
+			endOffset*=conversionFactor;
 			switch (type) {
 				case ActionTypes::Transition: {
 					// Actual calculation will be processed after this loop
@@ -173,7 +175,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 					end*=conversionFactor;
 					actions[drone].push_back(new MotionAction(
-							drone, new LinearTrajectory(start + offset, lastTime + startTime, end + offset, lastTime + startTime + duration), ActionTypes::Line));
+							drone, new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration), ActionTypes::Line));
 					break;
 				}
 				case ActionTypes::Circle: {
@@ -190,9 +192,10 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 						theta1 = theta1 * DEGREES_TO_RADIANS;
 						theta2 = theta2 * DEGREES_TO_RADIANS;
 					}
+					// TODO: use separate offset key for circle and hover
 					actions[drone].push_back(new MotionAction(
 							drone,
-							new CircleTrajectory(origin + offset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration),
+							new CircleTrajectory(origin + startOffset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration),
 							ActionTypes::Circle
 					));
 					break;
@@ -204,9 +207,10 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][2]
 					);
 					hoverPoint*=conversionFactor;
+					// TODO: use separate offset key for circle and hover
 					actions[drone].push_back(new MotionAction(
 							drone,
-							new LinearTrajectory(hoverPoint + offset, lastTime +  startTime, hoverPoint + offset, lastTime + startTime + duration),
+							new LinearTrajectory(hoverPoint + startOffset, lastTime +  startTime, hoverPoint + endOffset, lastTime + startTime + duration),
 							ActionTypes::Hover
 					));
 					break;

@@ -72,7 +72,7 @@ Jocs Jocs::Parse(std::string jocsPath) {
 				double sTime = a->GetStartTime();
 				double eTime = a->GetEndTime();
 				if (!floatComp(sTime, startTime)) {
-					throw new std::runtime_error(
+					throw std::runtime_error(
 							"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
 							std::to_string(sTime) + " and end time: " + std::to_string(eTime));
 				}
@@ -82,7 +82,7 @@ Jocs Jocs::Parse(std::string jocsPath) {
 					auto ma = static_cast<MotionAction *>(a);
 					auto actionStart = ma->GetStartPoint();
 					if (!pointComp(actionStart, startPoint)) {
-						throw new std::runtime_error(
+						throw std::runtime_error(
 								"Spatial Discontinuity for Drone: " + std::to_string(j) + ". Jumping from point: " +
 								"[" + std::to_string(startPoint.x()) + " " + std::to_string(startPoint.y()) + " " +
 								std::to_string(startPoint.z()) + "]" +
@@ -96,8 +96,8 @@ Jocs Jocs::Parse(std::string jocsPath) {
 
 			}
 		}
-	} catch (std::runtime_error* e){
-		std::cerr << e->what() << std::endl;
+	} catch (std::runtime_error e){
+		std::cerr << e.what() << std::endl;
 
 	}
 	return ret;

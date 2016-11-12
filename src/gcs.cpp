@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// TODO: Have a better check for mocap initialization/health
-	sleep(10);
+	sleep(15);
 
 	vector<HoverController *> hovers(n);
 	for(int i = 0; i < n; i++) {

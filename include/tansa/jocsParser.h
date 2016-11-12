@@ -35,7 +35,18 @@ public:
 	static const std::string UNITS_KEY;
 	static const double FEET_TO_METERS;
 	static const double DEGREES_TO_RADIANS;
-	Jocs(bool convertMeters, bool convertRadians) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians){}
+	static const std::string THEATER_VOLUME_KEY;
+	static const std::string MIN_KEY;
+	static const std::string MAX_KEY;
+	static const std::string LENGTH_KEY;
+	static const std::string TIME_KEY;
+	static const std::string ANGLE_KEY;
+	static const std::string REPEAT_KEY;
+	static const std::string DRONE_START_OFF_KEY;
+	static const std::string DRONE_END_OFF_KEY;
+	static const std::string HOVER_KEY;
+
+	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
 	/**
 	 * Parses a given Jocs file
 	 * @public
@@ -51,6 +62,7 @@ private:
 	bool needConvertToRadians = false;
 	std::vector<Point> homes;
 	std::vector<std::vector<Action*>> actions;
+	unsigned repeat;
 
 private:
 	/**
@@ -65,8 +77,7 @@ private:
 	 * @param data Json data containing a reference to an action
 	 * @param actions [out] Will be filled with actions
 	 */
-	 void parseAction(nlohmann::json::reference data);
-
+	 double parseAction(nlohmann::json::reference data, double lastTime);
 	/**
 	 * Converts from string to ActionTypes enum
 	 * @private

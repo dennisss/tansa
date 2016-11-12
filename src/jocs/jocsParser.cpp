@@ -74,7 +74,7 @@ Jocs Jocs::Parse(std::string jocsPath) {
 				if (!floatComp(sTime, startTime)) {
 					throw std::runtime_error(
 							"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
-							std::to_string(sTime) + " and end time: " + std::to_string(eTime));
+							std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
 				}
 				startTime = eTime;
 				//Check spatial continuity

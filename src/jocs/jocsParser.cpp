@@ -1,26 +1,43 @@
 //
 // Created by kyle on 10/12/16.
 //
-#include <regex>
 #include "tansa/jocsParser.h"
+#include <regex>
 namespace tansa {
-const std::string Jocs::HOME_KEY = "startPosition";
 const std::string Jocs::DRONE_KEY = "drones";
+const std::string Jocs::HOME_KEY = "startPosition";
 const std::string Jocs::ID_KEY = "id";
+
+const std::string Jocs::UNITS_KEY = "units";
+const std::string Jocs::LENGTH_KEY = "length";
+const std::string Jocs::TIME_KEY = "time";
+const std::string Jocs::ANGLE_KEY = "angle";
+
+const std::string Jocs::THEATER_VOLUME_KEY = "theater_volume";
+const std::string Jocs::MIN_KEY = "min";
+const std::string Jocs::MAX_KEY = "max";
+
+const std::string Jocs::REPEAT_KEY = "repeat";
+
 const std::string Jocs::CHOREOGRAPHY_KEY = "chor";
-const std::string Jocs::STARTPOS_KEY = "startPointCenter";
-const std::string Jocs::ENDPOS_KEY = "endPointCenter";
-const std::string Jocs::DURATION_KEY = "duration";
-const std::string Jocs::ACTION_ROOT_KEY = "action";
 const std::string Jocs::ACTION_TIME_KEY = "time";
+
+const std::string Jocs::ACTION_ROOT_KEY = "action";
 const std::string Jocs::ACTION_TYPE_KEY = "type";
+const std::string Jocs::DURATION_KEY = "duration";
+
 const std::string Jocs::DRONE_ARRAY_KEY = "drones";
+const std::string Jocs::DRONE_START_OFF_KEY = "startOffset";
+const std::string Jocs::DRONE_END_OFF_KEY = "endOffset";
+
 const std::string Jocs::ACTION_DATA_KEY = "data";
-const std::string Jocs::CIRCLE_ORIGIN_KEY = "originPointCenter";
+const std::string Jocs::STARTPOS_KEY = "startPoint";
+const std::string Jocs::ENDPOS_KEY = "endPoint";
+const std::string Jocs::HOVER_KEY = "hoverPoint";
+const std::string Jocs::CIRCLE_ORIGIN_KEY = "originPoint";
 const std::string Jocs::CIRCLE_RADIUS_KEY = "radius";
 const std::string Jocs::CIRCLE_THETA1_KEY = "theta1";
 const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
-const std::string Jocs::UNITS_KEY = "units";
 
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
@@ -29,103 +46,119 @@ Jocs Jocs::Parse(std::string jocsPath) {
 	ifstream jocsStream(jocsPath);
 	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
 	//For some reason this regex didn't like the end of line $...but does work without it
-	jocsData = std::move(std::regex_replace(jocsData, std::regex("//.*"), ""));
 	assert(jocsData.find("//") == std::string::npos);
 	auto rawJson = nlohmann::json::parse(jocsData);
 	auto units = rawJson[UNITS_KEY];
-	bool needConvertToMeters = (units["length"] == "feet");
-	bool needConvertToRadians = (units["angle"] == "degrees");
-	auto ret = Jocs(needConvertToMeters, needConvertToRadians);
+	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
+	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
+	unsigned repeat = rawJson[REPEAT_KEY];
+	auto ret = Jocs(needConvertToMeters, needConvertToRadians, repeat);
 	ret.parseActions(rawJson);
 	return ret;
 }
 
 void Jocs::parseActions(const nlohmann::json &data) {
+
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	auto drones = data[DRONE_ARRAY_KEY];
-
 	assert(drones.is_array());
-	//This must be an array
 	assert(actionsJson.is_array());
 	auto droneLength = drones.size();
 	homes.resize(droneLength);
+	double conversionFactor = needConvertToMeters ? FEET_TO_METERS : 1.0;
 	for(unsigned i = 0; i < droneLength; i++){
-		homes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2]);
+		homes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2])*conversionFactor;
 	}
+
 	auto length = actionsJson.size();
 	//allocate space for each subarray for each drone.
 	actions.resize(droneLength);
 	// For each drone, gather actions in a vector and add as entry in "actions" 2d vector
-	for(unsigned i = 0; i < length; i++){
-		parseAction(actionsJson[i]);
+	double lastTime = 0.0;
+	for(unsigned k = 0; k < repeat; k++) {
+		for (unsigned i = 0; i < length; i++) {
+			if (i == length - 1) {
+				lastTime = parseAction(actionsJson[i], lastTime);
+			} else {
+				parseAction(actionsJson[i], lastTime);
+			}
+		}
 	}
 	// Go back and review actions such that transitions can be created with polynomial trajectories
-	for(unsigned i = 0; i < actions.size(); i++){
+	for (unsigned i = 0; i < actions.size(); i++) {
 		// Each entry in "actions" has a vector full of actions for that drone
-		for (unsigned j=0; j < actions[i].size(); j++){
-			if(!actions[i][j]->IsCalculated()){
+		for (unsigned j = 0; j < actions[i].size(); j++) {
+			if (!actions[i][j]->IsCalculated()) {
 				double thisStart = actions[i][j]->GetStartTime();
 				double thisEnd = actions[i][j]->GetEndTime();
-				if(j == 0){
-						MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
-						auto endState = next->GetPathState(next->GetStartTime());
-						std::cout << endState.velocity << std::endl;
-						delete actions[i][j];
-						actions[i][j] = new MotionAction(i,
-							 PolynomialTrajectory::compute(
-									 {homes[i]},
-									 thisStart,
-									 {endState.position, endState.velocity,
-									  endState.acceleration},
-									 thisEnd
-							 ),
-							 ActionTypes::Transition
-						);
-				} else if (j == (actions[i].size() - 1)){
+				if (j == 0) {
+					MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
+					auto endState = next->GetPathState(next->GetStartTime());
+					delete actions[i][j];
+					actions[i][j] = new MotionAction(i,
+													 PolynomialTrajectory::compute(
+															 {homes[i]},
+															 thisStart,
+															 {endState.position, endState.velocity,
+															  endState.acceleration},
+															 thisEnd
+													 ),
+													 ActionTypes::Transition
+					);
+				} else if (j == (actions[i].size() - 1)) {
 					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
-				} else{
+				} else {
 
-						// Calculate previous and next motion to generate what's needed for the transition
-						MotionAction *prev = static_cast<MotionAction *>(actions[i][j - 1]);
-						MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
-						// Get states from the previous and next state that were found
-						auto startState = prev->GetPathState(prev->GetEndTime());
-						auto endState = next->GetPathState(next->GetStartTime());
-						// Cleanup object and replace with a new MotionAction
-						delete actions[i][j];
-						actions[i][j] = new MotionAction(i, PolynomialTrajectory::compute(
-								{startState.position, startState.velocity, startState.acceleration},
-								thisStart,
-								{endState.position, endState.velocity, endState.acceleration},
-								thisEnd
-														 ),
-								ActionTypes::Transition
-						);
+					// Calculate previous and next motion to generate what's needed for the transition
+					MotionAction *prev = static_cast<MotionAction *>(actions[i][j - 1]);
+					MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
+					// Get states from the previous and next state that were found
+					auto startState = prev->GetPathState(prev->GetEndTime());
+					auto endState = next->GetPathState(next->GetStartTime());
+					// Cleanup object and replace with a new MotionAction
+					delete actions[i][j];
+					actions[i][j] = new MotionAction(i, PolynomialTrajectory::compute(
+							{startState.position, startState.velocity, startState.acceleration},
+							thisStart,
+							{endState.position, endState.velocity, endState.acceleration},
+							thisEnd
+							 ),
+					 ActionTypes::Transition
+					);
 				}
 			}
 		}
 	}
 }
 
-void Jocs::parseAction(nlohmann::json::reference data){
+// TODO: rename since it parses all actions at given timeslot
+double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
+	double endTime = 0.0;
+
 	for(unsigned i = 0; i < actionsArray.size(); i++) {
 		auto actionsArrayElement = actionsArray[i];
+
 		double duration = actionsArrayElement[DURATION_KEY];
+
 		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
 		assert(actionsArrayElement[DRONE_ARRAY_KEY].is_array());
+
 		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];
 		double conversionFactor = needConvertToMeters ? FEET_TO_METERS : 1.0;
+		endTime += lastTime + startTime + duration;
 		assert(drones.is_array());
+
 		for (unsigned j = 0; j < drones.size(); j++) {
 			unsigned drone = drones[j][ID_KEY];
-			Point offset(drones[j]["offset"][0],drones[j]["offset"][1],drones[j]["offset"][2]);
+			Point offset(drones[j][DRONE_START_OFF_KEY][0],drones[j][DRONE_START_OFF_KEY][1],drones[j][DRONE_START_OFF_KEY][2]);
+			offset*=conversionFactor;
 			switch (type) {
 				case ActionTypes::Transition: {
 					// Actual calculation will be processed after this loop
-					actions[drone].push_back(new EmptyAction(drone, startTime, startTime + duration));
+					actions[drone].push_back(new EmptyAction(drone, lastTime + startTime, lastTime + startTime + duration));
 					break;
 				}
 				case ActionTypes::Line: {
@@ -140,7 +173,7 @@ void Jocs::parseAction(nlohmann::json::reference data){
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 					end*=conversionFactor;
 					actions[drone].push_back(new MotionAction(
-							drone, new LinearTrajectory(start + offset, startTime, end + offset, startTime + duration), ActionTypes::Line));
+							drone, new LinearTrajectory(start + offset, lastTime + startTime, end + offset, lastTime + startTime + duration), ActionTypes::Line));
 					break;
 				}
 				case ActionTypes::Circle: {
@@ -159,21 +192,21 @@ void Jocs::parseAction(nlohmann::json::reference data){
 					}
 					actions[drone].push_back(new MotionAction(
 							drone,
-							new CircleTrajectory(origin + offset, radius, theta1, startTime, theta2, startTime + duration),
+							new CircleTrajectory(origin + offset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration),
 							ActionTypes::Circle
 					));
 					break;
 				}
 				case ActionTypes::Hover:{
 					Point hoverPoint(
-							actionsArrayElement[ACTION_DATA_KEY]["startPointCenter"][0],
-							actionsArrayElement[ACTION_DATA_KEY]["startPointCenter"][1],
-							actionsArrayElement[ACTION_DATA_KEY]["startPointCenter"][2]
+							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][0],
+							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][1],
+							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][2]
 					);
 					hoverPoint*=conversionFactor;
 					actions[drone].push_back(new MotionAction(
 							drone,
-							new LinearTrajectory(hoverPoint + offset, startTime, hoverPoint + offset, startTime + duration),
+							new LinearTrajectory(hoverPoint + offset, lastTime +  startTime, hoverPoint + offset, lastTime + startTime + duration),
 							ActionTypes::Hover
 					));
 					break;
@@ -184,6 +217,7 @@ void Jocs::parseAction(nlohmann::json::reference data){
 			}
 		}
 	}
+	return endTime;
 }
 
 ActionTypes Jocs::convertToActionType(const std::string& data){

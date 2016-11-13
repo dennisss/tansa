@@ -48,6 +48,7 @@ public:
 	static const std::string DRONE_OFF_KEY;
 
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
+	~Jocs();
 	/**
 	 * Parses a given Jocs file
 	 * @public

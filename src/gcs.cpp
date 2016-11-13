@@ -80,8 +80,8 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	Mocap *mocap;
-	GazeboConnector *gazebo;
+	Mocap *mocap = nullptr;
+	GazeboConnector *gazebo = nullptr;
 
 	if (useMocap) {
 		mocap = new Mocap();
@@ -280,12 +280,23 @@ int main(int argc, char *argv[]) {
 		delete gazebo;
 	}
 
-
 	// Stop all vehicles
 	for(int vi = 0; vi < n; vi++) {
 		Vehicle *v = vehicles[vi];
 		v->disconnect();
 		delete v;
+	}
+
+	for(int i = 0; i < posctls.size(); i++){
+		delete posctls[i];
+	}
+
+	for(int i = 0; i < hovers.size(); i++){
+		delete hovers[i];
+	}
+
+	for(int i = 0; i < takeoffs.size(); i++){
+		delete takeoffs[i];
 	}
 
 	printf("Done!\n");

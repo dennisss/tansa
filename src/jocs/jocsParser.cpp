@@ -43,6 +43,13 @@ const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
 
+Jocs::~Jocs() {
+	for (const auto &vec : actions) {
+		for (const auto &a : vec) {
+			delete a;
+		}
+	}
+}
 Jocs Jocs::Parse(std::string jocsPath) {
 	ifstream jocsStream(jocsPath);
 	if(!jocsStream.is_open()){

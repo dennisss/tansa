@@ -17,7 +17,6 @@ namespace tansa {
 class Jocs {
 public:
 	static const std::string HOME_KEY;
-	static const std::string DRONE_KEY;
 	static const std::string ID_KEY;
 	static const std::string CHOREOGRAPHY_KEY;
 	static const std::string STARTPOS_KEY;

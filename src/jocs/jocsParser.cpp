@@ -209,8 +209,8 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 
 		for (unsigned j = 0; j < drones.size(); j++) {
 			unsigned drone = drones[j][ID_KEY];
-			Point startOffset(drones[j][DRONE_START_OFF_KEY][0],drones[j][DRONE_START_OFF_KEY][1],drones[j][DRONE_START_OFF_KEY][2]);
-			Point endOffset(drones[j][DRONE_END_OFF_KEY][0],drones[j][DRONE_END_OFF_KEY][1],drones[j][DRONE_END_OFF_KEY][2]);
+			Point startOffset(drones[j][DRONE_START_OFF_KEY][0], drones[j][DRONE_START_OFF_KEY][1], drones[j][DRONE_START_OFF_KEY][2]);
+			Point endOffset(drones[j][DRONE_END_OFF_KEY][0], drones[j][DRONE_END_OFF_KEY][1], drones[j][DRONE_END_OFF_KEY][2]);
 			startOffset*=conversionFactor;
 			endOffset*=conversionFactor;
 			switch (type) {

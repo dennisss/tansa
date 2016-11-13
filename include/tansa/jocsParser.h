@@ -47,6 +47,7 @@ public:
 	static const std::string HOVER_KEY;
 
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
+	~Jocs();
 	/**
 	 * Parses a given Jocs file
 	 * @public

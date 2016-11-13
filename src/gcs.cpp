@@ -74,10 +74,11 @@ int main(int argc, char *argv[]) {
 	auto jocsData = Jocs::Parse(jocsPath);
 	auto actions = jocsData.GetActions();
 	auto homes = jocsData.GetHomes();
-	std::vector<Point> spawns = homes;
-	for(auto& s : spawns){
-		s.z() = 0;
-	}
+	std::vector<Point> spawns = {homes[0]};
+    homes[0].z() = 0;
+	//for(auto& s : spawns){
+	//	s.z() = 0;
+	//}
 
 
 	Mocap *mocap = nullptr;
@@ -93,7 +94,8 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	int n = homes.size();
+	//int n = homes.size();
+	int n = 1;
 
 
 	vector<Vehicle *> vehicles(n);

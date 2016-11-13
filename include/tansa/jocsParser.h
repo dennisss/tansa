@@ -17,7 +17,6 @@ namespace tansa {
 class Jocs {
 public:
 	static const std::string HOME_KEY;
-	static const std::string DRONE_KEY;
 	static const std::string ID_KEY;
 	static const std::string CHOREOGRAPHY_KEY;
 	static const std::string STARTPOS_KEY;
@@ -45,6 +44,7 @@ public:
 	static const std::string DRONE_START_OFF_KEY;
 	static const std::string DRONE_END_OFF_KEY;
 	static const std::string HOVER_KEY;
+	static const std::string DRONE_OFF_KEY;
 
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
 	~Jocs();

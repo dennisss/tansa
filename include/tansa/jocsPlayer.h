@@ -6,14 +6,21 @@
 namespace tansa {
 	class JocsPlayer {
 	public:
-		JocsPlayer(Jocs jocsData) : choreography(jocsData) {}
-		static void play();
-		static void pause();
-		static void rewind(int steps);
-		static void reset();
+		JocsPlayer(bool useMocap) : useMocap(useMocap)  {}
+		void play();
+		void pause();
+		void rewind(int steps);
+		void reset();
+		void loadJocs(string jocsPath);
+		void loadConfig(string configPath);
 	private:
-		Jocs choreography;
+		Jocs jocsData;
+		std::vector<Point> homes;
+		std::vector<std::vector<Action*>> actions;
+		bool useMocap;
 		bool running = false;
+		bool pauseRequested = false;
+		bool resetMode = false;
 	};
 }
 #endif //TANSA_JOCSPLAYER_H

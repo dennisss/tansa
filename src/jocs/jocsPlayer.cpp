@@ -1,4 +1,10 @@
+#include <tansa/mocap.h>
+#include <tansa/gazebo.h>
+#include <zconf.h>
+#include <tansa/control.h>
 #include "tansa/jocsPlayer.h"
+#include <unistd.h>
+#include <sys/signal.h>
 
 namespace tansa {
 
@@ -13,7 +19,7 @@ namespace tansa {
 	 * Pause the choreography
 	 */
 	void JocsPlayer::pause() {
-
+		JocsPlayer::pauseRequested = true;
 	}
 
 	/**
@@ -28,6 +34,16 @@ namespace tansa {
 	 * Reset the choreography back to the initial position (ie: plans[0])
 	 */
 	void JocsPlayer::reset() {
-
+		JocsPlayer::resetMode = true;
 	}
+
+    /**
+     * Load JOCS data from a specified path
+     */
+    void JocsPlayer::loadJocs(string jocsPath) {
+		// TODO: Clear all these if they already have data.
+		JocsPlayer::jocsData = Jocs::Parse(jocsPath);
+		JocsPlayer::homes = jocsData.GetHomes();
+		JocsPlayer::actions = jocsData.GetActions();
+    }
 }

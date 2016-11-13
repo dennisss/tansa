@@ -1,7 +1,3 @@
-//
-// Created by TessD on 10/14/2016.
-//
-
 #ifndef TANSA_ACTION_H
 #define TANSA_ACTION_H
 

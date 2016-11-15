@@ -7,9 +7,11 @@ namespace tansa
 {
 
 
-void init() {
+void init(bool enableMessaging) {
 	time_init();
-	messaging_init();
+	if(enableMessaging) {
+		messaging_init();
+	}
 }
 
 

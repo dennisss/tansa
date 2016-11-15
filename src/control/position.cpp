@@ -10,9 +10,9 @@ PositionController::PositionController(Vehicle *v) {
 	pid = new PID<3>();
 
 	pid->setGains(
-		Point(4.4, 4.4, 4.4), // p
+		Point(3.4, 3.4, 3.4), // p
 		Point(0, 0, 0), // i
-		Point(0.8, 0.8, 0.8) // d
+		Point(1.0, 1.0, 1.0) // d
 	);
 }
 

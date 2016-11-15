@@ -82,8 +82,8 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < jocsActiveIds.size(); i++) {
 		int chosenId = jocsActiveIds[i];
 		// We assume the user only configured for valid IDs..
-		homes[chosenId].z() = 0;
 		spawns.push_back(homes[chosenId]);
+        spawns[i].z() = 0;
 	}
 
 

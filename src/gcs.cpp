@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
 					}
 					plans[vi]++;
 				}
-				Trajectory *cur = static_cast<MotionAction*>(actions[vi][plans[vi]])->GetPath();
+				Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
 				posctls[vi]->track(cur);
 				posctls[vi]->control(t);
 			}

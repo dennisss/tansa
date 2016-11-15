@@ -68,7 +68,9 @@ int main(int argc, char *argv[]) {
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
 	string jocsPath = rawJson["jocsPath"];
+	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
 	bool useMocap = rawJson["useMocap"];
+	float scale = rawJson["theaterScale"];
 	bool enableMessaging = rawJson["enableMessaging"];
 
 	if (useMocap) {
@@ -92,12 +94,17 @@ int main(int argc, char *argv[]) {
 
 
 	tansa::init(enableMessaging);
-	auto jocsData = Jocs::Parse(jocsPath);
+	auto jocsData = Jocs::Parse(jocsPath, scale);
 	auto actions = jocsData.GetActions();
 	auto homes = jocsData.GetHomes();
-	std::vector<Point> spawns = homes;
-	for(auto& s : spawns){
-		s.z() = 0;
+
+	// Only pay attention to homes of active drones
+	std::vector<Point> spawns;
+	for (int i = 0; i < jocsActiveIds.size(); i++) {
+		int chosenId = jocsActiveIds[i];
+		// We assume the user only configured for valid IDs..
+		spawns.push_back(homes[chosenId]);
+        spawns[i].z() = 0;
 	}
 
 
@@ -114,7 +121,7 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	int n = homes.size();
+	int n = spawns.size();
 
 	if(n > vconfigs.size()) {
 		printf("Not enough drones on the network\n");
@@ -139,7 +146,7 @@ int main(int argc, char *argv[]) {
 
 	vector<HoverController *> hovers(n);
 	for(int i = 0; i < n; i++) {
-		hovers[i] = new HoverController(vehicles[i], homes[i]);
+		hovers[i] = new HoverController(vehicles[i], homes[jocsActiveIds[i]]);
 	}
 
 
@@ -151,7 +158,7 @@ int main(int argc, char *argv[]) {
 
 	vector<Trajectory *> takeoffs(n);
 	for(int i = 0; i < n; i++) {
-		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[i], 10.0);
+		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
 	}
 
 	int numLanded = 0;
@@ -276,8 +283,8 @@ int main(int argc, char *argv[]) {
 			}
 			else if(states[vi] == STATE_FLYING) {
 
-				if(t >= actions[vi][plans[vi]]->GetEndTime()) {
-					if(plans[vi] == actions[vi].size()-1) {
+				if(t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
+					if(plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
 						states[vi] = STATE_LANDING;
 						v.land();
 						numLanded++;
@@ -288,7 +295,7 @@ int main(int argc, char *argv[]) {
 					}
 					plans[vi]++;
 				}
-				Trajectory *cur = static_cast<MotionAction*>(actions[vi][plans[vi]])->GetPath();
+				Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
 				posctls[vi]->track(cur);
 				posctls[vi]->control(t);
 			}

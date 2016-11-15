@@ -1,10 +1,19 @@
 {
-  "jocsPath": "data/realChoreography.jocs",
-  "jocsActiveIds": [0,1,2,3,4,5],
-  "theaterScale": 0.67,
-  "useMocap": false,
-  "hardwareConfig": {
-    "clientAddress": "192.168.1.161",
-    "serverAddress": "192.168.1.150"
-  }
+	"jocsPath": "data/realChoreography.jocs",
+	"jocsActiveIds": [0,1,2,3,4,5],
+    "theaterScale": 0.67,
+	"useMocap": false,
+	"enableMessaging": false,
+	"hardwareConfig": {
+		"clientAddress": "192.168.1.79",
+		"serverAddress": "192.168.1.80"
+	},
+	"vehicles": [
+		{"net_id": 1},
+		{"net_id": 2},
+		{"net_id": 3},
+		{"net_id": 4},
+		{"net_id": 5},
+		{"net_id": 6}
+	]
 }

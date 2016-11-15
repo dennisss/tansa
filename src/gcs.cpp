@@ -62,7 +62,9 @@ int main(int argc, char *argv[]) {
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
 	string jocsPath = rawJson["jocsPath"];
+	auto jocsActiveIds = rawJson["jocsActiveIds"];
 	bool useMocap = rawJson["useMocap"];
+	float scale = rawJson["theaterScale"];
 
 	if (useMocap) {
 		nlohmann::json hardwareConfig = rawJson["hardwareConfig"];
@@ -71,11 +73,18 @@ int main(int argc, char *argv[]) {
 	}
 
 	tansa::init();
-	auto jocsData = Jocs::Parse(jocsPath);
+	auto jocsData = Jocs::Parse(jocsPath, scale);
 	auto actions = jocsData.GetActions();
 	auto homes = jocsData.GetHomes();
-	std::vector<Point> spawns = {homes[0]};
-    homes[0].z() = 0;
+
+	// Only pay attention to homes of active drones
+	std::vector<Point> spawns;
+	for (int i = 0; i < jocsActiveIds.size(); i++) {
+		int chosenId = jocsActiveIds[i];
+		// We assume the user only configured for valid IDs..
+		homes[chosenId].z() = 0;
+		spawns.push_back(homes[chosenId]);
+	}
 	//for(auto& s : spawns){
 	//	s.z() = 0;
 	//}
@@ -95,7 +104,7 @@ int main(int argc, char *argv[]) {
 
 
 	//int n = homes.size();
-	int n = 1;
+	int n = spawns.size();
 
 
 	vector<Vehicle *> vehicles(n);

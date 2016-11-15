@@ -51,7 +51,7 @@ Jocs::~Jocs() {
 		}
 	}
 }
-Jocs Jocs::Parse(std::string jocsPath) {
+Jocs Jocs::Parse(std::string jocsPath, double scale) {
 	ifstream jocsStream(jocsPath);
 	if(!jocsStream.is_open()){
 		throw std::runtime_error("Failed to open jocs file at path: " + jocsPath);
@@ -66,7 +66,7 @@ Jocs Jocs::Parse(std::string jocsPath) {
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
 	unsigned repeat = rawJson[REPEAT_KEY];
 	auto ret = Jocs(needConvertToMeters, needConvertToRadians, repeat);
-	ret.parseActions(rawJson);
+	ret.parseActions(rawJson, scale);
 	auto actions = ret.GetActions();
 	auto homes = ret.GetHomes();
 	auto floatComp = [](double a, double b) -> bool { return fabs(a-b) < 0.1; };
@@ -113,7 +113,7 @@ Jocs Jocs::Parse(std::string jocsPath) {
 	return ret;
 }
 
-void Jocs::parseActions(const nlohmann::json &data) {
+void Jocs::parseActions(const nlohmann::json &data, double scale) {
 
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	auto drones = data[DRONE_ARRAY_KEY];
@@ -123,7 +123,7 @@ void Jocs::parseActions(const nlohmann::json &data) {
 	homes.resize(droneLength);
 	double conversionFactor = needConvertToMeters ? FEET_TO_METERS : 1.0;
 	for(unsigned i = 0; i < droneLength; i++){
-		homes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2])*conversionFactor*(8.0/12.0);
+		homes[i] = Point(drones[i][HOME_KEY][0], drones[i][HOME_KEY][1], drones[i][HOME_KEY][2])*conversionFactor*(scale);
 	}
 
 	auto length = actionsJson.size();
@@ -134,9 +134,9 @@ void Jocs::parseActions(const nlohmann::json &data) {
 	for(unsigned k = 0; k < repeat; k++) {
 		for (unsigned i = 0; i < length; i++) {
 			if (i == length - 1) {
-				lastTime = parseAction(actionsJson[i], lastTime);
+				lastTime = parseAction(actionsJson[i], lastTime, scale);
 			} else {
-				parseAction(actionsJson[i], lastTime);
+				parseAction(actionsJson[i], lastTime, scale);
 			}
 		}
 	}
@@ -188,7 +188,7 @@ void Jocs::parseActions(const nlohmann::json &data) {
 }
 
 // TODO: rename since it parses all actions at given timeslot
-double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
+double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, double scale){
 	auto actionsArray = data[ACTION_ROOT_KEY];
 	assert(actionsArray.is_array());
 	double startTime = data[ACTION_TIME_KEY];
@@ -204,6 +204,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 
 		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];
 		double conversionFactor = needConvertToMeters ? FEET_TO_METERS : 1.0;
+		conversionFactor *= scale;
 		endTime += lastTime + startTime + duration;
 		assert(drones.is_array());
 
@@ -213,8 +214,6 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 			Point endOffset(drones[j][DRONE_END_OFF_KEY][0], drones[j][DRONE_END_OFF_KEY][1], drones[j][DRONE_END_OFF_KEY][2]);
 			startOffset*=conversionFactor;
 			endOffset*=conversionFactor;
-            startOffset*= (8.0/12.0);
-            endOffset*= (8.0/12.0);
 			switch (type) {
 				case ActionTypes::Transition: {
 					// Actual calculation will be processed after this loop
@@ -227,13 +226,11 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][1],
 							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][2]);
 					start*=conversionFactor;
-                    start*= (8.0/12.0);
 					Point end(
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][0],
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
 							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 					end*=conversionFactor;
-                    end*= (8.0/12.0);
 					actions[drone].push_back(new MotionAction(
 							drone, new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration), ActionTypes::Line));
 					break;
@@ -244,11 +241,9 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][1],
 							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][2]);
 					origin*=conversionFactor;
-                    origin*= (8.0/12.0);
 					double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
 					double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
 					radius*=conversionFactor;
-                    radius*=(8.0/12.0);
 					double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
 					if(needConvertToRadians) {
 						theta1 = theta1 * DEGREES_TO_RADIANS;
@@ -269,7 +264,6 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime){
 							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][2]
 					);
 					hoverPoint*=conversionFactor;
-                    hoverPoint*=(8.0/12.0);
 					// TODO: use separate offset key for circle and hover
 					actions[drone].push_back(new MotionAction(
 							drone,

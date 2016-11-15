@@ -1,6 +1,6 @@
 {
   "jocsPath": "data/realChoreography.jocs",
-  "jocsActiveIds": [0,1,2,3,4,5],
+  "jocsActiveIds": [1,4],
   "theaterScale": 1.0,
   "useMocap": false,
   "hardwareConfig": {

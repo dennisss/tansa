@@ -85,9 +85,6 @@ int main(int argc, char *argv[]) {
 		homes[chosenId].z() = 0;
 		spawns.push_back(homes[chosenId]);
 	}
-	//for(auto& s : spawns){
-	//	s.z() = 0;
-	//}
 
 
 	Mocap *mocap = nullptr;
@@ -103,7 +100,6 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	//int n = homes.size();
 	int n = spawns.size();
 
 

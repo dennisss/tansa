@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
 	string jocsPath = rawJson["jocsPath"];
-	auto jocsActiveIds = rawJson["jocsActiveIds"];
+	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
 	bool useMocap = rawJson["useMocap"];
 	float scale = rawJson["theaterScale"];
 
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 
 	vector<HoverController *> hovers(n);
 	for(int i = 0; i < n; i++) {
-		hovers[i] = new HoverController(vehicles[i], homes[i]);
+		hovers[i] = new HoverController(vehicles[i], homes[jocsActiveIds[i]]);
 	}
 
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 
 	vector<Trajectory *> takeoffs(n);
 	for(int i = 0; i < n; i++) {
-		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[i], 10.0);
+		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
 	}
 
 	int numLanded = 0;
@@ -256,8 +256,8 @@ int main(int argc, char *argv[]) {
 			}
 			else if(states[vi] == STATE_FLYING) {
 
-				if(t >= actions[vi][plans[vi]]->GetEndTime()) {
-					if(plans[vi] == actions[vi].size()-1) {
+				if(t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
+					if(plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
 						states[vi] = STATE_LANDING;
 						v.land();
 						numLanded++;

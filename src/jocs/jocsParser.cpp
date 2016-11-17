@@ -73,10 +73,13 @@ Jocs Jocs::Parse(std::string jocsPath, double scale) {
 	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
 
+	auto breakpoints = rawJson[BREAK_KEY];
+
 	unsigned repeat = rawJson[REPEAT_KEY];
 	auto ret = Jocs(needConvertToMeters, needConvertToRadians, repeat);
 
 	ret.parseActions(rawJson, scale);
+	ret.parseBreakpoints(rawJson);
 	auto actions = ret.GetActions();
 	auto homes = ret.GetHomes();
 
@@ -125,6 +128,7 @@ Jocs Jocs::Parse(std::string jocsPath, double scale) {
 }
 
 void Jocs::parseActions(const nlohmann::json &data, double scale) {
+	// TODO: split this into parseActions and parseDrones
 
 	auto actionsJson = data[CHOREOGRAPHY_KEY];
 	auto drones = data[DRONE_ARRAY_KEY];
@@ -292,6 +296,23 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 	return endTime;
 }
 
+void Jocs::parseBreakpoints(const nlohmann::json &data) {
+	auto breakpointsRaw = data[BREAK_KEY];
+
+	// TODO: handle when breakpoints aren't defined - don't fail, just set to empty list.
+
+	assert(breakpointsRaw.is_array());
+
+	auto breakpointsLength = breakpointsRaw.size();
+	breakpoints.resize(breakpointsLength);
+
+	for(unsigned i = 0; i < breakpointsLength; i++){
+		breakpoints[i] = Breakpoint(breakpointsRaw[i][BREAK_NAME],
+									breakpointsRaw[i][BREAK_NUMBER],
+									breakpointsRaw[i][BREAK_START]);
+	}
+}
+
 ActionTypes Jocs::convertToActionType(const std::string& data){
 	if(data == "transition")
 		return ActionTypes::Transition;
@@ -302,26 +323,6 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 	else if (data == "hover")
 		return ActionTypes::Hover;
 	return ActionTypes::None;
-}
-
-double Jocs::getNextBreakpointTime(double lastTime) {
-	// parse "breakpoints"
-}
-
-double Jocs::getBreakpointTime(unsigned breakpointNumber) {
-	// parse "breakpoints"
-}
-
-double Jocs::getBreakpointTime(std::string breakpointName) {
-	// parse "breakpoints"
-}
-
-unsigned Jocs::getBreakpointNumber(double startTime) {
-	// parse "breakpoints"
-}
-
-Point Jocs::getDroneLocationAtTime(double startTime, unsigned droneId) {
-	// parse "actions"
 }
 
 }

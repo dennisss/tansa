@@ -10,6 +10,7 @@
 #include "tansa/core.h"
 #include "tansa/trajectory.h"
 #include "tansa/action.h"
+#include "tansa/breakpoint.h"
 namespace tansa {
 /**
  * Class representing the
@@ -59,20 +60,17 @@ public:
 	 * @return A vector containing unique_ptrs to Actions
 	 */
 	static Jocs Parse(std::string jocsPath, double scale);
+
 	inline std::vector<Point> GetHomes() const { return homes; }
 	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
-
-	double getNextBreakpointTime(double lastTime);
-	double getBreakpointTime(unsigned breakpointNumber);
-	double getBreakpointTime(std::string breakpointName);
-	unsigned getBreakpointNumber(double startTime);
-	Point getDroneLocationAtTime(double startTime, unsigned droneId);
+	inline const std::vector<std::vector<Breakpoint*>>& GetBreakpoints() const { return breakpoints; }
 
 private:
 	bool needConvertToMeters = false;
 	bool needConvertToRadians = false;
 	std::vector<Point> homes;
 	std::vector<std::vector<Action*>> actions;
+	std::vector<Breakpoint> breakpoints;
 	unsigned repeat;
 
 private:
@@ -82,6 +80,11 @@ private:
 	 * @param actions [out] Will be filled with actions
 	 */
 	 void parseActions(const nlohmann::json &data, double scale);
+	/**
+	 * Parse all breakpoints in a given Jocs json object representing list of breakpoints
+	 * @param data [in] Jocs json data
+	 */
+	void parseBreakpoints(const nlohmann::json &data);
 	/**
 	 * Parses a singular action array
 	 * @private

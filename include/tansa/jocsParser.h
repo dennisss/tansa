@@ -45,6 +45,10 @@ public:
 	static const std::string DRONE_END_OFF_KEY;
 	static const std::string HOVER_KEY;
 	static const std::string DRONE_OFF_KEY;
+    static const std::string BREAK_KEY;
+    static const std::string BREAK_NAME;
+    static const std::string BREAK_START;
+    static const std::string BREAK_NUMBER;
 
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
 	~Jocs();

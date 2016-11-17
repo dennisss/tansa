@@ -19,6 +19,11 @@ const std::string Jocs::THEATER_VOLUME_KEY = "theater_volume";
 const std::string Jocs::MIN_KEY = "min";
 const std::string Jocs::MAX_KEY = "max";
 
+const std::string Jocs::BREAK_KEY = "breakpoints";
+const std::string Jocs::BREAK_NAME = "name";
+const std::string Jocs::BREAK_START = "startTime";
+const std::string Jocs::BREAK_NUMBER = "number";
+
 const std::string Jocs::REPEAT_KEY = "repeat";
 
 const std::string Jocs::CHOREOGRAPHY_KEY = "chor";

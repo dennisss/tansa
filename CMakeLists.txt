@@ -95,7 +95,7 @@ add_executable(
 
 	src/gcs.cpp
 
-)
+        include/tansa/breakpoint.h)
 
 target_link_libraries(
 	gcs

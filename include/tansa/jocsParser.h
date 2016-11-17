@@ -17,7 +17,6 @@ namespace tansa {
 class Jocs {
 public:
 	static const std::string HOME_KEY;
-	static const std::string DRONE_KEY;
 	static const std::string ID_KEY;
 	static const std::string CHOREOGRAPHY_KEY;
 	static const std::string STARTPOS_KEY;
@@ -45,15 +44,17 @@ public:
 	static const std::string DRONE_START_OFF_KEY;
 	static const std::string DRONE_END_OFF_KEY;
 	static const std::string HOVER_KEY;
+	static const std::string DRONE_OFF_KEY;
 
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
+	~Jocs();
 	/**
 	 * Parses a given Jocs file
 	 * @public
 	 * @param jocsPath String containing path from working directory to jocsFile
 	 * @return A vector containing unique_ptrs to Actions
 	 */
-	static Jocs Parse(std::string jocsPath);
+	static Jocs Parse(std::string jocsPath, double scale);
 	inline std::vector<Point> GetHomes() const { return homes; }
 	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
 
@@ -70,14 +71,14 @@ private:
 	 * @param data [in] Jocs json data
 	 * @param actions [out] Will be filled with actions
 	 */
-	 void parseActions(const nlohmann::json &data);
+	 void parseActions(const nlohmann::json &data, double scale);
 	/**
 	 * Parses a singular action array
 	 * @private
 	 * @param data Json data containing a reference to an action
 	 * @param actions [out] Will be filled with actions
 	 */
-	 double parseAction(nlohmann::json::reference data, double lastTime);
+	 double parseAction(nlohmann::json::reference data, double lastTime, double scale);
 	/**
 	 * Converts from string to ActionTypes enum
 	 * @private

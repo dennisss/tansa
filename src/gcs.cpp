@@ -25,6 +25,12 @@ struct hardware_config {
 	string serverAddress;
 };
 
+struct vehicle_config {
+	unsigned net_id; // The number printed on the physical
+	unsigned chor_id; // The id between 1 and 6 respesenting which drone in the choreography it w
+	unsigned lport; // Usually 14550 + id*10
+	unsigned rport; // For now always 14555
+};
 
 /* For sending a system state update to the gui */
 void send_status_message() {
@@ -68,7 +74,10 @@ int main(int argc, char *argv[]) {
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
 	string jocsPath = rawJson["jocsPath"];
+	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
 	bool useMocap = rawJson["useMocap"];
+	float scale = rawJson["theaterScale"];
+	bool enableMessaging = rawJson["enableMessaging"];
 
 	if (useMocap) {
 		nlohmann::json hardwareConfig = rawJson["hardwareConfig"];
@@ -76,18 +85,37 @@ int main(int argc, char *argv[]) {
 		config.serverAddress = hardwareConfig["serverAddress"];
 	}
 
-	tansa::init();
-	auto jocsData = Jocs::Parse(jocsPath);
-	auto actions = jocsData.GetActions();
-	auto homes = jocsData.GetHomes();
-	std::vector<Point> spawns = homes;
-	for(auto& s : spawns){
-		s.z() = 0;
+	std::vector<vehicle_config> vconfigs(rawJson["vehicles"].size());
+	for(unsigned i = 0; i < rawJson["vehicles"].size(); i++) {
+		vconfigs[i].net_id = rawJson["vehicles"][i]["net_id"];
+		if(useMocap) {
+			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
+			vconfigs[i].rport = 14555;
+		}
+		else { // The simulated ones are zero-indexed and
+			vconfigs[i].lport = 14550 + 10*(vconfigs[i].net_id - 1);
+			vconfigs[i].rport = 14555 + 10*(vconfigs[i].net_id - 1);
+		}
 	}
 
 
-	Mocap *mocap;
-	GazeboConnector *gazebo;
+	tansa::init(enableMessaging);
+	auto jocsData = Jocs::Parse(jocsPath, scale);
+	auto actions = jocsData.GetActions();
+	auto homes = jocsData.GetHomes();
+
+	// Only pay attention to homes of active drones
+	std::vector<Point> spawns;
+	for (int i = 0; i < jocsActiveIds.size(); i++) {
+		int chosenId = jocsActiveIds[i];
+		// We assume the user only configured for valid IDs..
+		spawns.push_back(homes[chosenId]);
+        spawns[i].z() = 0;
+	}
+
+
+	Mocap *mocap = nullptr;
+	GazeboConnector *gazebo = nullptr;
 
 	if (useMocap) {
 		mocap = new Mocap();
@@ -99,13 +127,19 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	int n = homes.size();
+	int n = spawns.size();
 
+	if(n > vconfigs.size()) {
+		printf("Not enough drones on the network\n");
+		return 1;
+	}
 
 	vector<Vehicle *> vehicles(n);
 	for(int i = 0; i < n; i++) {
+		const vehicle_config &v = vconfigs[i];
+
 		vehicles[i] = new Vehicle();
-		vehicles[i]->connect(14550 + i*10, 14555 + i*10);
+		vehicles[i]->connect(v.lport, v.rport);
 		if (useMocap) {
 			mocap->track(vehicles[i], i+1);
 		} else {
@@ -118,7 +152,7 @@ int main(int argc, char *argv[]) {
 
 	vector<HoverController *> hovers(n);
 	for(int i = 0; i < n; i++) {
-		hovers[i] = new HoverController(vehicles[i], homes[i]);
+		hovers[i] = new HoverController(vehicles[i], homes[jocsActiveIds[i]]);
 	}
 
 
@@ -130,7 +164,7 @@ int main(int argc, char *argv[]) {
 
 	vector<Trajectory *> takeoffs(n);
 	for(int i = 0; i < n; i++) {
-		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[i], 10.0);
+		takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
 	}
 
 	int numLanded = 0;
@@ -166,8 +200,8 @@ int main(int argc, char *argv[]) {
 		double t = Time::now().since(start).seconds();
 
 
-		// Regular status message
-		if(i % 20 == 0) {
+		// Regular status messages
+		if(enableMessaging && i % 20 == 0) {
 			send_status_message();
 		}
 
@@ -255,8 +289,8 @@ int main(int argc, char *argv[]) {
 			}
 			else if(states[vi] == STATE_FLYING) {
 
-				if(t >= actions[vi][plans[vi]]->GetEndTime()) {
-					if(plans[vi] == actions[vi].size()-1) {
+				if(t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
+					if(plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
 						states[vi] = STATE_LANDING;
 						v.land();
 						numLanded++;
@@ -267,7 +301,7 @@ int main(int argc, char *argv[]) {
 					}
 					plans[vi]++;
 				}
-				Trajectory *cur = static_cast<MotionAction*>(actions[vi][plans[vi]])->GetPath();
+				Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
 				posctls[vi]->track(cur);
 				posctls[vi]->control(t);
 			}
@@ -286,12 +320,23 @@ int main(int argc, char *argv[]) {
 		delete gazebo;
 	}
 
-
 	// Stop all vehicles
 	for(int vi = 0; vi < n; vi++) {
 		Vehicle *v = vehicles[vi];
 		v->disconnect();
 		delete v;
+	}
+
+	for(int i = 0; i < posctls.size(); i++){
+		delete posctls[i];
+	}
+
+	for(int i = 0; i < hovers.size(); i++){
+		delete hovers[i];
+	}
+
+	for(int i = 0; i < takeoffs.size(); i++){
+		delete takeoffs[i];
 	}
 
 	printf("Done!\n");

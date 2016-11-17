@@ -11,7 +11,7 @@ namespace tansa {
 /**
  * Call this on program start before using the other functions of the library
  */
-void init();
+void init(bool enableMessaging);
 
 void send_message(sio::message::list const& msglist);
 

@@ -72,6 +72,8 @@ public:
 
     virtual double GetEndTime() const { return endTime; }
 
+
+
 private:
     double startTime;
     double endTime;
@@ -92,6 +94,9 @@ public:
 	virtual double GetStartTime() const { return path->startTime(); }
 
 	virtual double GetEndTime() const { return path->endTime(); }
+
+	inline Point GetStartPoint() const { return path->evaluate(path->startTime()).position; }
+	inline Point GetEndPoint() const { return path->evaluate(path->endTime()).position; }
 
 private:
 	Trajectory* path;

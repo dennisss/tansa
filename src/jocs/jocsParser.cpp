@@ -51,6 +51,7 @@ Jocs::~Jocs() {
 		}
 	}
 }
+
 Jocs Jocs::Parse(std::string jocsPath, double scale) {
 	ifstream jocsStream(jocsPath);
 	if(!jocsStream.is_open()){
@@ -292,4 +293,25 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 		return ActionTypes::Hover;
 	return ActionTypes::None;
 }
+
+double Jocs::getNextBreakpointTime(const nlohmann::json &data, double lastTime) {
+
+}
+
+double Jocs::getBreakpointTime(const nlohmann::json &data, unsigned breakpointNumber) {
+
+}
+
+double Jocs::getBreakpointTime(const nlohmann::json &data, std::string breakpointName) {
+
+}
+
+unsigned Jocs::getBreakpointNumber(const nlohmann::json &data, double startTime) {
+
+}
+
+Point Jocs::getDroneLocationAtTime(const nlohmann::json &data, double startTime, unsigned droneId) {
+
+}
+
 }

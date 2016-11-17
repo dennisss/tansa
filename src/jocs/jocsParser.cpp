@@ -2,6 +2,7 @@
 // Created by kyle on 10/12/16.
 //
 #include "tansa/jocsParser.h"
+#include "tansa/breakpoint.h"
 #include <regex>
 #include <algorithm>
 #include <stdexcept>
@@ -62,14 +63,18 @@ Jocs Jocs::Parse(std::string jocsPath, double scale) {
 	jocsData = std::move(std::regex_replace(jocsData, std::regex("//.*"), ""));
 	assert(jocsData.find("//") == std::string::npos);
 	auto rawJson = nlohmann::json::parse(jocsData);
+
 	auto units = rawJson[UNITS_KEY];
 	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
+
 	unsigned repeat = rawJson[REPEAT_KEY];
 	auto ret = Jocs(needConvertToMeters, needConvertToRadians, repeat);
+
 	ret.parseActions(rawJson, scale);
 	auto actions = ret.GetActions();
 	auto homes = ret.GetHomes();
+
 	auto floatComp = [](double a, double b) -> bool { return fabs(a-b) < 0.1; };
 	auto pointComp = [](Point a, Point b) -> bool { return fabs((a-b).norm()) < 0.1; };
 	try {

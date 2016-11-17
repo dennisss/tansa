@@ -14,10 +14,17 @@ typedef unsigned breakpointId;
 class Breakpoint {
 
 public:
+	Breakpoint(std::string na, unsigned nu, double st) : name(na), number(nu), startTime(st) {}
+	virtual ~Breakpoint() {}
+
+	inline std::string GetName() { return name; }
+	inline unsigned GetNumber() { return number; }
+	inline double GetStartTime() { return startTime; }
 
 private:
-
-
+	std::string name;
+	unsigned number;
+	double startTime;
 };
 }
 

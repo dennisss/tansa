@@ -294,24 +294,24 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 	return ActionTypes::None;
 }
 
-double Jocs::getNextBreakpointTime(const nlohmann::json &data, double lastTime) {
-
+double Jocs::getNextBreakpointTime(double lastTime) {
+	// parse "breakpoints"
 }
 
-double Jocs::getBreakpointTime(const nlohmann::json &data, unsigned breakpointNumber) {
-
+double Jocs::getBreakpointTime(unsigned breakpointNumber) {
+	// parse "breakpoints"
 }
 
-double Jocs::getBreakpointTime(const nlohmann::json &data, std::string breakpointName) {
-
+double Jocs::getBreakpointTime(std::string breakpointName) {
+	// parse "breakpoints"
 }
 
-unsigned Jocs::getBreakpointNumber(const nlohmann::json &data, double startTime) {
-
+unsigned Jocs::getBreakpointNumber(double startTime) {
+	// parse "breakpoints"
 }
 
-Point Jocs::getDroneLocationAtTime(const nlohmann::json &data, double startTime, unsigned droneId) {
-
+Point Jocs::getDroneLocationAtTime(double startTime, unsigned droneId) {
+	// parse "actions"
 }
 
 }

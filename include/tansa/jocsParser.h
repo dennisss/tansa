@@ -57,12 +57,12 @@ public:
 	static Jocs Parse(std::string jocsPath, double scale);
 	inline std::vector<Point> GetHomes() const { return homes; }
 	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
-	
-	double getNextBreakpointTime(const nlohmann::json &data, double lastTime);
-	double getBreakpointTime(const nlohmann::json &data, unsigned breakpointNumber);
-	double getBreakpointTime(const nlohmann::json &data, std::string breakpointName);
-	unsigned getBreakpointNumber(const nlohmann::json &data, double startTime);
-	Point getDroneLocationAtTime(const nlohmann::json &data, double startTime, unsigned droneId);
+
+	double getNextBreakpointTime(double lastTime);
+	double getBreakpointTime(unsigned breakpointNumber);
+	double getBreakpointTime(std::string breakpointName);
+	unsigned getBreakpointNumber(double startTime);
+	Point getDroneLocationAtTime(double startTime, unsigned droneId);
 
 private:
 	bool needConvertToMeters = false;

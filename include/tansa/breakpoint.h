@@ -5,8 +5,6 @@
 #ifndef TANSA_BREAKPOINT_H
 #define TANSA_BREAKPOINT_H
 
-#include <memory>
-
 namespace tansa {
 
 typedef unsigned breakpointId;

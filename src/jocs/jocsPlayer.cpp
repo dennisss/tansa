@@ -42,10 +42,10 @@ namespace tansa {
      */
     void JocsPlayer::loadJocs(string jocsPath) {
 		// TODO: Clear all these if they already have data.
-		JocsPlayer::jocsData = Jocs::Parse(jocsPath);
-		JocsPlayer::homes = jocsData.GetHomes();
-		JocsPlayer::actions = jocsData.GetActions();
-		JocsPlayer::breakpoints = jocsData.GetBreakpoints();
+//		JocsPlayer::jocsData = Jocs::Parse(jocsPath, 1.0); // TODO: DON'T HARDCODE TO 1.0
+//		JocsPlayer::homes = jocsData.GetHomes();
+//		JocsPlayer::actions = jocsData.GetActions();
+//		JocsPlayer::breakpoints = jocsData.GetBreakpoints();
     }
 
 	/**
@@ -58,7 +58,7 @@ namespace tansa {
 
 		// Cycles all breakpoints
 		// Assumes list of breakpoints is in time-ascending order
-		for (int i = 0; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 0; i < breakpointsLength - 1; i++) {
 			double ret = breakpoints[i].GetStartTime();
 			if (ret >= lastTime) {
 				// Return the first breakpoint whose starttime hasn't passed yet
@@ -73,7 +73,7 @@ namespace tansa {
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (int i = 1; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
 			unsigned ret = breakpoints[i].GetNumber();
 			if (ret == breakpointNumber) {
 				return breakpoints[i].GetStartTime();
@@ -86,7 +86,7 @@ namespace tansa {
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (int i = 1; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
 			std::string name = breakpoints[i].GetName();
 			if (name.compare(breakpointName) == 0) {
 				return breakpoints[i].GetStartTime();
@@ -99,7 +99,7 @@ namespace tansa {
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (int i = 1; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
 			double ret = breakpoints[i].GetStartTime();
 			if (ret > startTime) {
 				// Return the breakpoint that the given time is a part of
@@ -115,16 +115,17 @@ namespace tansa {
 		// This one only works if the startTime is a startTime of an action
 		// Returns negative value if startTime is either between actions or out of scope
 
-		unsigned breakpointsLength = breakpoints.size();
 		unsigned actionsLength = actions[droneId].size();
 
 		// Assume droneId is valid and use it to choose which list of actions we need to parse
-		for (int j = 0; j < actionsLength; j++) {
+		for (unsigned j = 0; j < actionsLength; j++) {
 			double actionStartTime = actions[droneId][j]->GetStartTime();
 			bool isMotionAction = true; // TODO: actually check if it's a motion. For now, they're all motions.
 			if (actionStartTime == startTime && isMotionAction) {
 				return ((MotionAction*)actions[droneId][j])->GetStartPoint(); // TODO: check if this cast works...
 			}
 		}
+
+		return Point(0,0,-1); // TODO: figure out better "invalid" answer
 	}
 }

@@ -6,7 +6,7 @@
 namespace tansa {
 	class JocsPlayer {
 	public:
-		JocsPlayer(bool useMocap) : useMocap(useMocap)  {}
+		JocsPlayer(bool u) : useMocap(u) {}
 		void play();
 		void pause();
 		void rewind(int steps);
@@ -14,7 +14,7 @@ namespace tansa {
 		void loadJocs(string jocsPath);
 		void loadConfig(string configPath);
 	private:
-		Jocs jocsData;
+		//Jocs jocsData;
 		std::vector<Point> homes;
 		std::vector<std::vector<Action*>> actions;
 		std::vector<Breakpoint> breakpoints;

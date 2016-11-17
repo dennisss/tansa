@@ -301,12 +301,11 @@ void Jocs::parseBreakpoints(const nlohmann::json &data) {
 	assert(breakpointsRaw.is_array());
 
 	auto breakpointsLength = breakpointsRaw.size();
-	breakpoints.resize(breakpointsLength);
 
 	for(unsigned i = 0; i < breakpointsLength; i++){
-		breakpoints[i] = Breakpoint(breakpointsRaw[i][BREAK_NAME],
-									breakpointsRaw[i][BREAK_NUMBER],
-									breakpointsRaw[i][BREAK_START]);
+		breakpoints.push_back(Breakpoint(breakpointsRaw[i][BREAK_NAME],
+											 (unsigned)breakpointsRaw[i][BREAK_NUMBER],
+											 (double)breakpointsRaw[i][BREAK_START]));
 	}
 }
 

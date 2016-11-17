@@ -63,7 +63,7 @@ public:
 
 	inline std::vector<Point> GetHomes() const { return homes; }
 	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
-	inline const std::vector<std::vector<Breakpoint*>>& GetBreakpoints() const { return breakpoints; }
+	inline std::vector<Breakpoint> GetBreakpoints() const { return breakpoints; }
 
 private:
 	bool needConvertToMeters = false;

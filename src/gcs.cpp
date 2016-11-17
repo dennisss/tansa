@@ -103,7 +103,6 @@ int main(int argc, char *argv[]) {
 	auto jocsData = Jocs::Parse(jocsPath, scale);
 	auto actions = jocsData.GetActions();
 	auto homes = jocsData.GetHomes();
-    auto breakpoints = jocsData.GetBreakpoints();
 
 	// Only pay attention to homes of active drones
 	std::vector<Point> spawns;

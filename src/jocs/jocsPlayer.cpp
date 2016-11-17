@@ -45,5 +45,27 @@ namespace tansa {
 		JocsPlayer::jocsData = Jocs::Parse(jocsPath);
 		JocsPlayer::homes = jocsData.GetHomes();
 		JocsPlayer::actions = jocsData.GetActions();
+		JocsPlayer::breakpoints = jocsData.GetBreakpoints();
     }
+
+	// *******
+	// Helper methods
+	// *******
+
+
+	double JocsPlayer::getNextBreakpointTime(double lastTime) {
+
+	}
+	double JocsPlayer::getBreakpointTime(unsigned breakpointNumber) {
+
+	}
+	double JocsPlayer::getBreakpointTime(std::string breakpointName) {
+
+	}
+	unsigned JocsPlayer::getBreakpointNumber(double startTime) {
+
+	}
+	Point JocsPlayer::getDroneLocationAtTime(double startTime, unsigned droneId) {
+
+	}
 }

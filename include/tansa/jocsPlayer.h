@@ -17,10 +17,17 @@ namespace tansa {
 		Jocs jocsData;
 		std::vector<Point> homes;
 		std::vector<std::vector<Action*>> actions;
+		std::vector<Breakpoint> breakpoints;
 		bool useMocap;
 		bool running = false;
 		bool pauseRequested = false;
 		bool resetMode = false;
+
+		double getNextBreakpointTime(double lastTime);
+		double getBreakpointTime(unsigned breakpointNumber);
+		double getBreakpointTime(std::string breakpointName);
+		unsigned getBreakpointNumber(double startTime);
+		Point getDroneLocationAtTime(double startTime, unsigned droneId);
 	};
 }
 #endif //TANSA_JOCSPLAYER_H

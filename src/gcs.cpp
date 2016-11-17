@@ -6,6 +6,7 @@
 #include <tansa/jocsPlayer.h>
 #include <tansa/mocap.h>
 #include <tansa/gazebo.h>
+#include <tansa/osc.h>
 
 #ifdef  __linux__
 #include <sys/signal.h>
@@ -30,7 +31,7 @@ void send_status_message() {
 
 }
 
-void on_message(sio::message::ptr const& data) {
+void socket_on_message(sio::message::ptr const& data) {
 	string type = data->get_map()["type"]->get_string();
 
 	if(type == "play") {
@@ -45,8 +46,39 @@ void on_message(sio::message::ptr const& data) {
 
 }
 
+void osc_on_message(OSCMessage &msg) {
+
+	// Address will look something like: '/cue/0101/start'
+	if(msg.address[0] == "cue" && msg.address[2] == "start") {
+		printf("Starting at cue #: %s\n", msg.address[1].c_str());
+	}
+
+	/*
+	printf("Address:\n");
+	for(auto str : msg.address)
+		printf("- %s\n", str.c_str());
+
+	printf("\nArgs:\n");
+	for(auto str : msg.args)
+		printf("- %s\n", str.c_str());
+	*/
+
+}
+
 
 int main(int argc, char *argv[]) {
+
+	/*
+	OSC *osc = new OSC();
+	osc->start(53100);
+	osc->set_listener(osc_on_message);
+
+	while(1) {
+		sleep(1);
+	}
+	return 0;
+	*/
+
 
 	assert(argc == 2);
 	string configPath = argv[1];

@@ -50,6 +50,12 @@ void on_message(sio::message::ptr const& data) {
 
 	if(type == "play") {
 		printf("Playing...\n");
+	} else if (type == "pause") {
+		printf("Pausing...\n");
+	} else if (type == "reset") {
+		printf("Resetting...\n");
+	} else {
+		throw "Unexpected message type recieved!";
 	}
 
 }

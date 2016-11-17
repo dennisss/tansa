@@ -47,6 +47,7 @@ add_library(
 	src/mocap/optitrack/NatNetClient.cpp
     src/jocs/jocsParser.cpp
 	src/jocs/action.cpp
+	src/jocs/jocsPlayer.cpp
 )
 
 target_link_libraries(

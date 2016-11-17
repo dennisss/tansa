@@ -1,6 +1,3 @@
-//
-// Created by kyle on 10/12/16.
-//
 #include "tansa/jocsParser.h"
 #include "tansa/breakpoint.h"
 #include <regex>

@@ -87,7 +87,6 @@ private:
 
 };
 
-
 /**
  * A 2d circle in the XY plane. An angle of 0 is on the X axis
  */
@@ -106,7 +105,6 @@ private:
 
 };
 
-
 /**
  * Stays at one point. Mainly just for testing.
  */
@@ -119,6 +117,28 @@ public:
 private:
 	Point p;
 
+};
+
+/**
+ * Smoothly goes increases or decreases luminosity between two luminosities
+ */
+class LightTrajectory {
+public:
+
+	LightTrajectory(double si, double st, double ei, double et) :
+			startTime(st), endTime(et), startIntensity(si), endIntensity(ei) {}
+	virtual ~LightTrajectory() {}
+
+	// Gives the intensity at a given time between the start and end times
+	virtual double evaluate(double t);
+
+	inline double startTime() { return this->startTime; }
+	inline double endTime() { return this->endTime; }
+
+private:
+
+	double startTime, endTime, startIntensity, endIntensity;
+	vector<double>
 };
 
 

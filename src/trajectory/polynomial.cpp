@@ -57,7 +57,6 @@ TrajectoryState PolynomialTrajectory::evaluate(double t) {
 	return s;
 }
 
-
 PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, double t1, const vector<Point> &c2, double t2) {
 
 	int n = 6; // number of coefficients to use

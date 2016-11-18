@@ -34,6 +34,7 @@ add_library(
 	src/core/vehicle_time.cpp
 	src/core/time.cpp
 	src/core/messaging.cpp
+	src/server/osc.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
 	src/estimation/linear_complementary.cpp

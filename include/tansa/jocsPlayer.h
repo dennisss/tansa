@@ -11,19 +11,34 @@
 namespace tansa {
 	class JocsPlayer {
 	public:
-		JocsPlayer(std::string jocsPath, double scale);
+		JocsPlayer(const std::vector<Vehicle *> &vehicles, const std::vector<unsigned> &jocsActiveIds);
+
+		// Get ready to fly (arm and takeoff to home point)
+		void prepare();
+
+		// Start flying
 		void play();
+
 		void pause();
-		void step(vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds);;
+
+		// Lands and disarms all drones (Must already be paused)
+		void stop();
+
+		void step();
 		void rewind(int steps);
 		void reset();
-		void loadJocs(std::string jocsPath, double scale);
-		bool isPlaying() { return this->playing; }
+		void loadJocs(Jocs *j);
+
+		// TODO: Instead we should use isRunning which checks if any states are not StateInit
+		//bool isPlaying() { return this->playing; }
 		std::vector<Point> getHomes();
 		std::vector<std::vector<Action*>> getActions();
-		void initControllers(std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds);
+		void initControllers();
 		void cleanup();
 	private:
+		std::vector<Vehicle *> vehicles;
+		std::vector<unsigned> jocsActiveIds;
+
 		std::vector<Breakpoint> breakpoints;
 		Jocs* currentJocs;
 		std::vector<std::vector<Action*>> actions;
@@ -31,9 +46,13 @@ namespace tansa {
 		std::vector<HoverController *> hovers;
 		std::vector<PositionController *> posctls;
 		std::vector<Trajectory *> takeoffs;
-		std::vector<int> states;
+		std::vector<Point> holdpoints;
+		std::vector<PlayerVehicleState> states;
 		std::vector<int> plans;
-		bool playing = false;
+
+		//bool playing = false;
+
+
 		bool pauseRequested = false;
 		bool resetMode = false;
 		bool initialized = false;

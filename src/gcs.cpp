@@ -83,7 +83,11 @@ void *console_thread(void *arg) {
 
 
 
-		if(args[0] == "play") {
+		if(args[0] == "prepare") {
+			cout << "Preparing..." << endl;
+			player->prepare();
+		}
+		else if(args[0] == "play") {
 			cout << "Playing..." << endl;
 			player->play();
 		}
@@ -136,8 +140,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	player = new JocsPlayer(jocsPath, scale);
-	auto homes = player->getHomes();
+	Jocs *jocs = Jocs::Parse(jocsPath, scale);
+
+	auto homes = jocs->GetHomes();
 
 	// Only pay attention to homes of active drones
 	std::vector<Point> spawns;
@@ -185,7 +190,15 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	player->initControllers(vehicles, jocsActiveIds);
+
+
+
+
+
+	player = new JocsPlayer(vehicles, jocsActiveIds);
+	player->loadJocs(jocs);
+
+	player->initControllers();
 
 	running = true;
 	signal(SIGINT, signal_sigint);
@@ -212,7 +225,7 @@ int main(int argc, char *argv[]) {
 			send_status_message();
 		}
 
-		player->step(vehicles, jocsActiveIds);
+		player->step();
 
 		r.sleep();
 		i++;

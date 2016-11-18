@@ -55,6 +55,7 @@ public:
 
 	virtual void control(double t);
 
+	void setPoint(Point p) { this->point = p; }
 
 	/**
 	 * Get the distance to the point being kept

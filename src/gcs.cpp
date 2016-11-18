@@ -19,7 +19,7 @@ using namespace tansa;
 
 static bool running;
 static JocsPlayer* player;
-
+static vector<Vehicle *> vehicles;
 
 void signal_sigint(int s) {
 	// TODO: Prevent
@@ -42,14 +42,21 @@ void send_status_message() {
 void socket_on_message(sio::message::ptr const& data) {
 	string type = data->get_map()["type"]->get_string();
 
-	if(type == "play") {
+	if(type == "prepare") {
+		printf("Preparing...\n");
+		player->prepare();
+	}
+	else if(type == "play") {
 		printf("Playing...\n");
+		player->play();
 	} else if (type == "pause") {
 		printf("Pausing...\n");
 	} else if (type == "reset") {
 		printf("Resetting...\n");
-	} else {
-		throw "Unexpected message type recieved!";
+	}
+	else {
+		// TODO: Send an error message back to the browser
+		printf("Unexpected message type recieved!\n");
 	}
 
 }
@@ -58,15 +65,21 @@ void socket_on_message(sio::message::ptr const& data) {
 void osc_on_message(OSCMessage &msg) {
 
 	// Address will look something like: '/cue/0101/start'
-	if(msg.address[0] == "cue" && msg.address[2] == "start") {
-		printf("Starting at cue #: %s\n", msg.address[1].c_str());
+	if(msg.address[0] == "cue") {
 
-		// Assert that it is already prepared at the given cue
+		int num = std::stoi(msg.address[1]);
 
-		player->play();
-	}
-	if(msg.address[0] == "cue" && msg.address[2] == "load") {
-		player->prepare();
+		if(msg.address[2] == "load") {
+			player->prepare();
+		}
+		else if(msg.address[2] == "start") {
+			printf("Starting at cue #: %d\n", num);
+
+			// Assert that it is already prepared at the given cue
+
+			player->play();
+		}
+
 	}
 
 	/*
@@ -204,7 +217,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	vector<Vehicle *> vehicles(n);
+	vehicles.resize(n);
 
 	for(int i = 0; i < n; i++) {
 		const vehicle_config &v = vconfigs[i];

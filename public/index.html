@@ -23,30 +23,6 @@
 
 		// This should receive data a few times a second
 		socket.on('msg', function(data) {
-			/*
-				data will probably be of the form:
-				{
-					type: 'stats',
-					time: 3.25, // in seconds
-					vehicles: [
-						{
-							id: 0,
-							tracking: true,
-							connected: true,
-							armed: true
-							...
-
-						}
-
-					],
-					global: {
-						playing: false,
-						mocap_connected: true
-						...					
-					}
-
-				}
-			*/
 
 			$('#test').text(JSON.stringify(data, null, 4));
 

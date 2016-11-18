@@ -125,7 +125,7 @@ private:
 class LightTrajectory {
 public:
 
-	LightTrajectory(double si, double st, double ei, double et) :
+	inline LightTrajectory(double si, double st, double ei, double et) :
 			startTime(st), endTime(et), startIntensity(si), endIntensity(ei) {}
 	virtual ~LightTrajectory() {}
 
@@ -146,8 +146,8 @@ protected:
 class StrobeTrajectory : public LightTrajectory {
 public:
 
-	StrobeTrajectory(double si, double st, double ei, double et, double bpm) :
-			startTime(st), endTime(et), startIntensity(si), endIntensity(ei), secondsPerBeat(bpm) {}
+	inline StrobeTrajectory(double si, double st, double ei, double et, double bpm) :
+			secondsPerBeat(bpm), LightTrajectory(si,st,ei,et) {}
 	virtual ~StrobeTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times

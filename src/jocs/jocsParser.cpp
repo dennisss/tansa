@@ -70,8 +70,6 @@ Jocs* Jocs::Parse(std::string jocsPath, double scale) {
 	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
 
-	auto breakpoints = rawJson[BREAK_KEY];
-
 	unsigned repeat = rawJson[REPEAT_KEY];
 	auto ret = new Jocs(needConvertToMeters, needConvertToRadians, repeat);
 
@@ -294,9 +292,13 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 }
 
 void Jocs::parseBreakpoints(const nlohmann::json &data) {
-	auto breakpointsRaw = data[BREAK_KEY];
 
-	// TODO: handle when breakpoints aren't defined - don't fail, just set to empty list.
+	// Skip parsing if not defined in file
+	if(data.count(BREAK_KEY) != 1) {
+		return;
+	}
+
+	auto breakpointsRaw = data[BREAK_KEY];
 
 	assert(breakpointsRaw.is_array());
 

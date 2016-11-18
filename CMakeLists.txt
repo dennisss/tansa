@@ -95,8 +95,7 @@ add_executable(
 	gcs
 
 	src/gcs.cpp
-	src/jocs/jocsPlayer.cpp
-	include/tansa/breakpoint.h)
+)
 
 target_link_libraries(
 	gcs

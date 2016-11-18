@@ -60,6 +60,13 @@ void osc_on_message(OSCMessage &msg) {
 	// Address will look something like: '/cue/0101/start'
 	if(msg.address[0] == "cue" && msg.address[2] == "start") {
 		printf("Starting at cue #: %s\n", msg.address[1].c_str());
+
+		// Assert that it is already prepared at the given cue
+
+		player->play();
+	}
+	if(msg.address[0] == "cue" && msg.address[2] == "load") {
+		player->prepare();
 	}
 
 	/*
@@ -125,18 +132,6 @@ void console_start() {
 
 int main(int argc, char *argv[]) {
 
-	/*
-	OSC *osc = new OSC();
-	osc->start(53100);
-	osc->set_listener(osc_on_message);
-
-	while(1) {
-		sleep(1);
-	}
-	return 0;
-	*/
-
-
 	assert(argc == 2);
 	string configPath = argv[1];
 
@@ -152,6 +147,7 @@ int main(int argc, char *argv[]) {
 	bool useMocap = rawJson["useMocap"];
 	float scale = rawJson["theaterScale"];
 	bool enableMessaging = rawJson["enableMessaging"];
+	bool enableOSC = rawJson["enableOSC"];
 
 	if (useMocap) {
 		nlohmann::json hardwareConfig = rawJson["hardwareConfig"];
@@ -222,7 +218,11 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-
+	if(enableOSC) {
+		OSC *osc = new OSC();
+		osc->start(53100);
+		osc->set_listener(osc_on_message);
+	}
 
 
 

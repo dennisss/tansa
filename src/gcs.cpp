@@ -4,6 +4,9 @@
 #include <tansa/jocsParser.h>
 #include <tansa/config.h>
 #include <tansa/jocsPlayer.h>
+#include <tansa/mocap.h>
+#include <tansa/gazebo.h>
+
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
@@ -80,15 +83,60 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	JocsPlayer* player = new JocsPlayer(jocsPath, scale);
+	auto homes = player->getHomes();
+
+	// Only pay attention to homes of active drones
+	std::vector<Point> spawns;
+	for (int i = 0; i < jocsActiveIds.size(); i++) {
+		int chosenId = jocsActiveIds[i];
+		// We assume the user only configured for valid IDs..
+		spawns.push_back(homes[chosenId]);
+		spawns[i].z() = 0;
+	}
 
 	tansa::init(enableMessaging);
 
-	auto player = new JocsPlayer(useMocap, config, jocsPath, jocsActiveIds, scale);
+	Mocap *mocap = nullptr;
+	GazeboConnector *gazebo = nullptr;
 
-	player->initVehicles(vconfigs, jocsActiveIds);
-	assert(player->isInitialized());
+	// Only pay attention to homes of active drones
+	if (useMocap) {
+		mocap = new Mocap();
+		mocap->connect(config.clientAddress, config.serverAddress);
+	} else {
+		gazebo = new GazeboConnector();
+		gazebo->connect();
+		gazebo->spawn(spawns);
+	}
+
+	int n = spawns.size();
+
+	if (n > vconfigs.size()) {
+		printf("Not enough drones on the network\n");
+		return 1;
+	}
+
+	vector<Vehicle *> vehicles(n);
+
+	for(int i = 0; i < n; i++) {
+		const vehicle_config &v = vconfigs[i];
+
+		vehicles[i] = new Vehicle();
+		vehicles[i]->connect(v.lport, v.rport);
+		if (useMocap) {
+			mocap->track(vehicles[i], i+1);
+		} else {
+			gazebo->track(vehicles[i], i);
+		}
+	}
+
+	player->initControllers(n, vehicles, jocsActiveIds);
 
 	int numLanded = 0;
+
+	running = true;
+	signal(SIGINT, signal_sigint);
 
 	int i = 0;
 
@@ -111,12 +159,27 @@ int main(int argc, char *argv[]) {
 			send_status_message();
 		}
 
-		start = player->play(start, i, numLanded, running, jocsActiveIds);
+		start = player->play(vehicles, start, i, n, numLanded, running, jocsActiveIds);
 		r.sleep();
 		i++;
 	}
 
 	/// Cleanup
+	if (useMocap) {
+		mocap->disconnect();
+		delete mocap;
+	} else {
+		gazebo->disconnect();
+		delete gazebo;
+	}
+
+	// Stop all vehicles
+	for(int vi = 0; vi < n; vi++) {
+		Vehicle *v = vehicles[vi];
+		v->disconnect();
+		delete v;
+	}
+
 	player->cleanup();
 
 	printf("Done!\n");

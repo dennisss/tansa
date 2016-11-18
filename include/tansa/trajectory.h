@@ -132,8 +132,8 @@ public:
 	// Gives the intensity at a given time between the start and end times
 	virtual double evaluate(double t);
 
-	inline double startTime() { return this->startTime; }
-	inline double endTime() { return this->endTime; }
+	inline double getStartTime() { return this->startTime; }
+	inline double getEndTime() { return this->endTime; }
 
 private:
 

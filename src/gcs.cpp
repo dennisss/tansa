@@ -4,7 +4,9 @@
 #include <tansa/jocsParser.h>
 #include <tansa/config.h>
 #include <tansa/jocsPlayer.h>
-
+#ifdef  __linux__
+#include <sys/signal.h>
+#endif
 using namespace tansa;
 bool running;
 
@@ -102,6 +104,7 @@ int main(int argc, char *argv[]) {
 	printf("running...\n");
 
 	Rate r(100);
+	running = true;
 	while(running) {
 		// Regular status messages
 		if(enableMessaging && i % 20 == 0) {

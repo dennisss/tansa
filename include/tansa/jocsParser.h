@@ -54,7 +54,7 @@ public:
 	 * @param jocsPath String containing path from working directory to jocsFile
 	 * @return A vector containing unique_ptrs to Actions
 	 */
-	static Jocs Parse(std::string jocsPath, double scale);
+	static Jocs* Parse(std::string jocsPath, double scale);
 	inline std::vector<Point> GetHomes() const { return homes; }
 	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
 

@@ -47,16 +47,17 @@ add_library(
 	src/mocap/optitrack/NatNetClient.cpp
     src/jocs/jocsParser.cpp
 	src/jocs/action.cpp
-	src/jocs/jocsPlayer.cpp
+
+
 )
 
 target_link_libraries(
 	tansa
-
 	pthread
 
 	sioclient
 	boost_system
+
 	${Boost_LIBRARIES}
 )
 
@@ -95,7 +96,7 @@ add_executable(
 	gcs
 
 	src/gcs.cpp
-
+	src/jocs/jocsPlayer.cpp
 )
 
 target_link_libraries(

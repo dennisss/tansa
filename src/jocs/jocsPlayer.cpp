@@ -1,14 +1,15 @@
 #include <tansa/mocap.h>
 #include <tansa/gazebo.h>
+#include <tansa/core.h>
 #include <zconf.h>
 #include <tansa/control.h>
 #include "tansa/jocsPlayer.h"
 
 namespace tansa {
 	const unsigned JocsPlayer::STATE_INIT = 0;
-	const unsigned JocsPlayer::STATE_TAKEOFF = 0;
-	const unsigned JocsPlayer::STATE_FLYING = 0;
-	const unsigned JocsPlayer::STATE_LANDING = 0;
+	const unsigned JocsPlayer::STATE_TAKEOFF = 1;
+	const unsigned JocsPlayer::STATE_FLYING = 2;
+	const unsigned JocsPlayer::STATE_LANDING = 3;
 
 	bool JocsPlayer::isInitialized() {
 		return initialized;
@@ -35,9 +36,10 @@ namespace tansa {
 	 */
 	void JocsPlayer::loadJocs(string jocsPath, std::vector<unsigned> jocsActiveIds, double scale) {
 		// TODO: Clear all these if they already have data.
-		auto jocsData = Jocs::Parse(jocsPath, scale);
-		homes = jocsData.GetHomes();
-		actions = jocsData.GetActions();
+		currentJocs = Jocs::Parse(jocsPath, scale);
+
+		homes = currentJocs->GetHomes();
+		actions = currentJocs->GetActions();
 
 		for (int i = 0; i < jocsActiveIds.size(); i++) {
 			int chosenId = jocsActiveIds[i];
@@ -53,7 +55,7 @@ namespace tansa {
 			return;
 		}
 
-		vehicles.reserve(n);
+		vehicles.resize(n);
 
 		for(int i = 0; i < n; i++) {
 			const vehicle_config &v = vconfigs[i];
@@ -70,18 +72,18 @@ namespace tansa {
 		// TODO: Have a better check for mocap initialization/health
 		sleep(15);
 
-		hovers.reserve(n);
+		hovers.resize(n);
 		for(int i = 0; i < n; i++) {
 			hovers[i] = new HoverController(vehicles[i], homes[jocsActiveIds[i]]);
 		}
 
-		posctls.reserve(n);
+		posctls.resize(n);
 		for(int i = 0; i < n; i++) {
 			posctls[i] = new PositionController(vehicles[i]);
 		}
 
 
-		takeoffs.reserve(n);
+		takeoffs.resize(n);
 		for(int i = 0; i < n; i++) {
 			takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
 		}
@@ -117,7 +119,6 @@ namespace tansa {
 				for(auto& state :states) {
 					state = STATE_TAKEOFF;
 				}
-				return start;
 			}
 
 		} else if (states[0] == STATE_TAKEOFF) {
@@ -126,7 +127,6 @@ namespace tansa {
 					state = STATE_FLYING;
 				}
 				start = Time::now();
-				return start;
 			}
 		}
 

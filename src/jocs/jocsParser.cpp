@@ -48,7 +48,7 @@ Jocs::~Jocs() {
 		}
 	}
 }
-Jocs Jocs::Parse(std::string jocsPath, double scale) {
+Jocs* Jocs::Parse(std::string jocsPath, double scale) {
 	ifstream jocsStream(jocsPath);
 	if(!jocsStream.is_open()){
 		throw std::runtime_error("Failed to open jocs file at path: " + jocsPath);
@@ -62,10 +62,10 @@ Jocs Jocs::Parse(std::string jocsPath, double scale) {
 	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
 	unsigned repeat = rawJson[REPEAT_KEY];
-	auto ret = Jocs(needConvertToMeters, needConvertToRadians, repeat);
-	ret.parseActions(rawJson, scale);
-	auto actions = ret.GetActions();
-	auto homes = ret.GetHomes();
+	auto ret = new Jocs(needConvertToMeters, needConvertToRadians, repeat);
+	ret->parseActions(rawJson, scale);
+	auto actions = ret->GetActions();
+	auto homes = ret->GetHomes();
 	auto floatComp = [](double a, double b) -> bool { return fabs(a-b) < 0.1; };
 	auto pointComp = [](Point a, Point b) -> bool { return fabs((a-b).norm()) < 0.1; };
 	try {

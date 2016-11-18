@@ -3,6 +3,8 @@
 
 #include "tansa/jocsParser.h"
 #include "tansa/config.h"
+class Mocap;
+class GazeboConnector;
 
 namespace tansa {
 	class JocsPlayer {
@@ -21,6 +23,7 @@ namespace tansa {
 		void cleanup();
 		bool isInitialized();
 	private:
+		Jocs* currentJocs;
 		std::vector<Point> spawns;
 		std::vector<Point> homes;
 		std::vector<std::vector<Action*>> actions;

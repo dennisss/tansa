@@ -27,8 +27,6 @@ namespace tansa {
 	}
 
 	void JocsPlayer::initControllers(std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds) {
-		// TODO: Have a better check for mocap initialization/health
-		sleep(15);
 
 		int n = vehicles.size();
 

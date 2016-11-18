@@ -10,9 +10,15 @@
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
+
+#include <iostream>
+
+using namespace std;
 using namespace tansa;
 
 static bool running;
+static JocsPlayer* player;
+
 
 void signal_sigint(int s) {
 	// TODO: Prevent
@@ -46,6 +52,51 @@ void on_message(sio::message::ptr const& data) {
 	}
 
 }
+
+pthread_t console_handle;
+
+void *console_thread(void *arg) {
+
+	while(running) {
+
+		// Read a command
+		cout << "> ";
+		string line;
+		getline(cin, line);
+
+		// Split into arguments
+		vector<string> args;
+		istringstream iss(line);
+		while(!iss.eof()) {
+			string a;
+			iss >> a;
+
+			if(iss.fail())
+				break;
+
+			args.push_back(a);
+		}
+
+
+		if(args.size() == 0)
+			continue;
+
+
+
+		if(args[0] == "play") {
+			cout << "Playing..." << endl;
+			player->play();
+		}
+
+
+	}
+
+}
+
+void console_start() {
+	pthread_create(&console_handle, NULL, console_thread, NULL);
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -85,7 +136,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	JocsPlayer* player = new JocsPlayer(jocsPath, scale);
+	player = new JocsPlayer(jocsPath, scale);
 	auto homes = player->getHomes();
 
 	// Only pay attention to homes of active drones
@@ -103,6 +154,7 @@ int main(int argc, char *argv[]) {
 	GazeboConnector *gazebo = nullptr;
 
 	// Only pay attention to homes of active drones
+	// TODO: Have a better check for mocap initialization/health
 	if (useMocap) {
 		mocap = new Mocap();
 		mocap->connect(config.clientAddress, config.serverAddress);
@@ -148,23 +200,19 @@ int main(int argc, char *argv[]) {
 
 	signal(SIGINT, signal_sigint);
 	printf("running...\n");
+	running = true;
 
-	player->play();
+	console_start();
 
 	Rate r(100);
-	running = true;
 	while(running) {
+
 		// Regular status messages
 		if(enableMessaging && i % 20 == 0) {
 			send_status_message();
 		}
 
 		player->step(vehicles, jocsActiveIds);
-
-		// Done!
-		if(!player->isPlaying()) {
-			break;
-		}
 
 		r.sleep();
 		i++;

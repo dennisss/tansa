@@ -138,7 +138,6 @@ public:
 private:
 
 	double startTime, endTime, startIntensity, endIntensity;
-	vector<double>
 };
 
 

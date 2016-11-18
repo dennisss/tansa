@@ -120,7 +120,7 @@ private:
 };
 
 /**
- * Smoothly goes increases or decreases luminosity between two luminosities
+ * Smoothly increases or decreases list intensity between two intensities
  */
 class LightTrajectory {
 public:
@@ -135,9 +135,27 @@ public:
 	inline double getStartTime() { return this->startTime; }
 	inline double getEndTime() { return this->endTime; }
 
-private:
+protected:
 
 	double startTime, endTime, startIntensity, endIntensity;
+};
+
+/**
+ * Smoothly increases or decreases list intensity between two intensities
+ */
+class StrobeTrajectory : public LightTrajectory {
+public:
+
+	StrobeTrajectory(double si, double st, double ei, double et, double bpm) :
+			startTime(st), endTime(et), startIntensity(si), endIntensity(ei), secondsPerBeat(bpm) {}
+	virtual ~StrobeTrajectory() {}
+
+	// Gives the intensity at a given time between the start and end times
+	virtual double evaluate(double t);
+
+private:
+
+	double secondsPerBeat;
 };
 
 

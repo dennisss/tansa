@@ -1,23 +1,27 @@
 #ifndef TANSA_JOCSPLAYER_H
 #define TANSA_JOCSPLAYER_H
 
+#include <tansa/core.h>
+#include <tansa/control.h>
+
+
 #include "tansa/jocsParser.h"
 #include "tansa/config.h"
-class Mocap;
-class GazeboConnector;
 
 namespace tansa {
 	class JocsPlayer {
 	public:
 		JocsPlayer(std::string jocsPath, double scale);
-		Time play(vector<Vehicle *> vehicles, Time start, int i, int n, int &numLanded, bool &running, std::vector<unsigned> jocsActiveIds);
+		void play();
 		void pause();
+		void step(vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds);;
 		void rewind(int steps);
 		void reset();
 		void loadJocs(std::string jocsPath, double scale);
+		bool isPlaying() { return this->playing; }
 		std::vector<Point> getHomes();
 		std::vector<std::vector<Action*>> getActions();
-		void initControllers(int n, std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds);
+		void initControllers(std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds);
 		void cleanup();
 	private:
 		std::vector<Breakpoint> breakpoints;
@@ -29,9 +33,12 @@ namespace tansa {
 		std::vector<Trajectory *> takeoffs;
 		std::vector<int> states;
 		std::vector<int> plans;
+		bool playing = false;
 		bool pauseRequested = false;
 		bool resetMode = false;
 		bool initialized = false;
+		Time start = Time(0,0);
+		int stepTick = 0;
 
 		double getNextBreakpointTime(double lastTime);
 		double getBreakpointTime(unsigned breakpointNumber);

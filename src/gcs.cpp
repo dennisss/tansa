@@ -11,9 +11,11 @@
 #include <sys/signal.h>
 #endif
 using namespace tansa;
-bool running;
+
+static bool running;
 
 void signal_sigint(int s) {
+	// TODO: Prevent
 	running = false;
 }
 
@@ -131,9 +133,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	player->initControllers(n, vehicles, jocsActiveIds);
-
-	int numLanded = 0;
+	player->initControllers(vehicles, jocsActiveIds);
 
 	running = true;
 	signal(SIGINT, signal_sigint);
@@ -146,10 +146,10 @@ int main(int argc, char *argv[]) {
 	float dl = 0.005;
 	*/
 
-	Time start(0,0);
-
 	signal(SIGINT, signal_sigint);
 	printf("running...\n");
+
+	player->play();
 
 	Rate r(100);
 	running = true;
@@ -159,7 +159,13 @@ int main(int argc, char *argv[]) {
 			send_status_message();
 		}
 
-		start = player->play(vehicles, start, i, n, numLanded, running, jocsActiveIds);
+		player->step(vehicles, jocsActiveIds);
+
+		// Done!
+		if(!player->isPlaying()) {
+			break;
+		}
+
 		r.sleep();
 		i++;
 	}

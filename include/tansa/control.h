@@ -27,6 +27,7 @@ template<unsigned int N> class PID;
 class PositionController : public Controller {
 public:
 	PositionController(Vehicle *v);
+	virtual ~PositionController() {}
 
 	/**
 	 * Specifies which trajectory should do followed
@@ -50,6 +51,7 @@ private:
 class HoverController : public Controller {
 public:
 	HoverController(Vehicle *v, const Point &p);
+	virtual ~HoverController() {}
 
 	virtual void control(double t);
 

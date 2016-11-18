@@ -1,9 +1,6 @@
-#include <tansa/mocap.h>
-#include <tansa/gazebo.h>
-#include <tansa/core.h>
-#include <zconf.h>
-#include <tansa/control.h>
 #include "tansa/jocsPlayer.h"
+
+#include <unistd.h>
 
 namespace tansa {
 
@@ -29,9 +26,11 @@ namespace tansa {
 		actions = currentJocs->GetActions();
 	}
 
-	void JocsPlayer::initControllers(int n, std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds) {
+	void JocsPlayer::initControllers(std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds) {
 		// TODO: Have a better check for mocap initialization/health
 		sleep(15);
+
+		int n = vehicles.size();
 
 		hovers.resize(n);
 		for(int i = 0; i < n; i++) {
@@ -55,13 +54,25 @@ namespace tansa {
 		}
 
 		plans.resize(n);
+		for(auto &p : plans) {
+			p = 0;
+		}
 	}
 
 	/**
 	 * Play one 'step' in the choreography
 	 */
-	Time JocsPlayer::play(std::vector<Vehicle *> vehicles, Time start, int i, int n, int &numLanded, bool &running, std::vector<unsigned> jocsActiveIds) {
+	void JocsPlayer::step(std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds) {
+
+		if(!playing) { // TODO: Playing should be a state achievable only after arming
+			return;
+		}
+
 		double t = Time::now().since(start).seconds();
+		stepTick++;
+
+
+		int n = vehicles.size();
 
 		// Check for state transitions
 		if (states[0] == STATE_INIT) {
@@ -97,7 +108,7 @@ namespace tansa {
 
 			if (states[vi] == STATE_INIT) {
 				// Lower frequency state management
-				if (i % 50 == 0) {
+				if (stepTick % 50 == 0) {
 
 					if (v.mode != "offboard") {
 						v.set_mode("offboard");
@@ -119,10 +130,6 @@ namespace tansa {
 					if (plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
 						states[vi] = STATE_LANDING;
 						v.land();
-						numLanded++;
-						if (numLanded == n) {
-							running = false;
-						}
 						continue;
 					}
 					plans[vi]++;
@@ -132,7 +139,25 @@ namespace tansa {
 				posctls[vi]->control(t);
 			}
 		}
-		return start;
+
+
+		// Final transition
+		bool allLanded = true;
+		for(int vi = 0; vi < n; vi++) {
+			if(states[vi] != STATE_LANDING) {
+				allLanded = false;
+				break;
+			}
+		}
+
+		// The chose choreography has ended
+		if(allLanded) {
+			playing = false;
+		}
+	}
+
+	void JocsPlayer::play() {
+		playing = true;
 	}
 
 	/**

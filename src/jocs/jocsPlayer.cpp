@@ -276,4 +276,32 @@ namespace tansa {
 
 		return Point(0,0,-1); // TODO: figure out better "invalid" answer
 	}
+
+	void JocsPlayer::createBreakpointSection(const std::vector<vector> actions, int startPoint, int endPoint = -1) {
+		double startTime, endTime = -1;
+		int bpStartIndex, bpEndIndex = -1;
+		if(startPoint >= 0) {
+			startTime = getBreakpointTime(startPoint);
+		} else {
+			bpStartIndex = 0;
+		}
+		if(startPoint >= 0) {
+			endTime = getBreakpointTime(endPoint);
+		} else {
+			bpEndIndex = actions.size() - 1;
+		}
+		for(int i = 0; i < actions.size(); i++) {
+			if(actions[i][1].start_time.seconds == startTime) {
+				bpStartIndex = i;
+			}
+			if(actions[i][1].start_time.seconds == endTime) {
+				bpEndIndex = i;
+			}
+			if(bpStartIndex != -1 && bpEndIndex != -1) {
+				break;
+			}
+		}
+		startIndex = bpStartIndex;
+		endIndex = bpEndIndex;
+	}
 }

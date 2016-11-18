@@ -45,18 +45,18 @@ add_library(
 	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp
 	src/mocap/optitrack/NatNetClient.cpp
-    src/jocs/jocsParser.cpp
+	src/jocs/jocsParser.cpp
 	src/jocs/action.cpp
 	src/jocs/jocsPlayer.cpp
 )
 
 target_link_libraries(
 	tansa
-
 	pthread
 
 	sioclient
 	boost_system
+
 	${Boost_LIBRARIES}
 )
 
@@ -95,8 +95,8 @@ add_executable(
 	gcs
 
 	src/gcs.cpp
-
-        include/tansa/breakpoint.h)
+	src/jocs/jocsPlayer.cpp
+	include/tansa/breakpoint.h)
 
 target_link_libraries(
 	gcs
@@ -122,7 +122,7 @@ add_custom_command(OUTPUT ${models_dir}/x340/x340.sdf
 	COMMAND rm -f ${models_dir}/x340/x340.sdf
 	COMMAND python ${scripts_dir}/xacro.py -o  ${models_dir}/x340/x340_base.urdf  ${models_dir}/x340/x340_base.xacro rotors_description_dir:=${rotors_description_dir} models_dir:=${models_dir} design_dir:=${design_dir}
 	COMMAND gz sdf -p  ${models_dir}/x340/x340_base.urdf >> ${models_dir}/x340/x340.sdf
- 	COMMAND rm -f ${models_dir}/x340/x340_base.urdf
+	COMMAND rm -f ${models_dir}/x340/x340_base.urdf
 )
 
 add_custom_target(sdf ALL DEPENDS ${models_dir}/x340/x340.sdf)

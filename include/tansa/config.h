@@ -13,4 +13,9 @@ struct vehicle_config {
 	unsigned rport; // For now always 14555
 };
 
+const unsigned STATE_INIT = 0;
+const unsigned STATE_TAKEOFF = 1;
+const unsigned STATE_FLYING = 2;
+const unsigned STATE_LANDING = 3;
+
 #endif //TANSA_CONFIG_H

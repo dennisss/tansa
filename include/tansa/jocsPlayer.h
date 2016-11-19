@@ -37,6 +37,12 @@ namespace tansa {
 		// TODO: Instead we should use isRunning which checks if any states are not StateInit
 		bool isPlaying() { return this->states[0] == StateFlying; }
 		bool isReady() { return this->states[0] == StateHolding; }
+
+		/**
+		 * Gets the time relative to the start of the current file
+		 */
+		double currentTime();
+
 		std::vector<Point> getHomes();
 		std::vector<std::vector<Action*>> getActions();
 		void cleanup();

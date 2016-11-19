@@ -124,6 +124,7 @@ public:
 	// Connection state
 	bool connected = false;
 	bool armed = false;
+	bool tracking = false;
 	string mode;
 
 	// Physical State : used for visualization and trajectory control
@@ -173,6 +174,7 @@ private:
 	Time lastTimesyncSent;
 	Time lastSystimeSent;
 	Time lastStateSent;
+	Time lastTrackTime = Time(0,0); int ntracks = 0;
 };
 
 /**

@@ -245,6 +245,14 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	);
 
 	send_message(&msg);
+
+
+	// Update tracking status
+	ntracks++;
+	if(ntracks > 100) {
+		this->tracking = true;
+	}
+	lastTrackTime = t;
 }
 
 State Vehicle::arrival_state() {
@@ -533,6 +541,10 @@ void *vehicle_thread(void *arg) {
 		if(now.since(v->lastTimesyncSent).seconds() >= 2) {
 			v->send_timesync(0, now.nanos());
 			v->lastTimesyncSent = now;
+		}
+		if(now.since(v->lastTrackTime).seconds() > 1) {
+			v->tracking = false;
+			v->ntracks = 0;
 		}
 
 

@@ -31,19 +31,20 @@ void signal_sigint(int s) {
 
 /* For sending a system state update to the gui */
 void send_status_message() {
-	Time t = Time::now();
 
 	json j;
 
 	j["type"] = "status";
-	j["time"] = t.seconds(); // TODO: Use player time
+	j["time"] = player->currentTime();
 
 	json vehs = json::array();
 	for(int i = 0; i < vehicles.size(); i++) {
 		json v;
 		v["id"] = vconfigs[i].net_id;
-		v["num"] = i <= jocsActiveIds.size() - 1? jocsActiveIds[i] : -1;
+		v["role"] = i <= jocsActiveIds.size() - 1? jocsActiveIds[i] : -1;
+		v["connected"] = vehicles[i]->connected;
 		v["armed"] = vehicles[i]->armed;
+		v["tracking"] = vehicles[i]->tracking;
 
 		json pos = json::array();
 		pos.push_back(vehicles[i]->state.position.x());
@@ -111,6 +112,7 @@ void socket_on_message(const json &data) {
 	}
 	else if (type == "pause") {
 		printf("Pausing...\n");
+		player->pause();
 	} else if (type == "reset") {
 		printf("Resetting...\n");
 	}

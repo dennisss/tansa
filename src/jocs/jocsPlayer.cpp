@@ -256,6 +256,15 @@ namespace tansa {
 
 	}
 
+
+	double JocsPlayer::currentTime() {
+		if(!this->isPlaying()) {
+			return -1;
+		}
+
+		return Time::now().since(start).seconds();
+	}
+
 	/**
 	 * Reset the choreography back to the initial position (ie: plans[0])
 	 */

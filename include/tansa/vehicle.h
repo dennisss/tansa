@@ -25,6 +25,18 @@ struct BatteryStatus {
 
 };
 
+struct VehicleParameters {
+
+	struct {
+		Point p;
+		Point i;
+		Point d;
+	} gains;
+
+	double hoverPoint;
+
+};
+
 
 /**
  * Reprents a single remote quadcopter connected via UDP
@@ -115,6 +127,8 @@ public:
 	LinearComplementaryEstimator estimator;
 
 	BatteryStatus battery;
+
+	VehicleParameters params;
 
 private:
 

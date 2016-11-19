@@ -65,5 +65,28 @@ private:
 
 };
 
+/**
+ * Controller for following Light Trajectory's
+ */
+class LightController : public Controller {
+public:
+	LightController(Vehicle *v);
+
+	/**
+	 * Specifies which trajectory should do followed
+	 */
+	void track(LightTrajectory *traj);
+
+
+	/**
+	 * This should be called 100 times a second to track the path
+	 */
+	virtual void control(double t);
+
+private:
+	Vehicle *vehicle;
+	LightTrajectory *trajectory;
+};
+
 
 #endif

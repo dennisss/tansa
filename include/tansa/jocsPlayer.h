@@ -23,12 +23,15 @@ namespace tansa {
 		std::vector<Breakpoint> breakpoints;
 		Jocs* currentJocs;
 		std::vector<std::vector<Action*>> actions;
+		std::vector<std::vector<LightAction*>> lightActions;
 		std::vector<Point> homes;
 		std::vector<HoverController *> hovers;
 		std::vector<PositionController *> posctls;
+		std::vector<LightController *> lightctls;
 		std::vector<Trajectory *> takeoffs;
 		std::vector<int> states;
 		std::vector<int> plans;
+		std::vector<int> lightCounters;
 		bool pauseRequested = false;
 		bool resetMode = false;
 		bool initialized = false;

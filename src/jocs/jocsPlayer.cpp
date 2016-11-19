@@ -27,6 +27,7 @@ namespace tansa {
 		currentJocs = Jocs::Parse(jocsPath, scale);
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
+		lightActions = currentJocs->GetLightActions();
 		breakpoints = currentJocs->GetBreakpoints();
 	}
 
@@ -44,6 +45,10 @@ namespace tansa {
 			posctls[i] = new PositionController(vehicles[i]);
 		}
 
+		lightctls.resize(n);
+		for(int i = 0; i < n; i++) {
+			lightctls[i] = new LightController(vehicles[i]);
+		}
 
 		takeoffs.resize(n);
 		for(int i = 0; i < n; i++) {
@@ -56,6 +61,7 @@ namespace tansa {
 		}
 
 		plans.resize(n);
+		lightCounters.resize(n);
 	}
 
 	/**
@@ -116,25 +122,31 @@ namespace tansa {
 				posctls[vi]->track(takeoffs[vi]);
 				posctls[vi]->control(t);
 			} else if (states[vi] == STATE_FLYING) {
-				if (isMotionAction(actions[jocsActiveIds[vi]][plans[vi]])) {
-					if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
-						if (plans[vi] == actions[jocsActiveIds[vi]].size() - 1) {
-							states[vi] = STATE_LANDING;
-							v.land();
-							numLanded++;
-							if (numLanded == n) {
-								running = false;
-							}
-							continue;
+				//if (isMotionAction(actions[jocsActiveIds[vi]][plans[vi]])) { // WILL ALWAYS BE, SINCE IN ACTIONS ARRAY
+				if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
+					if (plans[vi] == actions[jocsActiveIds[vi]].size() - 1) {
+						states[vi] = STATE_LANDING;
+						v.land();
+						numLanded++;
+						if (numLanded == n) {
+							running = false;
 						}
-						plans[vi]++;
+						continue;
 					}
-					Trajectory *cur = static_cast<MotionAction *>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
-					posctls[vi]->track(cur);
-					posctls[vi]->control(t);
-				} else {
-					LightTrajectory *cur = static_cast<LightAction *>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
-					printf("Should be doing a light action here\n");
+					plans[vi]++;
+				}
+				Trajectory *motion = static_cast<MotionAction *>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
+				posctls[vi]->track(motion);
+				posctls[vi]->control(t);
+				//}
+
+				LightTrajectory *light = static_cast<LightAction *>(lightActions[jocsActiveIds[vi]][lightCounters[vi]])->GetPath();
+
+				if (light->getStartTime() == motion->startTime()) {
+					printf("Getting light action for drone %d at time %f\n", vi, light->getStartTime());
+					lightctls[vi]->track(light);
+					lightctls[vi]->control(t);
+					lightCounters[vi]++;
 				}
 			}
 		}
@@ -168,6 +180,10 @@ namespace tansa {
 	void JocsPlayer::cleanup() {
 		for (int i = 0; i < posctls.size(); i++) {
 			delete posctls[i];
+		}
+
+		for (int i = 0; i < lightctls.size(); i++) {
+			delete lightctls[i];
 		}
 
 		for (int i = 0; i < hovers.size(); i++) {

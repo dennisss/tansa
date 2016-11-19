@@ -40,5 +40,5 @@ void PositionController::control(double t) {
 
 	vehicle->setpoint_accel(a);
 
-	printf("A: %.2f %.2f %.2f  E: %.2f\n", a.x(), a.y(), a.z(), eP.norm());
+	//printf("A: %.2f %.2f %.2f  E: %.2f\n", a.x(), a.y(), a.z(), eP.norm());
 }

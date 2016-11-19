@@ -92,6 +92,20 @@
               "endOffset":[0,0,0]
             }
           ]
+        },{
+          "type": "light",
+          "data": {
+            "startIntensity": 0.0,
+            "endIntensity": 1.0
+          },
+          "duration": 10,
+          "drones": [
+            {
+              "id": 0,
+              "startOffset":0,
+              "endOffset":0
+            }
+          ]
         }
       ]
     },

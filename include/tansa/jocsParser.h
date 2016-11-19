@@ -52,7 +52,7 @@ public:
     static const std::string BREAK_NUMBER;
 	static const std::string START_INTENSITY_KEY;
 	static const std::string END_INTENSITY_KEY;
-	static const std::string LIGHTS_INCL_KEY;
+	//static const std::string LIGHTS_INCL_KEY;
 
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
 	~Jocs();
@@ -66,13 +66,19 @@ public:
 
 	inline std::vector<Point> GetHomes() const { return homes; }
 	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
+	inline const std::vector<std::vector<LightAction*>>& GetLightActions() const { return lightActions; }
 	inline std::vector<Breakpoint> GetBreakpoints() const { return breakpoints; }
+
+
+	// TODO: this should be taken away from here and jocsPlayer and made a member of Action!!!!
+	//bool isMotionAction(Action* a);
 
 private:
 	bool needConvertToMeters = false;
 	bool needConvertToRadians = false;
 	std::vector<Point> homes;
 	std::vector<std::vector<Action*>> actions;
+	std::vector<std::vector<LightAction*>> lightActions;
 	std::vector<Breakpoint> breakpoints;
 	unsigned repeat;
 

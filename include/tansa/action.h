@@ -24,7 +24,7 @@ typedef unsigned DroneId;
 /**
  * @enum Defines the different lights on the drone
  */
-typedef unsigned LightId;
+//typedef unsigned LightId;
 /**
  * @interface Defines an interface for all Actions to implement
  */
@@ -108,8 +108,8 @@ private:
  */
 class LightAction : public Action {
 public:
-	LightAction(DroneId did, LightId lid, LightTrajectory* t) :
-			Action(did, ActionTypes::Light), lightId(lid), path(t)
+	LightAction(DroneId did, LightTrajectory* t) :
+			Action(did, ActionTypes::Light), path(t)
 			{ isCalculated = true; }
 	virtual ~LightAction(){ delete path; }
 
@@ -129,11 +129,11 @@ public:
 	/**
 	 * @return Which light this action is referring to.
 	 */
-	inline LightId GetLightId() { return lightId; }
+	//inline LightId GetLightId() { return lightId; }
 
 private:
 	LightTrajectory* path;
-	LightId lightId;
+	//LightId lightId;
 };
 
 }

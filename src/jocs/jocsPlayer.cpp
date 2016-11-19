@@ -27,6 +27,7 @@ namespace tansa {
 		currentJocs = Jocs::Parse(jocsPath, scale);
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
+		breakpoints = currentJocs->GetBreakpoints();
 	}
 
 	void JocsPlayer::initControllers(int n, std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds) {

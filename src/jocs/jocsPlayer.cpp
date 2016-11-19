@@ -116,9 +116,8 @@ namespace tansa {
 				posctls[vi]->track(takeoffs[vi]);
 				posctls[vi]->control(t);
 			} else if (states[vi] == STATE_FLYING) {
-				Action* current = actions[jocsActiveIds[vi]][plans[vi]];
-				if (isMotionAction(current)) {
-					if (t >= current->GetEndTime()) {
+				if (isMotionAction(actions[jocsActiveIds[vi]][plans[vi]])) {
+					if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
 						if (plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
 							states[vi] = STATE_LANDING;
 							v.land();
@@ -135,12 +134,12 @@ namespace tansa {
 					posctls[vi]->control(t);
 				} else {
 					// Should never have light commands after the choreography is over
-					assert(t <= current->GetEndTime());
+					//assert(t <= current->GetEndTime());
 					LightTrajectory *cur = static_cast<LightAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
 					// send light command to drone ... TODO: figure out how...
 				}
 
-				delete current;
+				//delete current;
 			}
 		}
 		return start;

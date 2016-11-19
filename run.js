@@ -15,7 +15,7 @@ function run(){
 
 	function start(){
 
-		server = child_process.spawn('/usr/bin/env', ['node', 'src/server'], {
+		server = child_process.spawn('/usr/bin/env', ['node', 'src/server/node'], {
 			cwd: __dirname,
 			stdio: ['ignore', 1, 2]
 		});
@@ -29,10 +29,10 @@ function run(){
 
 	start();
 
-	buildServer();
+	//buildServer();
 
 
-	var watcher = chokidar.watch(path.resolve(__dirname, '../src/server/**/*.js'), {
+	var watcher = chokidar.watch(path.resolve(__dirname, '../src/server/node/**/*.js'), {
 		//ignored: /[\/\\]\./,
 		persistent: true
 	});

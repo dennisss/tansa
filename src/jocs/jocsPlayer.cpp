@@ -57,7 +57,7 @@ namespace tansa {
 	 */
 	void JocsPlayer::step() {
 
-		int n = vehicles.size();
+		int n = jocsActiveIds.size();
 
 
 		// Check for state transitions
@@ -227,6 +227,25 @@ namespace tansa {
 	void JocsPlayer::pause() {
 		printf("Pause requested!");
 		pauseRequested = true;
+		// TODO: Determine a pause-at index (and maybe also a stop-at index)
+	}
+
+	void JocsPlayer::land() {
+		for(auto s : states) {
+			if(s != StateHolding) {
+				printf("Cannot land: Some drones not holding position\n");
+				return;
+			}
+		}
+
+		for(int i = 0; i < states.size(); i++) {
+			states[i] = StateLanding;
+
+			Point lastPoint = holdpoints[i];
+			Point groundPoint = lastPoint; groundPoint.z() = 0;
+			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
+			transitionStarts[i] = Time::now();
+		}
 	}
 
 	/**

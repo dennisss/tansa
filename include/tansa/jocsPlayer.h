@@ -21,6 +21,8 @@ namespace tansa {
 
 		void pause();
 
+		void land();
+
 		// Lands and disarms all drones (Must already be paused)
 		void stop();
 
@@ -30,8 +32,11 @@ namespace tansa {
 		void reset();
 		void loadJocs(Jocs *j);
 
+
+
 		// TODO: Instead we should use isRunning which checks if any states are not StateInit
-		//bool isPlaying() { return this->playing; }
+		bool isPlaying() { return this->states[0] == StateFlying; }
+		bool isReady() { return this->states[0] == StateHolding; }
 		std::vector<Point> getHomes();
 		std::vector<std::vector<Action*>> getActions();
 		void cleanup();

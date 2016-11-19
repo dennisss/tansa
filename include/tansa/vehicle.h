@@ -3,6 +3,7 @@
 
 #include "time.h"
 #include "estimation.h"
+#include "trajectory.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -35,6 +36,7 @@ struct VehicleParameters {
 
 	double hoverPoint;
 
+	double latency;
 };
 
 
@@ -60,6 +62,8 @@ public:
 
 	int disconnect();
 
+
+	void readParams(string file);
 
 
 	/**
@@ -150,8 +154,6 @@ private:
 
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
-
-	double latency;
 
 	ControlInput lastControlInput;
 	Time lastControlTime;

@@ -12,8 +12,14 @@
 </head>
 <body>
 
+	<button id="takeoffBtn">Takeoff</button>
+	<button id="playBtn">Play</button>
+	<button id="landBtn">Land</button>
+
+
 	<div id="test">
 	</div>
+
 
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
@@ -22,13 +28,26 @@
 		var socket = io();
 
 		// This should receive data a few times a second
-		socket.on('msg', function(data) {
+		socket.on('msg', function(str) {
+			var data = JSON.parse(str);
 
-			$('#test').text(JSON.stringify(data, null, 4));
-
+			$('#test').html(JSON.stringify(data, null, '\t').replace(/\n/g, '</br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;'));
 		});
 
-		// To hit play, do socket.emit('msg', {type: 'play'});
+
+		$('#takeoffBtn').click(function() {
+			socket.emit('msg', JSON.stringify({type: 'prepare'}))
+		});
+
+		$('#playBtn').click(function() {
+			socket.emit('msg', JSON.stringify({type: 'play'}))
+		});
+
+		$('#landBtn').click(function() {
+			socket.emit('msg', JSON.stringify({type: 'land'}))
+		});
+
+		// To hit play, do socket.emit('msg', JSON.stringify({type: 'play'}));
 
 
 	</script>

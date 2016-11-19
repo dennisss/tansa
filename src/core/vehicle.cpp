@@ -22,7 +22,6 @@ static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 
 Vehicle::Vehicle() :
-	latency(0),
 	lastControlInput(0,0,0),
 	lastControlTime(0,0),
 	lastHeartbeatReceived(0,0),
@@ -249,12 +248,12 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 }
 
 State Vehicle::arrival_state() {
-	if(latency == 0.0)
+	if(params.latency == 0.0)
 		return this->state;
 
 	State newstate = this->state;
 
-	Time eta(Time::now().seconds() + latency);
+	Time eta(Time::now().seconds() + params.latency);
 
 	// TODO: There may be multiple control inputs
 	this->estimator.predict(newstate, lastControlInput, eta);

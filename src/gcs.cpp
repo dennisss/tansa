@@ -12,6 +12,7 @@
 #include <sys/signal.h>
 #endif
 
+#include <dirent.h>
 #include <iostream>
 
 using namespace std;
@@ -20,6 +21,8 @@ using namespace tansa;
 static bool running;
 static JocsPlayer* player;
 static vector<Vehicle *> vehicles;
+static std::vector<vehicle_config> vconfigs;
+static vector<unsigned> jocsActiveIds;
 
 void signal_sigint(int s) {
 	// TODO: Prevent
@@ -30,17 +33,70 @@ void signal_sigint(int s) {
 void send_status_message() {
 	Time t = Time::now();
 
-	sio::message::ptr obj = sio::object_message::create();
-	obj->get_map()["type"] = sio::string_message::create("status");
-	obj->get_map()["time"] = sio::double_message::create(t.seconds());
+	json j;
 
-	sio::message::list li(obj);
-	tansa::send_message(li);
+	j["type"] = "status";
+	j["time"] = t.seconds(); // TODO: Use player time
+
+	json vehs = json::array();
+	for(int i = 0; i < vehicles.size(); i++) {
+		json v;
+		v["id"] = vconfigs[i].net_id;
+		v["num"] = i <= jocsActiveIds.size() - 1? jocsActiveIds[i] : -1;
+		v["armed"] = vehicles[i]->armed;
+
+		json pos = json::array();
+		pos.push_back(vehicles[i]->state.position.x());
+		pos.push_back(vehicles[i]->state.position.y());
+		pos.push_back(vehicles[i]->state.position.z());
+		v["position"] = pos;
+
+		json bat = {
+			{"voltage", vehicles[i]->battery.voltage},
+			{"percent", vehicles[i]->battery.percent}
+		};
+		v["battery"] = bat;
+
+		vehs.push_back(v);
+	}
+	j["vehicles"] = vehs;
+
+
+	json global;
+	global["playing"] = player->isPlaying();
+	global["ready"] = player->isReady();
+	j["global"] = global;
+
+	tansa::send_message(j);
+}
+
+void send_file_list() {
+
+/*
+	len = strlen(name);
+	dirp = opendir(".");
+	while ((dp = readdir(dirp)) != NULL)
+	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
+		(void)closedir(dirp);
+		return FOUND;
+	}
+	(void)closedir(dirp);
+	return NOT_FOUND;
+*/
+
+//	sio::message::ptr obj = sio::object_message::create();
+//	obj->get_map()["type"] = sio::string_message::create("status");
+//	obj->get_map()["time"] = sio::double_message::create(t.seconds());
+
+//	sio::message::list li(obj);
+//	tansa::send_message(li);
 
 }
 
-void socket_on_message(sio::message::ptr const& data) {
-	string type = data->get_map()["type"]->get_string();
+
+void socket_on_message(const json &data) {
+
+	string type = data["type"];
 
 	if(type == "prepare") {
 		printf("Preparing...\n");
@@ -49,7 +105,11 @@ void socket_on_message(sio::message::ptr const& data) {
 	else if(type == "play") {
 		printf("Playing...\n");
 		player->play();
-	} else if (type == "pause") {
+	}
+	else if(type == "land") {
+		player->land();
+	}
+	else if (type == "pause") {
 		printf("Pausing...\n");
 	} else if (type == "reset") {
 		printf("Resetting...\n");
@@ -132,6 +192,10 @@ void *console_thread(void *arg) {
 			cout << "Playing..." << endl;
 			player->play();
 		}
+		else if(args[0] == "land") {
+			cout << "Landing..." << endl;
+			player->land();
+		}
 
 
 	}
@@ -156,7 +220,8 @@ int main(int argc, char *argv[]) {
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
 	string jocsPath = rawJson["jocsPath"];
-	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
+	vector<unsigned> activeids = rawJson["jocsActiveIds"];
+	jocsActiveIds = activeids;
 	bool useMocap = rawJson["useMocap"];
 	float scale = rawJson["theaterScale"];
 	bool enableMessaging = rawJson["enableMessaging"];
@@ -168,7 +233,7 @@ int main(int argc, char *argv[]) {
 		config.serverAddress = hardwareConfig["serverAddress"];
 	}
 
-	std::vector<vehicle_config> vconfigs(rawJson["vehicles"].size());
+	vconfigs.resize(rawJson["vehicles"].size());
 	for(unsigned i = 0; i < rawJson["vehicles"].size(); i++) {
 		vconfigs[i].net_id = rawJson["vehicles"][i]["net_id"];
 		if(useMocap) {
@@ -195,6 +260,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	tansa::init(enableMessaging);
+
+	if(enableMessaging) {
+		tansa::on_message(socket_on_message);
+	}
+
 
 	Mocap *mocap = nullptr;
 	GazeboConnector *gazebo = nullptr;
@@ -223,6 +293,11 @@ int main(int argc, char *argv[]) {
 		const vehicle_config &v = vconfigs[i];
 
 		vehicles[i] = new Vehicle();
+
+		// Load default parameters
+		vehicles[i]->readParams("./config/params/default.json");
+		// TODO: Also read in per-drone ones
+
 		vehicles[i]->connect(v.lport, v.rport);
 		if (useMocap) {
 			mocap->track(vehicles[i], i+1);

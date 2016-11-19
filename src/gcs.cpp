@@ -243,8 +243,6 @@ int main(int argc, char *argv[]) {
 	player = new JocsPlayer(vehicles, jocsActiveIds);
 	player->loadJocs(jocs);
 
-	player->initControllers();
-
 	running = true;
 	signal(SIGINT, signal_sigint);
 

@@ -25,6 +25,7 @@ namespace tansa {
 		void stop();
 
 		void step();
+
 		void rewind(int steps);
 		void reset();
 		void loadJocs(Jocs *j);
@@ -33,7 +34,6 @@ namespace tansa {
 		//bool isPlaying() { return this->playing; }
 		std::vector<Point> getHomes();
 		std::vector<std::vector<Action*>> getActions();
-		void initControllers();
 		void cleanup();
 	private:
 		std::vector<Vehicle *> vehicles;
@@ -45,18 +45,19 @@ namespace tansa {
 		std::vector<Point> homes;
 		std::vector<HoverController *> hovers;
 		std::vector<PositionController *> posctls;
-		std::vector<Trajectory *> takeoffs;
 		std::vector<Point> holdpoints;
 		std::vector<PlayerVehicleState> states;
 		std::vector<int> plans;
 
-		//bool playing = false;
+
+		// Separate trajectories and timings for doing takeoff and landings
+		std::vector<Trajectory *> transitions;
+		vector<Time> transitionStarts;
 
 
 		bool pauseRequested = false;
 		bool resetMode = false;
-		bool initialized = false;
-		Time start = Time(0,0);
+		Time start = Time(0,0); // TODO: I will also need a time offset
 		int stepTick = 0;
 
 		double getNextBreakpointTime(double lastTime);

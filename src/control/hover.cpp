@@ -2,9 +2,9 @@
 
 
 
-HoverController::HoverController(Vehicle *v, const Point &p) {
+HoverController::HoverController(Vehicle *v) {
 	this->vehicle = v;
-	this->point = p;
+	this->point = Point(0,0,0);
 }
 
 void HoverController::control(double t) {

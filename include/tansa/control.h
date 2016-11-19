@@ -50,12 +50,12 @@ private:
 
 class HoverController : public Controller {
 public:
-	HoverController(Vehicle *v, const Point &p);
+	HoverController(Vehicle *v);
 	virtual ~HoverController() {}
 
 	virtual void control(double t);
 
-	void setPoint(Point p) { this->point = p; }
+	void setPoint(const Point &p) { this->point = p; }
 
 	/**
 	 * Get the distance to the point being kept

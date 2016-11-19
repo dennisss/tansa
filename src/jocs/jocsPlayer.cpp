@@ -15,39 +15,19 @@ namespace tansa {
 	JocsPlayer::JocsPlayer(const std::vector<Vehicle *> &vehicles, const std::vector<unsigned> &jocsActiveIds) {
 		this->vehicles = vehicles;
 		this->jocsActiveIds = jocsActiveIds;
-	}
 
-	/**
-	 * Load JOCS data from a specified path
-	 */
-	void JocsPlayer::loadJocs(Jocs *j) {
-		// TODO: Clear all these if they already have data.
-		currentJocs = j; // Jocs::Parse(jocsPath, scale);
-		homes = currentJocs->GetHomes();
-		actions = currentJocs->GetActions();
-	}
-
-	void JocsPlayer::initControllers() {
 
 		int n = vehicles.size();
 
 		hovers.resize(n);
 		for(int i = 0; i < n; i++) {
-			hovers[i] = new HoverController(vehicles[i], homes[jocsActiveIds[i]]);
+			hovers[i] = new HoverController(vehicles[i]);
 		}
 
 		posctls.resize(n);
 		for(int i = 0; i < n; i++) {
 			posctls[i] = new PositionController(vehicles[i]);
 		}
-
-
-		takeoffs.resize(n);
-		for(int i = 0; i < n; i++) {
-			takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
-		}
-		// TODO: Only grab the ones for the active drones
-		holdpoints = homes;
 
 		states.resize(n);
 		for(auto& state : states){
@@ -58,6 +38,17 @@ namespace tansa {
 		for(auto &p : plans) {
 			p = 0;
 		}
+
+		transitionStarts.resize(n, Time(0,0));
+	}
+
+	/**
+	 * Load JOCS data from a specified path
+	 */
+	void JocsPlayer::loadJocs(Jocs *j) {
+		currentJocs = j;
+		homes = currentJocs->GetHomes();
+		actions = currentJocs->GetActions();
 	}
 
 
@@ -77,8 +68,8 @@ namespace tansa {
 			// Once all are armed, take them all off to the current position
 
 			bool allGood = true;
-			for(int vi = 0; vi < n; vi++) {
-				if (vehicles[vi]->mode != "offboard" || !vehicles[vi]->armed) {
+			for(int i = 0; i < n; i++) {
+				if (vehicles[i]->mode != "offboard" || !vehicles[i]->armed) {
 					allGood = false;
 					break;
 				}
@@ -90,6 +81,17 @@ namespace tansa {
 					state = StateTakeoff; // TODO: Shouldn't this be StateReady?
 				}
 
+				transitions.resize(n);
+				for(int i = 0; i < n; i++) {
+
+
+					states[i] = StateTakeoff;
+					transitionStarts[i] = Time::now();
+					transitions[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
+				}
+				// TODO: Only grab the ones for the active drones
+				holdpoints = homes;
+
 				return;
 			}
 		}
@@ -99,28 +101,16 @@ namespace tansa {
 
 
 
-		double t = Time::now().since(start).seconds();
-		stepTick++;
-
-
-		// If any are taking off, track when they are done
-		for(int i = 0; i < n; i++) {
-			if(states[i] == StateTakeoff) {
-				if(takeoffs[i] == NULL || t >= takeoffs[i]->endTime()) {
-					states[i] = StateHolding;
-				}
-			}
-		}
-
-
-
 
 		// Do the control loops
-		for(int vi = 0; vi < n; vi++) {
-			Vehicle &v = *vehicles[vi];
+		for(int i = 0; i < n; i++) {
+			Vehicle &v = *vehicles[i];
+			auto &s = states[i];
+
+			int chorI = jocsActiveIds[i];
 
 
-			if(states[vi] == StateArming) {
+			if(s == StateArming) {
 				// Lower frequency state management
 				if(stepTick % 50 == 0) {
 					if (v.mode != "offboard") {
@@ -133,44 +123,72 @@ namespace tansa {
 				}
 
 				// Do nothing
-				vehicles[vi]->setpoint_accel(Vector3d(0,0,0));
+				v.setpoint_accel(Vector3d(0,0,0));
 			}
-			else if(states[vi] == StateTakeoff) {
-				posctls[vi]->track(takeoffs[vi]);
-				posctls[vi]->control(t);
+			else if(s == StateTakeoff) {
+				double t = Time::now().since(transitionStarts[i]).seconds();
+
+				if(transitions[i] == NULL || t >= transitions[i]->endTime()) {
+					s = StateHolding;
+				}
+
+				posctls[i]->track(transitions[i]);
+				posctls[i]->control(t);
 			}
-			else if(states[vi] == StateReady) {
+			else if(s == StateReady) {
 				// Do nothing
-				vehicles[vi]->setpoint_accel(Vector3d(0,0,0));
+				v.setpoint_accel(Vector3d(0,0,0));
 			}
-			else if(states[vi] == StateHolding) {
+			else if(s == StateHolding) {
+				double t = Time::now().since(start).seconds();
+
 				// Do a hover
-				hovers[vi]->setPoint(holdpoints[vi]); // TODO: Only do this on transitions (when holdpoints changes)
-				hovers[vi]->control(t);
+				hovers[i]->setPoint(holdpoints[i]); // TODO: Only do this on transitions (when holdpoints changes)
+				hovers[i]->control(t);
 			}
-			else if(states[vi] == StateFlying) {
-				if(t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
-					if(plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
-						states[vi] = StateLanding;
-						v.land();
+			else if(s == StateFlying) {
+				double t = Time::now().since(start).seconds();
+
+				Trajectory *cur = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
+
+				if(t >= actions[chorI][plans[i]]->GetEndTime()) {
+					if(plans[i] == actions[chorI].size()-1) {
+						states[i] = StateLanding;
+
+						Point lastPoint = cur->evaluate(t).position;
+						Point groundPoint = lastPoint; groundPoint.z() = 0;
+						transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
+						transitionStarts[i] = Time::now();
 						continue;
 					}
-					plans[vi]++;
+					plans[i]++;
 				}
-				Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
-				posctls[vi]->track(cur);
-				posctls[vi]->control(t);
+
+				posctls[i]->track(cur);
+				posctls[i]->control(t);
 			}
-			else if(states[vi] == StateLanding) {
+			else if(s == StateLanding) {
+				double t = Time::now().since(transitionStarts[i]).seconds();
 
-
-				// TODO: Do a trajectory down to 0
-				// Once done, do nothing and disarm the drone
-
-				// Transition back to StateInit
+				// Descend to ground
+				if(t < transitions[i]->endTime()) {
+					posctls[i]->track(transitions[i]);
+					posctls[i]->control(t);
+				}
+				// Disarm
+				else if(v.armed){
+					v.setpoint_accel(Vector3d(0,0,0));
+					v.arm(false);
+				}
+				// Reset state machine
+				else {
+					s = StateInit;
+				}
 
 			}
 		}
+
+		stepTick++;
 	}
 
 	void JocsPlayer::prepare() {
@@ -236,8 +254,9 @@ namespace tansa {
 			delete hovers[i];
 		}
 
-		for (int i = 0; i < takeoffs.size(); i++) {
-			delete takeoffs[i];
+		// TODO: They will memory leak
+		for (int i = 0; i < transitions.size(); i++) {
+			delete transitions[i];
 		}
 	}
 
@@ -322,6 +341,7 @@ namespace tansa {
 		return Point(0,0,-1); // TODO: figure out better "invalid" answer
 	}
 
+/*
 	void JocsPlayer::createBreakpointSection(const std::vector<vector> actions, int startPoint, int endPoint = -1) {
 		double startTime, endTime = -1;
 		int bpStartIndex, bpEndIndex = -1;
@@ -349,4 +369,6 @@ namespace tansa {
 		startIndex = bpStartIndex;
 		endIndex = bpEndIndex;
 	}
+
+	*/
 }

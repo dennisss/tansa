@@ -116,6 +116,7 @@ namespace tansa {
 				posctls[vi]->track(takeoffs[vi]);
 				posctls[vi]->control(t);
 			} else if (states[vi] == STATE_FLYING) {
+				// TODO: separate into handling light versus motion actions differently
 				if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
 					if (plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
 						states[vi] = STATE_LANDING;
@@ -246,12 +247,15 @@ namespace tansa {
 		// Assume droneId is valid and use it to choose which list of actions we need to parse
 		for (unsigned j = 0; j < actionsLength; j++) {
 			double actionStartTime = actions[droneId][j]->GetStartTime();
-			bool isMotionAction = true; // TODO: actually check if it's a motion. For now, they're all motions.
-			if (actionStartTime == startTime && isMotionAction) {
+			if (actionStartTime == startTime && isMotionAction(actions[droneId][j])) {
 				return ((MotionAction*)actions[droneId][j])->GetStartPoint(); // TODO: check if this cast works...
 			}
 		}
 
 		return Point(0,0,-1); // TODO: figure out better "invalid" answer
+	}
+	bool JocsPlayer::isMotionAction(Action* a) {
+		MotionAction* ma = dynamic_cast<MotionAction*>(a);
+		return ma;
 	}
 }

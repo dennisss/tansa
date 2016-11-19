@@ -44,6 +44,10 @@ const std::string Jocs::CIRCLE_RADIUS_KEY = "radius";
 const std::string Jocs::CIRCLE_THETA1_KEY = "theta1";
 const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
 
+const std::string Jocs::START_INTENSITY_KEY = "startIntensity";
+const std::string Jocs::END_INTENSITY_KEY = "endIntensity";
+const std::string Jocs::LIGHTS_INCL_KEY = "lightsIncluded";
+
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
 
@@ -88,16 +92,18 @@ Jocs* Jocs::Parse(std::string jocsPath, double scale) {
 			std::sort(actions[j].begin(), actions[j].end(),
 					  [](Action *const &lhs, Action *const &rhs) { return lhs->GetStartTime() < rhs->GetStartTime(); });
 			for (unsigned i = 0; i < actions[j].size(); i++) {
-				//Check temporal continuity
 				Action *a = actions[j][i];
-				double sTime = a->GetStartTime();
-				double eTime = a->GetEndTime();
-				if (!floatComp(sTime, startTime)) {
-					throw std::runtime_error(
-							"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
-							std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
+				//Check temporal continuity
+				if (a->GetActionType() != ActionTypes::Light) {
+					double sTime = a->GetStartTime();
+					double eTime = a->GetEndTime();
+					if (!floatComp(sTime, startTime)) {
+						throw std::runtime_error(
+								"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
+								std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
+					}
+					startTime = eTime;
 				}
-				startTime = eTime;
 				//Check spatial continuity
 				if (a->GetActionType() != ActionTypes::Light) {
 					auto ma = static_cast<MotionAction *>(a);
@@ -282,6 +288,29 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 					));
 					break;
 				}
+				case ActionTypes::Light: {
+
+					// Get the lights that this action applies to
+					auto lights = actionsArrayElement[ACTION_DATA_KEY][LIGHTS_INCL_KEY];
+					assert(lights.is_array());
+
+					// Create separate actions - one for each light for each drone
+
+					for (int k = 0; k < lights.size(); k++) {
+						actions[drone].push_back(new LightAction(
+								drone,
+								k,
+								new LightTrajectory(
+										actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY],
+										lastTime + startTime,
+										actionsArrayElement[ACTION_DATA_KEY][END_INTENSITY_KEY],
+										lastTime + startTime + duration)
+						));
+					}
+				}
+				//case ActionTypes::StrobeLight: {
+
+				//}
 				default: {
 					break;
 				}
@@ -320,6 +349,10 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 		return ActionTypes::Circle;
 	else if (data == "hover")
 		return ActionTypes::Hover;
+	else if (data == "light")
+		return ActionTypes::Light;
+	else if (data == "strobe")
+		return ActionTypes::Strobe;
 	return ActionTypes::None;
 }
 

@@ -38,6 +38,7 @@ namespace tansa {
 		double getBreakpointTime(std::string breakpointName);
 		unsigned getBreakpointNumber(double startTime);
 		Point getDroneLocationAtTime(double startTime, unsigned droneId);
+		bool isMotionAction(Action* a);
 	};
 }
 #endif //TANSA_JOCSPLAYER_H

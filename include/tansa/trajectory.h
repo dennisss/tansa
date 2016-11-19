@@ -135,6 +135,9 @@ public:
 	inline double getStartTime() { return this->startTime; }
 	inline double getEndTime() { return this->endTime; }
 
+	inline double getStartIntensity() { return this->startIntensity; }
+	inline double getEndIntensity() { return this->endIntensity; }
+
 protected:
 
 	double startTime, endTime, startIntensity, endIntensity;

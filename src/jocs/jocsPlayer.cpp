@@ -116,21 +116,26 @@ namespace tansa {
 				posctls[vi]->track(takeoffs[vi]);
 				posctls[vi]->control(t);
 			} else if (states[vi] == STATE_FLYING) {
-				if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
-					if (plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
-						states[vi] = STATE_LANDING;
-						v.land();
-						numLanded++;
-						if (numLanded == n) {
-							running = false;
+				if (isMotionAction(actions[jocsActiveIds[vi]][plans[vi]])) {
+					if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
+						if (plans[vi] == actions[jocsActiveIds[vi]].size() - 1) {
+							states[vi] = STATE_LANDING;
+							v.land();
+							numLanded++;
+							if (numLanded == n) {
+								running = false;
+							}
+							continue;
 						}
-						continue;
+						plans[vi]++;
 					}
-					plans[vi]++;
+					Trajectory *cur = static_cast<MotionAction *>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
+					posctls[vi]->track(cur);
+					posctls[vi]->control(t);
+				} else {
+					LightTrajectory *cur = static_cast<LightAction *>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
+					printf("Should be doing a light action here\n");
 				}
-				Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
-				posctls[vi]->track(cur);
-				posctls[vi]->control(t);
 			}
 		}
 		return start;

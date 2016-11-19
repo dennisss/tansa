@@ -93,10 +93,10 @@ Jocs* Jocs::Parse(std::string jocsPath, double scale) {
 					  [](Action *const &lhs, Action *const &rhs) { return lhs->GetStartTime() < rhs->GetStartTime(); });
 			for (unsigned i = 0; i < actions[j].size(); i++) {
 				Action *a = actions[j][i];
+				double sTime = a->GetStartTime();
+				double eTime = a->GetEndTime();
 				//Check temporal continuity
 				if (a->GetActionType() != ActionTypes::Light) {
-					double sTime = a->GetStartTime();
-					double eTime = a->GetEndTime();
 					if (!floatComp(sTime, startTime)) {
 						throw std::runtime_error(
 								"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +

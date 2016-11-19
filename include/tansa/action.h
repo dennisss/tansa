@@ -24,7 +24,7 @@ typedef unsigned DroneId;
 /**
  * @enum Defines the different lights on the drone
  */
-enum class LightId {TOP, BOT};
+typedef unsigned LightId;
 /**
  * @interface Defines an interface for all Actions to implement
  */
@@ -108,7 +108,7 @@ private:
  */
 class LightAction : public Action {
 public:
-	LightAction(DroneId did, LightId lid, Trajectory* t) :
+	LightAction(DroneId did, LightId lid, LightTrajectory* t) :
 			Action(did, ActionTypes::Light), lightId(lid), path(t)
 			{ isCalculated = true; }
 	virtual ~LightAction(){ delete path; }
@@ -117,8 +117,8 @@ public:
 
 	inline LightTrajectory* GetPath() { return path; }
 
-	virtual double GetStartTime() const { return path->startTime(); }
-	virtual double GetEndTime() const { return path->endTime(); }
+	virtual double GetStartTime() const { return path->getStartTime(); }
+	virtual double GetEndTime() const { return path->getEndTime(); }
 
 	/**
 	 * @return Current set intensity of the light

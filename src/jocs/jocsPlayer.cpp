@@ -116,30 +116,21 @@ namespace tansa {
 				posctls[vi]->track(takeoffs[vi]);
 				posctls[vi]->control(t);
 			} else if (states[vi] == STATE_FLYING) {
-				if (isMotionAction(actions[jocsActiveIds[vi]][plans[vi]])) {
-					if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
-						if (plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
-							states[vi] = STATE_LANDING;
-							v.land();
-							numLanded++;
-							if (numLanded == n) {
-								running = false;
-							}
-							continue;
+				if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
+					if (plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
+						states[vi] = STATE_LANDING;
+						v.land();
+						numLanded++;
+						if (numLanded == n) {
+							running = false;
 						}
-						plans[vi]++;
+						continue;
 					}
-					Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
-					posctls[vi]->track(cur);
-					posctls[vi]->control(t);
-				} else {
-					// Should never have light commands after the choreography is over
-					//assert(t <= current->GetEndTime());
-					LightTrajectory *cur = static_cast<LightAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
-					// send light command to drone ... TODO: figure out how...
+					plans[vi]++;
 				}
-
-				//delete current;
+				Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
+				posctls[vi]->track(cur);
+				posctls[vi]->control(t);
 			}
 		}
 		return start;

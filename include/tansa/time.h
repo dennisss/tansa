@@ -11,7 +11,7 @@ class Time {
 
 public:
 	Time(int secs, int nsecs);
-
+	Time(double secs);
 
 	/**
 	 * Gets the current time object

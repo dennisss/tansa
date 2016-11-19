@@ -28,9 +28,11 @@ void PositionController::control(double t) {
 
 	// Evaluate trajectory
 	TrajectoryState s = trajectory->evaluate(t);
+	State cur = vehicle->arrival_state();
 
-	Vector3d eP = s.position - vehicle->state.position;
-	Vector3d eV = s.velocity - vehicle->state.velocity;
+
+	Vector3d eP = s.position - cur.position;
+	Vector3d eV = s.velocity - cur.velocity;
 
 	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + s.acceleration;
 

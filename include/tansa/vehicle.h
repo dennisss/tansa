@@ -90,6 +90,10 @@ public:
 	 */
 	void mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t);
 
+	/**
+	 * Computes the approximate state of the vehicle upon receiving a message sent right now
+	 */
+	State arrival_state();
 
 	// TODO: Change these to use Point
 	// By default, this will preserve the yaw
@@ -133,6 +137,7 @@ private:
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
 
+	double latency;
 
 	ControlInput lastControlInput;
 	Time lastControlTime;

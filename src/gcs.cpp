@@ -19,6 +19,7 @@ using namespace std;
 using namespace tansa;
 
 static bool running;
+static bool killmode = false;
 static JocsPlayer* player;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
@@ -116,6 +117,11 @@ void socket_on_message(const json &data) {
 	} else if (type == "reset") {
 		printf("Resetting...\n");
 	}
+	else if(type == "kill") {
+		bool enabled = data["enabled"];
+		printf("Killing...\n");
+		killmode = enabled;
+	}
 	else {
 		// TODO: Send an error message back to the browser
 		printf("Unexpected message type recieved!\n");
@@ -197,6 +203,9 @@ void *console_thread(void *arg) {
 		else if(args[0] == "land") {
 			cout << "Landing..." << endl;
 			player->land();
+		}
+		else if(args[0] == "kill") {
+			killmode = args.size() > 1? (args[1] == "off"? false : true) : true;
 		}
 
 
@@ -345,7 +354,13 @@ int main(int argc, char *argv[]) {
 			send_status_message();
 		}
 
-		player->step();
+		if(killmode) {
+			for(Vehicle *v : vehicles)
+				v->terminate();
+		}
+		else {
+			player->step();
+		}
 
 		r.sleep();
 		i++;

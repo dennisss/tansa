@@ -97,7 +97,7 @@
 			<br>
 			<div class="container-fluid">
                         	<div class="col-sm-7">
-					<select class="form-control">
+					<select id="fileNameList" class="form-control">
 						<option>Select a JOCS File</option>
 						<option>jumpManJumpManJumpMan.jocs</option>
 						<option>exesAndOhs.jocs</option>
@@ -105,7 +105,7 @@
 					</select>
 				</div>
 				<div class="col-sm-5">
-					<select class="form-control">
+					<select id="queueList" class="form-control">
   		                              	<option>Start</option>
                 		                <option>1</option>
                                 		<option>2</option>
@@ -225,6 +225,8 @@
 <script>
 var socket = io();
 
+socket.emit("msg", JSON.stringify({type: 'list'}));
+
 $(".flightReady").hide();
 $.material.init();
 
@@ -281,35 +283,46 @@ $("#killDrones").click(function () {
 // This should receive data a few times a second
 socket.on('msg', function(data) {
 	data = JSON.parse(data);
-	//$("#droneTable").html("");
-        $('#runTime').text(Math.round(data.time*100)/100);
-	setValue($('.playStatus'), data.global.playing);
-	setValue($(".readyStatus"), data.global.ready);
-	$.each(data.vehicles, function (index, drone) {
-		if($("#drone" + drone.id).length == 0) {
-	        	var droneRow = $($("#droneRow").html()); 
-			droneRow.attr("id", "drone" + drone.id);
-        		droneRow.find(".droneID").html(drone.id);
-        		var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
-			var batteryIndicator = Math.floor(batteryLevel/25);
-			//console.log(batteryLevel + " " + batteryIndicator);
-			setValue(droneRow.find(".armed"), drone.armed);
-			setValue(droneRow.find(".connected") , drone.connected);
-			setValue(droneRow.find(".tracking") , drone.tracking);
-			droneRow.find(".battery-level").addClass("fa-battery-" + batteryIndicator);
-        		$("#droneTable").append(droneRow);
-			//console.log("Row Appended");
-		} else {
-			var droneRow = $("#drone" + drone.id);
-			var batteryLevel = Math.floor((parseFloat(drone.battery.percentage) * 100));
-                        var batteryIndicator = Math.floor(batteryLevel/25);
-                        setValue(droneRow.find(".armed"), drone.armed);
-			setValue(droneRow.find(".connected") , drone.connected);
-                        setValue(droneRow.find(".tracking") , drone.tracking);
-                        droneRow.find(".battery-level").addClass("fa-battery-" + batteryIndicator);
-			//console.log("Row ammended");
-		}
-	});
+	if(data.type == "status") {
+		//$("#droneTable").html("");
+		$('#runTime').text(Math.round(data.time*100)/100);
+		setValue($('.playStatus'), data.global.playing);
+		setValue($(".readyStatus"), data.global.ready);
+		$.each(data.vehicles, function (index, drone) {
+			if($("#drone" + drone.id).length == 0) {
+				var droneRow = $($("#droneRow").html()); 
+				droneRow.attr("id", "drone" + drone.id);
+				droneRow.find(".droneID").html(drone.id);
+				var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
+				var batteryIndicator = Math.floor(batteryLevel/25);
+				//console.log(batteryLevel + " " + batteryIndicator);
+				setValue(droneRow.find(".armed"), drone.armed);
+				setValue(droneRow.find(".connected") , drone.connected);
+				setValue(droneRow.find(".tracking") , drone.tracking);
+				droneRow.find(".battery-level").addClass("fa-battery-" + batteryIndicator);
+				$("#droneTable").append(droneRow);
+				//console.log("Row Appended");
+			} else {
+				var droneRow = $("#drone" + drone.id);
+				var batteryLevel = Math.floor((parseFloat(drone.battery.percentage) * 100));
+				var batteryIndicator = Math.floor(batteryLevel/25);
+				setValue(droneRow.find(".armed"), drone.armed);
+				setValue(droneRow.find(".connected") , drone.connected);
+				setValue(droneRow.find(".tracking") , drone.tracking);
+				droneRow.find(".battery-level").addClass("fa-battery-" + batteryIndicator);
+				//console.log("Row ammended");
+			}
+		});
+	} else if (data.type == "list_reply") {
+		console.log("This has been heard.");
+		var stringOfOptions = "";
+		$.each(data.files, function(index, value) {
+			stringOfOptions += "<option>" + value + "</option>";
+		}); 
+		$("#fileNameList").html(stringOfOptions);
+	} else {
+		console.log("Unknown message type - " + data.type);
+	}
 });
 
 // Repeatable Functions

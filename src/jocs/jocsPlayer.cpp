@@ -4,8 +4,6 @@
 
 namespace tansa {
 
-	double EPSILON = 0.001;
-
 	std::vector<Point> JocsPlayer::getHomes() {
 		return homes;
 	}

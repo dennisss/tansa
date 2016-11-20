@@ -20,12 +20,16 @@ void PositionController::track(Trajectory *traj) {
 	this->trajectory = traj;
 }
 
+TrajectoryState PositionController::getTargetState(double t) {
+	return trajectory->evaluate(t);
+}
+
 void PositionController::control(double t) {
 
 	double hover = vehicle->params.hoverPoint;
 
 	// Evaluate trajectory
-	TrajectoryState s = trajectory->evaluate(t);
+	TrajectoryState s = this->getTargetState(t);
 	State cur = vehicle->arrival_state();
 
 

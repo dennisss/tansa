@@ -7,6 +7,8 @@
 
 namespace tansa {
 
+	double EPSILON = 0.001;
+
 	std::vector<Point> JocsPlayer::getHomes() {
 		return homes;
 	}
@@ -138,15 +140,21 @@ namespace tansa {
 				Trajectory *motion = static_cast<MotionAction *>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
 				posctls[vi]->track(motion);
 				posctls[vi]->control(t);
+				//printf("Getting motion action for drone %d at time %f\n", jocsActiveIds[vi], motion->startTime());
 				//}
 
 				LightTrajectory *light = static_cast<LightAction *>(lightActions[jocsActiveIds[vi]][lightCounters[vi]])->GetPath();
 
-				if (light->getStartTime() == motion->startTime()) {
-					printf("Getting light action for drone %d at time %f\n", vi, light->getStartTime());
+				// TODO: this will only work if there is a light action at the same time as a motion action
+				// so we should fix that.. it should be possible to have a time where there is only a light action
+				// and no motion action.
+				if (std::abs(light->getStartTime() - motion->startTime()) < EPSILON) {
+					//printf("Getting light action for drone %d at time %f\n", jocsActiveIds[vi], light->getStartTime());
 					lightctls[vi]->track(light);
 					lightctls[vi]->control(t);
-					lightCounters[vi]++;
+					if (t >= lightActions[jocsActiveIds[vi]][lightCounters[vi]]->GetEndTime()) {
+						lightCounters[vi]++;
+					}
 				}
 			}
 		}

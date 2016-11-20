@@ -83,145 +83,161 @@
 			}
 			.modal-lg-all {
 				min-width: 675px;
-    				width: 60vw;
+				width: 60vw;
 			}
 		</style>
 </head>
 <body>
-<h1 class="text-center">Dancing Drones Control Board</h1>
-<script src="/socket.io/socket.io.js"></script>
-<div class="container-fluid">
-	<div class="text-center gap row preFlight">
-                <div class="col-md-6 col-sm-12 text-center">
-                        <button id="loadJacq" type="button" class="btn btn-fab actionFab"><span class="fa fa-upload" aria-hidden="true"></span></button>
-			<br>
-			<div class="container-fluid">
-                        	<div class="col-sm-7">
-					<select id="fileNameList" class="form-control">
-						<option>Select a JOCS File</option>
-						<option>jumpManJumpManJumpMan.jocs</option>
-						<option>exesAndOhs.jocs</option>
-						<option>operationPhilia.jocs</option>
-					</select>
-				</div>
-				<div class="col-sm-5">
-					<select id="queueList" class="form-control">
-  		                              	<option>Start</option>
-                		                <option>1</option>
-                                		<option>2</option>
-                                		<option>3</option>
-                        		</select>
+	<h1 class="text-center">Dancing Drones Control Board</h1>
+	<script src="/socket.io/socket.io.js"></script>
+	<div class="container-fluid">
+		<div class="text-center gap row preFlight">
+			<div class="col-md-6 col-sm-12 text-center">
+				<button id="loadJacq" type="button" class="btn btn-fab actionFab">
+					<span class="fa fa-upload" aria-hidden="true"></span>
+				</button>
+				<br>
+				<div class="container-fluid">
+					<div class="col-sm-7">
+						<select id="fileNameList" class="form-control">
+							<option>Select a JOCS File</option>
+							<option>jumpManJumpManJumpMan.jocs</option>
+							<option>exesAndOhs.jocs</option>
+							<option>operationPhilia.jocs</option>
+						</select>
+					</div>
+					<div class="col-sm-5">
+						<select id="queueList" class="form-control">
+							<option>Start</option>
+							<option>1</option>
+							<option>2</option>
+							<option>3</option>
+						</select>
+					</div>
 				</div>
 			</div>
-                </div>
-                <div class="col-md-3 col-sm-6 text-center">
-                        <button id="positionMap" type="button" class="btn btn-fab actionFab" data-toggle="modal" data-target="#droneMapModal"><span class="fa fa-bullseye" aria-hidden="true"></span></button>
-                        <br><br>
-                </div>
-                <div class="col-md-3 col-sm-6 text-center">
-                        <button id="takeOff" type="button" class="btn btn-fab actionFab"><span class="fa fa-rocket" aria-hidden="true"></span></button>
-                        <br><br>
-                </div><!--
-                <div class="col-md-3 col-sm-6 text-center">
-                        <button id="killDrones" type="button" class="btn btn-fab actionFab"><i class="fa fa-bomb" aria-hidden="true"></i></button>
-                        <br><br>
-                </div>-->
-        </div>
-	<div class="text-center gap row flightReady">
-		<div class="col-md-3 col-sm-6 text-center">
-			<button id="playDrones" type="button" class="btn btn-fab actionFab"><span class="glyphicon glyphicon-play" aria-hidden="true"></span></button>
-			<br><br>
+			<div class="col-md-3 col-sm-6 text-center">
+					<button id="positionMap" type="button" class="btn btn-fab actionFab" data-toggle="modal" data-target="#droneMapModal">
+						<span class="fa fa-bullseye" aria-hidden="true"></span>
+					</button>
+					<br><br>
+			</div>
+			<div class="col-md-3 col-sm-6 text-center">
+					<button id="takeOff" type="button" class="btn btn-fab actionFab">
+						<span class="fa fa-rocket" aria-hidden="true"></span>
+					</button>
+					<br><br>
+			</div><!--
+			<div class="col-md-3 col-sm-6 text-center">
+					<button id="killDrones" type="button" class="btn btn-fab actionFab"><i class="fa fa-bomb" aria-hidden="true"></i></button>
+					<br><br>
+			</div>-->
 		</div>
-		<div class="col-md-3 col-sm-6 text-center">
-			<button id="pauseDrones" type="button" class="btn btn-fab actionFab"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span></button>
-			<br><br>
+		<div class="text-center gap row flightReady">
+			<div class="col-md-3 col-sm-6 text-center">
+				<button id="playDrones" type="button" class="btn btn-fab actionFab">
+					<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+				</button>
+				<br><br>
+			</div>
+			<div class="col-md-3 col-sm-6 text-center">
+				<button id="pauseDrones" type="button" class="btn btn-fab actionFab">
+					<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+				</button>
+				<br><br>
+			</div>
+			<div class="col-md-3 col-sm-6 text-center">
+				<button id="stopDrones" type="button" class="btn btn-fab actionFab">
+					<span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
+				</button>
+				<br><br>
+			</div>
+			<div class="col-md-3 col-sm-6 text-center">
+				<button id="killDrones" type="button" class="btn btn-fab actionFab">
+					<i class="fa fa-bomb" aria-hidden="true"></i>
+				</button>
+				<br><br>
+			</div>
 		</div>
-		<div class="col-md-3 col-sm-6 text-center">
-			<button id="stopDrones" type="button" class="btn btn-fab actionFab"><span class="glyphicon glyphicon-stop" aria-hidden="true"></span></button>
-			<br><br>
+		<div class="row">
+			<div class="col-sm-3 text-center">
+				MoCap:&nbsp;&nbsp;<i class="fa fa-binoculars moCapStatus" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 text-center">
+				Ready:&nbsp;&nbsp;<i class="fa fa-circle readyStatus" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 text-center">
+				Playing:&nbsp;&nbsp;<i class="fa fa-circle playStatus" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 text-center">
+				Run Time:&nbsp;&nbsp;<span id="runTime">0</span> secs
+			</div>
 		</div>
-		<div class="col-md-3 col-sm-6 text-center">
-			<button id="killDrones" type="button" class="btn btn-fab actionFab"><i class="fa fa-bomb" aria-hidden="true"></i></button>
-			<br><br>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-sm-3 text-center">
-			MoCap:&nbsp;&nbsp;<i class="fa fa-binoculars moCapStatus" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 text-center">
-                        Ready:&nbsp;&nbsp;<i class="fa fa-circle readyStatus" aria-hidden="true"></i>
-                </div>
-		<div class="col-sm-3 text-center">
-			Playing:&nbsp;&nbsp;<i class="fa fa-circle playStatus" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 text-center">
-			Run Time:&nbsp;&nbsp;<span id="runTime">0</span> secs
-		</div>
-	</div>
-	<br>
-	<!--
-	<div class="row droneData">
-		<div class="col-sm-1">
-			<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID">1</span>
-		</div>
-		<div class="col-sm-3 text-center">
-			Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 text-center">
-			Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 text-center">
-			Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-2 text-center">
-			<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
-		</div>
-	</div>-->
-	<div id="droneTable">
-	</div>
-</div>
-<div class="modal fade" id="droneMapModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog modal-lg-all" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title">Drone Starting Map</h4>
-      </div>
-      <div class="modal-body text-center">
-        <canvas id="droneMap" width="600" height="400"></canvas>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-<template id="droneRow">
-	<div class="row droneData">
-		<div class="col-sm-1 col-md-1 noPad">
-			<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID"></span>
-		</div>
-		<div class="col-md-1 visible-md visible-lg text-center">
-			<i class="fa fa-exchange" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 col-md-2 visible-md visible-lg text-center">
-			Battery:&nbsp;&nbsp;<i class="battery-level fa" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 col-md-2 text-center">
-			Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 col-md-2 text-center">
-			Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-3 col-md-2 text-center">
-			Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
-		</div>
-		<div class="col-sm-2 col-md-2 text-center">
-			<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
+		<br>
+		<!--
+		<div class="row droneData">
+			<div class="col-sm-1">
+				<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID">1</span>
+			</div>
+			<div class="col-sm-3 text-center">
+				Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 text-center">
+				Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 text-center">
+				Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-2 text-center">
+				<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
+			</div>
+		</div>-->
+		<div id="droneTable">
 		</div>
 	</div>
-</template>
+	<div class="modal fade" id="droneMapModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog modal-lg-all" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<h4 class="modal-title">Drone Starting Map</h4>
+				</div>
+				<div class="modal-body text-center">
+					<canvas id="droneMap" width="600" height="400"></canvas>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div><!-- /.modal-content -->
+		</div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+	<template id="droneRow">
+		<div class="row droneData">
+			<div class="col-sm-1 col-md-1 noPad">
+				<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID"></span>
+			</div>
+			<div class="col-md-1 visible-md visible-lg text-center">
+				<i class="fa fa-exchange" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 col-md-2 visible-md visible-lg text-center">
+				Battery:&nbsp;&nbsp;<i class="battery-level fa" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 col-md-2 text-center">
+				Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 col-md-2 text-center">
+				Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-3 col-md-2 text-center">
+				Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
+			</div>
+			<div class="col-sm-2 col-md-2 text-center">
+				<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
+			</div>
+		</div>
+	</template>
 <script>
 var socket = io();
 
@@ -283,45 +299,33 @@ $("#killDrones").click(function () {
 // This should receive data a few times a second
 socket.on('msg', function(data) {
 	data = JSON.parse(data);
-	if(data.type == "status") {
-		//$("#droneTable").html("");
-		$('#runTime').text(Math.round(data.time*100)/100);
+	if (data.type == 'status') {
+		$('#runTime').text(Math.round(data.time * 100) / 100);
 		setValue($('.playStatus'), data.global.playing);
-		setValue($(".readyStatus"), data.global.ready);
+		setValue($('.readyStatus'), data.global.ready);
+
 		$.each(data.vehicles, function (index, drone) {
-			if($("#drone" + drone.id).length == 0) {
-				var droneRow = $($("#droneRow").html()); 
-				droneRow.attr("id", "drone" + drone.id);
-				droneRow.find(".droneID").html(drone.id);
-				var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
-				var batteryIndicator = Math.floor(batteryLevel/25);
-				//console.log(batteryLevel + " " + batteryIndicator);
-				setValue(droneRow.find(".armed"), drone.armed);
-				setValue(droneRow.find(".connected") , drone.connected);
-				setValue(droneRow.find(".tracking") , drone.tracking);
-				droneRow.find(".battery-level").addClass("fa-battery-" + batteryIndicator);
-				$("#droneTable").append(droneRow);
-				//console.log("Row Appended");
-			} else {
-				var droneRow = $("#drone" + drone.id);
-				var batteryLevel = Math.floor((parseFloat(drone.battery.percentage) * 100));
-				var batteryIndicator = Math.floor(batteryLevel/25);
-				setValue(droneRow.find(".armed"), drone.armed);
-				setValue(droneRow.find(".connected") , drone.connected);
-				setValue(droneRow.find(".tracking") , drone.tracking);
-				droneRow.find(".battery-level").addClass("fa-battery-" + batteryIndicator);
-				//console.log("Row ammended");
+			var droneRow = $('#drone' + drone.id);
+			var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
+			var batteryIndicator = Math.floor(batteryLevel / 25);
+			if(!droneRow.length) {
+				droneRow = $($('#droneRow').html());
+				droneRow.attr('id', 'drone' + drone.id);
+				droneRow.find('.droneID').html(drone.id);
+				$('#droneTable').append(droneRow);
 			}
+			setValue(droneRow.find('.armed'), drone.armed);
+			setValue(droneRow.find('.connected') , drone.connected);
+			setValue(droneRow.find('.tracking') , drone.tracking);
+			droneRow.find('.battery-level').addClass('fa-battery-' + batteryIndicator);
 		});
-	} else if (data.type == "list_reply") {
-		console.log("This has been heard.");
-		var stringOfOptions = "";
-		$.each(data.files, function(index, value) {
-			stringOfOptions += "<option>" + value + "</option>";
-		}); 
-		$("#fileNameList").html(stringOfOptions);
+	} else if (data.type == 'list_reply') {
+		var stringOfOptions = (data.files || []).reduce(function(acc, currentValue) {
+			return acc + '<option>' + currentValue + '</option>';
+		}, '');
+		$('#fileNameList').html(stringOfOptions);
 	} else {
-		console.log("Unknown message type - " + data.type);
+		console.log('Unknown message type - ' + data.type);
 	}
 });
 
@@ -329,7 +333,7 @@ socket.on('msg', function(data) {
 
 function swapControlPanels() {
 	$(".preFlight").slideToggle();
-        $(".flightReady").slideToggle();
+	$(".flightReady").slideToggle();
 }
 
 function armDrones() {
@@ -373,8 +377,8 @@ function gridSetup() {
 	}
 
 	for (var y = 0.5; y < canvasHeight; y += 10) {
-  		context.moveTo(0, y);
-  		context.lineTo(canvasWidth, y);
+		context.moveTo(0, y);
+		context.lineTo(canvasWidth, y);
 	}
 
 	context.strokeStyle = "#eee";
@@ -384,7 +388,7 @@ function gridSetup() {
 	var halfHeight = canvasHeight/2;
 	
 	context.beginPath();
-	context.moveTo(halfWidth, 0)
+	context.moveTo(halfWidth, 0);
 	context.lineTo(halfWidth, canvasHeight);
 
 	context.moveTo(0, halfHeight);

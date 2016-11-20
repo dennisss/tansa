@@ -1,10 +1,10 @@
 {
-	"jocsPath": "data/singleDrone.jocs",
-	"jocsActiveIds": [0],
+	"jocsPath": "data/circles.jocs",
+	"jocsActiveIds": [0,1],
 	"theaterScale": 1.0,
 	"useMocap": false,
 	"enableMessaging": true,
-	"enableOSC": true,
+	"enableOSC": false,
 	"hardwareConfig": {
 		"clientAddress": "192.168.1.79",
 		"serverAddress": "192.168.1.80"

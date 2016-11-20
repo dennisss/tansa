@@ -138,14 +138,17 @@ namespace tansa {
 				v.setpoint_accel(Vector3d(0,0,0));
 			}
 			else if(s == StateHolding) {
+				double t = Time::now().seconds();
+
 				if (pauseRequested) {
 					paused = true;
 					pauseRequested = false;
-					pauseOffset = Time::now().seconds();
+					pauseOffset = t;
 				}
 
-				double t = Time::now().seconds();
 				if (paused && (stopRequested || t - pauseOffset > 20.0)) {
+					cout << (stopRequested ? "Stop requested" : "Paused for more than 20 seconds")
+						 << ", attempting to land." << endl;
 					land();
 					return;
 				}
@@ -154,7 +157,7 @@ namespace tansa {
 				hovers[i]->control(t);
 			}
 			else if(s == StateFlying) {
-				double t = Time::now().since(start).seconds() - pauseOffset;
+				double t = Time::now().since(start).seconds();
 
 				Trajectory *cur = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
 
@@ -230,10 +233,14 @@ namespace tansa {
 		}
 
 		if (paused) {
+			printf("Resuming from pause...\n");
 			paused = false;
 			pauseRequested = false;
 			stopRequested = false;
 			pauseOffset = 0.0;
+			for (auto &plan : plans) {
+				plan++;
+			}
 		}
 
 		start = Time::now();
@@ -246,7 +253,6 @@ namespace tansa {
 	 * Pause the choreography
 	 */
 	void JocsPlayer::pause() {
-		printf("Pause requested!");
 		pauseRequested = true;
 		// TODO: Determine a pause-at index (and maybe also a stop-at index)
 	}

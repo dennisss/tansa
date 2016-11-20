@@ -34,28 +34,34 @@ public:
 	 */
 	void track(Trajectory *traj);
 
+	virtual TrajectoryState getTargetState(double t);
 
 	/**
 	 * This should be called 100 times a second to track the path
 	 */
 	virtual void control(double t);
 
-private:
+protected:
 	Vehicle *vehicle;
+
+	PID<PointDims> *pid;
+
+private:
 	Trajectory *trajectory;
 
-	PID<3> *pid;
 };
 
 
-class HoverController : public Controller {
+class HoverController : public PositionController {
 public:
 	HoverController(Vehicle *v);
 	virtual ~HoverController() {}
 
-	virtual void control(double t);
-
 	void setPoint(const Point &p) { this->point = p; }
+
+	virtual TrajectoryState getTargetState(double t);
+
+	virtual void control(double t);
 
 	/**
 	 * Get the distance to the point being kept
@@ -63,9 +69,7 @@ public:
 	double distance();
 
 private:
-	Vehicle *vehicle;
 	Point point;
-
 };
 
 /**

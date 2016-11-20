@@ -136,7 +136,10 @@ namespace tansa {
 			else if(s == StateTakeoff) {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
-				if(transitions[i] == NULL || t >= transitions[i]->endTime()) {
+				// If the drones started on the ground and overshot the target, switch to hover
+				bool overshot = v.state.position.z() > holdpoints[i].z();
+
+				if(transitions[i] == NULL || t >= transitions[i]->endTime() || overshot) {
 					s = StateHolding;
 				}
 

@@ -54,6 +54,20 @@
               "endOffset":[0,0,0]
             }
           ]
+        },{
+          "type": "light",
+          "data": {
+            "startIntensity": 1.0,
+            "endIntensity": 1.0
+          },
+          "duration": 15,
+          "drones": [
+            {
+              "id": 0,
+              "startOffset":0,
+              "endOffset":0
+            }
+          ]
         }
       ]
     },
@@ -146,6 +160,20 @@
               "id":0,
               "startOffset":[0,0,0],
               "endOffset":[0,0,0]
+            }
+          ]
+        },{
+          "type": "light",
+          "data": {
+            "startIntensity": 1.0,
+            "endIntensity": 0.0
+          },
+          "duration": 10,
+          "drones": [
+            {
+              "id": 0,
+              "startOffset":0,
+              "endOffset":0
             }
           ]
         }

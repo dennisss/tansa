@@ -49,6 +49,7 @@ namespace tansa {
 		currentJocs = j;
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
+		breakpoints = currentJocs->GetBreakpoints();
 	}
 
 
@@ -78,7 +79,7 @@ namespace tansa {
 			if(allGood) {
 				start = Time::now();
 				for(auto& state : states) {
-					state = StateTakeoff; // TODO: Shouldn't this be StateReady?
+					state = StateReady; // TODO: Shouldn't this be StateReady?
 				}
 
 				transitions.resize(n);
@@ -95,12 +96,6 @@ namespace tansa {
 				return;
 			}
 		}
-
-		// TODO:
-		// If all are Ready, then transition to takeoff
-
-
-
 
 		// Do the control loops
 		for(int i = 0; i < n; i++) {
@@ -140,14 +135,23 @@ namespace tansa {
 				v.setpoint_accel(Vector3d(0,0,0));
 			}
 			else if(s == StateHolding) {
-				double t = Time::now().since(start).seconds();
+				if (pauseRequested) {
+					paused = true;
+					pauseRequested = false;
+					pauseOffset = Time::now().seconds();
+				}
 
+				double t = Time::now().seconds();
+				if (paused && (stopRequested || t - pauseOffset > 20.0)) {
+					land();
+					return;
+				}
 				// Do a hover
 				hovers[i]->setPoint(holdpoints[i]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			}
 			else if(s == StateFlying) {
-				double t = Time::now().since(start).seconds();
+				double t = Time::now().since(start).seconds() - pauseOffset;
 
 				Trajectory *cur = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
 
@@ -162,6 +166,13 @@ namespace tansa {
 						continue;
 					}
 					plans[i]++;
+				} else if (pauseRequested) {
+					double nextBreakpoint = getNextBreakpointTime(t);
+					if ((int)t + 1 == nextBreakpoint) {
+						states[i] = StateHolding;
+						holdpoints[i] = cur->evaluate(t).position;
+						continue;
+					}
 				}
 
 				posctls[i]->track(cur);
@@ -215,6 +226,13 @@ namespace tansa {
 			}
 		}
 
+		if (paused) {
+			paused = false;
+			pauseRequested = false;
+			stopRequested = false;
+			pauseOffset = 0.0;
+		}
+
 		start = Time::now();
 		for(auto &s : states) {
 			s = StateFlying;
@@ -228,6 +246,14 @@ namespace tansa {
 		printf("Pause requested!");
 		pauseRequested = true;
 		// TODO: Determine a pause-at index (and maybe also a stop-at index)
+	}
+
+	void JocsPlayer::stop() {
+		if (!paused) {
+			printf("Must already be paused.");
+			return;
+		}
+		stopRequested = true;
 	}
 
 	void JocsPlayer::land() {

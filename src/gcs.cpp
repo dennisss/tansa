@@ -20,6 +20,9 @@ using namespace tansa;
 
 static bool running;
 static bool killmode = false;
+static bool pauseMode = false;
+static bool stopMode = false;
+static bool playMode = false;
 static JocsPlayer* player;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
@@ -106,14 +109,17 @@ void socket_on_message(const json &data) {
 	}
 	else if(type == "play") {
 		printf("Playing...\n");
-		player->play();
+		playMode = true;
 	}
 	else if(type == "land") {
 		player->land();
 	}
 	else if (type == "pause") {
 		printf("Pausing...\n");
-		player->pause();
+		pauseMode = true;
+	} else if (type == "stop") {
+		printf("Stopping...\n");
+		stopMode = true;
 	} else if (type == "reset") {
 		printf("Resetting...\n");
 	}
@@ -192,20 +198,23 @@ void *console_thread(void *arg) {
 
 
 
-		if(args[0] == "prepare") {
+		if (args[0] == "prepare") {
 			cout << "Preparing..." << endl;
 			player->prepare();
-		}
-		else if(args[0] == "play") {
+		} else if (args[0] == "play") {
 			cout << "Playing..." << endl;
-			player->play();
-		}
-		else if(args[0] == "land") {
+			playMode = true;
+		} else if (args[0] == "pause") {
+			cout << "Pausing..." << endl;
+			pauseMode = true;
+		} else if (args[0] == "stop") {
+			cout << "Stopping..." << endl;
+			stopMode = true;
+		} else if (args[0] == "land") {
 			cout << "Landing..." << endl;
 			player->land();
-		}
-		else if(args[0] == "kill") {
-			killmode = args.size() > 1? (args[1] == "off"? false : true) : true;
+		} else if (args[0] == "kill") {
+			killmode = args.size() <= 1 || !(args[1] == "off");
 		}
 
 
@@ -354,11 +363,19 @@ int main(int argc, char *argv[]) {
 			send_status_message();
 		}
 
-		if(killmode) {
+		if (killmode) {
 			for(Vehicle *v : vehicles)
 				v->terminate();
-		}
-		else {
+		} else if (playMode) {
+			playMode = false;
+			player->play();
+		} else if (pauseMode) {
+			pauseMode = false;
+			player->pause();
+		} else if (stopMode) {
+			stopMode = false;
+			player->stop();
+		} else {
 			player->step();
 		}
 

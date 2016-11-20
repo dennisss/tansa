@@ -67,8 +67,11 @@ namespace tansa {
 
 
 		bool pauseRequested = false;
+		bool paused = false;
+		bool stopRequested = false;
 		bool resetMode = false;
 		Time start = Time(0,0); // TODO: I will also need a time offset
+		double pauseOffset = 0.0;
 		int stepTick = 0;
 
 		double getNextBreakpointTime(double lastTime);

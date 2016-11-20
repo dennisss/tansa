@@ -29,17 +29,30 @@ void messaging_init() {
 
 namespace tansa {
 
-void send_message(sio::message::list const& msglist) {
+void send_message(const json &msg) {
+
+	sio::message::ptr obj = sio::string_message::create(msg.dump());
+	sio::message::list li(obj);
+
 	sio::socket::ptr sock = h.socket();
-	sock->emit("msg", msglist);
+	sock->emit("msg", li);
 }
 
+static tansa_message_listener listener;
 void on_message(tansa_message_listener l) {
+
+	listener = l;
 
 	sio::socket::ptr sock = h.socket();
 
+	// TODO: Make sure that this doesn't crash
 	sock->on("msg", sio::socket::event_listener_aux([&](string const& name, sio::message::ptr const& data, bool isAck, sio::message::list &ack_resp) {
-		l(data);
+		// Convert string to json
+
+		string str = data->get_string();
+		json j = json::parse(str);
+
+		listener(j);
 	}));
 
 }

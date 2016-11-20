@@ -6,43 +6,224 @@
 #include <tansa/jocsPlayer.h>
 #include <tansa/mocap.h>
 #include <tansa/gazebo.h>
+#include <tansa/osc.h>
 
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
+
+#include <dirent.h>
+#include <iostream>
+
+using namespace std;
 using namespace tansa;
-bool running;
+
+static bool running;
+static bool killmode = false;
+static bool pauseMode = false;
+static bool stopMode = false;
+static bool playMode = false;
+static JocsPlayer* player;
+static vector<Vehicle *> vehicles;
+static std::vector<vehicle_config> vconfigs;
+static vector<unsigned> jocsActiveIds;
 
 void signal_sigint(int s) {
+	// TODO: Prevent
 	running = false;
 }
 
 /* For sending a system state update to the gui */
 void send_status_message() {
-	Time t = Time::now();
 
-	sio::message::ptr obj = sio::object_message::create();
-	obj->get_map()["type"] = sio::string_message::create("status");
-	obj->get_map()["time"] = sio::double_message::create(t.seconds());
+	json j;
 
-	sio::message::list li(obj);
-	tansa::send_message(li);
+	j["type"] = "status";
+	j["time"] = player->currentTime();
+
+	json vehs = json::array();
+	for(int i = 0; i < vehicles.size(); i++) {
+		json v;
+		v["id"] = vconfigs[i].net_id;
+		v["role"] = i <= jocsActiveIds.size() - 1? jocsActiveIds[i] : -1;
+		v["connected"] = vehicles[i]->connected;
+		v["armed"] = vehicles[i]->armed;
+		v["tracking"] = vehicles[i]->tracking;
+
+		json pos = json::array();
+		pos.push_back(vehicles[i]->state.position.x());
+		pos.push_back(vehicles[i]->state.position.y());
+		pos.push_back(vehicles[i]->state.position.z());
+		v["position"] = pos;
+
+		json bat = {
+			{"voltage", vehicles[i]->battery.voltage},
+			{"percent", vehicles[i]->battery.percent}
+		};
+		v["battery"] = bat;
+
+		vehs.push_back(v);
+	}
+	j["vehicles"] = vehs;
+
+
+	json global;
+	global["playing"] = player->isPlaying();
+	global["ready"] = player->isReady();
+	j["global"] = global;
+
+	tansa::send_message(j);
+}
+
+void send_file_list() {
+
+/*
+	len = strlen(name);
+	dirp = opendir(".");
+	while ((dp = readdir(dirp)) != NULL)
+	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
+		(void)closedir(dirp);
+		return FOUND;
+	}
+	(void)closedir(dirp);
+	return NOT_FOUND;
+*/
+
+//	sio::message::ptr obj = sio::object_message::create();
+//	obj->get_map()["type"] = sio::string_message::create("status");
+//	obj->get_map()["time"] = sio::double_message::create(t.seconds());
+
+//	sio::message::list li(obj);
+//	tansa::send_message(li);
 
 }
 
-void on_message(sio::message::ptr const& data) {
-	string type = data->get_map()["type"]->get_string();
 
-	if(type == "play") {
+void socket_on_message(const json &data) {
+
+	string type = data["type"];
+
+	if(type == "prepare") {
+		printf("Preparing...\n");
+		player->prepare();
+	}
+	else if(type == "play") {
 		printf("Playing...\n");
-	} else if (type == "pause") {
+		playMode = true;
+	}
+	else if(type == "land") {
+		player->land();
+	}
+	else if (type == "pause") {
 		printf("Pausing...\n");
+		pauseMode = true;
+	} else if (type == "stop") {
+		printf("Stopping...\n");
+		stopMode = true;
 	} else if (type == "reset") {
 		printf("Resetting...\n");
-	} else {
-		throw "Unexpected message type recieved!";
+	}
+	else if(type == "kill") {
+		bool enabled = data["enabled"];
+		printf("Killing...\n");
+		killmode = enabled;
+	}
+	else {
+		// TODO: Send an error message back to the browser
+		printf("Unexpected message type recieved!\n");
 	}
 
+}
+
+
+void osc_on_message(OSCMessage &msg) {
+
+	// Address will look something like: '/cue/0101/start'
+	if(msg.address[0] == "cue") {
+
+		int num = std::stoi(msg.address[1]);
+
+		if(msg.address[2] == "load") {
+			player->prepare();
+		}
+		else if(msg.address[2] == "start") {
+			printf("Starting at cue #: %d\n", num);
+
+			// Assert that it is already prepared at the given cue
+
+			player->play();
+		}
+
+	}
+
+	/*
+	printf("Address:\n");
+	for(auto str : msg.address)
+		printf("- %s\n", str.c_str());
+
+	printf("\nArgs:\n");
+	for(auto str : msg.args)
+		printf("- %s\n", str.c_str());
+	*/
+
+}
+
+pthread_t console_handle;
+
+void *console_thread(void *arg) {
+
+	while(running) {
+
+		// Read a command
+		cout << "> ";
+		string line;
+		getline(cin, line);
+
+		// Split into arguments
+		vector<string> args;
+		istringstream iss(line);
+		while(!iss.eof()) {
+			string a;
+			iss >> a;
+
+			if(iss.fail())
+				break;
+
+			args.push_back(a);
+		}
+
+
+		if(args.size() == 0)
+			continue;
+
+
+
+		if (args[0] == "prepare") {
+			cout << "Preparing..." << endl;
+			player->prepare();
+		} else if (args[0] == "play") {
+			cout << "Playing..." << endl;
+			playMode = true;
+		} else if (args[0] == "pause") {
+			cout << "Pausing..." << endl;
+			pauseMode = true;
+		} else if (args[0] == "stop") {
+			cout << "Stopping..." << endl;
+			stopMode = true;
+		} else if (args[0] == "land") {
+			cout << "Landing..." << endl;
+			player->land();
+		} else if (args[0] == "kill") {
+			killmode = args.size() <= 1 || !(args[1] == "off");
+		}
+
+
+	}
+
+}
+
+void console_start() {
+	pthread_create(&console_handle, NULL, console_thread, NULL);
 }
 
 
@@ -59,10 +240,12 @@ int main(int argc, char *argv[]) {
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
 	string jocsPath = rawJson["jocsPath"];
-	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
+	vector<unsigned> activeids = rawJson["jocsActiveIds"];
+	jocsActiveIds = activeids;
 	bool useMocap = rawJson["useMocap"];
 	float scale = rawJson["theaterScale"];
 	bool enableMessaging = rawJson["enableMessaging"];
+	bool enableOSC = rawJson["enableOSC"];
 
 	if (useMocap) {
 		nlohmann::json hardwareConfig = rawJson["hardwareConfig"];
@@ -70,7 +253,7 @@ int main(int argc, char *argv[]) {
 		config.serverAddress = hardwareConfig["serverAddress"];
 	}
 
-	std::vector<vehicle_config> vconfigs(rawJson["vehicles"].size());
+	vconfigs.resize(rawJson["vehicles"].size());
 	for(unsigned i = 0; i < rawJson["vehicles"].size(); i++) {
 		vconfigs[i].net_id = rawJson["vehicles"][i]["net_id"];
 		if(useMocap) {
@@ -83,8 +266,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	JocsPlayer* player = new JocsPlayer(jocsPath, scale);
-	auto homes = player->getHomes();
+	Jocs *jocs = Jocs::Parse(jocsPath, scale);
+
+	auto homes = jocs->GetHomes();
 
 	// Only pay attention to homes of active drones
 	std::vector<Point> spawns;
@@ -97,10 +281,16 @@ int main(int argc, char *argv[]) {
 
 	tansa::init(enableMessaging);
 
+	if(enableMessaging) {
+		tansa::on_message(socket_on_message);
+	}
+
+
 	Mocap *mocap = nullptr;
 	GazeboConnector *gazebo = nullptr;
 
 	// Only pay attention to homes of active drones
+	// TODO: Have a better check for mocap initialization/health
 	if (useMocap) {
 		mocap = new Mocap();
 		mocap->connect(config.clientAddress, config.serverAddress);
@@ -117,12 +307,17 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	vector<Vehicle *> vehicles(n);
+	vehicles.resize(n);
 
 	for(int i = 0; i < n; i++) {
 		const vehicle_config &v = vconfigs[i];
 
 		vehicles[i] = new Vehicle();
+
+		// Load default parameters
+		vehicles[i]->readParams("./config/params/default.json");
+		// TODO: Also read in per-drone ones
+
 		vehicles[i]->connect(v.lport, v.rport);
 		if (useMocap) {
 			mocap->track(vehicles[i], i+1);
@@ -131,9 +326,17 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	player->initControllers(n, vehicles, jocsActiveIds);
+	if(enableOSC) {
+		OSC *osc = new OSC();
+		osc->start(53100);
+		osc->set_listener(osc_on_message);
+	}
 
-	int numLanded = 0;
+
+
+
+	player = new JocsPlayer(vehicles, jocsActiveIds);
+	player->loadJocs(jocs);
 
 	running = true;
 	signal(SIGINT, signal_sigint);
@@ -146,20 +349,36 @@ int main(int argc, char *argv[]) {
 	float dl = 0.005;
 	*/
 
-	Time start(0,0);
-
 	signal(SIGINT, signal_sigint);
 	printf("running...\n");
+	running = true;
+
+	console_start();
 
 	Rate r(100);
-	running = true;
 	while(running) {
+
 		// Regular status messages
 		if(enableMessaging && i % 20 == 0) {
 			send_status_message();
 		}
 
-		start = player->play(vehicles, start, i, n, numLanded, running, jocsActiveIds);
+		if (killmode) {
+			for(Vehicle *v : vehicles)
+				v->terminate();
+		} else if (playMode) {
+			playMode = false;
+			player->play();
+		} else if (pauseMode) {
+			pauseMode = false;
+			player->pause();
+		} else if (stopMode) {
+			stopMode = false;
+			player->stop();
+		} else {
+			player->step();
+		}
+
 		r.sleep();
 		i++;
 	}

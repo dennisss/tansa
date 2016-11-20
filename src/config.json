@@ -3,7 +3,8 @@
 	"jocsActiveIds": [0],
 	"theaterScale": 1.0,
 	"useMocap": false,
-	"enableMessaging": false,
+	"enableMessaging": true,
+	"enableOSC": true,
 	"hardwareConfig": {
 		"clientAddress": "192.168.1.79",
 		"serverAddress": "192.168.1.80"

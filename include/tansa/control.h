@@ -27,6 +27,7 @@ template<unsigned int N> class PID;
 class PositionController : public Controller {
 public:
 	PositionController(Vehicle *v);
+	virtual ~PositionController() {}
 
 	/**
 	 * Specifies which trajectory should do followed
@@ -49,10 +50,12 @@ private:
 
 class HoverController : public Controller {
 public:
-	HoverController(Vehicle *v, const Point &p);
+	HoverController(Vehicle *v);
+	virtual ~HoverController() {}
 
 	virtual void control(double t);
 
+	void setPoint(const Point &p) { this->point = p; }
 
 	/**
 	 * Get the distance to the point being kept

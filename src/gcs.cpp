@@ -11,8 +11,11 @@
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
-
+//TODO check if these work on OSX
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <iostream>
 
 using namespace std;
@@ -73,22 +76,27 @@ void send_status_message() {
 	j["global"] = global;
 
 	tansa::send_message(j);
-}
+}	
 
 void send_file_list() {
+	std::vector<std::string> jocsFilePaths;
+	json j;
 
-/*
-	len = strlen(name);
-	dirp = opendir(".");
-	while ((dp = readdir(dirp)) != NULL)
-	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
-		(void)closedir(dirp);
-		return FOUND;
+	j["type"] = "list_reply";
+	json files = json::array();
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir = opendir ("data")) != NULL) {
+		while ((ent = readdir (dir)) != NULL) {
+			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".jocs") != std::string::npos)	
+			files.push_back(std::string(ent->d_name));
+		}
+		closedir (dir);
+	} else {
+		/* could not open directory */
 	}
-	(void)closedir(dirp);
-	return NOT_FOUND;
-*/
-
+	j["files"] = files;
+	tansa::send_message(j);
 //	sio::message::ptr obj = sio::object_message::create();
 //	obj->get_map()["type"] = sio::string_message::create("status");
 //	obj->get_map()["time"] = sio::double_message::create(t.seconds());
@@ -107,8 +115,7 @@ void socket_on_message(const json &data) {
 		printf("Preparing...\n");
 		player->prepare();
 	}
-	else if(type == "play") {
-		printf("Playing...\n");
+	else if(type == "play") {		printf("Playing...\n");
 		playMode = true;
 	}
 	else if(type == "land") {
@@ -122,6 +129,8 @@ void socket_on_message(const json &data) {
 		stopMode = true;
 	} else if (type == "reset") {
 		printf("Resetting...\n");
+	} else if (type == "list"){
+		send_file_list();
 	}
 	else if(type == "kill") {
 		bool enabled = data["enabled"];

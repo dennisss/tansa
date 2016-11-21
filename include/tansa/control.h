@@ -82,7 +82,7 @@ public:
 	/**
 	 * Specifies which trajectory should do followed
 	 */
-	void track(LightTrajectory *traj);
+	void track(LightTrajectory *trajTop, LightTrajectory *trajBot);
 
 
 	/**
@@ -91,8 +91,13 @@ public:
 	virtual void control(double t);
 
 private:
+	double EPSILON = 0.01;
+
 	Vehicle *vehicle;
-	LightTrajectory *trajectory;
+	LightTrajectory *trajectoryTop;
+	LightTrajectory *trajectoryBot;
+	double currentIntensityTop = 0.0;
+	double currentIntensityBot = 0.0;
 };
 
 

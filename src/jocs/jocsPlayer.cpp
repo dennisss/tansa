@@ -198,6 +198,7 @@ namespace tansa {
 					if (t >= lightActions[jocsActiveIds[i]][lightCounters[i]]->GetStartTime()) {
 						//printf("Getting light action for drone %d at time %f\n", jocsActiveIds[vi], light->getStartTime());
 						lightctls[i]->track(light, light); //TODO: not just copy same light trajectory for both lights
+						//printf("Drone %d \n" + jocsActiveIds[i]);
 						lightctls[i]->control(t);
 						if (t >= lightActions[jocsActiveIds[i]][lightCounters[i]]->GetEndTime()) {
 							lightCounters[i]++;

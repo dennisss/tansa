@@ -1,37 +1,80 @@
 #ifndef TANSA_JOCSPLAYER_H
 #define TANSA_JOCSPLAYER_H
 
+#include <tansa/core.h>
+#include <tansa/control.h>
+
+
 #include "tansa/jocsParser.h"
 #include "tansa/config.h"
-class Mocap;
-class GazeboConnector;
 
 namespace tansa {
 	class JocsPlayer {
 	public:
-		JocsPlayer(std::string jocsPath, double scale);
-		Time play(vector<Vehicle *> vehicles, Time start, int i, int n, int &numLanded, bool &running, std::vector<unsigned> jocsActiveIds);
+		JocsPlayer(const std::vector<Vehicle *> &vehicles, const std::vector<unsigned> &jocsActiveIds);
+
+		// Get ready to fly (arm and takeoff to home point)
+		void prepare();
+
+		// Start flying
+		void play();
+
 		void pause();
+
+		void land();
+
+		// Lands and disarms all drones (Must already be paused)
+		void stop();
+
+		void step();
+
 		void rewind(int steps);
 		void reset();
-		void loadJocs(std::string jocsPath, double scale);
+		void loadJocs(Jocs *j);
+
+
+
+		// TODO: Instead we should use isRunning which checks if any states are not StateInit
+		bool isPlaying() { return this->states[0] == StateFlying; }
+		bool isReady() { return this->states[0] == StateHolding; }
+
+		/**
+		 * Gets the time relative to the start of the current file
+		 */
+		double currentTime();
+
 		std::vector<Point> getHomes();
 		std::vector<std::vector<Action*>> getActions();
-		void initControllers(int n, std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds);
 		void cleanup();
 	private:
+		std::vector<Vehicle *> vehicles;
+		std::vector<unsigned> jocsActiveIds;
+
 		std::vector<Breakpoint> breakpoints;
 		Jocs* currentJocs;
 		std::vector<std::vector<Action*>> actions;
 		std::vector<Point> homes;
 		std::vector<HoverController *> hovers;
 		std::vector<PositionController *> posctls;
-		std::vector<Trajectory *> takeoffs;
-		std::vector<int> states;
+		std::vector<Point> holdpoints;
+		std::vector<PlayerVehicleState> states;
 		std::vector<int> plans;
+
+
+		// Separate trajectories and timings for doing takeoff and landings
+		std::vector<Trajectory *> transitions;
+		vector<Time> transitionStarts;
+
+
 		bool pauseRequested = false;
+		bool paused = false;
+		bool stopRequested = false;
 		bool resetMode = false;
-		bool initialized = false;
+		Time start = Time(0,0); // TODO: I will also need a time offset
+		Time pauseOffset = Time(0,0);
+		double timeOffset = 0.0;
+		std::vector<int> pauseIndices;
+		int stepTick = 0;
 
 		double getNextBreakpointTime(double lastTime);
 		double getBreakpointTime(unsigned breakpointNumber);

@@ -3,6 +3,7 @@
 
 #include "time.h"
 #include "estimation.h"
+#include "trajectory.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -23,6 +24,19 @@ struct BatteryStatus {
 	double voltage = -1;
 	double percent = -1;
 
+};
+
+struct VehicleParameters {
+
+	struct {
+		Point p;
+		Point i;
+		Point d;
+	} gains;
+
+	double hoverPoint;
+
+	double latency;
 };
 
 
@@ -48,6 +62,8 @@ public:
 
 	int disconnect();
 
+
+	void readParams(string file);
 
 
 	/**
@@ -90,6 +106,10 @@ public:
 	 */
 	void mocap_update(const Vector3d &pos, const Quaterniond &orient, const Time &t);
 
+	/**
+	 * Computes the approximate state of the vehicle upon receiving a message sent right now
+	 */
+	State arrival_state();
 
 	// TODO: Change these to use Point
 	// By default, this will preserve the yaw
@@ -104,6 +124,7 @@ public:
 	// Connection state
 	bool connected = false;
 	bool armed = false;
+	bool tracking = false;
 	string mode;
 
 	// Physical State : used for visualization and trajectory control
@@ -111,6 +132,8 @@ public:
 	LinearComplementaryEstimator estimator;
 
 	BatteryStatus battery;
+
+	VehicleParameters params;
 
 private:
 
@@ -133,7 +156,6 @@ private:
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
 
-
 	ControlInput lastControlInput;
 	Time lastControlTime;
 
@@ -152,6 +174,7 @@ private:
 	Time lastTimesyncSent;
 	Time lastSystimeSent;
 	Time lastStateSent;
+	Time lastTrackTime = Time(0,0); int ntracks = 0;
 };
 
 /**

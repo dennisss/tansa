@@ -13,9 +13,67 @@ struct vehicle_config {
 	unsigned rport; // For now always 14555
 };
 
-const unsigned STATE_INIT = 0;
-const unsigned STATE_TAKEOFF = 1;
-const unsigned STATE_FLYING = 2;
-const unsigned STATE_LANDING = 3;
+/**
+ * State assigned to a vehicle controlled by a player
+ */
+enum PlayerVehicleState {
+	/**
+	 * Vehicle disarmed and not doing anything
+	 *
+	 * Transitions to Ready upon arm()
+	 */
+	StateInit,
+
+	/**
+	 * Arms the drone, transitions to Ready on completion
+	 */
+	StateArming,
+
+	/**
+	 * Vehicle armed but doing nothing on the ground
+	 *
+	 * Once all vehicles are Ready, transitions to Takeoff on load of a JOCS file
+	 */
+	StateReady,
+
+	/**
+	 * Vehicle going to starting point of first action
+	 *
+	 * If the starting point is on the ground, then:
+	 * - if the vehicle is on the ground, this is a no-op
+	 * - else this descends and lands without entering Landing state
+	 *
+	 * Transitions to Holding upon getting to the point
+	 */
+	StateTakeoff,
+
+	/**
+	 * Hovers/sits in one place
+	 *
+	 * If in the air and 20 seconds have elapsed, transitions to Landing state
+	 *
+	 * Transitions to Takeoff upon load of a new JOCS file
+	 *
+	 * Transitions to Flying on play()
+	 */
+	StateHolding,
+
+	/**
+	 * Performs the assigned actions
+	 *
+	 * After a pause(), on next safe point, transitions to Holding
+	 *
+	 * Transitions to Landing after completion of all actions
+	 */
+	StateFlying,
+
+	/**
+	 * Landing at the current position and disarming
+	 *
+	 * Transitions to Init upon completion
+	 */
+	StateLanding
+};
+
 
 #endif //TANSA_CONFIG_H

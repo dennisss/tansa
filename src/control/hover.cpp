@@ -1,17 +1,48 @@
 #include <tansa/control.h>
 
+#include "pid.h"
 
 
-HoverController::HoverController(Vehicle *v, const Point &p) {
-	this->vehicle = v;
-	this->point = p;
+HoverController::HoverController(Vehicle *v) : PositionController(v) {
+	this->point = Point(0,0,0);
+
+	// Position controller gains + integral term
+	pid->setGains(
+		v->params.gains.p,
+		v->params.gains.i,
+		v->params.gains.d
+	);
+
+	pid->setWindupOutputLimit(
+		Point(-0.1, -0.1, -0.1),
+		Point(0.1, 0.1, 0.1)
+	);
+}
+
+TrajectoryState HoverController::getTargetState(double t) {
+	TrajectoryState s;
+	s.position = point;
+	s.velocity = Point::Zero();
+	s.acceleration = Point::Zero();
+	return s;
 }
 
 void HoverController::control(double t) {
+
+	// If really low to the ground, do nothing
+	if(point.z() < 0.1) {
+		vehicle->setpoint_accel(Point::Zero());
+		return;
+	}
+
+	PositionController::control(t);
+
+	/*
 	// This is already built into PX4, so we will let it handle staying in one spot
 	// Precision over speed should considered when calibrating the PX4 position controller
 
 	vehicle->setpoint_pos(point);
+	*/
 }
 
 double HoverController::distance() {

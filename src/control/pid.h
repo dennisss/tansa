@@ -19,7 +19,7 @@ public:
 		lastE = Vector::Zero();
 
 		for(unsigned i = 0; i < N; i++) {
-			minIntegral(i) = DBL_MIN;
+			minIntegral(i) = -DBL_MAX;
 			maxIntegral(i) = DBL_MAX;
 		}
 	}
@@ -71,9 +71,12 @@ public:
 	/**
 	 * Sets the maximum control effect produced by the integral
 	 * This should be called after setting the gains
-	 * Note: this is not the value of the error integral, but the output when gain is applied
+	 * Note: this is not the value of the error sum, but the integral output component after gain is applied
 	 */
-    void setWindupOutputLimit(Vector min, Vector max);
+    void setWindupOutputLimit(Vector min, Vector max) {
+		this->minIntegral = min.cwiseQuotient(this->gainI);
+		this->maxIntegral = max.cwiseQuotient(this->gainI);
+	}
 
 
 

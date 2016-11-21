@@ -27,32 +27,41 @@ template<unsigned int N> class PID;
 class PositionController : public Controller {
 public:
 	PositionController(Vehicle *v);
+	virtual ~PositionController() {}
 
 	/**
 	 * Specifies which trajectory should do followed
 	 */
 	void track(Trajectory *traj);
 
+	virtual TrajectoryState getTargetState(double t);
 
 	/**
 	 * This should be called 100 times a second to track the path
 	 */
 	virtual void control(double t);
 
-private:
+protected:
 	Vehicle *vehicle;
+
+	PID<PointDims> *pid;
+
+private:
 	Trajectory *trajectory;
 
-	PID<3> *pid;
 };
 
 
-class HoverController : public Controller {
+class HoverController : public PositionController {
 public:
-	HoverController(Vehicle *v, const Point &p);
+	HoverController(Vehicle *v);
+	virtual ~HoverController() {}
+
+	void setPoint(const Point &p) { this->point = p; }
+
+	virtual TrajectoryState getTargetState(double t);
 
 	virtual void control(double t);
-
 
 	/**
 	 * Get the distance to the point being kept
@@ -60,9 +69,7 @@ public:
 	double distance();
 
 private:
-	Vehicle *vehicle;
 	Point point;
-
 };
 
 

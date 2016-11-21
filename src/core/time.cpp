@@ -3,6 +3,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <math.h>
 
 #ifdef __MACH__
 #include <mach/clock.h>
@@ -75,6 +76,11 @@ Time::Time() {
 Time::Time(int secs, int nsecs) {
 	this->val.tv_sec = secs;
 	this->val.tv_nsec = nsecs;
+}
+
+Time::Time(double seconds) {
+	this->val.tv_sec = seconds;
+	this->val.tv_nsec = seconds * 1000000000;
 }
 
 

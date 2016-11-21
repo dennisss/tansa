@@ -1,9 +1,6 @@
-#include <tansa/mocap.h>
-#include <tansa/gazebo.h>
-#include <tansa/core.h>
-#include <zconf.h>
-#include <tansa/control.h>
 #include "tansa/jocsPlayer.h"
+
+#include <unistd.h>
 
 namespace tansa {
 
@@ -15,27 +12,16 @@ namespace tansa {
 		return actions;
 	}
 
-	JocsPlayer::JocsPlayer(std::string jocsPath, double scale) {
-		this->loadJocs(jocsPath, scale);
-	}
+	JocsPlayer::JocsPlayer(const std::vector<Vehicle *> &vehicles, const std::vector<unsigned> &jocsActiveIds) {
+		this->vehicles = vehicles;
+		this->jocsActiveIds = jocsActiveIds;
 
-	/**
-	 * Load JOCS data from a specified path
-	 */
-	void JocsPlayer::loadJocs(std::string jocsPath, double scale) {
-		// TODO: Clear all these if they already have data.
-		currentJocs = Jocs::Parse(jocsPath, scale);
-		homes = currentJocs->GetHomes();
-		actions = currentJocs->GetActions();
-	}
 
-	void JocsPlayer::initControllers(int n, std::vector<Vehicle *> vehicles, std::vector<unsigned> jocsActiveIds) {
-		// TODO: Have a better check for mocap initialization/health
-		sleep(15);
+		int n = vehicles.size();
 
 		hovers.resize(n);
 		for(int i = 0; i < n; i++) {
-			hovers[i] = new HoverController(vehicles[i], homes[jocsActiveIds[i]]);
+			hovers[i] = new HoverController(vehicles[i]);
 		}
 
 		posctls.resize(n);
@@ -43,32 +29,52 @@ namespace tansa {
 			posctls[i] = new PositionController(vehicles[i]);
 		}
 
-
-		takeoffs.resize(n);
-		for(int i = 0; i < n; i++) {
-			takeoffs[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
-		}
-
 		states.resize(n);
 		for(auto& state : states){
-			state = STATE_INIT;
+			state = StateInit;
 		}
 
 		plans.resize(n);
+		for(auto &p : plans) {
+			p = 0;
+		}
+
+		pauseIndices.resize(n);
+		for(auto &pi : pauseIndices){
+			pi = 0;
+		}
+
+		transitionStarts.resize(n, Time(0,0));
 	}
+
+	/**
+	 * Load JOCS data from a specified path
+	 */
+	void JocsPlayer::loadJocs(Jocs *j) {
+		currentJocs = j;
+		homes = currentJocs->GetHomes();
+		actions = currentJocs->GetActions();
+		breakpoints = currentJocs->GetBreakpoints();
+	}
+
 
 	/**
 	 * Play one 'step' in the choreography
 	 */
-	Time JocsPlayer::play(std::vector<Vehicle *> vehicles, Time start, int i, int n, int &numLanded, bool &running, std::vector<unsigned> jocsActiveIds) {
-		double t = Time::now().since(start).seconds();
+	void JocsPlayer::step() {
+
+		int n = jocsActiveIds.size();
+
 
 		// Check for state transitions
-		if (states[0] == STATE_INIT) {
+		if (states[0] == StateInit) {
+			// No implicit transitions
+		} else if (states[0] == StateArming) {
+			// Once all are armed, take them all off to the current position
 
 			bool allGood = true;
-			for(int vi = 0; vi < n; vi++) {
-				if (vehicles[vi]->mode != "offboard" || !vehicles[vi]->armed) {
+			for(int i = 0; i < n; i++) {
+				if (vehicles[i]->mode != "offboard" || !vehicles[i]->armed) {
 					allGood = false;
 					break;
 				}
@@ -76,29 +82,36 @@ namespace tansa {
 
 			if (allGood) {
 				start = Time::now();
-				for(auto& state :states) {
-					state = STATE_TAKEOFF;
+				for(auto& state : states) {
+					state = StateReady; // TODO: Shouldn't this be StateReady?
 				}
-			}
 
-		} else if (states[0] == STATE_TAKEOFF) {
-			if (t >= 10.0) {
-				for(auto& state : states){
-					state = STATE_FLYING;
+				transitions.resize(n);
+				for(int i = 0; i < n; i++) {
+
+
+					states[i] = StateTakeoff;
+					transitionStarts[i] = Time::now();
+					transitions[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
 				}
-				start = Time::now();
+				// TODO: Only grab the ones for the active drones
+				holdpoints = homes;
+
+				return;
 			}
 		}
 
-
 		// Do the control loops
-		for(int vi = 0; vi < n; vi++) {
-			Vehicle &v = *vehicles[vi];
+		for(int i = 0; i < n; i++) {
+			Vehicle &v = *vehicles[i];
+			auto &s = states[i];
 
-			if (states[vi] == STATE_INIT) {
+			int chorI = jocsActiveIds[i];
+
+
+			if (s == StateArming) {
 				// Lower frequency state management
-				if (i % 50 == 0) {
-
+				if(stepTick % 50 == 0) {
 					if (v.mode != "offboard") {
 						v.set_mode("offboard");
 						printf("Setting mode\n");
@@ -108,39 +121,168 @@ namespace tansa {
 					}
 				}
 
-
 				// Do nothing
-				vehicles[vi]->setpoint_accel(Vector3d(0,0,0));
-			} else if (states[vi] == STATE_TAKEOFF) {
-				posctls[vi]->track(takeoffs[vi]);
-				posctls[vi]->control(t);
-			} else if (states[vi] == STATE_FLYING) {
-				if (t >= actions[jocsActiveIds[vi]][plans[vi]]->GetEndTime()) {
-					if (plans[vi] == actions[jocsActiveIds[vi]].size()-1) {
-						states[vi] = STATE_LANDING;
-						v.land();
-						numLanded++;
-						if (numLanded == n) {
-							running = false;
-						}
+				v.setpoint_accel(Vector3d(0,0,0));
+			} else if (s == StateTakeoff) {
+				double t = Time::now().since(transitionStarts[i]).seconds();
+
+				// If the drones started on the ground and overshot the target, switch to hover
+				bool overshot = v.state.position.z() > holdpoints[i].z();
+
+				if(transitions[i] == NULL || t >= transitions[i]->endTime() || overshot) {
+					s = StateHolding;
+				}
+
+				posctls[i]->track(transitions[i]);
+				posctls[i]->control(t);
+			} else if (s == StateReady) {
+				// Do nothing
+				v.setpoint_accel(Vector3d(0,0,0));
+			} else if (s == StateHolding) {
+				double t = Time::now().seconds();
+
+				if (pauseRequested) {
+					cout << "Transitioning to paused, t = " << Time::now().since(start).seconds() - timeOffset << endl;
+					paused = true;
+					pauseRequested = false;
+					pauseOffset = Time::now();
+				}
+
+				if (paused && (stopRequested || Time::now().since(pauseOffset).seconds() > 20.0)) {
+					cout << (stopRequested ? "Stop requested" : "Paused for more than 20 seconds")
+						 << ", attempting to land." << endl;
+					land();
+					return;
+				}
+				// Do a hover
+				hovers[i]->setPoint(holdpoints[i]); // TODO: Only do this on transitions (when holdpoints changes)
+				hovers[i]->control(t);
+			} else if (s == StateFlying) {
+				double t = Time::now().since(start).seconds() - timeOffset;
+
+				Trajectory *cur = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
+
+				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
+					if (plans[i] == actions[chorI].size()-1) {
+						states[i] = StateLanding;
+
+						Point lastPoint = cur->evaluate(t).position;
+						Point groundPoint = lastPoint; groundPoint.z() = 0;
+						transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
+						transitionStarts[i] = Time::now();
 						continue;
 					}
-					plans[vi]++;
+					plans[i]++;
+				} else if (pauseRequested) {
+					double nextBreakpoint = getNextBreakpointTime(t);
+					if ((int)t + 1 == nextBreakpoint) {
+						states[i] = StateHolding;
+						pauseIndices[i] = plans[i];
+						holdpoints[i] = cur->evaluate(t).position;
+						continue;
+					}
 				}
-				Trajectory *cur = static_cast<MotionAction*>(actions[jocsActiveIds[vi]][plans[vi]])->GetPath();
-				posctls[vi]->track(cur);
-				posctls[vi]->control(t);
+
+				posctls[i]->track(cur);
+				posctls[i]->control(t);
+			} else if (s == StateLanding) {
+				double t = Time::now().since(transitionStarts[i]).seconds();
+
+				// Descend to ground
+				if(t < transitions[i]->endTime()) {
+					posctls[i]->track(transitions[i]);
+					posctls[i]->control(t);
+				}
+				// Disarm
+				else if(v.armed){
+					v.setpoint_accel(Vector3d(0,0,0));
+					v.arm(false);
+				}
+				// Reset state machine
+				else {
+					s = StateInit;
+				}
+
 			}
 		}
-		return start;
+
+		stepTick++;
+	}
+
+	void JocsPlayer::prepare() {
+
+		for(auto s : states) {
+			if(s != StateInit) {
+				printf("Cannot prepare: Some drones not in initial state\n");
+				return;
+			}
+		}
+
+
+		for(auto &s : states) {
+			s = StateArming;
+		}
+	}
+
+	void JocsPlayer::play() {
+
+		for(auto s : states) {
+			if(s != StateHolding) {
+				printf("Cannot play: Some drones not ready\n");
+				return;
+			}
+		}
+
+		if (paused) {
+			paused = false;
+			pauseRequested = false;
+			stopRequested = false;
+			timeOffset += Time::now().since(pauseOffset).seconds();
+			int n = jocsActiveIds.size();
+			for (int i = 0; i < n; i++) {
+				plans[i] = pauseIndices[i];
+			}
+		} else {
+			start = Time::now();
+		}
+
+		for(auto &s : states) {
+			s = StateFlying;
+		}
 	}
 
 	/**
 	 * Pause the choreography
 	 */
 	void JocsPlayer::pause() {
-		printf("Pause requested!");
 		pauseRequested = true;
+		// TODO: Determine a pause-at index (and maybe also a stop-at index)
+	}
+
+	void JocsPlayer::stop() {
+		if (!paused) {
+			printf("Must already be paused.");
+			return;
+		}
+		stopRequested = true;
+	}
+
+	void JocsPlayer::land() {
+		for(auto s : states) {
+			if(s != StateHolding) {
+				printf("Cannot land: Some drones not holding position\n");
+				return;
+			}
+		}
+
+		for(int i = 0; i < states.size(); i++) {
+			states[i] = StateLanding;
+
+			Point lastPoint = holdpoints[i];
+			Point groundPoint = lastPoint; groundPoint.z() = 0;
+			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
+			transitionStarts[i] = Time::now();
+		}
 	}
 
 	/**
@@ -149,6 +291,15 @@ namespace tansa {
 	 */
 	void JocsPlayer::rewind(int steps) {
 
+	}
+
+
+	double JocsPlayer::currentTime() {
+		if(!this->isPlaying()) {
+			return -1;
+		}
+
+		return Time::now().since(start).seconds();
 	}
 
 	/**
@@ -168,8 +319,9 @@ namespace tansa {
 			delete hovers[i];
 		}
 
-		for (int i = 0; i < takeoffs.size(); i++) {
-			delete takeoffs[i];
+		// TODO: They will memory leak
+		for (int i = 0; i < transitions.size(); i++) {
+			delete transitions[i];
 		}
 	}
 
@@ -253,4 +405,35 @@ namespace tansa {
 
 		return Point(0,0,-1); // TODO: figure out better "invalid" answer
 	}
+
+/*
+	void JocsPlayer::createBreakpointSection(const std::vector<vector> actions, int startPoint, int endPoint = -1) {
+		double startTime, endTime = -1;
+		int bpStartIndex, bpEndIndex = -1;
+		if(startPoint >= 0) {
+			startTime = getBreakpointTime(startPoint);
+		} else {
+			bpStartIndex = 0;
+		}
+		if(startPoint >= 0) {
+			endTime = getBreakpointTime(endPoint);
+		} else {
+			bpEndIndex = actions.size() - 1;
+		}
+		for(int i = 0; i < actions.size(); i++) {
+			if(actions[i][1].start_time.seconds == startTime) {
+				bpStartIndex = i;
+			}
+			if(actions[i][1].start_time.seconds == endTime) {
+				bpEndIndex = i;
+			}
+			if(bpStartIndex != -1 && bpEndIndex != -1) {
+				break;
+			}
+		}
+		startIndex = bpStartIndex;
+		endIndex = bpEndIndex;
+	}
+
+	*/
 }

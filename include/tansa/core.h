@@ -1,9 +1,10 @@
 #ifndef TANSA_CORE_H_
 #define TANSA_CORE_H_
 
-#include <sio_message.h>
+#include "json.hpp"
+using json = nlohmann::json;
 
-typedef void (*tansa_message_listener)(sio::message::ptr const& data);
+typedef void (*tansa_message_listener)(const json &data);
 
 namespace tansa {
 
@@ -13,7 +14,9 @@ namespace tansa {
  */
 void init(bool enableMessaging);
 
-void send_message(sio::message::list const& msglist);
+void send_message(const json &msg);
+
+void on_message(tansa_message_listener l);
 
 }
 

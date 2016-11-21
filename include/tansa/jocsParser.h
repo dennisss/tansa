@@ -73,7 +73,6 @@ private:
 	std::vector<Breakpoint> breakpoints;
 	unsigned repeat;
 
-private:
 	/**
 	 * Parse all actions in a given Jocs json object
 	 * @param data [in] Jocs json data

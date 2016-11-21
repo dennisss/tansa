@@ -91,7 +91,7 @@ public:
 	virtual void control(double t);
 
 private:
-	double EPSILON = 0.01;
+	double EPSILON = 0.1;
 
 	Vehicle *vehicle;
 	LightTrajectory *trajectoryTop;

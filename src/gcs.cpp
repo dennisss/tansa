@@ -11,8 +11,11 @@
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
-
+//TODO check if these work on OSX
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <iostream>
 
 using namespace std;
@@ -23,6 +26,7 @@ static bool killmode = false;
 static bool pauseMode = false;
 static bool stopMode = false;
 static bool playMode = false;
+static bool prepareMode = false;
 static JocsPlayer* player;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
@@ -73,29 +77,27 @@ void send_status_message() {
 	j["global"] = global;
 
 	tansa::send_message(j);
-}
+}	
 
 void send_file_list() {
+	json j;
 
-/*
-	len = strlen(name);
-	dirp = opendir(".");
-	while ((dp = readdir(dirp)) != NULL)
-	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
-		(void)closedir(dirp);
-		return FOUND;
+	j["type"] = "list_reply";
+	json files = json::array();
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir = opendir ("data")) != NULL) {
+		while ((ent = readdir (dir)) != NULL) {
+			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".jocs") != std::string::npos)	
+				files.push_back(std::string(ent->d_name));
+		}
+		closedir (dir);
+	} else {
+		/* could not open directory */
+		//TODO Do something intelligent here
 	}
-	(void)closedir(dirp);
-	return NOT_FOUND;
-*/
-
-//	sio::message::ptr obj = sio::object_message::create();
-//	obj->get_map()["type"] = sio::string_message::create("status");
-//	obj->get_map()["time"] = sio::double_message::create(t.seconds());
-
-//	sio::message::list li(obj);
-//	tansa::send_message(li);
-
+	j["files"] = files;
+	tansa::send_message(j);
 }
 
 
@@ -105,16 +107,13 @@ void socket_on_message(const json &data) {
 
 	if(type == "prepare") {
 		printf("Preparing...\n");
-		player->prepare();
-	}
-	else if(type == "play") {
+		prepareMode = true;
+	} else if(type == "play") {
 		printf("Playing...\n");
 		playMode = true;
-	}
-	else if(type == "land") {
+	} else if(type == "land") {
 		player->land();
-	}
-	else if (type == "pause") {
+	} else if (type == "pause") {
 		printf("Pausing...\n");
 		pauseMode = true;
 	} else if (type == "stop") {
@@ -122,17 +121,19 @@ void socket_on_message(const json &data) {
 		stopMode = true;
 	} else if (type == "reset") {
 		printf("Resetting...\n");
-	}
-	else if(type == "kill") {
+	} else if (type == "list"){
+		printf("Sending file list...\n");
+		send_file_list();
+	} else if (type == "load"){
+		printf("Loading jocs file...\n");
+	} else if(type == "kill") {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
 		killmode = enabled;
-	}
-	else {
+	} else {
 		// TODO: Send an error message back to the browser
 		printf("Unexpected message type recieved!\n");
 	}
-
 }
 
 
@@ -200,7 +201,7 @@ void *console_thread(void *arg) {
 
 		if (args[0] == "prepare") {
 			cout << "Preparing..." << endl;
-			player->prepare();
+			prepareMode = true;
 		} else if (args[0] == "play") {
 			cout << "Playing..." << endl;
 			playMode = true;
@@ -366,6 +367,9 @@ int main(int argc, char *argv[]) {
 		if (killmode) {
 			for(Vehicle *v : vehicles)
 				v->terminate();
+		} else if (prepareMode) {
+			prepareMode = false;
+			player->prepare();
 		} else if (playMode) {
 			playMode = false;
 			player->play();

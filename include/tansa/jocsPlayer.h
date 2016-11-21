@@ -71,7 +71,9 @@ namespace tansa {
 		bool stopRequested = false;
 		bool resetMode = false;
 		Time start = Time(0,0); // TODO: I will also need a time offset
-		double pauseOffset = 0.0;
+		Time pauseOffset = Time(0,0);
+		double timeOffset = 0.0;
+		std::vector<int> pauseIndices;
 		int stepTick = 0;
 
 		double getNextBreakpointTime(double lastTime);

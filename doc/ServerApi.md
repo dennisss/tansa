@@ -62,14 +62,14 @@ List
 To list all files available to use:
 ```
 {
-	type: "load"
+	type: "list"
 }
 ```
 
 Reply is:
 ```
 {
-	type: "load_reply",
+	type: "list_reply",
 	files: ["singleDrone.jocs", ....]
 }
 ```

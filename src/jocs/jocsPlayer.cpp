@@ -39,6 +39,11 @@ namespace tansa {
 			p = 0;
 		}
 
+		pauseIndices.resize(n);
+		for(auto &pi : pauseIndices){
+			pi = 0;
+		}
+
 		transitionStarts.resize(n, Time(0,0));
 	}
 
@@ -62,10 +67,9 @@ namespace tansa {
 
 
 		// Check for state transitions
-		if(states[0] == StateInit) {
+		if (states[0] == StateInit) {
 			// No implicit transitions
-		}
-		else if(states[0] == StateArming) {
+		} else if (states[0] == StateArming) {
 			// Once all are armed, take them all off to the current position
 
 			bool allGood = true;
@@ -76,7 +80,7 @@ namespace tansa {
 				}
 			}
 
-			if(allGood) {
+			if (allGood) {
 				start = Time::now();
 				for(auto& state : states) {
 					state = StateReady; // TODO: Shouldn't this be StateReady?
@@ -105,7 +109,7 @@ namespace tansa {
 			int chorI = jocsActiveIds[i];
 
 
-			if(s == StateArming) {
+			if (s == StateArming) {
 				// Lower frequency state management
 				if(stepTick % 50 == 0) {
 					if (v.mode != "offboard") {
@@ -119,8 +123,7 @@ namespace tansa {
 
 				// Do nothing
 				v.setpoint_accel(Vector3d(0,0,0));
-			}
-			else if(s == StateTakeoff) {
+			} else if (s == StateTakeoff) {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// If the drones started on the ground and overshot the target, switch to hover
@@ -132,21 +135,20 @@ namespace tansa {
 
 				posctls[i]->track(transitions[i]);
 				posctls[i]->control(t);
-			}
-			else if(s == StateReady) {
+			} else if (s == StateReady) {
 				// Do nothing
 				v.setpoint_accel(Vector3d(0,0,0));
-			}
-			else if(s == StateHolding) {
+			} else if (s == StateHolding) {
 				double t = Time::now().seconds();
 
 				if (pauseRequested) {
+					cout << "Transitioning to paused, t = " << Time::now().since(start).seconds() - timeOffset << endl;
 					paused = true;
 					pauseRequested = false;
-					pauseOffset = t;
+					pauseOffset = Time::now();
 				}
 
-				if (paused && (stopRequested || t - pauseOffset > 20.0)) {
+				if (paused && (stopRequested || Time::now().since(pauseOffset).seconds() > 20.0)) {
 					cout << (stopRequested ? "Stop requested" : "Paused for more than 20 seconds")
 						 << ", attempting to land." << endl;
 					land();
@@ -155,14 +157,13 @@ namespace tansa {
 				// Do a hover
 				hovers[i]->setPoint(holdpoints[i]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
-			}
-			else if(s == StateFlying) {
-				double t = Time::now().since(start).seconds();
+			} else if (s == StateFlying) {
+				double t = Time::now().since(start).seconds() - timeOffset;
 
 				Trajectory *cur = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
 
-				if(t >= actions[chorI][plans[i]]->GetEndTime()) {
-					if(plans[i] == actions[chorI].size()-1) {
+				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
+					if (plans[i] == actions[chorI].size()-1) {
 						states[i] = StateLanding;
 
 						Point lastPoint = cur->evaluate(t).position;
@@ -176,6 +177,7 @@ namespace tansa {
 					double nextBreakpoint = getNextBreakpointTime(t);
 					if ((int)t + 1 == nextBreakpoint) {
 						states[i] = StateHolding;
+						pauseIndices[i] = plans[i];
 						holdpoints[i] = cur->evaluate(t).position;
 						continue;
 					}
@@ -183,8 +185,7 @@ namespace tansa {
 
 				posctls[i]->track(cur);
 				posctls[i]->control(t);
-			}
-			else if(s == StateLanding) {
+			} else if (s == StateLanding) {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// Descend to ground
@@ -233,17 +234,18 @@ namespace tansa {
 		}
 
 		if (paused) {
-			printf("Resuming from pause...\n");
 			paused = false;
 			pauseRequested = false;
 			stopRequested = false;
-			pauseOffset = 0.0;
-			for (auto &plan : plans) {
-				plan++;
+			timeOffset += Time::now().since(pauseOffset).seconds();
+			int n = jocsActiveIds.size();
+			for (int i = 0; i < n; i++) {
+				plans[i] = pauseIndices[i];
 			}
+		} else {
+			start = Time::now();
 		}
 
-		start = Time::now();
 		for(auto &s : states) {
 			s = StateFlying;
 		}

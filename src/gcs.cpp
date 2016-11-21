@@ -26,6 +26,7 @@ static bool killmode = false;
 static bool pauseMode = false;
 static bool stopMode = false;
 static bool playMode = false;
+static bool prepareMode = false;
 static JocsPlayer* player;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
@@ -106,7 +107,7 @@ void socket_on_message(const json &data) {
 
 	if(type == "prepare") {
 		printf("Preparing...\n");
-		player->prepare();
+		prepareMode = true;
 	} else if(type == "play") {
 		printf("Playing...\n");
 		playMode = true;
@@ -124,7 +125,7 @@ void socket_on_message(const json &data) {
 		printf("Sending file list...\n");
 		send_file_list();
 	} else if (type == "load"){
-		printf("Loading jocs file...\n")
+		printf("Loading jocs file...\n");
 	} else if(type == "kill") {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
@@ -200,7 +201,7 @@ void *console_thread(void *arg) {
 
 		if (args[0] == "prepare") {
 			cout << "Preparing..." << endl;
-			player->prepare();
+			prepareMode = true;
 		} else if (args[0] == "play") {
 			cout << "Playing..." << endl;
 			playMode = true;
@@ -366,6 +367,9 @@ int main(int argc, char *argv[]) {
 		if (killmode) {
 			for(Vehicle *v : vehicles)
 				v->terminate();
+		} else if (prepareMode) {
+			prepareMode = false;
+			player->prepare();
 		} else if (playMode) {
 			playMode = false;
 			player->play();

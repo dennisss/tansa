@@ -195,12 +195,9 @@ namespace tansa {
 				if (lightCounters[i] < lightActions[jocsActiveIds[i]].size()) {
 					LightTrajectory *light = static_cast<LightAction *>(lightActions[jocsActiveIds[i]][lightCounters[i]])->GetPath();
 
-					// TODO: this will only work if there is a light action at the same time as a motion action
-					// so we should fix that.. it should be possible to have a time where there is only a light action
-					// and no motion action.
 					if (t >= lightActions[jocsActiveIds[i]][lightCounters[i]]->GetStartTime()) {
 						//printf("Getting light action for drone %d at time %f\n", jocsActiveIds[vi], light->getStartTime());
-						lightctls[i]->track(light);
+						lightctls[i]->track(light, light); //TODO: not just copy same light trajectory for both lights
 						lightctls[i]->control(t);
 						if (t >= lightActions[jocsActiveIds[i]][lightCounters[i]]->GetEndTime()) {
 							lightCounters[i]++;

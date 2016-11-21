@@ -39,6 +39,11 @@ namespace tansa {
 			p = 0;
 		}
 
+		pauseIndices.resize(n);
+		for(auto &pi : pauseIndices){
+			pi = 0;
+		}
+
 		transitionStarts.resize(n, Time(0,0));
 	}
 
@@ -143,10 +148,9 @@ namespace tansa {
 				if (pauseRequested) {
 					paused = true;
 					pauseRequested = false;
-					pauseOffset = t;
 				}
 
-				if (paused && (stopRequested || t - pauseOffset > 20.0)) {
+				if (paused && (stopRequested || Time::now().since(pauseOffset).seconds() > 20.0)) {
 					cout << (stopRequested ? "Stop requested" : "Paused for more than 20 seconds")
 						 << ", attempting to land." << endl;
 					land();
@@ -161,7 +165,7 @@ namespace tansa {
 
 				Trajectory *cur = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
 
-				if(t >= actions[chorI][plans[i]]->GetEndTime()) {
+				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
 					if(plans[i] == actions[chorI].size()-1) {
 						states[i] = StateLanding;
 
@@ -176,6 +180,8 @@ namespace tansa {
 					double nextBreakpoint = getNextBreakpointTime(t);
 					if ((int)t + 1 == nextBreakpoint) {
 						states[i] = StateHolding;
+						pauseIndices[i] = plans[i];
+						pauseOffset = Time::now();
 						holdpoints[i] = cur->evaluate(t).position;
 						continue;
 					}
@@ -237,9 +243,10 @@ namespace tansa {
 			paused = false;
 			pauseRequested = false;
 			stopRequested = false;
-			pauseOffset = 0.0;
-			for (auto &plan : plans) {
-				plan++;
+			start.setTime(start, -Time::now().since(pauseOffset).seconds());
+			int n = jocsActiveIds.size();
+			for (int i = 0; i < n; i++) {
+				plans[i] = pauseIndices[i];
 			}
 		}
 

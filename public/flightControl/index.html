@@ -308,7 +308,7 @@ socket.on('msg', function(data) {
 			var droneRow = $('#drone' + drone.id);
 			var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
 			var batteryIndicator = Math.floor(batteryLevel / 25);
-			if(!droneRow.length) {
+			if (!droneRow.length) {
 				droneRow = $($('#droneRow').html());
 				droneRow.attr('id', 'drone' + drone.id);
 				droneRow.find('.droneID').html(drone.id);

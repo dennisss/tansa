@@ -29,6 +29,7 @@
         <script src="js/bootstrap.min.js"></script>
         <script src="js/material.min.js"></script>
         <script src="js/materials.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
 		<style>
 			button.btn.btn-fab.actionFab {
 				border-radius: 50%;
@@ -85,20 +86,26 @@
 				min-width: 675px;
 				width: 60vw;
 			}
+			.white {
+				-webkit-box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+                                box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+                                position: relative;
+                                line-height: normal;
+                                background-color: white !important;
+			}
 		</style>
 </head>
 <body>
-	<h1 class="text-center">Dancing Drones Control Board</h1>
-	<script src="/socket.io/socket.io.js"></script>
+	<h1 class="text-center">Dancing Drones Command Center</h1>
 	<div class="container-fluid">
 		<div class="text-center gap row preFlight">
-			<div class="col-md-6 col-sm-12 text-center">
-				<button id="loadJacq" type="button" class="btn btn-fab actionFab">
+			<div class="col-sm-12 text-center">
+<!--				<button id="loadJacq" type="button" class="btn btn-fab actionFab">
 					<span class="fa fa-upload" aria-hidden="true"></span>
 				</button>
-				<br>
-				<div class="container-fluid">
-					<div class="col-sm-7">
+				<br>-->
+				<div class="container-fluid noMargin">
+					<div class="col-sm-8">
 						<select id="fileNameList" class="form-control">
 							<option>Select a JOCS File</option>
 							<option>jumpManJumpManJumpMan.jocs</option>
@@ -106,7 +113,12 @@
 							<option>operationPhilia.jocs</option>
 						</select>
 					</div>
-					<div class="col-sm-5">
+					<div class="col-sm-1">
+                                                <button id="loadJacq" type="button" class="btn btn-fab white">
+                                                        <span class="fa fa-upload" aria-hidden="true"></span>
+                                                </button>
+                                        </div>
+					<div class="col-sm-3">
 						<select id="queueList" class="form-control">
 							<option>Start</option>
 							<option>1</option>
@@ -116,22 +128,22 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-sm-4 text-center">
 					<button id="positionMap" type="button" class="btn btn-fab actionFab" data-toggle="modal" data-target="#droneMapModal">
 						<span class="fa fa-bullseye" aria-hidden="true"></span>
 					</button>
 					<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-sm-4 text-center">
 					<button id="takeOff" type="button" class="btn btn-fab actionFab">
 						<span class="fa fa-rocket" aria-hidden="true"></span>
 					</button>
 					<br><br>
-			</div><!--
-			<div class="col-md-3 col-sm-6 text-center">
-					<button id="killDrones" type="button" class="btn btn-fab actionFab"><i class="fa fa-bomb" aria-hidden="true"></i></button>
+			</div>
+			<div class="col-sm-4 text-center">
+					<button type="button" class="btn btn-fab actionFab killDrones"><i class="fa fa-bomb" aria-hidden="true"></i></button>
 					<br><br>
-			</div>-->
+			</div>
 		</div>
 		<div class="text-center gap row flightReady">
 			<div class="col-md-3 col-sm-6 text-center">
@@ -153,7 +165,7 @@
 				<br><br>
 			</div>
 			<div class="col-md-3 col-sm-6 text-center">
-				<button id="killDrones" type="button" class="btn btn-fab actionFab">
+				<button type="button" class="btn btn-fab actionFab killDrones">
 					<i class="fa fa-bomb" aria-hidden="true"></i>
 				</button>
 				<br><br>
@@ -174,24 +186,6 @@
 			</div>
 		</div>
 		<br>
-		<!--
-		<div class="row droneData">
-			<div class="col-sm-1">
-				<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID">1</span>
-			</div>
-			<div class="col-sm-3 text-center">
-				Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
-			</div>
-			<div class="col-sm-3 text-center">
-				Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
-			</div>
-			<div class="col-sm-3 text-center">
-				Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
-			</div>
-			<div class="col-sm-2 text-center">
-				<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
-			</div>
-		</div>-->
 		<div id="droneTable">
 		</div>
 	</div>
@@ -243,6 +237,8 @@ var socket = io();
 
 socket.emit("msg", JSON.stringify({type: 'list'}));
 
+$("#takeOff").prop("disabled", "true");
+
 $(".flightReady").hide();
 $.material.init();
 
@@ -290,7 +286,7 @@ $("#stopDrones").click(function () {
 });
 
 
-$("#killDrones").click(function () {
+$(".killDrones").click(function () {
 	socket.emit('msg', JSON.stringify({type: 'kill', enabled: true}));
 	//setFalse($(".playStatus"));
 	//disarm();
@@ -319,6 +315,12 @@ socket.on('msg', function(data) {
 			setValue(droneRow.find('.tracking') , drone.tracking);
 			droneRow.find('.battery-level').addClass('fa-battery-' + batteryIndicator);
 		});
+				
+		if($(".connected").length == 0 || ($(".connected.false").length > 0 || $(".tracking.false").length > 0)) {
+			$("#takeOff").prop("disabled", "true");
+		} else {
+			$("#takeOff").removeAttr("disabled");
+		}
 	} else if (data.type == 'list_reply') {
 		var stringOfOptions = (data.files || []).reduce(function(acc, currentValue) {
 			return acc + '<option>' + currentValue + '</option>';

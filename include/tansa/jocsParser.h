@@ -98,6 +98,14 @@ private:
 	 * @return Action type as the enum
 	 */
 	 ActionTypes convertToActionType(const std::string& data);
+
+	/**
+	 * Generates action array with specific breakpoints for start to end
+	 * @private
+	 * @param data A string containing the ascii representation of an ActionType
+	 * @return Action type as the enum
+	 */
+
 };
 }
 #endif //TANSA_JOCSPARSER_H

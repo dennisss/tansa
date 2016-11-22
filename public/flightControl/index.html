@@ -130,7 +130,7 @@
 			</div>
 			<div class="col-sm-4 text-center">
 					<button id="positionMap" type="button" class="btn btn-fab actionFab" data-toggle="modal" data-target="#droneMapModal">
-						<span class="fa fa-bullseye" aria-hidden="true"></span>
+						<span class="fa fa-th" aria-hidden="true"></span>
 					</button>
 					<br><br>
 			</div>
@@ -154,13 +154,13 @@
 			</div>
 			<div class="col-md-3 col-sm-6 text-center">
 				<button id="pauseDrones" type="button" class="btn btn-fab actionFab">
-					<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+					<span class="fa fa-step-forward" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
 			<div class="col-md-3 col-sm-6 text-center">
 				<button id="stopDrones" type="button" class="btn btn-fab actionFab">
-					<span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
+					<span class="fa fa-download" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
@@ -216,7 +216,7 @@
 				<i class="fa fa-exchange" aria-hidden="true"></i>
 			</div>
 			<div class="col-sm-3 col-md-2 visible-md visible-lg text-center">
-				Battery:&nbsp;&nbsp;<i class="battery-level fa" aria-hidden="true"></i>
+				Battery:&nbsp;&nbsp;<span class="batteryLevel"></span>%
 			</div>
 			<div class="col-sm-3 col-md-2 text-center">
 				Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
@@ -237,7 +237,9 @@ var socket = io();
 
 socket.emit("msg", JSON.stringify({type: 'list'}));
 
-$("#takeOff").prop("disabled", "true");
+disable($("#takeOff"));
+disable($("#pauseDrones"));
+disable($("#stopDrones"));
 
 $(".flightReady").hide();
 $.material.init();
@@ -262,6 +264,7 @@ setFalse($(".armed"));
 $("#takeOff").click(function() {
 	socket.emit('msg', JSON.stringify({type: 'prepare'}));
 	swapControlPanels();
+	
 });
 
 $("#playDrones").click(function () {
@@ -270,11 +273,17 @@ $("#playDrones").click(function () {
 	trackDrones();
 	connectToDrones();
 	socket.emit('msg', JSON.stringify({type: 'play'}));
+	disable($("#playDrones"));
+	enable($("#pauseDrones"));
+	enable($("#stopDrones"));
 });
 
 $("#pauseDrones").click(function () {
 	setTralse($(".playStatus"));
 	socket.emit('msg', {type: 'pause'});
+	disable($("#pauseDrones"));
+	enable($("#playDrones"));
+	enable($("#stopDrones"));
 });
 
 
@@ -283,6 +292,9 @@ $("#stopDrones").click(function () {
 	//setFalse($(".playStatus"));
 	//disarm();
 	swapControlPanels();
+	enable($("#playDrones"));
+	disable($("#pauseDrones"));
+	disable($("#stopDrones"));
 });
 
 
@@ -291,6 +303,8 @@ $(".killDrones").click(function () {
 	//setFalse($(".playStatus"));
 	//disarm();
 });
+
+var isPlaying = false;
 
 // This should receive data a few times a second
 socket.on('msg', function(data) {
@@ -303,7 +317,6 @@ socket.on('msg', function(data) {
 		$.each(data.vehicles, function (index, drone) {
 			var droneRow = $('#drone' + drone.id);
 			var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
-			var batteryIndicator = Math.floor(batteryLevel / 25);
 			if (!droneRow.length) {
 				droneRow = $($('#droneRow').html());
 				droneRow.attr('id', 'drone' + drone.id);
@@ -313,13 +326,19 @@ socket.on('msg', function(data) {
 			setValue(droneRow.find('.armed'), drone.armed);
 			setValue(droneRow.find('.connected') , drone.connected);
 			setValue(droneRow.find('.tracking') , drone.tracking);
-			droneRow.find('.battery-level').addClass('fa-battery-' + batteryIndicator);
+			droneRow.find('.batteryLevel').html(batteryLevel);
+			if(batteryLevel > 0 && batteryLevel <= 30) {
+				setFalse(droneRow.find('.batteryLevel'));
+			}
 		});
 				
 		if($(".connected").length == 0 || ($(".connected.false").length > 0 || $(".tracking.false").length > 0)) {
-			$("#takeOff").prop("disabled", "true");
+			disable($("#takeOff"));
 		} else {
-			$("#takeOff").removeAttr("disabled");
+			enable($("#takeOff"));
+		}
+		if(data.global.playing) {
+			disable($("#playDrones"));
 		}
 	} else if (data.type == 'list_reply') {
 		var stringOfOptions = (data.files || []).reduce(function(acc, currentValue) {
@@ -370,6 +389,14 @@ function setTralse(item) {
 
 function setFalse(item) {
 	item.removeClass("true tralse").addClass("false");	
+}
+
+function disable(item) {
+	item.prop("disabled", "true");
+}
+
+function enable(item) {
+	item.removeAttr("disabled");
 }
 
 function gridSetup() {

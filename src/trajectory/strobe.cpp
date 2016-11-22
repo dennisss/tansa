@@ -9,5 +9,5 @@ double StrobeTrajectory::evaluate(double t) {
 
 	// If even or last, return the end intensity
 	// If odd, return the start intensity
-	return (beatsPassed % 2 == 0) ? startIntensity: endIntensity;
+	return (beatsPassed % 2 == 0) ? endIntensity : startIntensity;
 }

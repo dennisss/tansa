@@ -240,9 +240,8 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 				//auto lights = actionsArrayElement[ACTION_DATA_KEY][LIGHTS_INCL_KEY];
 				//assert(lights.is_array());
 
-				// Create separate actions - one for each light for each drone
+				// TODO: Create separate actions - one for each light for each drone
 
-				//for (int k = 0; k < lights.size(); k++) {
 				float si = actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY];
 				float ei = actionsArrayElement[ACTION_DATA_KEY][END_INTENSITY_KEY];
 				lightActions[drone].push_back(new LightAction(
@@ -253,11 +252,6 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 								ei,
 								lastTime + startTime + duration)
 				));
-				//printf("Start Intensity: %.2f\n", si);
-				//printf("Start Time: %.2f\n", lastTime + startTime);
-				//printf("End Intensity: %.2f\n", ei);
-				//printf("End Time: %.2f\n", lastTime + startTime + duration);
-				//}
 			} else {
 				Point startOffset(drones[j][DRONE_START_OFF_KEY][0], drones[j][DRONE_START_OFF_KEY][1], drones[j][DRONE_START_OFF_KEY][2]);
 				Point endOffset(drones[j][DRONE_END_OFF_KEY][0], drones[j][DRONE_END_OFF_KEY][1], drones[j][DRONE_END_OFF_KEY][2]);

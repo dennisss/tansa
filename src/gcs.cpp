@@ -27,7 +27,8 @@ static bool pauseMode = false;
 static bool stopMode = false;
 static bool playMode = false;
 static bool prepareMode = false;
-static JocsPlayer* player;
+static float scale = 1.0;
+static JocsPlayer* player = nullptr;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static vector<unsigned> jocsActiveIds;
@@ -100,6 +101,34 @@ void send_file_list() {
 	tansa::send_message(j);
 }
 
+void load_jocs_file(const json &data){
+	if(player == nullptr){
+		//TODO: Send some kinda error code here
+		return;
+	}
+	std::string file = data["filename"];
+	int cue = data["cue"];
+	//TODO: Prepare the jocs file to start at this cue.
+	//TODO: Need to make sure this gets deleted. Will have to delete inside the JocsPlayer class when we load a new file.
+	// In other words, we transfer ownership of the jocs object to the player here.
+	auto jocs = Jocs::Parse("data/"+ file, scale);
+	player->loadJocs(jocs);
+	auto breakpoints = jocs->GetBreakpoints();
+	json j;
+	j["type"] = "load_reply";
+	json nums = json::array();
+	for(auto& b : breakpoints){
+		nums.push_back(b.GetNumber());
+	}
+	json positions = json::array();
+	for(auto& b : breakpoints){
+		//TODO: need to fill in the starting positions. Not contained in breakpoints currently
+	}
+	j["cues"] = nums;
+	j["target_positions"] = positions;
+	tansa::send_message(j);
+
+}
 
 void socket_on_message(const json &data) {
 
@@ -126,6 +155,7 @@ void socket_on_message(const json &data) {
 		send_file_list();
 	} else if (type == "load"){
 		printf("Loading jocs file...\n");
+		load_jocs_file(data);
 	} else if(type == "kill") {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
@@ -244,7 +274,7 @@ int main(int argc, char *argv[]) {
 	vector<unsigned> activeids = rawJson["jocsActiveIds"];
 	jocsActiveIds = activeids;
 	bool useMocap = rawJson["useMocap"];
-	float scale = rawJson["theaterScale"];
+	scale = rawJson["theaterScale"];
 	bool enableMessaging = rawJson["enableMessaging"];
 	bool enableOSC = rawJson["enableOSC"];
 

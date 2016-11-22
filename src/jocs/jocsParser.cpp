@@ -261,6 +261,9 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 					case ActionTypes::Transition: {
 						// Actual calculation will be processed after this loop
 						actions[drone].push_back(new EmptyAction(drone, lastTime + startTime, lastTime + startTime + duration));
+						if (abs(startTime - 489.0) < 0.01) {
+							printf("");
+						}
 						break;
 					}
 					case ActionTypes::Line: {

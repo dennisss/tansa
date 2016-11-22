@@ -133,7 +133,7 @@ namespace tansa {
 
 
 				// Do nothing
-				v.setpoint_accel(Vector3d(0,0,0));
+				v.setpoint_zero();
 			} else if (s == StateTakeoff) {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
@@ -148,7 +148,7 @@ namespace tansa {
 				posctls[i]->control(t);
 			} else if (s == StateReady) {
 				// Do nothing
-				v.setpoint_accel(Vector3d(0,0,0));
+				v.setpoint_zero();
 			} else if (s == StateHolding) {
 				double t = Time::now().seconds();
 
@@ -218,7 +218,7 @@ namespace tansa {
 				}
 				// Disarm
 				else if(v.armed){
-					v.setpoint_accel(Vector3d(0,0,0));
+					v.setpoint_zero();
 					v.arm(false);
 				}
 				// Reset state machine

@@ -212,13 +212,8 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	this->estimator.correct(this->state, pos, v, t);
 
 
-	Matrix3d m;
-	m << 1, 0, 0,
-		 0, -1, 0,
-		 0, 0, -1;
-
 	Vector3d pos_ned = enuToFromNed() * pos;
-	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(m);
+	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(baseToFromAirFrame());
 
 	float q[4];
 	q[0] = orient_ned.w();
@@ -301,6 +296,13 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 	// TODO: Once the state is forward predicted, use that time
 	lastControlTime = Time::now();
 
+
+	const double hover = params.hoverPoint;
+
+	// Scale to -1 to 1 range and add hover point because PX4 doesn't take m s^-2 input but rather input proportional to thrust percentage
+	accel = accel * (hover / GRAVITY_MS) + Vector3d(0, 0, hover);
+
+
 	Vector3d accel_ned = enuToFromNed() * accel;
 
 	mavlink_message_t msg;
@@ -320,6 +322,10 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 	);
 
 	send_message(&msg);
+}
+
+void Vehicle::setpoint_zero() {
+	this->setpoint_zero(Vector3d(0,0, -GRAVITY_MS));
 }
 
 void Vehicle::set_lighting(float top, float bottom) {
@@ -418,12 +424,8 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			mavlink_local_position_ned_t lp;
 			mavlink_msg_local_position_ned_decode(msg, &lp);
 
-/*
-			this->position = enuToFromNed() * Vector3d(lp.x, lp.y, lp.z);
-			this->velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
-*/
-
-//			printf("POS: %.2f %.2f %.2f\n", lp.x, lp.y, lp.z);
+			onboardState.position = enuToFromNed() * Vector3d(lp.x, lp.y, lp.z);
+			onboardState.velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
 
 			break;
 
@@ -436,11 +438,21 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			break;
 
-		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION: {
+
+			mavlink_attitude_quaternion_t aq;
+			mavlink_msg_attitude_quaternion_decode(msg, &aq);
+
+			Quaterniond orient_ned(aq.q1, aq.q2, aq.q3, aq.q4);
+
+			Quaterniond orient = Quaterniond(enuToFromNed()) * orient_ned * Quaterniond(baseToFromAirFrame());
+
+			onboardState.orientation = orient;
+			onboardState.time = Time::now();
 
 			break;
 
-
+		}
 		case MAVLINK_MSG_ID_STATUSTEXT:
 
 			// TODO: Also incorporate the severity

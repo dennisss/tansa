@@ -31,7 +31,7 @@ void HoverController::control(double t) {
 
 	// If really low to the ground, do nothing
 	if(point.z() < 0.1) {
-		vehicle->setpoint_accel(Point::Zero());
+		vehicle->setpoint_zero();
 		return;
 	}
 

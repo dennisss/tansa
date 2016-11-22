@@ -261,9 +261,11 @@ int main(int argc, char *argv[]) {
 			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
 			vconfigs[i].rport = 14555;
 		}
-		else { // The simulated ones are zero-indexed and
-			vconfigs[i].lport = 14550 + 10*(vconfigs[i].net_id - 1);
-			vconfigs[i].rport = 14555 + 10*(vconfigs[i].net_id - 1);
+		else { // The simulated ones are zero-indexed and are always in ascending order
+			vconfigs[i].net_id = i;
+
+			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
+			vconfigs[i].rport = 14555 + 10*vconfigs[i].net_id;
 		}
 	}
 

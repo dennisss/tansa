@@ -19,6 +19,7 @@ using namespace std;
 
 #define MAV_CMD_BEACON MAV_CMD_USER_1
 
+#define GRAVITY_MS 9.8
 
 struct BatteryStatus {
 	double voltage = -1;
@@ -117,6 +118,8 @@ public:
 
 	void setpoint_accel(const Vector3d &a);
 
+	void setpoint_zero();
+
 	// Should do something like waiting for a response
 	void ping();
 
@@ -130,6 +133,9 @@ public:
 	// Physical State : used for visualization and trajectory control
 	State state;
 	LinearComplementaryEstimator estimator;
+
+	// State as observed by the onboard processor
+	State onboardState;
 
 	BatteryStatus battery;
 

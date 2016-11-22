@@ -138,7 +138,7 @@ namespace tansa {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// If the drones started on the ground and overshot the target, switch to hover
-				bool overshot = v.state.position.z() > holdpoints[i].z();
+				bool overshot = v.state.position.z() > holdpoints[jocsActiveIds[i]].z();
 
 				if(transitions[i] == NULL || t >= transitions[i]->endTime() || overshot) {
 					s = StateHolding;
@@ -166,7 +166,7 @@ namespace tansa {
 					return;
 				}
 				// Do a hover
-				hovers[i]->setPoint(holdpoints[i]); // TODO: Only do this on transitions (when holdpoints changes)
+				hovers[i]->setPoint(holdpoints[jocsActiveIds[i]]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
 				double t = Time::now().since(start).seconds() - timeOffset;
@@ -189,7 +189,7 @@ namespace tansa {
 					if ((int)t + 1 == nextBreakpoint) {
 						states[i] = StateHolding;
 						pauseIndices[i] = plans[i];
-						holdpoints[i] = motion->evaluate(t).position;
+						holdpoints[jocsActiveIds[i]] = motion->evaluate(t).position;
 						continue;
 					}
 				}
@@ -303,7 +303,7 @@ namespace tansa {
 		for(int i = 0; i < states.size(); i++) {
 			states[i] = StateLanding;
 
-			Point lastPoint = holdpoints[i];
+			Point lastPoint = holdpoints[jocsActiveIds[i]];
 			Point groundPoint = lastPoint; groundPoint.z() = 0;
 			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
 			transitionStarts[i] = Time::now();

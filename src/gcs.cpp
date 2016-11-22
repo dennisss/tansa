@@ -107,7 +107,7 @@ void load_jocs_file(const json &data){
 		return;
 	}
 	std::string file = data["filename"];
-	int cue = data["cue"];
+	//int cue = data["cue"];
 	//TODO: Prepare the jocs file to start at this cue.
 	//TODO: Need to make sure this gets deleted. Will have to delete inside the JocsPlayer class when we load a new file.
 	// In other words, we transfer ownership of the jocs object to the player here.

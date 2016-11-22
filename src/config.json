@@ -1,7 +1,7 @@
 {
-	"jocsPath": "data/realChoreography.jocs",
+	"jocsPath": "data/sixDroneDemo.jocs",
 	"jocsActiveIds": [0,1,2,3,4,5],
-	"theaterScale": 0.7,
+	"theaterScale": 1.0,
 	"useMocap": false,
 	"enableMessaging": true,
 	"enableOSC": true,

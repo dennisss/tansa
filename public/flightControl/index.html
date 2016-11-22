@@ -114,7 +114,7 @@
 						</select>
 					</div>
 					<div class="col-sm-1">
-                                                <button id="loadJacq" type="button" class="btn btn-fab white">
+                                                <button id="loadJocs" type="button" class="btn btn-fab white">
                                                         <span class="fa fa-upload" aria-hidden="true"></span>
                                                 </button>
                                         </div>
@@ -302,6 +302,11 @@ $(".killDrones").click(function () {
 	socket.emit('msg', JSON.stringify({type: 'kill', enabled: true}));
 	//setFalse($(".playStatus"));
 	//disarm();
+});
+
+$("#loadJocs").click(function () {
+	var fileName = $("#fileNameList option:selected").html();
+	socket.emit('msg', JSON.stringify({type: 'load', filename: fileName}));
 });
 
 var isPlaying = false;

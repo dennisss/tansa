@@ -53,19 +53,19 @@ namespace tansa {
 		std::vector<Breakpoint> breakpoints;
 		Jocs* currentJocs;
 		std::vector<std::vector<Action*>> actions;
+		std::vector<std::vector<LightAction*>> lightActions;
 		std::vector<Point> homes;
 		std::vector<HoverController *> hovers;
 		std::vector<PositionController *> posctls;
+		std::vector<LightController *> lightctls;
+		std::vector<int> lightCounters;
 		std::vector<Point> holdpoints;
 		std::vector<PlayerVehicleState> states;
 		std::vector<int> plans;
 
-
 		// Separate trajectories and timings for doing takeoff and landings
 		std::vector<Trajectory *> transitions;
 		vector<Time> transitionStarts;
-
-
 		bool pauseRequested = false;
 		bool paused = false;
 		bool stopRequested = false;
@@ -81,6 +81,7 @@ namespace tansa {
 		double getBreakpointTime(std::string breakpointName);
 		unsigned getBreakpointNumber(double startTime);
 		Point getDroneLocationAtTime(double startTime, unsigned droneId);
+		bool isMotionAction(Action* a);
 	};
 }
 #endif //TANSA_JOCSPLAYER_H

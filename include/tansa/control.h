@@ -72,5 +72,33 @@ private:
 	Point point;
 };
 
+/**
+ * Controller for following Light Trajectory's
+ */
+class LightController : public Controller {
+public:
+	LightController(Vehicle *v);
+
+	/**
+	 * Specifies which trajectory should do followed
+	 */
+	void track(LightTrajectory *trajTop, LightTrajectory *trajBot);
+
+
+	/**
+	 * This should be called 100 times a second to track the path
+	 */
+	virtual void control(double t);
+
+private:
+	double EPSILON = 0.01;
+
+	Vehicle *vehicle;
+	LightTrajectory *trajectoryTop;
+	LightTrajectory *trajectoryBot;
+	double currentIntensityTop = 0.0;
+	double currentIntensityBot = 0.0;
+};
+
 
 #endif

@@ -17,13 +17,14 @@ enum ActionTypes : unsigned{
 	Circle = 3,
 	Hover = 4,
 	Light = 5,
+	Strobe = 6,
 };
 
 typedef unsigned DroneId;
 /**
  * @enum Defines the different lights on the drone
  */
-enum class LightId {TOP, BOT};
+//typedef unsigned LightId;
 /**
  * @interface Defines an interface for all Actions to implement
  */
@@ -107,28 +108,32 @@ private:
  */
 class LightAction : public Action {
 public:
-	LightAction(double s, double e, DroneId id, double i, LightId l) :  Action(id, ActionTypes::Light),
-			startTime(s), endTime(e), intensity(i), lightId(l) { isCalculated = true; }
-	virtual ~LightAction(){}
-	virtual double GetStartTime() { return startTime; }
+	LightAction(DroneId did, LightTrajectory* t) :
+			Action(did, ActionTypes::Light), path(t)
+			{ isCalculated = true; }
+	virtual ~LightAction(){ delete path; }
 
-	virtual double GetEndTime() { return endTime; }
+	inline double GetPathState(double t) { return path->evaluate(t); }
+
+	inline LightTrajectory* GetPath() { return path; }
+
+	virtual double GetStartTime() const { return path->getStartTime(); }
+	virtual double GetEndTime() const { return path->getEndTime(); }
 
 	/**
 	 * @return Current set intensity of the light
 	 */
-	inline double GetIntensity() { return intensity; }
+	inline double GetStartIntensity() { return path->evaluate(path->getStartTime()); }
+	inline double GetEndIntensity() { return path->evaluate(path->getEndTime()); }
 
 	/**
 	 * @return Which light this action is referring to.
 	 */
-	inline LightId GetLightId() { return lightId; }
+	//inline LightId GetLightId() { return lightId; }
 
 private:
-	double startTime;
-	double endTime;
-	double intensity;
-	LightId lightId;
+	LightTrajectory* path;
+	//LightId lightId;
 };
 
 }

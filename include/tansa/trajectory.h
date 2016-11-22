@@ -87,7 +87,6 @@ private:
 
 };
 
-
 /**
  * A 2d circle in the XY plane. An angle of 0 is on the X axis
  */
@@ -106,7 +105,6 @@ private:
 
 };
 
-
 /**
  * Stays at one point. Mainly just for testing.
  */
@@ -119,6 +117,48 @@ public:
 private:
 	Point p;
 
+};
+
+/**
+ * Smoothly increases or decreases list intensity between two intensities
+ */
+class LightTrajectory {
+public:
+
+	inline LightTrajectory(double si, double st, double ei, double et) :
+			startTime(st), endTime(et), startIntensity(si), endIntensity(ei) {}
+	virtual ~LightTrajectory() {}
+
+	// Gives the intensity at a given time between the start and end times
+	virtual double evaluate(double t);
+
+	inline double getStartTime() { return this->startTime; }
+	inline double getEndTime() { return this->endTime; }
+
+	inline double getStartIntensity() { return this->startIntensity; }
+	inline double getEndIntensity() { return this->endIntensity; }
+
+protected:
+
+	double startTime, endTime, startIntensity, endIntensity;
+};
+
+/**
+ * Smoothly increases or decreases list intensity between two intensities
+ */
+class StrobeTrajectory : public LightTrajectory {
+public:
+
+	inline StrobeTrajectory(double si, double st, double ei, double et, double bpm) :
+			secondsPerBeat(bpm), LightTrajectory(si,st,ei,et) {}
+	virtual ~StrobeTrajectory() {}
+
+	// Gives the intensity at a given time between the start and end times
+	virtual double evaluate(double t);
+
+private:
+
+	double secondsPerBeat;
 };
 
 

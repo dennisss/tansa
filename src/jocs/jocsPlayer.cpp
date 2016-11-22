@@ -16,7 +16,6 @@ namespace tansa {
 		this->vehicles = vehicles;
 		this->jocsActiveIds = jocsActiveIds;
 
-
 		int n = vehicles.size();
 
 		hovers.resize(n);
@@ -29,6 +28,11 @@ namespace tansa {
 			posctls[i] = new PositionController(vehicles[i]);
 		}
 
+		lightctls.resize(n);
+		for(int i = 0; i < n; i++) {
+			lightctls[i] = new LightController(vehicles[i]);
+		}
+
 		states.resize(n);
 		for(auto& state : states){
 			state = StateInit;
@@ -37,6 +41,11 @@ namespace tansa {
 		plans.resize(n);
 		for(auto &p : plans) {
 			p = 0;
+		}
+
+		lightCounters.resize(n);
+		for(auto &lc : lightCounters) {
+			lc = 0;
 		}
 
 		pauseIndices.resize(n);
@@ -54,6 +63,7 @@ namespace tansa {
 		currentJocs = j;
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
+		lightActions = currentJocs->GetLightActions();
 		breakpoints = currentJocs->GetBreakpoints();
 	}
 
@@ -121,13 +131,14 @@ namespace tansa {
 					}
 				}
 
+
 				// Do nothing
 				v.setpoint_accel(Vector3d(0,0,0));
 			} else if (s == StateTakeoff) {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// If the drones started on the ground and overshot the target, switch to hover
-				bool overshot = v.state.position.z() > holdpoints[i].z();
+				bool overshot = v.state.position.z() > holdpoints[chorI].z();
 
 				if(transitions[i] == NULL || t >= transitions[i]->endTime() || overshot) {
 					s = StateHolding;
@@ -155,18 +166,18 @@ namespace tansa {
 					return;
 				}
 				// Do a hover
-				hovers[i]->setPoint(holdpoints[i]); // TODO: Only do this on transitions (when holdpoints changes)
+				hovers[i]->setPoint(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
 				double t = Time::now().since(start).seconds() - timeOffset;
 
-				Trajectory *cur = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
+				Trajectory *motion = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
 
 				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
 					if (plans[i] == actions[chorI].size()-1) {
 						states[i] = StateLanding;
 
-						Point lastPoint = cur->evaluate(t).position;
+						Point lastPoint = motion->evaluate(t).position;
 						Point groundPoint = lastPoint; groundPoint.z() = 0;
 						transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
 						transitionStarts[i] = Time::now();
@@ -178,13 +189,25 @@ namespace tansa {
 					if ((int)t + 1 == nextBreakpoint) {
 						states[i] = StateHolding;
 						pauseIndices[i] = plans[i];
-						holdpoints[i] = cur->evaluate(t).position;
+						holdpoints[chorI] = motion->evaluate(t).position;
 						continue;
 					}
 				}
 
-				posctls[i]->track(cur);
+				posctls[i]->track(motion);
 				posctls[i]->control(t);
+
+				if (lightCounters[i] < lightActions[chorI].size()) {
+					LightTrajectory *light = static_cast<LightAction *>(lightActions[chorI][lightCounters[i]])->GetPath();
+
+					if (t >= lightActions[chorI][lightCounters[i]]->GetStartTime()) {
+						lightctls[i]->track(light, light); //TODO: not just copy same light trajectory for both lights
+						lightctls[i]->control(t);
+						if (t >= lightActions[chorI][lightCounters[i]]->GetEndTime()) {
+							lightCounters[i]++;
+						}
+					}
+				}
 			} else if (s == StateLanding) {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
@@ -278,7 +301,7 @@ namespace tansa {
 		for(int i = 0; i < states.size(); i++) {
 			states[i] = StateLanding;
 
-			Point lastPoint = holdpoints[i];
+			Point lastPoint = holdpoints[jocsActiveIds[i]];
 			Point groundPoint = lastPoint; groundPoint.z() = 0;
 			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
 			transitionStarts[i] = Time::now();
@@ -313,6 +336,10 @@ namespace tansa {
 	void JocsPlayer::cleanup() {
 		for (int i = 0; i < posctls.size(); i++) {
 			delete posctls[i];
+		}
+
+		for (int i = 0; i < lightctls.size(); i++) {
+			delete lightctls[i];
 		}
 
 		for (int i = 0; i < hovers.size(); i++) {
@@ -397,15 +424,17 @@ namespace tansa {
 		// Assume droneId is valid and use it to choose which list of actions we need to parse
 		for (unsigned j = 0; j < actionsLength; j++) {
 			double actionStartTime = actions[droneId][j]->GetStartTime();
-			bool isMotionAction = true; // TODO: actually check if it's a motion. For now, they're all motions.
-			if (actionStartTime == startTime && isMotionAction) {
+			if (actionStartTime == startTime && isMotionAction(actions[droneId][j])) {
 				return ((MotionAction*)actions[droneId][j])->GetStartPoint(); // TODO: check if this cast works...
 			}
 		}
 
 		return Point(0,0,-1); // TODO: figure out better "invalid" answer
 	}
-
+	bool JocsPlayer::isMotionAction(Action* a) {
+		MotionAction* ma = dynamic_cast<MotionAction*>(a);
+		return ma;
+	}
 /*
 	void JocsPlayer::createBreakpointSection(const std::vector<vector> actions, int startPoint, int endPoint = -1) {
 		double startTime, endTime = -1;

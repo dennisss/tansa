@@ -50,7 +50,9 @@ add_library(
 	src/jocs/jocsParser.cpp
 	src/jocs/action.cpp
 	src/jocs/jocsPlayer.cpp
-)
+	src/trajectory/light.cpp
+	src/trajectory/strobe.cpp
+	src/control/lightcontrol.cpp)
 
 target_link_libraries(
 	tansa

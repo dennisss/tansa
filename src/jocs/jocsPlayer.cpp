@@ -138,7 +138,7 @@ namespace tansa {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// If the drones started on the ground and overshot the target, switch to hover
-				bool overshot = v.state.position.z() > holdpoints[jocsActiveIds[i]].z();
+				bool overshot = v.state.position.z() > holdpoints[chorI].z();
 
 				if(transitions[i] == NULL || t >= transitions[i]->endTime() || overshot) {
 					s = StateHolding;
@@ -166,7 +166,7 @@ namespace tansa {
 					return;
 				}
 				// Do a hover
-				hovers[i]->setPoint(holdpoints[jocsActiveIds[i]]); // TODO: Only do this on transitions (when holdpoints changes)
+				hovers[i]->setPoint(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
 				double t = Time::now().since(start).seconds() - timeOffset;
@@ -189,7 +189,7 @@ namespace tansa {
 					if ((int)t + 1 == nextBreakpoint) {
 						states[i] = StateHolding;
 						pauseIndices[i] = plans[i];
-						holdpoints[jocsActiveIds[i]] = motion->evaluate(t).position;
+						holdpoints[chorI] = motion->evaluate(t).position;
 						continue;
 					}
 				}
@@ -197,15 +197,13 @@ namespace tansa {
 				posctls[i]->track(motion);
 				posctls[i]->control(t);
 
-				if (lightCounters[i] < lightActions[jocsActiveIds[i]].size()) {
-					LightTrajectory *light = static_cast<LightAction *>(lightActions[jocsActiveIds[i]][lightCounters[i]])->GetPath();
+				if (lightCounters[i] < lightActions[chorI].size()) {
+					LightTrajectory *light = static_cast<LightAction *>(lightActions[chorI][lightCounters[i]])->GetPath();
 
-					if (t >= lightActions[jocsActiveIds[i]][lightCounters[i]]->GetStartTime()) {
-						//printf("Getting light action for drone %d at time %f\n", jocsActiveIds[vi], light->getStartTime());
+					if (t >= lightActions[chorI][lightCounters[i]]->GetStartTime()) {
 						lightctls[i]->track(light, light); //TODO: not just copy same light trajectory for both lights
-						//printf("Drone %d \n" + jocsActiveIds[i]);
 						lightctls[i]->control(t);
-						if (t >= lightActions[jocsActiveIds[i]][lightCounters[i]]->GetEndTime()) {
+						if (t >= lightActions[chorI][lightCounters[i]]->GetEndTime()) {
 							lightCounters[i]++;
 						}
 					}

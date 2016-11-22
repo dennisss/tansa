@@ -72,6 +72,7 @@ namespace tansa {
 		bool resetMode = false;
 		Time start = Time(0,0); // TODO: I will also need a time offset
 		Time pauseOffset = Time(0,0);
+		double timeOffset = 0.0;
 		std::vector<int> pauseIndices;
 		int stepTick = 0;
 

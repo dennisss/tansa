@@ -305,8 +305,23 @@ $(".killDrones").click(function () {
 });
 
 $("#loadJocs").click(function () {
-	var fileName = $("#fileNameList option:selected").html();
-	socket.emit('msg', JSON.stringify({type: 'load', filename: fileName}));
+	var fileName = $("select#fileNameList option:selected").html();
+	// TODO: Parse the rest of the items in the message from the GUI
+	var message = {
+		type: 'load',
+		jocsPath: 'data/' + fileName,
+		jocsActiveIds: [0,1,2,3,4,5],
+		theaterScale: 0.9,
+		vehicles: [
+			{ net_id: 1 },
+			{ net_id: 2 },
+			{ net_id: 3 },
+			{ net_id: 4 },
+			{ net_id: 5 },
+			{ net_id: 6 }
+		]
+	};
+	socket.emit('msg', JSON.stringify(message));
 });
 
 var isPlaying = false;
@@ -350,6 +365,8 @@ socket.on('msg', function(data) {
 			return acc + '<option>' + currentValue + '</option>';
 		}, '');
 		$('#fileNameList').html(stringOfOptions);
+	} else if (data.type == 'load_reply') {
+		// TODO: Update based on the response
 	} else {
 		console.log('Unknown message type - ' + data.type);
 	}

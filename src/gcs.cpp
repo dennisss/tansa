@@ -21,64 +21,84 @@
 using namespace std;
 using namespace tansa;
 
-static bool running;
+static bool running = false;
+static bool initialized = false;
 static bool killmode = false;
 static bool pauseMode = false;
 static bool stopMode = false;
 static bool playMode = false;
 static bool prepareMode = false;
+static bool loadMode = false;
 static float scale = 1.0;
 static JocsPlayer* player = nullptr;
+static GazeboConnector *gazebo = nullptr;
+static Mocap *mocap = nullptr;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static vector<unsigned> jocsActiveIds;
+static bool useMocap;
+static string jocsConfigPath = "src/jocsConfig.json";
 
 void signal_sigint(int s) {
 	// TODO: Prevent
 	running = false;
 }
 
+/**
+ * Construct an array of error objects to include with a response when an error has occurred.
+ * @param message	The message to be displayed by the GUI
+ */
+void generateError(json &response, string message) {
+	json error;
+	error["message"] = message;
+	if (response.find("error") != response.end()) {
+		response["error"].push_back(error);
+	} else {
+		json errorResponse = json::array();
+		errorResponse.push_back(error);
+		response["error"] = errorResponse;
+	}
+}
+
 /* For sending a system state update to the gui */
 void send_status_message() {
+	json jsonStatus;
 
-	json j;
+	jsonStatus["type"] = "status";
+	jsonStatus["time"] = player->currentTime();
 
-	j["type"] = "status";
-	j["time"] = player->currentTime();
-
-	json vehs = json::array();
+	json jsonVehicles = json::array();
 	for(int i = 0; i < vehicles.size(); i++) {
-		json v;
-		v["id"] = vconfigs[i].net_id;
-		v["role"] = i <= jocsActiveIds.size() - 1? jocsActiveIds[i] : -1;
-		v["connected"] = vehicles[i]->connected;
-		v["armed"] = vehicles[i]->armed;
-		v["tracking"] = vehicles[i]->tracking;
+		json jsonVehicle;
+		jsonVehicle["id"] = vconfigs[i].net_id;
+		jsonVehicle["role"] = i <= jocsActiveIds.size() - 1 ? jocsActiveIds[i] : -1;
+		jsonVehicle["connected"] = vehicles[i]->connected;
+		jsonVehicle["armed"] = vehicles[i]->armed;
+		jsonVehicle["tracking"] = vehicles[i]->tracking;
 
-		json pos = json::array();
-		pos.push_back(vehicles[i]->state.position.x());
-		pos.push_back(vehicles[i]->state.position.y());
-		pos.push_back(vehicles[i]->state.position.z());
-		v["position"] = pos;
+		json jsonPosition = json::array();
+		jsonPosition.push_back(vehicles[i]->state.position.x());
+		jsonPosition.push_back(vehicles[i]->state.position.y());
+		jsonPosition.push_back(vehicles[i]->state.position.z());
+		jsonVehicle["position"] = jsonPosition;
 
-		json bat = {
+		json jsonBatteryStats = {
 			{"voltage", vehicles[i]->battery.voltage},
 			{"percent", vehicles[i]->battery.percent}
 		};
-		v["battery"] = bat;
+		jsonVehicle["battery"] = jsonBatteryStats;
 
-		vehs.push_back(v);
+		jsonVehicles.push_back(jsonVehicle);
 	}
-	j["vehicles"] = vehs;
+	jsonStatus["vehicles"] = jsonVehicles;
 
+	json globalStatus;
+	globalStatus["playing"] = player->isPlaying();
+	globalStatus["ready"] = player->isReady();
+	jsonStatus["global"] = globalStatus;
 
-	json global;
-	global["playing"] = player->isPlaying();
-	global["ready"] = player->isReady();
-	j["global"] = global;
-
-	tansa::send_message(j);
-}	
+	tansa::send_message(jsonStatus);
+}
 
 void send_file_list() {
 	json j;
@@ -94,53 +114,165 @@ void send_file_list() {
 		}
 		closedir (dir);
 	} else {
-		/* could not open directory */
-		//TODO Do something intelligent here
+		generateError(j, "Could not open directory.");
 	}
 	j["files"] = files;
 	tansa::send_message(j);
 }
 
-void load_jocs_file(const json &data){
-	if(player == nullptr){
-		//TODO: Send some kinda error code here
+/**
+ * Disconnect and delete any existing vehicles, and initialize those specified via JSON
+ * @param rawJson 			The JSON object containing the vehicle configuration information (net_id's)
+ * @param homes 			Homes for the new vehicles, specified by the current Jocs file
+ * @param jocsActiveIds 	The ids of the drones to be used in this configuration
+ */
+void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jocsActiveIds) {
+	vconfigs.resize(rawJson["vehicles"].size());
+
+	for (unsigned i = 0; i < rawJson["vehicles"].size(); i++) {
+		vconfigs[i].net_id = rawJson["vehicles"][i]["net_id"];
+		if (useMocap) {
+			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
+			vconfigs[i].rport = 14555;
+		} else { // The simulated ones are zero-indexed and
+			vconfigs[i].lport = 14550 + 10*(vconfigs[i].net_id - 1);
+			vconfigs[i].rport = 14555 + 10*(vconfigs[i].net_id - 1);
+		}
+	}
+
+	int n = vconfigs.size();
+
+	if (n > vconfigs.size()) {
+		printf("Not enough drones on the network\n");
 		return;
 	}
-	std::string file = data["filename"];
-	//int cue = data["cue"];
-	//TODO: Prepare the jocs file to start at this cue.
-	//TODO: Need to make sure this gets deleted. Will have to delete inside the JocsPlayer class when we load a new file.
-	// In other words, we transfer ownership of the jocs object to the player here.
-	auto jocs = Jocs::Parse("data/"+ file, scale);
-	player->loadJocs(jocs);
-	auto breakpoints = jocs->GetBreakpoints();
+
+	// Stop all vehicles
+	for (int vi = 0; vi < vehicles.size(); vi++) {
+		Vehicle *v = vehicles[vi];
+		v->disconnect();
+		delete v;
+	}
+
+	vehicles.resize(n);
+
+	for (int i = 0; i < n; i++) {
+		const vehicle_config &v = vconfigs[i];
+
+		vehicles[i] = new Vehicle();
+
+		// Load default parameters
+		vehicles[i]->readParams("./config/params/default.json");
+		// TODO: Also read in per-drone ones
+
+		vehicles[i]->connect(v.lport, v.rport);
+		if (useMocap) {
+			mocap->track(vehicles[i], i+1);
+		} else {
+			gazebo->track(vehicles[i], i);
+		}
+	}
+
+	if (!useMocap) {
+		// Only pay attention to homes of active drones
+		vector<Point> spawns;
+		for (int i = 0; i < jocsActiveIds.size(); i++) {
+			int chosenId = jocsActiveIds[i];
+			// We assume the user only configured for valid IDs..
+			spawns.push_back(homes[chosenId]);
+			spawns[i].z() = 0;
+		}
+		gazebo->spawn(spawns);
+	}
+
+	// Initialize the vehicles within the jocsPlayer
+	player->initVehicles(vehicles);
+}
+
+/**
+ * Create and send the JSON response after receieving the 'load' command from the GUI
+ */
+void constructLoadResponse() {
+	auto breakpoints = player->getBreakpoints();
 	json j;
 	j["type"] = "load_reply";
 	json nums = json::array();
-	for(auto& b : breakpoints){
+	for (auto& b : breakpoints){
 		nums.push_back(b.GetNumber());
 	}
 	json positions = json::array();
-	for(auto& b : breakpoints){
+	for (auto& b : breakpoints){
 		//TODO: need to fill in the starting positions. Not contained in breakpoints currently
 	}
 	j["cues"] = nums;
 	j["target_positions"] = positions;
 	tansa::send_message(j);
+}
 
+/**
+ * Load a Jocs file with the configuration parameters specified via either the REPL or the GUI
+ * @param rawJson 	JSON containing configuration information to initialize (or reconfigure) the JocsPlayer
+ */
+void loadJocsFile(const json &rawJson) {
+	if (player == nullptr) {
+		// TODO: Send some kinda error code here
+		printf("Player is null...\n");
+		return;
+	}
+
+	initialized = false;
+	string jocsPath = rawJson["jocsPath"];
+	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
+	scale = rawJson["theaterScale"];
+
+	player->cleanup();
+	player->loadJocs(jocsPath, scale, jocsActiveIds);
+	vector<Point> homes = player->getHomes();
+	spawnVehicles(rawJson, homes, jocsActiveIds);
+
+	// int cue = data["cue"];
+	// TODO: Prepare the jocs file to start at this cue.
+	// TODO: Need to make sure this gets deleted. Will have to delete inside the JocsPlayer class when we load a new file.
+	// In other words, we transfer ownership of the jocs object to the player here.
+
+	constructLoadResponse();
+
+	initialized = true;
+	loadMode = false;
+	printf("Finished loadJocsFile\n");
+}
+
+/**
+ * Legacy method to load entirely from a config file, allows for initialization/loading via the REPL
+ * @param configPath The path to the (JSON) config file.
+ */
+void loadFromConfigFile(string configPath) {
+	if (configPath == "default") configPath = jocsConfigPath;
+
+	ifstream configStream(configPath);
+
+	if (!configStream) {
+		cout << "Unable to read config file" << endl;
+		return;
+	}
+
+	/// Parse the config file
+	std::string configData((std::istreambuf_iterator<char>(configStream)), std::istreambuf_iterator<char>());
+	nlohmann::json rawJson = nlohmann::json::parse(configData);
+	loadJocsFile(rawJson);
 }
 
 void socket_on_message(const json &data) {
 
 	string type = data["type"];
 
-	if(type == "prepare") {
+	if (type == "prepare") {
 		printf("Preparing...\n");
 		prepareMode = true;
-	} else if(type == "play") {
+	} else if (type == "play") {
 		printf("Playing...\n");
 		playMode = true;
-	} else if(type == "land") {
+	} else if (type == "land") {
 		player->land();
 	} else if (type == "pause") {
 		printf("Pausing...\n");
@@ -155,8 +287,9 @@ void socket_on_message(const json &data) {
 		send_file_list();
 	} else if (type == "load"){
 		printf("Loading jocs file...\n");
-		load_jocs_file(data);
-	} else if(type == "kill") {
+		loadMode = true;
+		loadJocsFile(data);
+	} else if (type == "kill") {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
 		killmode = enabled;
@@ -202,9 +335,7 @@ void osc_on_message(OSCMessage &msg) {
 pthread_t console_handle;
 
 void *console_thread(void *arg) {
-
-	while(running) {
-
+	while (running) {
 		// Read a command
 		cout << "> ";
 		string line;
@@ -223,11 +354,8 @@ void *console_thread(void *arg) {
 			args.push_back(a);
 		}
 
-
 		if(args.size() == 0)
 			continue;
-
-
 
 		if (args[0] == "prepare") {
 			cout << "Preparing..." << endl;
@@ -246,11 +374,12 @@ void *console_thread(void *arg) {
 			player->land();
 		} else if (args[0] == "kill") {
 			killmode = args.size() <= 1 || !(args[1] == "off");
+		} else if (args[0] == "load" && args.size() > 1) {
+			cout << "Loading..." << endl;
+			loadMode = true;
+			loadFromConfigFile(args[1]);
 		}
-
-
 	}
-
 }
 
 void console_start() {
@@ -270,11 +399,7 @@ int main(int argc, char *argv[]) {
 	std::string configData((std::istreambuf_iterator<char>(configStream)), std::istreambuf_iterator<char>());
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
-	string jocsPath = rawJson["jocsPath"];
-	vector<unsigned> activeids = rawJson["jocsActiveIds"];
-	jocsActiveIds = activeids;
-	bool useMocap = rawJson["useMocap"];
-	scale = rawJson["theaterScale"];
+	useMocap = rawJson["useMocap"];
 	bool enableMessaging = rawJson["enableMessaging"];
 	bool enableOSC = rawJson["enableOSC"];
 
@@ -284,41 +409,11 @@ int main(int argc, char *argv[]) {
 		config.serverAddress = hardwareConfig["serverAddress"];
 	}
 
-	vconfigs.resize(rawJson["vehicles"].size());
-	for(unsigned i = 0; i < rawJson["vehicles"].size(); i++) {
-		vconfigs[i].net_id = rawJson["vehicles"][i]["net_id"];
-		if(useMocap) {
-			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
-			vconfigs[i].rport = 14555;
-		}
-		else { // The simulated ones are zero-indexed and
-			vconfigs[i].lport = 14550 + 10*(vconfigs[i].net_id - 1);
-			vconfigs[i].rport = 14555 + 10*(vconfigs[i].net_id - 1);
-		}
-	}
-
-	Jocs *jocs = Jocs::Parse(jocsPath, scale);
-
-	auto homes = jocs->GetHomes();
-
-	// Only pay attention to homes of active drones
-	std::vector<Point> spawns;
-	for (int i = 0; i < jocsActiveIds.size(); i++) {
-		int chosenId = jocsActiveIds[i];
-		// We assume the user only configured for valid IDs..
-		spawns.push_back(homes[chosenId]);
-		spawns[i].z() = 0;
-	}
-
 	tansa::init(enableMessaging);
 
-	if(enableMessaging) {
+	if (enableMessaging) {
 		tansa::on_message(socket_on_message);
 	}
-
-
-	Mocap *mocap = nullptr;
-	GazeboConnector *gazebo = nullptr;
 
 	// Only pay attention to homes of active drones
 	// TODO: Have a better check for mocap initialization/health
@@ -328,49 +423,15 @@ int main(int argc, char *argv[]) {
 	} else {
 		gazebo = new GazeboConnector();
 		gazebo->connect();
-		gazebo->spawn(spawns);
 	}
 
-	int n = spawns.size();
-
-	if (n > vconfigs.size()) {
-		printf("Not enough drones on the network\n");
-		return 1;
-	}
-
-	vehicles.resize(n);
-
-	for(int i = 0; i < n; i++) {
-		const vehicle_config &v = vconfigs[i];
-
-		vehicles[i] = new Vehicle();
-
-		// Load default parameters
-		vehicles[i]->readParams("./config/params/default.json");
-		// TODO: Also read in per-drone ones
-
-		vehicles[i]->connect(v.lport, v.rport);
-		if (useMocap) {
-			mocap->track(vehicles[i], i+1);
-		} else {
-			gazebo->track(vehicles[i], i);
-		}
-	}
-
-	if(enableOSC) {
+	if (enableOSC) {
 		OSC *osc = new OSC();
 		osc->start(53100);
 		osc->set_listener(osc_on_message);
 	}
 
-
-
-
-	player = new JocsPlayer(vehicles, jocsActiveIds);
-	player->loadJocs(jocs);
-
-	running = true;
-	signal(SIGINT, signal_sigint);
+	player = new JocsPlayer();
 
 	int i = 0;
 
@@ -381,22 +442,25 @@ int main(int argc, char *argv[]) {
 	*/
 
 	signal(SIGINT, signal_sigint);
-	printf("running...\n");
 	running = true;
+	printf("running...\n");
 
 	console_start();
 
 	Rate r(100);
-	while(running) {
-
+	while (running) {
 		// Regular status messages
-		if(enableMessaging && i % 20 == 0) {
+		if (enableMessaging && i % 20 == 0) {
 			send_status_message();
 		}
 
 		if (killmode) {
 			for(Vehicle *v : vehicles)
 				v->terminate();
+		} else if (loadMode) {
+			printf("Still loading...\n");
+		} else if (player == nullptr || !initialized) {
+			// Player not initialized: no-op
 		} else if (prepareMode) {
 			prepareMode = false;
 			player->prepare();
@@ -427,7 +491,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Stop all vehicles
-	for(int vi = 0; vi < n; vi++) {
+	for (int vi = 0; vi < vehicles.size(); vi++) {
 		Vehicle *v = vehicles[vi];
 		v->disconnect();
 		delete v;

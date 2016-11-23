@@ -1,0 +1,13 @@
+{
+	"jocsPath": "data/realChoreography.jocs",
+	"jocsActiveIds": [0,1,2,3,4,5],
+	"theaterScale": 1.0,
+	"vehicles": [
+		{"net_id": 1},
+		{"net_id": 2},
+		{"net_id": 3},
+		{"net_id": 4},
+		{"net_id": 5},
+		{"net_id": 6}
+	]
+}

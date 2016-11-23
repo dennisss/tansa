@@ -4,6 +4,10 @@
 
 namespace tansa {
 
+	std::vector<Breakpoint> JocsPlayer::getBreakpoints() {
+		return breakpoints;
+	}
+
 	std::vector<Point> JocsPlayer::getHomes() {
 		return homes;
 	}
@@ -12,10 +16,8 @@ namespace tansa {
 		return actions;
 	}
 
-	JocsPlayer::JocsPlayer(const std::vector<Vehicle *> &vehicles, const std::vector<unsigned> &jocsActiveIds) {
+	void JocsPlayer::initVehicles(const std::vector<Vehicle *> &vehicles) {
 		this->vehicles = vehicles;
-		this->jocsActiveIds = jocsActiveIds;
-
 
 		int n = vehicles.size();
 
@@ -50,11 +52,21 @@ namespace tansa {
 	/**
 	 * Load JOCS data from a specified path
 	 */
-	void JocsPlayer::loadJocs(Jocs *j) {
-		currentJocs = j;
+	void JocsPlayer::loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds) {
+		cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ")" << endl;
+		if (isPlaying()) {
+			printf("Can't load a new jocs file if still playing.\n");
+			return;
+		}
+
+		delete currentJocs;
+		this->jocsActiveIds = jocsActiveIds;
+
+		currentJocs = Jocs::Parse(jocsPath, scale);
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
 		breakpoints = currentJocs->GetBreakpoints();
+		cout << "Finished loading jocs" << endl;
 	}
 
 

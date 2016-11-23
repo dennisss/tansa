@@ -44,11 +44,19 @@ const std::string Jocs::CIRCLE_RADIUS_KEY = "radius";
 const std::string Jocs::CIRCLE_THETA1_KEY = "theta1";
 const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
 
+const std::string Jocs::START_INTENSITY_KEY = "startIntensity";
+const std::string Jocs::END_INTENSITY_KEY = "endIntensity";
+
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
 
 Jocs::~Jocs() {
 	for (const auto &vec : actions) {
+		for (const auto &a : vec) {
+			delete a;
+		}
+	}
+	for (const auto &vec : lightActions) {
 		for (const auto &a : vec) {
 			delete a;
 		}
@@ -88,16 +96,18 @@ Jocs* Jocs::Parse(std::string jocsPath, double scale) {
 			std::sort(actions[j].begin(), actions[j].end(),
 					  [](Action *const &lhs, Action *const &rhs) { return lhs->GetStartTime() < rhs->GetStartTime(); });
 			for (unsigned i = 0; i < actions[j].size(); i++) {
-				//Check temporal continuity
 				Action *a = actions[j][i];
 				double sTime = a->GetStartTime();
 				double eTime = a->GetEndTime();
-				if (!floatComp(sTime, startTime)) {
-					throw std::runtime_error(
-							"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
-							std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
+				//Check temporal continuity
+				if (a->GetActionType() != ActionTypes::Light) {
+					if (!floatComp(sTime, startTime)) {
+						throw std::runtime_error(
+								"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
+								std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
+					}
+					startTime = eTime;
 				}
-				startTime = eTime;
 				//Check spatial continuity
 				if (a->GetActionType() != ActionTypes::Light) {
 					auto ma = static_cast<MotionAction *>(a);
@@ -139,6 +149,7 @@ void Jocs::parseActions(const nlohmann::json &data, double scale) {
 	auto length = actionsJson.size();
 	//allocate space for each subarray for each drone.
 	actions.resize(droneLength);
+	lightActions.resize(droneLength);
 	// For each drone, gather actions in a vector and add as entry in "actions" 2d vector
 	double lastTime = 0.0;
 	for(unsigned k = 0; k < repeat; k++) {
@@ -176,8 +187,10 @@ void Jocs::parseActions(const nlohmann::json &data, double scale) {
 				} else {
 
 					// Calculate previous and next motion to generate what's needed for the transition
-					MotionAction *prev = static_cast<MotionAction *>(actions[i][j - 1]);
-					MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
+					// - can safely assume all are motions since made separate array for lights
+					MotionAction* prev = dynamic_cast<MotionAction*>(actions[i][j - 1]);
+					MotionAction* next = dynamic_cast<MotionAction*>(actions[i][j + 1]);
+
 					// Get states from the previous and next state that were found
 					auto startState = prev->GetPathState(prev->GetEndTime());
 					auto endState = next->GetPathState(next->GetStartTime());
@@ -220,70 +233,91 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 
 		for (unsigned j = 0; j < drones.size(); j++) {
 			unsigned drone = drones[j][ID_KEY];
-			Point startOffset(drones[j][DRONE_START_OFF_KEY][0], drones[j][DRONE_START_OFF_KEY][1], drones[j][DRONE_START_OFF_KEY][2]);
-			Point endOffset(drones[j][DRONE_END_OFF_KEY][0], drones[j][DRONE_END_OFF_KEY][1], drones[j][DRONE_END_OFF_KEY][2]);
-			startOffset*=conversionFactor;
-			endOffset*=conversionFactor;
-			switch (type) {
-				case ActionTypes::Transition: {
-					// Actual calculation will be processed after this loop
-					actions[drone].push_back(new EmptyAction(drone, lastTime + startTime, lastTime + startTime + duration));
-					break;
-				}
-				case ActionTypes::Line: {
-					Point start(
-							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][0],
-							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][1],
-							actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][2]);
-					start*=conversionFactor;
-					Point end(
-							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][0],
-							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
-							actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
-					end*=conversionFactor;
-					actions[drone].push_back(new MotionAction(
-							drone, new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration), ActionTypes::Line));
-					break;
-				}
-				case ActionTypes::Circle: {
-					Point origin(
-							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][0],
-							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][1],
-							actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][2]);
-					origin*=conversionFactor;
-					double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
-					double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
-					radius*=conversionFactor;
-					double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
-					if(needConvertToRadians) {
-						theta1 = theta1 * DEGREES_TO_RADIANS;
-						theta2 = theta2 * DEGREES_TO_RADIANS;
+
+			if (type == ActionTypes::Light) {
+
+				// Get the lights that this action applies to
+				//auto lights = actionsArrayElement[ACTION_DATA_KEY][LIGHTS_INCL_KEY];
+				//assert(lights.is_array());
+
+				// TODO: Create separate actions - one for each light for each drone
+
+				float si = actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY];
+				float ei = actionsArrayElement[ACTION_DATA_KEY][END_INTENSITY_KEY];
+				lightActions[drone].push_back(new LightAction(
+						drone,
+						new LightTrajectory(
+								si,
+								lastTime + startTime,
+								ei,
+								lastTime + startTime + duration)
+				));
+			} else {
+				Point startOffset(drones[j][DRONE_START_OFF_KEY][0], drones[j][DRONE_START_OFF_KEY][1], drones[j][DRONE_START_OFF_KEY][2]);
+				Point endOffset(drones[j][DRONE_END_OFF_KEY][0], drones[j][DRONE_END_OFF_KEY][1], drones[j][DRONE_END_OFF_KEY][2]);
+				startOffset*=conversionFactor;
+				endOffset*=conversionFactor;
+				switch (type) {
+					case ActionTypes::Transition: {
+						// Actual calculation will be processed after this loop
+						actions[drone].push_back(new EmptyAction(drone, lastTime + startTime, lastTime + startTime + duration));
+						break;
 					}
-					// TODO: use separate offset key for circle and hover
-					actions[drone].push_back(new MotionAction(
-							drone,
-							new CircleTrajectory(origin + startOffset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration),
-							ActionTypes::Circle
-					));
-					break;
-				}
-				case ActionTypes::Hover:{
-					Point hoverPoint(
-							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][0],
-							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][1],
-							actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][2]
-					);
-					hoverPoint*=conversionFactor;
-					// TODO: use separate offset key for circle and hover
-					actions[drone].push_back(new MotionAction(
-							drone,
-							new LinearTrajectory(hoverPoint + startOffset, lastTime +  startTime, hoverPoint + endOffset, lastTime + startTime + duration),
-							ActionTypes::Hover
-					));
-					break;
-				}
-				default: {
-					break;
+					case ActionTypes::Line: {
+						Point start(
+								actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][0],
+								actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][1],
+								actionsArrayElement[ACTION_DATA_KEY][STARTPOS_KEY][2]);
+						start*=conversionFactor;
+						Point end(
+								actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][0],
+								actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][1],
+								actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
+						end*=conversionFactor;
+						actions[drone].push_back(new MotionAction(
+								drone, new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration), ActionTypes::Line));
+						break;
+					}
+					case ActionTypes::Circle: {
+						Point origin(
+								actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][0],
+								actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][1],
+								actionsArrayElement[ACTION_DATA_KEY][CIRCLE_ORIGIN_KEY][2]);
+						origin*=conversionFactor;
+						double radius = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_RADIUS_KEY];
+						double theta1 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA1_KEY];
+						radius*=conversionFactor;
+						double theta2 = actionsArrayElement[ACTION_DATA_KEY][CIRCLE_THETA2_KEY];
+						if(needConvertToRadians) {
+							theta1 = theta1 * DEGREES_TO_RADIANS;
+							theta2 = theta2 * DEGREES_TO_RADIANS;
+						}
+						// TODO: use separate offset key for circle and hover
+						actions[drone].push_back(new MotionAction(
+								drone,
+								new CircleTrajectory(origin + startOffset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration),
+								ActionTypes::Circle
+						));
+						break;
+					}
+					case ActionTypes::Hover:{
+						Point hoverPoint(
+								actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][0],
+								actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][1],
+								actionsArrayElement[ACTION_DATA_KEY][HOVER_KEY][2]
+						);
+						hoverPoint*=conversionFactor;
+						// TODO: use separate offset key for circle and hover
+						actions[drone].push_back(new MotionAction(
+								drone,
+								new LinearTrajectory(hoverPoint + startOffset, lastTime +  startTime, hoverPoint + endOffset, lastTime + startTime + duration),
+								ActionTypes::Hover
+						));
+						break;
+					}
+					default: {
+						break;
+					}
 				}
 			}
 		}
@@ -320,6 +354,10 @@ ActionTypes Jocs::convertToActionType(const std::string& data){
 		return ActionTypes::Circle;
 	else if (data == "hover")
 		return ActionTypes::Hover;
+	else if (data == "light")
+		return ActionTypes::Light;
+	else if (data == "strobe")
+		return ActionTypes::Strobe;
 	return ActionTypes::None;
 }
 

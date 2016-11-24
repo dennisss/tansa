@@ -105,7 +105,7 @@
 				</button>
 				<br>-->
 				<div class="container-fluid noMargin">
-					<div class="col-sm-8">
+					<div class="col-xs-8 col-md-6">
 						<select id="fileNameList" class="form-control">
 							<option>Select a JOCS File</option>
 							<option>jumpManJumpManJumpMan.jocs</option>
@@ -113,13 +113,23 @@
 							<option>operationPhilia.jocs</option>
 						</select>
 					</div>
-					<div class="col-sm-1">
+					<!--<div class="col-xs-2 col-md-1">
+                                                <button id="loadJocs" type="button" class="btn btn-fab white">
+                                                        <span class="fa fa-upload" aria-hidden="true"></span>
+                                                </button>
+                                        </div>-->
+					<div class="col-xs-2 col-md-1">
+						<div class="form-group label-floating text-left">	
+							<label for="scaleQty" class="control-label">Scale</label> <input type="text" class="form-control" id='scaleQty' value="1">
+						</div>
+					</div>
+					<div class="col-xs-2 col-md-1">
                                                 <button id="loadJocs" type="button" class="btn btn-fab white">
                                                         <span class="fa fa-upload" aria-hidden="true"></span>
                                                 </button>
                                         </div>
-					<div class="col-sm-3">
-						<select id="queueList" class="form-control">
+					<div class="col-xs-6 col-md-4">
+						<select id="queueList" class="form-control hidden">
 							<option>Start</option>
 							<option>1</option>
 							<option>2</option>
@@ -128,43 +138,43 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-sm-4 text-center">
+			<div class="col-xs-4 text-center">
 					<button id="positionMap" type="button" class="btn btn-fab actionFab" data-toggle="modal" data-target="#droneMapModal">
 						<span class="fa fa-th" aria-hidden="true"></span>
 					</button>
 					<br><br>
 			</div>
-			<div class="col-sm-4 text-center">
+			<div class="col-xs-4 text-center">
 					<button id="takeOff" type="button" class="btn btn-fab actionFab">
 						<span class="fa fa-rocket" aria-hidden="true"></span>
 					</button>
 					<br><br>
 			</div>
-			<div class="col-sm-4 text-center">
+			<div class="col-xs-4 text-center">
 					<button type="button" class="btn btn-fab actionFab killDrones"><i class="fa fa-bomb" aria-hidden="true"></i></button>
 					<br><br>
 			</div>
 		</div>
 		<div class="text-center gap row flightReady">
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-md-3 col-xs-6 text-center">
 				<button id="playDrones" type="button" class="btn btn-fab actionFab">
 					<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-md-3 col-xs-6 text-center">
 				<button id="pauseDrones" type="button" class="btn btn-fab actionFab">
 					<span class="fa fa-step-forward" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-md-3 col-xs-6 text-center">
 				<button id="stopDrones" type="button" class="btn btn-fab actionFab">
 					<span class="fa fa-download" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-md-3 col-xs-6 text-center">
 				<button type="button" class="btn btn-fab actionFab killDrones">
 					<i class="fa fa-bomb" aria-hidden="true"></i>
 				</button>
@@ -172,16 +182,16 @@
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-sm-3 text-center">
+			<div class="col-xs-3 text-center">
 				MoCap:&nbsp;&nbsp;<i class="fa fa-binoculars moCapStatus" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 text-center">
+			<div class="col-xs-3 text-center">
 				Ready:&nbsp;&nbsp;<i class="fa fa-circle readyStatus" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 text-center">
+			<div class="col-xs-3 text-center">
 				Playing:&nbsp;&nbsp;<i class="fa fa-circle playStatus" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 text-center">
+			<div class="col-xs-3 text-center">
 				Run Time:&nbsp;&nbsp;<span id="runTime">0</span> secs
 			</div>
 		</div>
@@ -306,12 +316,13 @@ $(".killDrones").click(function () {
 
 $("#loadJocs").click(function () {
 	var fileName = $("select#fileNameList option:selected").html();
+	var scale = $("#scaleQty").val()
 	// TODO: Parse the rest of the items in the message from the GUI
 	var message = {
 		type: 'load',
 		jocsPath: 'data/' + fileName,
 		jocsActiveIds: [0,1,2,3,4,5],
-		theaterScale: 0.9,
+		theaterScale: scale,
 		vehicles: [
 			{ net_id: 1 },
 			{ net_id: 2 },
@@ -325,6 +336,9 @@ $("#loadJocs").click(function () {
 });
 
 var isPlaying = false;
+
+// from http://stackoverflow.com/questions/3733227/javascript-seconds-to-minutes-and-seconds
+function fmtMSS(s){return(s-(s%=60))/60+(9<s?':':':0')+s}
 
 // This should receive data a few times a second
 socket.on('msg', function(data) {

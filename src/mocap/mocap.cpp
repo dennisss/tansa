@@ -2,8 +2,20 @@
 #include <tansa/vehicle.h>
 #include <tansa/time.h>
 
+#include <iostream>
+
 #include "optitrack/NatNetClient.h"
 #include "optitrack/NatNetTypes.h"
+
+
+static Vector3d lastPosition(0,0,0);
+static bool found = false;
+static bool beaconOn = false;
+static Quaterniond startOrient;
+static int frameI = 0;
+
+static Vector3d velocity(0,0,0);
+
 
 Mocap::Mocap() {
 
@@ -76,12 +88,13 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 
 		inst->tracked[id]->mocap_update(pos, quat, t);
 
+//		cout << pos.transpose() << endl;
 
 	}
 
 
-/*
-	// Grab other markers that were triangulated but not
+
+	// Grab other markers that were triangulated but not attached to rigid bodies
 	vector<Vector3d> markers;
 	markers.resize(pFrameOfData->nOtherMarkers);
 	for(int i = 0; i < markers.size(); i++) {
@@ -90,9 +103,98 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 			pFrameOfData->OtherMarkers[i][2],
 			pFrameOfData->OtherMarkers[i][1]
 		);
+
+		//cout << markers[i].transpose() << endl;
+
 	}
-*/
+
 	// Markers is now the full
 
 
+	Vehicle *v = inst->tracked[1];
+
+
+	Vector3d mainMarker;
+	int mainMarkerI = -1;
+	double minError = 9999.0;
+
+	// Find primary marker
+	for(int i = 0; i < markers.size(); i++) {
+
+		Vector3d m = markers[i];
+
+		// Initial scan
+		if(!found) {
+			if(m.norm() < 0.5) { // Look for something close to the origin
+				lastPosition = m;
+				startOrient = v->onboardState.orientation;
+				found = true;
+
+				cout << "Found marker at: " << m.transpose() << endl;
+				break;
+			}
+		}
+		// Track
+		else {
+			double e = (m - lastPosition).norm();
+			if(/* e < 0.035 && */ e < minError) {
+				minError = e;
+				mainMarkerI = i;
+				mainMarker = m;
+
+				lastPosition = mainMarker;
+			}
+		}
+	}
+
+
+
+	// Look for alignment beacon
+	if(beaconOn) {
+		for(int i = 0; i < markers.size(); i++) {
+			if(mainMarkerI == i) {
+				continue;
+			}
+
+
+
+
+		}
+
+	}
+
+
+
+	frameI++;
+
+	if(found) {
+		Vector3d pos = startOrient * lastPosition;
+		pos.z() = lastPosition.z();
+//		v->mocap_update(pos, Quaterniond(1,0,0,0), t);
+
+
+	}
+
+	/*
+		If we have 2 markers, then we can determine auto-gyro bias estimation
+
+		- We record initial yaw orientation y0 with mocap orientation ym0 at time 0
+		- Later we record any set: yt and ymt at time 't'
+		- If the bias was perfect, then yt - y0 == ymt - ym0
+			- (yt - y0) - (ymt - ym0) = ydiff is the unexplained rotation angle integrated from the gyro
+			- differentiating, we get a bias of (ydiff / t) = b
+			- we will use gradient descent to incrementally add to the current gyro bias until
+	*/
+
+	/*
+	// Toggle the beacon in short bursts
+	if(found && frameI % 120 == 0) {
+		v->set_beacon(true);
+		beaconOn = true;
+	}
+	else if((frameI - 30) % 120 == 0 && beaconOn) { // Turn off in 30 frames
+		v->set_beacon(false);
+		beaconOn = false;
+	}
+	*/
 }

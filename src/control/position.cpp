@@ -25,9 +25,6 @@ TrajectoryState PositionController::getTargetState(double t) {
 }
 
 void PositionController::control(double t) {
-
-	double hover = vehicle->params.hoverPoint;
-
 	// Evaluate trajectory
 	TrajectoryState s = this->getTargetState(t);
 	State cur = vehicle->arrival_state();

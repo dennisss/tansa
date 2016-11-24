@@ -134,6 +134,9 @@ public:
 	State state;
 	LinearComplementaryEstimator estimator;
 
+	ControlInput lastControlInput;
+	Time lastControlTime;
+
 	// State as observed by the onboard processor
 	State onboardState;
 
@@ -161,9 +164,6 @@ private:
 
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
-
-	ControlInput lastControlInput;
-	Time lastControlTime;
 
 
 	Time lastHeartbeatReceived;

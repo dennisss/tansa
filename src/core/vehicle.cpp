@@ -300,10 +300,10 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 	const double hover = params.hoverPoint;
 
 	// Scale to -1 to 1 range and add hover point because PX4 doesn't take m s^-2 input but rather input proportional to thrust percentage
-	accel = accel * (hover / GRAVITY_MS) + Vector3d(0, 0, hover);
+	Vector3d accel_normal = accel * (hover / GRAVITY_MS) + Vector3d(0, 0, hover);
 
 
-	Vector3d accel_ned = enuToFromNed() * accel;
+	Vector3d accel_ned = enuToFromNed() * accel_normal;
 
 	mavlink_message_t msg;
 	mavlink_msg_set_position_target_local_ned_pack_chan(
@@ -325,7 +325,7 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 }
 
 void Vehicle::setpoint_zero() {
-	this->setpoint_zero(Vector3d(0,0, -GRAVITY_MS));
+	this->setpoint_accel(Vector3d(0,0, -GRAVITY_MS));
 }
 
 void Vehicle::set_lighting(float top, float bottom) {

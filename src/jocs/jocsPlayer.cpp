@@ -98,11 +98,13 @@ namespace tansa {
 
 				transitions.resize(n);
 				for(int i = 0; i < n; i++) {
+					Vector3d start = vehicles[i]->state.position,
+							 end = homes[jocsActiveIds[i]];
 
-
+					double dur = (start - end).norm() / VEHICLE_ASCENT_MS;
 					states[i] = StateTakeoff;
 					transitionStarts[i] = Time::now();
-					transitions[i] = new LinearTrajectory(vehicles[i]->state.position, 0, homes[jocsActiveIds[i]], 10.0);
+					transitions[i] = new LinearTrajectory(start, 0, end, dur);
 				}
 				// TODO: Only grab the ones for the active drones
 				holdpoints = homes;
@@ -178,8 +180,9 @@ namespace tansa {
 						states[i] = StateLanding;
 
 						Point lastPoint = motion->evaluate(t).position;
-						Point groundPoint = lastPoint; groundPoint.z() = 0;
-						transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
+						Point groundPoint(lastPoint.x(), lastPoint.y(), 0);
+						double dur = lastPoint.z() / VEHICLE_DESCENT_MS;
+						transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, dur);
 						transitionStarts[i] = Time::now();
 						continue;
 					}
@@ -211,8 +214,10 @@ namespace tansa {
 			} else if (s == StateLanding) {
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
-				// Descend to ground
-				if(t < transitions[i]->endTime()) {
+				// Special behavior near the ground. Stop trying to descend if we are hitting ground effects
+				bool groundEffect = (v.state.position.z() < 0.20 && (v.state.velocity.norm() < 0.08)) || v.state.position.z() < 0.15;
+
+				if(t < transitions[i]->endTime() && !groundEffect) {
 					posctls[i]->track(transitions[i]);
 					posctls[i]->control(t);
 				}
@@ -303,7 +308,8 @@ namespace tansa {
 
 			Point lastPoint = holdpoints[jocsActiveIds[i]];
 			Point groundPoint = lastPoint; groundPoint.z() = 0;
-			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, 10.0);
+			double dur = lastPoint.z() / VEHICLE_DESCENT_MS;
+			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, dur);
 			transitionStarts[i] = Time::now();
 		}
 	}

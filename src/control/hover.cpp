@@ -14,8 +14,8 @@ HoverController::HoverController(Vehicle *v) : PositionController(v) {
 	);
 
 	pid->setWindupOutputLimit(
-		Point(-0.1, -0.1, -0.1),
-		Point(0.1, 0.1, 0.1)
+		Point(-2.0, -2.0, -2.0),
+		Point(2.0, 2.0, 2.0)
 	);
 }
 

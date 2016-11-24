@@ -1,6 +1,9 @@
 #ifndef TANSA_CONFIG_H
 #define TANSA_CONFIG_H
 
+#define VEHICLE_ASCENT_MS 0.2
+#define VEHICLE_DESCENT_MS 0.3
+
 struct hardware_config {
 	string clientAddress;
 	string serverAddress;

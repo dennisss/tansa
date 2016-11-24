@@ -3,6 +3,8 @@
 
 #include <fstream>
 
+namespace tansa {
+
 bool Vehicle::readParams(string file) {
 
 	std::ifstream stream(file);
@@ -40,4 +42,6 @@ void Vehicle::writeParams(string file) {
 	fstream.open(file, ios::out | ios::trunc);
 	fstream << j.dump();
 	fstream.close();
+}
+
 }

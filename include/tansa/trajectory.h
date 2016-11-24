@@ -59,7 +59,7 @@ class PiecewiseTrajectory : public Trajectory {
 public:
 
 
-}
+};
 
 class PolynomialTrajectory : public Trajectory {
 public:
@@ -186,7 +186,7 @@ public:
 private:
 	LinearTrajectory *center;
 	CircleTrajectory *circle;
-}
+};
 
 
 }

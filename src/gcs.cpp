@@ -175,6 +175,7 @@ void osc_on_message(OSCMessage &msg) {
 
 /*
 	Must be called when holding in singleDrone.jocs
+	TODO: Provide some distance measure during holding phase to determine if the drone is stable enough to calibrate
 */
 void do_calibrate() {
 	if(vehicles.size() != 1) {

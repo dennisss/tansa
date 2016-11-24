@@ -1,9 +1,9 @@
 #include <tansa/control.h>
 
-namespace tansa {
-
 #include "pid.h"
 
+
+namespace tansa {
 
 HoverController::HoverController(Vehicle *v) : PositionController(v) {
 	this->point = Point(0,0,0);

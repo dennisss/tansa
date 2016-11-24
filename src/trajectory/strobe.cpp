@@ -1,5 +1,6 @@
 #include <tansa/trajectory.h>
 
+namespace tansa {
 
 double StrobeTrajectory::evaluate(double t) {
 	assert(t - startTime > 0); // TODO move to a constructor maybe
@@ -10,4 +11,6 @@ double StrobeTrajectory::evaluate(double t) {
 	// If even or last, return the end intensity
 	// If odd, return the start intensity
 	return (beatsPassed % 2 == 0) ? endIntensity : startIntensity;
+}
+
 }

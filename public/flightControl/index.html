@@ -120,7 +120,8 @@
                                         </div>-->
 					<div class="col-xs-2 col-md-1">
 						<div class="form-group label-floating text-left">	
-							<label for="scaleQty" class="control-label">Scale</label> <input type="text" class="form-control" id='scaleQty' value="1">
+							<label for="scaleQty" class="control-label">Scale</label>
+							<input class="form-control" id='scaleQty' value="1.0">
 						</div>
 					</div>
 					<div class="col-xs-2 col-md-1">
@@ -315,8 +316,8 @@ $(".killDrones").click(function () {
 });
 
 $("#loadJocs").click(function () {
-	var fileName = $("select#fileNameList option:selected").html();
-	var scale = $("#scaleQty").val()
+	var fileName = $('select#fileNameList option:selected').html();
+	var scale = parseInt($('input#scaleQty').val(), 10);
 	// TODO: Parse the rest of the items in the message from the GUI
 	var message = {
 		type: 'load',
@@ -336,9 +337,6 @@ $("#loadJocs").click(function () {
 });
 
 var isPlaying = false;
-
-// from http://stackoverflow.com/questions/3733227/javascript-seconds-to-minutes-and-seconds
-function fmtMSS(s){return(s-(s%=60))/60+(9<s?':':':0')+s}
 
 // This should receive data a few times a second
 socket.on('msg', function(data) {

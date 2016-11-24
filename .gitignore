@@ -30,3 +30,4 @@ log
 
 # IDE Files from CLion
 .idea/
+cmake-build-debug/

@@ -71,7 +71,7 @@ void send_status_message() {
 	for(int i = 0; i < vehicles.size(); i++) {
 		json jsonVehicle;
 		jsonVehicle["id"] = vconfigs[i].net_id;
-		jsonVehicle["role"] = i <= jocsActiveIds.size() - 1 ? jocsActiveIds[i] : -1;
+		jsonVehicle["role"] = (jocsActiveIds.size() > 0 && i <= jocsActiveIds.size() - 1) ? jocsActiveIds[i] : -1;
 		jsonVehicle["connected"] = vehicles[i]->connected;
 		jsonVehicle["armed"] = vehicles[i]->armed;
 		jsonVehicle["tracking"] = vehicles[i]->tracking;
@@ -109,7 +109,7 @@ void send_file_list() {
 	struct dirent *ent;
 	if ((dir = opendir ("data")) != NULL) {
 		while ((ent = readdir (dir)) != NULL) {
-			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".jocs") != std::string::npos)	
+			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".jocs") != std::string::npos)
 				files.push_back(std::string(ent->d_name));
 		}
 		closedir (dir);

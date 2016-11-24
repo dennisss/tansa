@@ -64,8 +64,9 @@ public:
 	int disconnect();
 
 
-	void readParams(string file);
+	bool readParams(string file);
 
+	void writeParams(string file);
 
 	/**
 	 * Changes the armed state of the drone
@@ -135,6 +136,7 @@ public:
 	LinearComplementaryEstimator estimator;
 
 	ControlInput lastControlInput;
+	ControlInput lastRawControlInput;
 	Time lastControlTime;
 
 	// State as observed by the onboard processor

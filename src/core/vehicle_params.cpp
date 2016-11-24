@@ -3,10 +3,12 @@
 
 #include <fstream>
 
-void Vehicle::readParams(string file) {
+bool Vehicle::readParams(string file) {
 
 	std::ifstream stream(file);
-	if(!stream) throw "Unable to read params file!";
+	if(!stream) {
+		return false;
+	}
 
 	std::string rawdata((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
 	nlohmann::json data = nlohmann::json::parse(rawdata);
@@ -26,4 +28,16 @@ void Vehicle::readParams(string file) {
 		params.latency = data["latency"];
 	}
 
+	return true;
+}
+
+void Vehicle::writeParams(string file) {
+
+	json j = json::object();
+	j["hoverPoint"] = params.hoverPoint;
+
+	ofstream fstream;
+	fstream.open(file, ios::out | ios::trunc);
+	fstream << j.dump();
+	fstream.close();
 }

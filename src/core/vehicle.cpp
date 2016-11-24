@@ -23,6 +23,7 @@ static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 Vehicle::Vehicle() :
 	lastControlInput(0,0,0),
+	lastRawControlInput(0,0,0),
 	lastControlTime(0,0),
 	lastHeartbeatReceived(0,0),
 	lastHeartbeatSent(0,0),
@@ -301,7 +302,7 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 
 	// Scale to -1 to 1 range and add hover point because PX4 doesn't take m s^-2 input but rather input proportional to thrust percentage
 	Vector3d accel_normal = accel * (hover / GRAVITY_MS) + Vector3d(0, 0, hover);
-
+	lastRawControlInput = accel_normal;
 
 	Vector3d accel_ned = enuToFromNed() * accel_normal;
 
@@ -360,6 +361,27 @@ void Vehicle::set_beacon(bool on) {
 
 	send_message(&msg);
 }
+
+/*
+// TODO: This should wait for a COMMAND_ACK message (should give a RESULT_ACCEPTED upon start of calibration)
+// These src/modules/commander/calibration_messages.h are
+void Vehicle::calibrate() {
+	bool gyro = true;
+
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
+		&msg,
+		1, 1,
+		MAV_CMD_PREFLIGHT_CALIBRATION,
+		1, // yes we want a confirmation
+		gyro? 1 : 0,
+		0, 0, 0, 0, 0, 0
+	);
+
+	send_message(&msg);
+}
+*/
 
 
 void Vehicle::send_message(mavlink_message_t *msg) {

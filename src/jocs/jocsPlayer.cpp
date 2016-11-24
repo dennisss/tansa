@@ -173,7 +173,8 @@ namespace tansa {
 			} else if (s == StateFlying) {
 				double t = Time::now().since(start).seconds() - timeOffset;
 
-				Trajectory *motion = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
+				MotionAction *motionAction = static_cast<MotionAction*>(actions[chorI][plans[i]]);
+				Trajectory *motion = motionAction->GetPath();
 
 				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
 					if (plans[i] == actions[chorI].size()-1) {
@@ -197,8 +198,14 @@ namespace tansa {
 					}
 				}
 
-				posctls[i]->track(motion);
-				posctls[i]->control(t);
+				if(motionAction->GetActionType() == Hover) {
+					hovers[i]->setPoint(motion->evaluate(t).position); // TODO: This line will be a constant for this type of action
+					hovers[i]->control(t);
+				}
+				else {
+					posctls[i]->track(motion);
+					posctls[i]->control(t);
+				}
 
 				if (lightCounters[i] < lightActions[chorI].size()) {
 					LightTrajectory *light = static_cast<LightAction *>(lightActions[chorI][lightCounters[i]])->GetPath();

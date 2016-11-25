@@ -123,8 +123,8 @@ public:
 	/**
 	 * @return Current set intensity of the light
 	 */
-	inline double GetStartIntensity() { return path->evaluate(path->getStartTime()); }
-	inline double GetEndIntensity() { return path->evaluate(path->getEndTime()); }
+	inline double GetStartIntensity() { return path->evaluate(path->getStartIntensity()); }
+	inline double GetEndIntensity() { return path->evaluate(path->getEndIntensity()); }
 
 	/**
 	 * @return Which light this action is referring to.

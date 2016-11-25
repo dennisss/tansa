@@ -149,16 +149,18 @@ protected:
 class StrobeTrajectory : public LightTrajectory {
 public:
 
-	inline StrobeTrajectory(double si, double st, double ei, double et, double bpm) :
-			secondsPerBeat(bpm), LightTrajectory(si,st,ei,et) {}
+	inline StrobeTrajectory(double si, double st, double ei, double et, double bps) :
+			beatsPerSecond(bps), LightTrajectory(si,st,ei,et) {}
 	virtual ~StrobeTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times
 	virtual double evaluate(double t);
 
+	inline double getBeatsPerSecond() { return this->beatsPerSecond; }
+
 private:
 
-	double secondsPerBeat;
+	double beatsPerSecond;
 };
 
 

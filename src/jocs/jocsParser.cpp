@@ -46,6 +46,7 @@ const std::string Jocs::CIRCLE_THETA2_KEY = "theta2";
 
 const std::string Jocs::START_INTENSITY_KEY = "startIntensity";
 const std::string Jocs::END_INTENSITY_KEY = "endIntensity";
+const std::string Jocs::BPS_KEY = "bps";
 
 const double Jocs::FEET_TO_METERS = 0.3048;
 const double Jocs::DEGREES_TO_RADIANS = M_PI/180.0;
@@ -241,6 +242,8 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 				//assert(lights.is_array());
 
 				// TODO: Create separate actions - one for each light for each drone
+				// UNLESS if we decide to still use one set_lighting command for all lights,
+				// simply use two "paths" in the "Trajectory" class.
 
 				float si = actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY];
 				float ei = actionsArrayElement[ACTION_DATA_KEY][END_INTENSITY_KEY];
@@ -251,6 +254,20 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 								lastTime + startTime,
 								ei,
 								lastTime + startTime + duration)
+				));
+			} else if (type == ActionTypes::Strobe) {
+
+				float si = actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY];
+				float ei = actionsArrayElement[ACTION_DATA_KEY][END_INTENSITY_KEY];
+				float bps = actionsArrayElement[ACTION_DATA_KEY][BPS_KEY];
+				lightActions[drone].push_back(new LightAction(
+						drone,
+						new StrobeTrajectory(
+								si,
+								lastTime + startTime,
+								ei,
+								lastTime + startTime + duration,
+								bps)
 				));
 			} else {
 				Point startOffset(drones[j][DRONE_START_OFF_KEY][0], drones[j][DRONE_START_OFF_KEY][1], drones[j][DRONE_START_OFF_KEY][2]);

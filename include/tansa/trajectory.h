@@ -126,21 +126,21 @@ class LightTrajectory {
 public:
 
 	inline LightTrajectory(double si, double st, double ei, double et) :
-			startTime(st), endTime(et), startIntensity(si), endIntensity(ei) {}
+			startIntensity(si), startTime(st), endIntensity(ei), endTime(et) {}
 	virtual ~LightTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times
 	virtual double evaluate(double t);
 
+	inline double getStartIntensity() { return this->startIntensity; }
 	inline double getStartTime() { return this->startTime; }
+	inline double getEndIntensity() { return this->endIntensity; }
 	inline double getEndTime() { return this->endTime; }
 
-	inline double getStartIntensity() { return this->startIntensity; }
-	inline double getEndIntensity() { return this->endIntensity; }
 
 protected:
 
-	double startTime, endTime, startIntensity, endIntensity;
+	double startIntensity, startTime, endIntensity, endTime;
 };
 
 /**
@@ -150,7 +150,7 @@ class StrobeTrajectory : public LightTrajectory {
 public:
 
 	inline StrobeTrajectory(double si, double st, double ei, double et, double bps) :
-			beatsPerSecond(bps), LightTrajectory(si,st,ei,et) {}
+			LightTrajectory(si,st,ei,et), beatsPerSecond(bps) {}
 	virtual ~StrobeTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times

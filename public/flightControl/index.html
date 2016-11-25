@@ -193,7 +193,7 @@
 				Playing:&nbsp;&nbsp;<i class="fa fa-circle playStatus" aria-hidden="true"></i>
 			</div>
 			<div class="col-xs-3 text-center">
-				Run Time:&nbsp;&nbsp;<span id="runTime">0</span> secs
+				Run Time:&nbsp;&nbsp;<span id="runTime">0</span>
 			</div>
 		</div>
 		<br>
@@ -220,25 +220,25 @@
 	</div><!-- /.modal -->
 	<template id="droneRow">
 		<div class="row droneData">
-			<div class="col-sm-1 col-md-1 noPad">
+			<div class="col-xs-1 col-md-1 noPad">
 				<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID"></span>
 			</div>
 			<div class="col-md-1 visible-md visible-lg text-center">
 				<i class="fa fa-exchange" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 col-md-2 visible-md visible-lg text-center">
+			<div class="col-xs-3 col-md-2 visible-md visible-lg text-center">
 				Battery:&nbsp;&nbsp;<span class="batteryLevel"></span>%
 			</div>
-			<div class="col-sm-3 col-md-2 text-center">
+			<div class="col-xs-3 col-md-2 text-center">
 				Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 col-md-2 text-center">
+			<div class="col-xs-3 col-md-2 text-center">
 				Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 col-md-2 text-center">
+			<div class="col-xs-3 col-md-2 text-center">
 				Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-2 col-md-2 text-center">
+			<div class="col-xs-2 col-md-2 text-center">
 				<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
 			</div>
 		</div>
@@ -271,7 +271,6 @@ var loadButton = $('#loadJocs');
 
 /// Function Declarations
 var swapControlPanels;
-
 
 socket.emit('msg', JSON.stringify({ type: 'list' }));
 
@@ -346,10 +345,29 @@ loadButton.click(function() {
 
 var isPlaying = false;
 
+function timeConvert(seconds) {
+	if(seconds > 0) {
+		seconds = ~~((seconds * 100)/100);
+		// Minutes and seconds
+		var mins = ~~(seconds / 60);
+		var secs = seconds % 60;
+
+		// Output like "1:01" or "4:03:59" or "123:03:59"
+		var ret = "";
+	
+		ret += "" + (mins < 10 ? "0" : "") 
+		ret += mins + ":" + (secs < 10 ? "0" : "");
+		ret += "" + secs;
+	} else {
+		ret = " -:-- "
+	}
+	return ret;
+}
+
 processStatusMessage = function(data) {
     var playStatus = $('.playStatus');
 
-    $('#runTime').text(Math.round(data.time * 100) / 100);
+    $('#runTime').text(timeConvert(data.time));
     setValue(playStatus, data.global.playing);
     setValue($('.readyStatus'), data.global.ready);
 

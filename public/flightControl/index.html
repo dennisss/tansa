@@ -275,7 +275,6 @@ setFalse($(".armed"));
 $("#takeOff").click(function() {
 	socket.emit('msg', JSON.stringify({type: 'prepare'}));
 	swapControlPanels();
-	
 });
 
 $("#playDrones").click(function () {
@@ -291,7 +290,7 @@ $("#playDrones").click(function () {
 
 $("#pauseDrones").click(function () {
 	setTralse($(".playStatus"));
-	socket.emit('msg', {type: 'pause'});
+	socket.emit('msg', JSON.stringify({type: 'pause'}));
 	disable($("#pauseDrones"));
 	enable($("#playDrones"));
 	enable($("#stopDrones"));
@@ -363,7 +362,7 @@ socket.on('msg', function(data) {
 				setFalse(droneRow.find('.batteryLevel'));
 			}
 		});
-				
+
 		if($(".connected").length == 0 || ($(".connected.false").length > 0 || $(".tracking.false").length > 0)) {
 			disable($("#takeOff"));
 		} else {

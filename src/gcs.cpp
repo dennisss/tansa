@@ -203,8 +203,12 @@ void constructLoadResponse() {
 		nums.push_back(b.GetNumber());
 	}
 	json positions = json::array();
-	for (auto& b : breakpoints){
-		//TODO: need to fill in the starting positions. Not contained in breakpoints currently
+	for (Point home : player->getHomes()){
+		//TODO: need to fill in the starting positions for breakpoints. Not contained in breakpoints currently
+		json position;
+		position["x"] = home.x();
+		position["y"] = home.y();
+		positions.push_back(position);
 	}
 	j["cues"] = nums;
 	j["target_positions"] = positions;

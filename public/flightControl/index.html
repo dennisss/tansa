@@ -253,6 +253,7 @@ var modes = {
 
 // Hold some states for the UI
 var model = {
+    isPlaying: false,
 	view: modes.PRE_FLIGHT
 };
 
@@ -271,6 +272,7 @@ var loadButton = $('#loadJocs');
 
 /// Function Declarations
 var swapControlPanels;
+var drawDrone;
 
 socket.emit('msg', JSON.stringify({ type: 'list' }));
 
@@ -342,8 +344,6 @@ loadButton.click(function() {
 	};
 	socket.emit('msg', JSON.stringify(message));
 });
-
-var isPlaying = false;
 
 function timeConvert(seconds) {
 	if(seconds > 0) {
@@ -417,6 +417,7 @@ processListReply = function(data) {
 
 processLoadReply = function(data) {
     // TODO: Update based on the response
+	data.target_positions.forEach(drawDrone);
 };
 
 // This should receive data a few times a second
@@ -485,7 +486,10 @@ function enable(item) {
 }
 
 function gridSetup() {
-	for (var x = 0.5; x < canvasWidth; x += 10) {
+    var halfWidth = canvasWidth / 2;
+    var halfHeight = canvasHeight / 2;
+
+    for (var x = 0.5; x < canvasWidth; x += 10) {
 		context.moveTo(x, 0);
 		context.lineTo(x, canvasHeight);
 	}
@@ -498,9 +502,6 @@ function gridSetup() {
 	context.strokeStyle = '#eee';
 	context.stroke();
 	
-	var halfWidth = canvasWidth/2;
-	var halfHeight = canvasHeight/2;
-	
 	context.beginPath();
 	context.moveTo(halfWidth, 0);
 	context.lineTo(halfWidth, canvasHeight);
@@ -512,9 +513,9 @@ function gridSetup() {
 	context.stroke();
 }
 
-function drawDrone(data) {
-
-
+drawDrone = function(position) {
+    // TODO: Actually draw drones
+	console.log(position.x, position.y);
 }
 
 </script>

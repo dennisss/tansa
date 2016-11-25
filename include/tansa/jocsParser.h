@@ -52,6 +52,7 @@ public:
     static const std::string BREAK_NUMBER;
 	static const std::string START_INTENSITY_KEY;
 	static const std::string END_INTENSITY_KEY;
+	static const std::string BPS_KEY;
 	//static const std::string LIGHTS_INCL_KEY;
 
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}

@@ -60,7 +60,7 @@
             "startIntensity": 1.0,
             "endIntensity": 1.0
           },
-          "duration": 15,
+          "duration": 0.5,
           "drones": [
             {
               "id": 0,
@@ -163,10 +163,11 @@
             }
           ]
         },{
-          "type": "light",
+          "type": "strobe",
           "data": {
             "startIntensity": 1.0,
-            "endIntensity": 0.0
+            "endIntensity": 0.0,
+            "bps": 2
           },
           "duration": 10,
           "drones": [

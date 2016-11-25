@@ -1,0 +1,154 @@
+{
+  "units":
+  {
+	"length": "feet",
+	"time": "seconds",
+	"angle": "degrees"
+  },
+  "drones": [
+    {
+      "startPosition": [-4,-3,3],
+      "id": 0
+    },{
+      "startPosition": [0,-3,3],
+      "id": 1
+    },{
+      "startPosition": [4,-3,3],
+      "id": 2
+    },{
+      "startPosition": [-4,3,3],
+      "id": 3
+    },{
+      "startPosition": [0,3,3],
+      "id": 4
+    },{
+      "startPosition": [4,3,3],
+      "id": 5
+    }
+  ],
+ "theater_volume": {
+   "min": [-4,-3,0],
+   "max": [4,6,6]
+ },
+  "repeat":1,
+  "chor": [
+    {
+      "time":0,
+      "action": [
+        {
+          "type": "line",
+          "data":{
+            "startPoint": [0,0,3],
+            "endPoint": [0,3,6]
+          },
+          "duration":5,
+          "drones":[
+            {
+              "id": 0,
+              "startOffset":[-4,-3,0],
+              "endOffset":[-4,-3,0]
+            },{
+              "id": 1,
+              "startOffset":[0,-3,0],
+              "endOffset":[0,-3,0]
+            },{
+              "id": 2,
+              "startOffset":[4,-3,0],
+              "endOffset":[4,-3,0]
+            },{
+              "id": 3,
+              "startOffset":[-4,3,0],
+              "endOffset":[-4,3,0]
+            },{
+              "id": 4,
+              "startOffset":[0,3,0],
+              "endOffset":[0,3,0]
+            },{
+              "id": 5,
+              "startOffset":[4,3,0],
+              "endOffset":[4,3,0]
+            }
+          ]
+        }
+      ]
+    },{
+      "time":5,
+      "action": [
+        {
+          "type": "line",
+          "data":{
+            "startPoint": [0,3,6],
+            "endPoint": [0,0,3]
+          },
+          "duration":5,
+          "drones":[
+            {
+              "id": 0,
+              "startOffset":[-4,-3,0],
+              "endOffset":[-4,-3,0]
+            },{
+              "id": 1,
+              "startOffset":[0,-3,0],
+              "endOffset":[0,-3,0]
+            },{
+              "id": 2,
+              "startOffset":[4,-3,0],
+              "endOffset":[4,-3,0]
+            },{
+              "id": 3,
+              "startOffset":[-4,3,0],
+              "endOffset":[-4,3,0]
+            },{
+              "id": 4,
+              "startOffset":[0,3,0],
+              "endOffset":[0,3,0]
+            },{
+              "id": 5,
+              "startOffset":[4,3,0],
+              "endOffset":[4,3,0]
+            }
+          ]
+        }
+      ]
+    },{
+      "time":10,
+      "action": [
+        {
+          "type": "line",
+          "data":{
+            "startPoint": [0,0,3],
+            "endPoint": [0,0,1]
+          },
+          "duration":5,
+          "drones":[
+            {
+              "id": 0,
+              "startOffset":[-4,-3,0],
+              "endOffset":[-4,-3,0]
+            },{
+              "id": 1,
+              "startOffset":[0,-3,0],
+              "endOffset":[0,-3,0]
+            },{
+              "id": 2,
+              "startOffset":[4,-3,0],
+              "endOffset":[4,-3,0]
+            },{
+              "id": 3,
+              "startOffset":[-4,3,0],
+              "endOffset":[-4,3,0]
+            },{
+              "id": 4,
+              "startOffset":[0,3,0],
+              "endOffset":[0,3,0]
+            },{
+              "id": 5,
+              "startOffset":[4,3,0],
+              "endOffset":[4,3,0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

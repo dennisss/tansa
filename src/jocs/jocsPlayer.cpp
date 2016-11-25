@@ -72,6 +72,7 @@ namespace tansa {
 
 		delete currentJocs;
 		this->jocsActiveIds = jocsActiveIds;
+		landed = false;
 
 		currentJocs = Jocs::Parse(jocsPath, scale);
 		homes = currentJocs->GetHomes();
@@ -174,9 +175,11 @@ namespace tansa {
 				}
 
 				if (paused && (stopRequested || Time::now().since(pauseOffset).seconds() > 20.0)) {
-					cout << (stopRequested ? "Stop requested" : "Paused for more than 20 seconds")
-						 << ", attempting to land." << endl;
-					land();
+					string message = stopRequested ? "Stop requested" : "Paused for more than 20 seconds";
+					cout << message + ", attempting to land." << endl;
+					paused = false;
+					stopRequested = false;
+					this->land();
 					return;
 				}
 				// Do a hover
@@ -237,6 +240,7 @@ namespace tansa {
 				}
 				// Reset state machine
 				else {
+					landed = true;
 					s = StateInit;
 				}
 

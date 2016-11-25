@@ -95,6 +95,8 @@ void send_status_message() {
 	json globalStatus;
 	globalStatus["playing"] = player->isPlaying();
 	globalStatus["ready"] = player->isReady();
+	globalStatus["paused"] = player->isPaused();
+	globalStatus["landed"] = player->isLanded();
 	jsonStatus["global"] = globalStatus;
 
 	tansa::send_message(jsonStatus);
@@ -272,8 +274,6 @@ void socket_on_message(const json &data) {
 	} else if (type == "play") {
 		printf("Playing...\n");
 		playMode = true;
-	} else if (type == "land") {
-		player->land();
 	} else if (type == "pause") {
 		printf("Pausing...\n");
 		pauseMode = true;
@@ -369,9 +369,6 @@ void *console_thread(void *arg) {
 		} else if (args[0] == "stop") {
 			cout << "Stopping..." << endl;
 			stopMode = true;
-		} else if (args[0] == "land") {
-			cout << "Landing..." << endl;
-			player->land();
 		} else if (args[0] == "kill") {
 			killmode = args.size() <= 1 || !(args[1] == "off");
 		} else if (args[0] == "load" && args.size() > 1) {

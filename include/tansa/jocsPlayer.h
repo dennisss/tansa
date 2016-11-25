@@ -35,8 +35,10 @@ namespace tansa {
 
 
 		// TODO: Instead we should use isRunning which checks if any states are not StateInit
-		bool isPlaying() { return states.size() > 0 && this->states[0] == StateFlying; }
-		bool isReady() { return states.size() > 0 && this->states[0] == StateHolding; }
+		inline bool isPlaying() { return states.size() > 0 && this->states[0] == StateFlying; }
+		inline bool isReady() { return states.size() > 0 && this->states[0] == StateHolding; }
+		inline bool isPaused() { return this->paused; }
+		inline bool isLanded() { return this->landed; }
 
 		/**
 		 * Gets the time relative to the start of the current file
@@ -72,6 +74,7 @@ namespace tansa {
 		bool paused = false;
 		bool stopRequested = false;
 		bool resetMode = false;
+		bool landed = false;
 		Time start = Time(0,0); // TODO: I will also need a time offset
 		Time pauseOffset = Time(0,0);
 		double timeOffset = 0.0;

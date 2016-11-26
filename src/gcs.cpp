@@ -102,11 +102,39 @@ void send_status_message() {
 	tansa::send_message(jsonStatus);
 }
 
+
+/**
+ * Return breakpoint information for a given jocsFile
+ * @param jocsPath	Path to a jocs file.
+ * @return	json array of breakpoint objects
+ */
+json getBreakpoints(string jocsPath) {
+	json jsonBreakpoints = json::array();
+	try {
+		auto jocsData = Jocs::Parse(jocsPath, 1.0);
+		auto breakPoints = jocsData->GetBreakpoints();
+
+		for (auto &breakPoint : breakPoints) {
+			json jsonBreakpoint;
+			jsonBreakpoint["name"] = breakPoint.GetName();
+			jsonBreakpoint["number"] = breakPoint.GetNumber();
+			jsonBreakpoint["startTime"] = breakPoint.GetStartTime();
+			jsonBreakpoints.push_back(jsonBreakpoint);
+		}
+	} catch (std::runtime_error e) {
+		cout << "Encountered an exception in getBreakpoints(" << jocsPath << "): ";
+		std::cerr << e.what() << std::endl;
+	}
+
+	return jsonBreakpoints;
+}
+
 void send_file_list() {
 	json j;
 
 	j["type"] = "list_reply";
 	json files = json::array();
+	json jsonMessage = json::array();
 	DIR *dir;
 	struct dirent *ent;
 	if ((dir = opendir ("data")) != NULL) {
@@ -118,7 +146,15 @@ void send_file_list() {
 	} else {
 		generateError(j, "Could not open directory.");
 	}
-	j["files"] = files;
+
+	for (string file : files) {
+		json message;
+		message["fileName"] = file;
+		message["breakpoints"] = getBreakpoints("data/" + file);
+		jsonMessage.push_back(message);
+	}
+
+	j["files"] = jsonMessage;
 	tansa::send_message(j);
 }
 

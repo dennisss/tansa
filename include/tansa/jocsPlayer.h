@@ -81,6 +81,8 @@ namespace tansa {
 		double timeOffset = 0.0;
 		std::vector<int> pauseIndices;
 		int stepTick = 0;
+//		int startIndex = 0;
+//		int endIndex = 0;
 
 		double getNextBreakpointTime(double lastTime);
 		double getBreakpointTime(unsigned breakpointNumber);
@@ -88,6 +90,7 @@ namespace tansa {
 		unsigned getBreakpointNumber(double startTime);
 		Point getDroneLocationAtTime(double startTime, unsigned droneId);
 		bool isMotionAction(Action* a);
+//		void createBreakpointSection(int startPoint, int endPoint = -1);
 	};
 }
 #endif //TANSA_JOCSPLAYER_H

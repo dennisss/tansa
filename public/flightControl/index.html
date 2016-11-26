@@ -108,9 +108,6 @@
 					<div class="col-xs-8 col-md-6">
 						<select id="fileNameList" class="form-control">
 							<option>Select a JOCS File</option>
-							<option>jumpManJumpManJumpMan.jocs</option>
-							<option>exesAndOhs.jocs</option>
-							<option>operationPhilia.jocs</option>
 						</select>
 					</div>
 					<!--<div class="col-xs-2 col-md-1">
@@ -124,18 +121,15 @@
 							<input class="form-control" id='scaleQty' value="1.0">
 						</div>
 					</div>
-					<div class="col-xs-2 col-md-1">
-                                                <button id="loadJocs" type="button" class="btn btn-fab white">
-                                                        <span class="fa fa-upload" aria-hidden="true"></span>
-                                                </button>
-                                        </div>
 					<div class="col-xs-6 col-md-4">
-						<select id="queueList" class="form-control hidden">
-							<option>Start</option>
-							<option>1</option>
-							<option>2</option>
-							<option>3</option>
+						<select id="queueList" class="form-control">
+							<option>Breakpoint</option>
 						</select>
+					</div>
+					<div class="col-xs-2 col-md-1">
+						<button id="loadJocs" type="button" class="btn btn-fab white">
+							<span class="fa fa-upload" aria-hidden="true"></span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -249,13 +243,14 @@
 var socket = io();
 
 var modes = {
-    PRE_FLIGHT: 'preFlight',
+	PRE_FLIGHT: 'preFlight',
 	FLIGHT: 'flightReady'
 };
 
 // Hold some states for the UI
 var model = {
-    isPlaying: false,
+	files: {},
+	isPlaying: false,
 	view: modes.PRE_FLIGHT
 };
 
@@ -271,6 +266,7 @@ var pauseButton = $('#pauseDrones');
 var stopButton = $('#stopDrones');
 var killButton = $('.killDrones');
 var loadButton = $('#loadJocs');
+var fileSelector = $('select#fileNameList');
 
 /// Function Declarations
 var swapControlPanels;
@@ -326,12 +322,23 @@ killButton.click(function() {
 	socket.emit('msg', JSON.stringify({ type: 'kill', enabled: true }));
 });
 
+fileSelector.change(function() {
+    var selectedFileName = $('select#fileNameList option:selected').html();
+    var stringOfOptions = (model.files[selectedFileName].breakpoints || []).reduce(function(acc, currentValue) {
+        console.log(currentValue.number + ': ' + currentValue.name);
+        return acc + '<option>' + currentValue.number + '</option>';
+	}, '<option>Select a breakpoint</option>');
+	$('#queueList').html(stringOfOptions);
+});
+
 loadButton.click(function() {
 	var fileName = $('select#fileNameList option:selected').html();
+	var breakPoint = parseInt($('select#queueList option:selected').val(), 10) || 1;
 	var scale = parseFloat($('input#scaleQty').val()) || 1.0;
 	// TODO: Parse the rest of the items in the message from the GUI
 	var message = {
 		type: 'load',
+		breakPoint: breakPoint,
 		jocsPath: 'data/' + fileName,
 		jocsActiveIds: [0,1,2,3,4,5],
 		theaterScale: scale,
@@ -391,7 +398,7 @@ processStatusMessage = function(data) {
         }
     });
 
-    if ($('.connected').length == 0 || ($('.connected.false').length > 0 || $('.tracking.false').length > 0)) {
+	if ($('.connected').length == 0 || ($('.connected.false').length > 0 || $('.tracking.false').length > 0)) {
         disable($('#takeOff'));
     } else {
         enable($('#takeOff'));
@@ -405,42 +412,44 @@ processStatusMessage = function(data) {
         disable($('#pauseDrones'));
         enable($('#playDrones'));
         enable($('#stopDrones'));
-	} else if (data.global.landed) {
+    } else if (data.global.landed) {
         swapControlPanels(modes.PRE_FLIGHT);
-	}
+    }
 };
 
 processListReply = function(data) {
-    var stringOfOptions = (data.files || []).reduce(function(acc, currentValue) {
-        return acc + '<option>' + currentValue + '</option>';
-    }, '');
-    $('#fileNameList').html(stringOfOptions);
+    model.files = {};
+	var stringOfOptions = (data.files || []).reduce(function(acc, currentValue) {
+		model.files[currentValue.fileName] = currentValue;
+	    return acc + '<option>' + currentValue.fileName + '</option>';
+	}, '<option>Select a file</option>');
+	$('#fileNameList').html(stringOfOptions);
 };
 
 processLoadReply = function(data) {
-    // TODO: Update based on the response
+	// TODO: Update based on the response
 	$("#droneRawCoordintes").html("");
 	data.target_positions.forEach(drawDrone);
 };
 
 // This should receive data a few times a second
 socket.on('msg', function(data) {
-    var handler;
-    data = JSON.parse(data);
+	var handler;
+	data = JSON.parse(data);
 
-    switch(data.type) {
+	switch(data.type) {
 		case 'status':
-		    handler = processStatusMessage;
-		    break;
+			handler = processStatusMessage;
+			break;
 		case 'list_reply':
-		    handler = processListReply;
-		    break;
+			handler = processListReply;
+			break;
 		case 'load_reply':
-		    handler = processLoadReply;
-		    break;
+			handler = processLoadReply;
+			break;
 		default:
-        	console.log('Unknown message type - ' + data.type);
-        	return;
+			console.log('Unknown message type - ' + data.type);
+			return;
 	}
 	handler(data);
 });
@@ -448,16 +457,16 @@ socket.on('msg', function(data) {
 // Repeatable Functions
 
 swapControlPanels = function(mode) {
-    // Already in the right view, no-op
-    if (model.view === mode) {
-        return;
+	// Already in the right view, no-op
+	if (model.view === mode) {
+		return;
 	}
 	model.view = mode;
 	$('.preFlight').slideToggle();
 	$('.flightReady').slideToggle();
-    enable($('#playDrones'));
-    disable($('#pauseDrones'));
-    disable($('#stopDrones'));
+	enable($('#playDrones'));
+	disable($('#pauseDrones'));
+	disable($('#stopDrones'));
 };
 
 function setValue(item, value) {
@@ -489,10 +498,10 @@ function enable(item) {
 }
 
 function gridSetup() {
-    var halfWidth = canvasWidth / 2;
-    var halfHeight = canvasHeight / 2;
+	var halfWidth = canvasWidth / 2;
+	var halfHeight = canvasHeight / 2;
 
-    for (var x = 0.5; x < canvasWidth; x += 10) {
+	for (var x = 0.5; x < canvasWidth; x += 10) {
 		context.moveTo(x, 0);
 		context.lineTo(x, canvasHeight);
 	}
@@ -517,7 +526,7 @@ function gridSetup() {
 }
 
 drawDrone = function(position, index) {
-    // TODO: Actually draw drones
+	// TODO: Actually draw drones
 	$("#droneRawCoordintes").append("Drone #" + Number(index + 1) + ": [" +  position.x +  ", " +  position.y + "]<br>");
 }
 

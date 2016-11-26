@@ -473,34 +473,48 @@ namespace tansa {
 		MotionAction* ma = dynamic_cast<MotionAction*>(a);
 		return ma;
 	}
-/*
-	void JocsPlayer::createBreakpointSection(const std::vector<vector> actions, int startPoint, int endPoint = -1) {
-		double startTime, endTime = -1;
-		int bpStartIndex, bpEndIndex = -1;
-		if(startPoint >= 0) {
-			startTime = getBreakpointTime(startPoint);
-		} else {
-			bpStartIndex = 0;
-		}
-		if(startPoint >= 0) {
-			endTime = getBreakpointTime(endPoint);
-		} else {
-			bpEndIndex = actions.size() - 1;
-		}
-		for(int i = 0; i < actions.size(); i++) {
-			if(actions[i][1].start_time.seconds == startTime) {
-				bpStartIndex = i;
-			}
-			if(actions[i][1].start_time.seconds == endTime) {
-				bpEndIndex = i;
-			}
-			if(bpStartIndex != -1 && bpEndIndex != -1) {
-				break;
-			}
-		}
-		startIndex = bpStartIndex;
-		endIndex = bpEndIndex;
-	}
 
-	*/
+	/**
+	 * Compute the indices to start and end at given breakpoints
+	 * @param startPoint
+	 * @param endPoint
+	 */
+//	void JocsPlayer::createBreakpointSection(int startPoint, int endPoint = -1) {
+//		double startTime = -1, endTime = -1;
+//		int bpStartIndex = -1 , bpEndIndex = -1;
+//
+//		if(startPoint >= 0) {
+//			startTime = this->getBreakpointTime((unsigned)startPoint);
+//		}
+//
+//		if(endPoint >= 0) {
+//			endTime = getBreakpointTime((unsigned)endPoint);
+//		}
+//
+//		if (endPoint != -1 && endPoint <= startPoint) {
+//			printf("Start point must be before endpoint...\n");
+//			return;
+//		}
+//
+//		for(int i = 0; i < actions.size(); i++) {
+//			if(actions[i][1]->GetStartTime() == startTime) {
+//				bpStartIndex = i;
+//			}
+//			if(actions[i][1]->GetEndTime() == endTime) {
+//				bpEndIndex = i;
+//			}
+//			if(bpStartIndex != -1 && bpEndIndex != -1) {
+//				break;
+//			}
+//		}
+//		if (bpStartIndex == -1) {
+//			bpStartIndex = 0;
+//		}
+//
+//		if (bpEndIndex == -1) {
+//			bpEndIndex = (int)actions.size() - 1;
+//		}
+//		startIndex = bpStartIndex;
+//		endIndex = bpEndIndex;
+//	}
 }

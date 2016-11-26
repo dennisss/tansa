@@ -271,9 +271,9 @@ void loadJocsFile(const json &rawJson) {
 	string jocsPath = rawJson["jocsPath"];
 	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
 	scale = rawJson["theaterScale"];
-
+	int startPoint = rawJson["startPoint"];
 	player->cleanup();
-	player->loadJocs(jocsPath, scale, jocsActiveIds);
+	player->loadJocs(jocsPath, scale, jocsActiveIds, startPoint);
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, jocsActiveIds);
 

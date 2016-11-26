@@ -325,7 +325,6 @@ killButton.click(function() {
 fileSelector.change(function() {
     var selectedFileName = $('select#fileNameList option:selected').html();
     var stringOfOptions = (model.files[selectedFileName].breakpoints || []).reduce(function(acc, currentValue) {
-        console.log(currentValue.number + ': ' + currentValue.name);
         return acc + '<option>' + currentValue.number + '</option>';
 	}, '<option>Select a breakpoint</option>');
 	$('#queueList').html(stringOfOptions);
@@ -338,7 +337,7 @@ loadButton.click(function() {
 	// TODO: Parse the rest of the items in the message from the GUI
 	var message = {
 		type: 'load',
-		breakPoint: breakPoint,
+		startPoint: breakPoint,
 		jocsPath: 'data/' + fileName,
 		jocsActiveIds: [0,1,2,3,4,5],
 		theaterScale: scale,

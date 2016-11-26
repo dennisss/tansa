@@ -211,6 +211,8 @@
 				</div>
 				<div class="modal-body text-center">
 					<canvas id="droneMap" width="600" height="400"></canvas>
+					<div>Audience</div>
+					<div id="droneRawCoordintes"></div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -417,6 +419,7 @@ processListReply = function(data) {
 
 processLoadReply = function(data) {
     // TODO: Update based on the response
+	$("#droneRawCoordintes").html("");
 	data.target_positions.forEach(drawDrone);
 };
 
@@ -513,9 +516,9 @@ function gridSetup() {
 	context.stroke();
 }
 
-drawDrone = function(position) {
+drawDrone = function(position, index) {
     // TODO: Actually draw drones
-	console.log(position.x, position.y);
+	$("#droneRawCoordintes").append("Drone #" + Number(index + 1) + ": [" +  position.x +  ", " +  position.y + "]<br>");
 }
 
 </script>

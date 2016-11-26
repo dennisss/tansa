@@ -252,6 +252,12 @@ namespace tansa {
 
 	void JocsPlayer::prepare() {
 
+		for(const auto& v : vehicles){
+			if(!v->tracking) {
+				printf("Don't have mocap tracking for at least one drone\n");
+				return;
+			}
+		}
 		for(auto s : states) {
 			if(s != StateInit) {
 				printf("Cannot prepare: Some drones not in initial state\n");

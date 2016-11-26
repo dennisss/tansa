@@ -39,3 +39,5 @@ void PositionController::control(double t) {
 
 	vehicle->setpoint_accel(a);
 }
+
+}

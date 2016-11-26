@@ -1,5 +1,6 @@
 #include <tansa/trajectory.h>
 
+namespace tansa {
 
 CircleTrajectory::CircleTrajectory(const Point &origin, double radius, double theta1, double t1, double theta2, double t2)
 	: Trajectory(t1, t2) {
@@ -23,4 +24,6 @@ TrajectoryState CircleTrajectory::evaluate(double t) {
 	s.acceleration = Point(-radius*dtheta*dtheta*sin(theta), -radius*dtheta*dtheta*cos(theta), 0);
 
 	return s;
+}
+
 }

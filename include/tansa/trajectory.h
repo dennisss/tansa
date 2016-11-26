@@ -7,7 +7,10 @@
 using namespace Eigen;
 using namespace std;
 
-#define PointDims 3
+
+namespace tansa {
+
+const unsigned PointDims = 3;
 // TODO: Should eventually be Vector4d to incorporate yaw
 typedef Vector3d Point;
 
@@ -49,6 +52,14 @@ protected:
 
 };
 
+/**
+ * Concatenation of many temporally offset trajectories
+ */
+class PiecewiseTrajectory : public Trajectory {
+public:
+
+
+};
 
 class PolynomialTrajectory : public Trajectory {
 public:
@@ -163,5 +174,23 @@ private:
 	double beatsPerSecond;
 };
 
+
+/**
+ * Does a spiral in the z direction. Implemented as an normalized circle with a moving center trajectory
+ */
+class SpiralTrajectory : public Trajectory {
+public:
+
+
+	virtual TrajectoryState evaluate(double t);
+
+
+private:
+	LinearTrajectory *center;
+	CircleTrajectory *circle;
+};
+
+
+}
 
 #endif

@@ -1,4 +1,5 @@
 #include <tansa/trajectory.h>
+#include "utils.h"
 
 #include <iostream>
 #include <cassert>
@@ -20,7 +21,8 @@ typedef CGAL::Quadratic_program_solution<ET> Solution;
 
 /*
 	Contains the generator of a minimum snap trajectory through points in the differentially flat space [x, y, z, yaw]
-	See 'Polynomial Trajectory Planning for Quadrotor Flight' by Richter et. al. for a full derivation.
+
+	-
 
 	Given:
 	- A desired polynomial order
@@ -29,18 +31,23 @@ typedef CGAL::Quadratic_program_solution<ET> Solution;
 */
 
 
-/*
-	Generates a piecewise polynomial trajectory with minimal snap through the given waypoints at the given times
+/**
+ * Generates a piecewise polynomial trajectory with minimal snap through the given waypoints at the given times
+ *
+ * See 'Polynomial Trajectory Planning for Quadrotor Flight' by Richter et. al. for a full derivation.
+ * This is the constrained QP formulation
+ *
+ * Currently this assumes we start at rest and end at rest
+ */
+void compute_min_snap(const vector<Point> &x, const vector<double> &t) {
 
-	Currently this assumes we start at rest and end at rest
-*/
-void compute_min_snap(const vector<Vector4d> &x, const vector<double> &t) {
+	// Number of coefficients generated segments : c_(n-1) * t^(n-1) + c_(n-2) * t^(n-2) + ... + c_0
+	// Note that in the Richter paper, big N is the polynomial order (N-1)
+	int N = 10;
 
-	int N = 9; // Polynomial order for generated segments : c_n * t^n + c_n-1 * t^(n-1) + ... + c_0
+	int M = x.size() - 1; // number of segments
 
-	int M = x.size(); // number of segments
-
-	if(t.size() != M + 1) {
+	if(t.size() != x.size()) {
 		printf("Wrong number of times provided\n");
 		return;
 	}
@@ -51,7 +58,7 @@ void compute_min_snap(const vector<Vector4d> &x, const vector<double> &t) {
 		s.t. A p - b = 0
 	*/
 
-	int R = 4;
+	int R = 4; // Derivative to minimize : in this case snap (0 indexed)
 
 	// The whole cost matrix for a single axis
 	// Note: this stays the same for each axis as this is only dependent on n, m, and t
@@ -95,19 +102,65 @@ void compute_min_snap(const vector<Vector4d> &x, const vector<double> &t) {
 	// Of the form Ax = b
 	// - start and stop: pos, vel, accel, jerk constraints
 	// - continuitity of all intermediate positions derivatives
+	// Note: A fixed position for an internal point would appear twice
+	// - so we will have two of most of the position
+	// -> (M+1)*(R-1) + 
 	// -> (M+1)*r
 	int nc = (M+1)*R; // Number of contraints
 
-	MatrixXd A(nc, N * M);
-	VectorXd b(nc);
+
+	// Iterate over each axis
+	for(int d = 0; d < PointDims; d++) {
+
+		// Setup constraints
+
+		MatrixXd A = MatrixXd::Zero(nc, N * M);
+		VectorXd b = MatrixXd::Zero(nc);
+
+
+		for(int i = 0; i < M; i++) {
+
+			// Start of end time vectors for this segment
+			VectorXd tvecS = powvec(0, N);
+			VectorXd tvecE = powvec(t[i+1] - t[i]);
+
+			// First R rows for the start
+			for(int j = 0; j < R; j++) {
+				//
+				A.block<> = diffvec(tvecS, j)
+
+			}
+
+
+		}
+
+
+	}
+
+
+	// essentially, I need to reuse the diffvec() stuff from polynomial.cpp to set the d
+
+	// continuity constraints should look something like [0, 0, .., Aderiv, -Bderiv, .. 0, 0,] = [0]
 
 
 
+
+}
+
+/*
+	Our QP is of the form:
+	argmin p^T Q p
+	s.t. A p - b = 0
+
+	In CGAL
+	Q becomes D
+*/
+VectorXd qp_solve(MatrixXd Q, MatrixXd A, VectorXd b) {
 
 	// Solving the quadratic program
 
 	// by default, we have a nonnegative QP with Ax <= b
-	Program qp(CGAL::SMALLER, true, 0, false, 0);
+	Program qp(CGAL::EQUAL, true, 0, false, 0);
 
 	// now set the non-default entries:
 	const int X = 0;

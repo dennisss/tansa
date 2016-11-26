@@ -21,6 +21,9 @@
 using namespace std;
 using namespace tansa;
 
+// TODO: Resolve this to an absolute path
+static const char *paramsDir = "./config/params/";
+
 static bool running;
 static bool killmode = false;
 static bool pauseMode = false;
@@ -28,6 +31,7 @@ static bool stopMode = false;
 static bool playMode = false;
 static bool prepareMode = false;
 static JocsPlayer* player;
+static bool useMocap;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static vector<unsigned> jocsActiveIds;
@@ -169,6 +173,38 @@ void osc_on_message(OSCMessage &msg) {
 
 }
 
+/*
+	Must be called when holding in singleDrone.jocs
+	TODO: Provide some distance measure during holding phase to determine if the drone is stable enough to calibrate
+*/
+void do_calibrate() {
+	if(vehicles.size() != 1) {
+		cout << "Can only calibrate one vehicle at a time" << endl;
+		return;
+	}
+
+	if(!player->isReady()) {
+		cout << "Must be holding to start calibration" << endl;
+		return;
+	}
+
+	cout << "Calibrating..." << endl;
+
+	double sum = 0.0;
+	Rate r(10);
+	for(int i = 0; i < 40; i++) {
+		sum += vehicles[0]->lastRawControlInput.z();
+	}
+
+	sum /= 40.0;
+
+	string calibId = useMocap? to_string(vconfigs[0].net_id) : "sim";
+	vehicles[0]->params.hoverPoint = sum;
+	vehicles[0]->writeParams(string(paramsDir) + calibId + ".calib.json");
+
+	cout << "Done!" << endl;
+}
+
 pthread_t console_handle;
 
 void *console_thread(void *arg) {
@@ -217,6 +253,9 @@ void *console_thread(void *arg) {
 		} else if (args[0] == "kill") {
 			killmode = args.size() <= 1 || !(args[1] == "off");
 		}
+		else if(args[0] == "calibrate") {
+			do_calibrate();
+		}
 
 
 	}
@@ -243,7 +282,7 @@ int main(int argc, char *argv[]) {
 	string jocsPath = rawJson["jocsPath"];
 	vector<unsigned> activeids = rawJson["jocsActiveIds"];
 	jocsActiveIds = activeids;
-	bool useMocap = rawJson["useMocap"];
+	useMocap = rawJson["useMocap"];
 	float scale = rawJson["theaterScale"];
 	bool enableMessaging = rawJson["enableMessaging"];
 	bool enableOSC = rawJson["enableOSC"];
@@ -261,9 +300,11 @@ int main(int argc, char *argv[]) {
 			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
 			vconfigs[i].rport = 14555;
 		}
-		else { // The simulated ones are zero-indexed and
-			vconfigs[i].lport = 14550 + 10*(vconfigs[i].net_id - 1);
-			vconfigs[i].rport = 14555 + 10*(vconfigs[i].net_id - 1);
+		else { // The simulated ones are zero-indexed and are always in ascending order
+			vconfigs[i].net_id = i;
+
+			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
+			vconfigs[i].rport = 14555 + 10*vconfigs[i].net_id;
 		}
 	}
 
@@ -316,8 +357,12 @@ int main(int argc, char *argv[]) {
 		vehicles[i] = new Vehicle();
 
 		// Load default parameters
-		vehicles[i]->readParams("./config/params/default.json");
-		// TODO: Also read in per-drone ones
+		vehicles[i]->readParams(string(paramsDir) + "default.json");
+		string calibId = useMocap? to_string(v.net_id) : "sim";
+
+		if(!vehicles[i]->readParams(string(paramsDir) + to_string(v.net_id) + ".calib.json")) {
+			cout << "#" + to_string(v.net_id) + " not calibrated!" << endl;
+		}
 
 		vehicles[i]->connect(v.lport, v.rport);
 		if (useMocap) {

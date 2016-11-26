@@ -3,6 +3,8 @@
 #include <tansa/time.h>
 #include <unistd.h>
 
+using namespace tansa;
+
 // Just making sure that we can correctly measure time differences
 TEST(Time, UnitDurations) {
 

@@ -10,6 +10,7 @@
 #include <mach/mach.h>
 #endif
 
+namespace tansa {
 
 // Real time at which the
 static Time starttime(0,0);
@@ -156,4 +157,6 @@ void Rate::sleep() {
 	usleep(MIN(uperiod, uperiod - done));
 
 	lasttime = Time::now();
+}
+
 }

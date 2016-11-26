@@ -4,7 +4,7 @@
 
 #include <tansa/mocap.h>
 
-
+using namespace tansa;
 
 TEST(MocapRegistrationTest, CorrespondenceSolving) {
 

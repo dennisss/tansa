@@ -20,5 +20,13 @@ inline Matrix3d enuToFromNed() {
 	return mat;
 }
 
+inline Matrix3d baseToFromAirFrame() {
+	Matrix3d mat;
+	mat << 1, 0, 0,
+		   0, -1, 0,
+		   0, 0, -1;
+	return mat;
+}
+
 
 #endif

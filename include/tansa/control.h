@@ -4,6 +4,8 @@
 #include "vehicle.h"
 #include "trajectory.h"
 
+namespace tansa {
+
 /*
 	The general idea is that every Vehicle will always have some Controllers associated with it.
 	When a trajectoy is completed, the controller may change slightly or another controller may take over
@@ -100,5 +102,6 @@ private:
 	double currentIntensityBot = 0.0;
 };
 
+}
 
 #endif

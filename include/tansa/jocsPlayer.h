@@ -35,6 +35,7 @@ namespace tansa {
 
 
 		// TODO: Instead we should use isRunning which checks if any states are not StateInit
+		bool canLoad();
 		inline bool isPlaying() { return states.size() > 0 && this->states[0] == StateFlying; }
 		inline bool isReady() { return states.size() > 0 && this->states[0] == StateHolding; }
 		inline bool isPaused() { return this->paused; }

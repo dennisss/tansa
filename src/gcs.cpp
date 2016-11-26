@@ -223,6 +223,11 @@ void loadJocsFile(const json &rawJson) {
 	if (player == nullptr) {
 		// TODO: Send some kinda error code here
 		printf("Player is null...\n");
+		loadMode = false;
+		return;
+	} else if (!player->canLoad()) {
+		printf("Player not in a state to load...\n");
+		loadMode = false;
 		return;
 	}
 

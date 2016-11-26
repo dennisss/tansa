@@ -60,13 +60,27 @@ namespace tansa {
 		transitionStarts.resize(n, Time(0,0));
 	}
 
+	bool JocsPlayer::canLoad() {
+		for (auto s : states) {
+			if(s != StateInit) {
+				printf("Cannot load a new file: Some drones not in initial state\n");
+				return false;
+			}
+		}
+
+		if (isPlaying()) {
+			printf("Can't load a new jocs file if still playing.\n");
+			return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Load JOCS data from a specified path
 	 */
 	void JocsPlayer::loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds) {
 		cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ")" << endl;
-		if (isPlaying()) {
-			printf("Can't load a new jocs file if still playing.\n");
+		if (!this->canLoad()) {
 			return;
 		}
 
@@ -284,7 +298,6 @@ namespace tansa {
 			paused = false;
 			pauseRequested = false;
 			stopRequested = false;
-			start.setTime(start, -Time::now().since(pauseOffset).seconds());
 			timeOffset += Time::now().since(pauseOffset).seconds();
 			int n = jocsActiveIds.size();
 			for (int i = 0; i < n; i++) {

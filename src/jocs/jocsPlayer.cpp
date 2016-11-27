@@ -218,6 +218,9 @@ namespace tansa {
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
 				double t = Time::now().since(start).seconds() - timeOffset + startOffset;
+				if (((int)t) % 5 == 0 && abs(t - (int)t) < 0.01) {
+					printf("%.2f\n",t);
+				}
 
 				MotionAction *motionAction = static_cast<MotionAction*>(actions[chorI][plans[i]]);
 				Trajectory *motion = motionAction->GetPath();

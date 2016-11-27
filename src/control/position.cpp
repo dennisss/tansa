@@ -38,8 +38,6 @@ void PositionController::control(double t) {
 	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + s.acceleration;
 
 	vehicle->setpoint_accel(a);
-
-	//printf("A: %.2f %.2f %.2f  E: %.2f\n", a.x(), a.y(), a.z(), eP.norm());
 }
 
 }

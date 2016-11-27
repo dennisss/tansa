@@ -172,7 +172,7 @@ namespace tansa {
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
 				double t = Time::now().since(start).seconds() - timeOffset;
-				if (((int)t) % 5 == 0) {
+				if (((int)t) % 5 == 0 && abs(t - (int)t) < 0.01) {
 					printf("%.2f\n",t);
 				}
 

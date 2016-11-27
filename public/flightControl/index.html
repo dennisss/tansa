@@ -11,7 +11,7 @@
         <title>Drone Controller</title>
 
         <!-- Material Design fonts -->
-        <link async rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+        <link async rel="stylesheet" href="/node_modules/roboto-fontface/css/roboto/roboto-fontface.css" type="text/css">
         <!--<link async href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
 
         <!-- Bootstrap -->
@@ -25,10 +25,11 @@
         <link async rel="stylesheet" href="css/fontawesome/css/font-awesome.min.css">
 
         <!-- JavaScript/jQuery Dependencies -->
-        <script src="js/jquery.min.js"></script>
+        <script src="/node_modules/jquery/dist/jquery.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
         <script src="js/material.min.js"></script>
         <script src="js/materials.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
 		<style>
 			button.btn.btn-fab.actionFab {
 				border-radius: 50%;
@@ -85,20 +86,26 @@
 				min-width: 675px;
 				width: 60vw;
 			}
+			.white {
+				-webkit-box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+                                box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+                                position: relative;
+                                line-height: normal;
+                                background-color: white !important;
+			}
 		</style>
 </head>
 <body>
-	<h1 class="text-center">Dancing Drones Control Board</h1>
-	<script src="/socket.io/socket.io.js"></script>
+	<h1 class="text-center">Dancing Drones Command Center</h1>
 	<div class="container-fluid">
 		<div class="text-center gap row preFlight">
-			<div class="col-md-6 col-sm-12 text-center">
-				<button id="loadJacq" type="button" class="btn btn-fab actionFab">
+			<div class="col-sm-12 text-center">
+<!--				<button id="loadJacq" type="button" class="btn btn-fab actionFab">
 					<span class="fa fa-upload" aria-hidden="true"></span>
 				</button>
-				<br>
-				<div class="container-fluid">
-					<div class="col-sm-7">
+				<br>-->
+				<div class="container-fluid noMargin">
+					<div class="col-xs-8 col-md-6">
 						<select id="fileNameList" class="form-control">
 							<option>Select a JOCS File</option>
 							<option>jumpManJumpManJumpMan.jocs</option>
@@ -106,8 +113,24 @@
 							<option>operationPhilia.jocs</option>
 						</select>
 					</div>
-					<div class="col-sm-5">
-						<select id="queueList" class="form-control">
+					<!--<div class="col-xs-2 col-md-1">
+                                                <button id="loadJocs" type="button" class="btn btn-fab white">
+                                                        <span class="fa fa-upload" aria-hidden="true"></span>
+                                                </button>
+                                        </div>-->
+					<div class="col-xs-2 col-md-1">
+						<div class="form-group label-floating text-left">	
+							<label for="scaleQty" class="control-label">Scale</label>
+							<input class="form-control" id='scaleQty' value="1.0">
+						</div>
+					</div>
+					<div class="col-xs-2 col-md-1">
+                                                <button id="loadJocs" type="button" class="btn btn-fab white">
+                                                        <span class="fa fa-upload" aria-hidden="true"></span>
+                                                </button>
+                                        </div>
+					<div class="col-xs-6 col-md-4">
+						<select id="queueList" class="form-control hidden">
 							<option>Start</option>
 							<option>1</option>
 							<option>2</option>
@@ -116,82 +139,64 @@
 					</div>
 				</div>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-xs-4 text-center">
 					<button id="positionMap" type="button" class="btn btn-fab actionFab" data-toggle="modal" data-target="#droneMapModal">
-						<span class="fa fa-bullseye" aria-hidden="true"></span>
+						<span class="fa fa-th" aria-hidden="true"></span>
 					</button>
 					<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-xs-4 text-center">
 					<button id="takeOff" type="button" class="btn btn-fab actionFab">
 						<span class="fa fa-rocket" aria-hidden="true"></span>
 					</button>
 					<br><br>
-			</div><!--
-			<div class="col-md-3 col-sm-6 text-center">
-					<button id="killDrones" type="button" class="btn btn-fab actionFab"><i class="fa fa-bomb" aria-hidden="true"></i></button>
+			</div>
+			<div class="col-xs-4 text-center">
+					<button type="button" class="btn btn-fab actionFab killDrones"><i class="fa fa-bomb" aria-hidden="true"></i></button>
 					<br><br>
-			</div>-->
+			</div>
 		</div>
 		<div class="text-center gap row flightReady">
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-md-3 col-xs-6 text-center">
 				<button id="playDrones" type="button" class="btn btn-fab actionFab">
 					<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-md-3 col-xs-6 text-center">
 				<button id="pauseDrones" type="button" class="btn btn-fab actionFab">
-					<span class="glyphicon glyphicon-pause" aria-hidden="true"></span>
+					<span class="fa fa-step-forward" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
+			<div class="col-md-3 col-xs-6 text-center">
 				<button id="stopDrones" type="button" class="btn btn-fab actionFab">
-					<span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
+					<span class="fa fa-download" aria-hidden="true"></span>
 				</button>
 				<br><br>
 			</div>
-			<div class="col-md-3 col-sm-6 text-center">
-				<button id="killDrones" type="button" class="btn btn-fab actionFab">
+			<div class="col-md-3 col-xs-6 text-center">
+				<button type="button" class="btn btn-fab actionFab killDrones">
 					<i class="fa fa-bomb" aria-hidden="true"></i>
 				</button>
 				<br><br>
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-sm-3 text-center">
+			<div class="col-xs-3 text-center">
 				MoCap:&nbsp;&nbsp;<i class="fa fa-binoculars moCapStatus" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 text-center">
+			<div class="col-xs-3 text-center">
 				Ready:&nbsp;&nbsp;<i class="fa fa-circle readyStatus" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 text-center">
+			<div class="col-xs-3 text-center">
 				Playing:&nbsp;&nbsp;<i class="fa fa-circle playStatus" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 text-center">
-				Run Time:&nbsp;&nbsp;<span id="runTime">0</span> secs
+			<div class="col-xs-3 text-center">
+				Run Time:&nbsp;&nbsp;<span id="runTime">0</span>
 			</div>
 		</div>
 		<br>
-		<!--
-		<div class="row droneData">
-			<div class="col-sm-1">
-				<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID">1</span>
-			</div>
-			<div class="col-sm-3 text-center">
-				Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
-			</div>
-			<div class="col-sm-3 text-center">
-				Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
-			</div>
-			<div class="col-sm-3 text-center">
-				Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
-			</div>
-			<div class="col-sm-2 text-center">
-				<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
-			</div>
-		</div>-->
 		<div id="droneTable">
 		</div>
 	</div>
@@ -206,6 +211,8 @@
 				</div>
 				<div class="modal-body text-center">
 					<canvas id="droneMap" width="600" height="400"></canvas>
+					<div>Audience</div>
+					<div id="droneRawCoordintes"></div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -215,25 +222,25 @@
 	</div><!-- /.modal -->
 	<template id="droneRow">
 		<div class="row droneData">
-			<div class="col-sm-1 col-md-1 noPad">
+			<div class="col-xs-1 col-md-1 noPad">
 				<i class="fa fa-plane" aria-hidden="true"></i> <span class="droneID"></span>
 			</div>
 			<div class="col-md-1 visible-md visible-lg text-center">
 				<i class="fa fa-exchange" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 col-md-2 visible-md visible-lg text-center">
-				Battery:&nbsp;&nbsp;<i class="battery-level fa" aria-hidden="true"></i>
+			<div class="col-xs-3 col-md-2 visible-md visible-lg text-center">
+				Battery:&nbsp;&nbsp;<span class="batteryLevel"></span>%
 			</div>
-			<div class="col-sm-3 col-md-2 text-center">
+			<div class="col-xs-3 col-md-2 text-center">
 				Tracking:&nbsp;&nbsp;<i class="fa fa-circle tracking" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 col-md-2 text-center">
+			<div class="col-xs-3 col-md-2 text-center">
 				Connected:&nbsp;&nbsp;<i class="fa fa-circle connected" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-3 col-md-2 text-center">
+			<div class="col-xs-3 col-md-2 text-center">
 				Armed:&nbsp;&nbsp;<i class="fa fa-circle armed" aria-hidden="true"></i>
 			</div>
-			<div class="col-sm-2 col-md-2 text-center">
+			<div class="col-xs-2 col-md-2 text-center">
 				<button class="btn btn-sm noMargin droneLog"><i class="fa fa-terminal" aria-hidden="true"></i>&nbsp;&nbsp;Log</button>
 			</div>
 		</div>
@@ -241,114 +248,217 @@
 <script>
 var socket = io();
 
-socket.emit("msg", JSON.stringify({type: 'list'}));
+var modes = {
+    PRE_FLIGHT: 'preFlight',
+	FLIGHT: 'flightReady'
+};
 
-$(".flightReady").hide();
+// Hold some states for the UI
+var model = {
+    isPlaying: false,
+	view: modes.PRE_FLIGHT
+};
+
+/// Socket handler declarations
+var processStatusMessage;
+var processListReply;
+var processLoadReply;
+
+/// Button Selectors
+var takeoffButton = $('#takeOff');
+var playButton = $('#playDrones');
+var pauseButton = $('#pauseDrones');
+var stopButton = $('#stopDrones');
+var killButton = $('.killDrones');
+var loadButton = $('#loadJocs');
+
+/// Function Declarations
+var swapControlPanels;
+var drawDrone;
+
+socket.emit('msg', JSON.stringify({ type: 'list' }));
+
+disable(takeoffButton);
+disable(pauseButton);
+disable(stopButton);
+
+$('.flightReady').hide();
 $.material.init();
 
 var canvasWidth = 600;
 var canvasHeight = 400;
 
-var c_canvas = document.getElementById("droneMap");
-var context = c_canvas.getContext("2d");
+var c_canvas = document.getElementById('droneMap');
+var context = c_canvas.getContext('2d');
 
 gridSetup();
 
 // Test for Colors - Remove for Prod
-$(".moCapStatus").addClass("true");
-setFalse($(".playStatus"));
-setFalse($(".tracking"));
-setFalse($(".connected"));
-setFalse($(".armed"));
+$('.moCapStatus').addClass('true');
+setFalse($('.playStatus'));
+setFalse($('.tracking'));
+setFalse($('.connected'));
+setFalse($('.armed'));
 
 // Event Listeners
 
-$("#takeOff").click(function() {
-	socket.emit('msg', JSON.stringify({type: 'prepare'}));
-	swapControlPanels();
+takeoffButton.click(function() {
+	socket.emit('msg', JSON.stringify({ type: 'prepare' }));
+	swapControlPanels(modes.FLIGHT);
 });
 
-$("#playDrones").click(function () {
-	setTrue($(".playStatus"));
-	armDrones();
-	trackDrones();
-	connectToDrones();
-	socket.emit('msg', JSON.stringify({type: 'play'}));
+playButton.click(function() {
+	socket.emit('msg', JSON.stringify({ type: 'play' }));
 });
 
-$("#pauseDrones").click(function () {
-	setTralse($(".playStatus"));
-	socket.emit('msg', {type: 'pause'});
+pauseButton.click(function() {
+	setTralse($('.playStatus'));
+	socket.emit('msg', JSON.stringify({ type: 'pause' }));
 });
 
 
-$("#stopDrones").click(function () {
-	socket.emit('msg', JSON.stringify({type: 'land'}));
-	//setFalse($(".playStatus"));
-	//disarm();
-	swapControlPanels();
+stopButton.click(function() {
+	socket.emit('msg', JSON.stringify({ type: 'stop' }));
 });
 
 
-$("#killDrones").click(function () {
-	socket.emit('msg', JSON.stringify({type: 'kill', enabled: true}));
-	//setFalse($(".playStatus"));
-	//disarm();
+killButton.click(function() {
+	socket.emit('msg', JSON.stringify({ type: 'kill', enabled: true }));
 });
+
+loadButton.click(function() {
+	var fileName = $('select#fileNameList option:selected').html();
+	var scale = parseFloat($('input#scaleQty').val()) || 1.0;
+	// TODO: Parse the rest of the items in the message from the GUI
+	var message = {
+		type: 'load',
+		jocsPath: 'data/' + fileName,
+		jocsActiveIds: [0,1,2,3,4,5],
+		theaterScale: scale,
+		vehicles: [
+			{ net_id: 1 },
+			{ net_id: 2 },
+			{ net_id: 3 },
+			{ net_id: 4 },
+			{ net_id: 5 },
+			{ net_id: 6 }
+		]
+	};
+	socket.emit('msg', JSON.stringify(message));
+});
+
+function timeConvert(seconds) {
+	if(seconds > 0) {
+		seconds = ~~((seconds * 100)/100);
+		// Minutes and seconds
+		var mins = ~~(seconds / 60);
+		var secs = seconds % 60;
+
+		// Output like "1:01" or "4:03:59" or "123:03:59"
+		var ret = "";
+	
+		ret += "" + (mins < 10 ? "0" : "") 
+		ret += mins + ":" + (secs < 10 ? "0" : "");
+		ret += "" + secs;
+	} else {
+		ret = " -:-- "
+	}
+	return ret;
+}
+
+processStatusMessage = function(data) {
+    var playStatus = $('.playStatus');
+
+    $('#runTime').text(timeConvert(data.time));
+    setValue(playStatus, data.global.playing);
+    setValue($('.readyStatus'), data.global.ready);
+
+    $.each(data.vehicles, function(index, drone) {
+        var droneRow = $('#drone' + drone.id);
+        var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
+        if (!droneRow.length) {
+            droneRow = $($('#droneRow').html());
+            droneRow.attr('id', 'drone' + drone.id);
+            droneRow.find('.droneID').html(drone.id);
+            $('#droneTable').append(droneRow);
+        }
+        setValue(droneRow.find('.armed'), drone.armed);
+        setValue(droneRow.find('.connected') , drone.connected);
+        setValue(droneRow.find('.tracking') , drone.tracking);
+        droneRow.find('.batteryLevel').html(batteryLevel);
+        if (batteryLevel > 0 && batteryLevel <= 30) {
+            setFalse(droneRow.find('.batteryLevel'));
+        }
+    });
+
+    if ($('.connected').length == 0 || ($('.connected.false').length > 0 || $('.tracking.false').length > 0)) {
+        disable($('#takeOff'));
+    } else {
+        enable($('#takeOff'));
+    }
+
+    if (data.global.playing) {
+        setTrue(playStatus);
+        disable($('#playDrones'));
+        enable($('#pauseDrones'));
+    } else if (data.global.paused) {
+        disable($('#pauseDrones'));
+        enable($('#playDrones'));
+        enable($('#stopDrones'));
+	} else if (data.global.landed) {
+        swapControlPanels(modes.PRE_FLIGHT);
+	}
+};
+
+processListReply = function(data) {
+    var stringOfOptions = (data.files || []).reduce(function(acc, currentValue) {
+        return acc + '<option>' + currentValue + '</option>';
+    }, '');
+    $('#fileNameList').html(stringOfOptions);
+};
+
+processLoadReply = function(data) {
+    // TODO: Update based on the response
+	$("#droneRawCoordintes").html("");
+	data.target_positions.forEach(drawDrone);
+};
 
 // This should receive data a few times a second
 socket.on('msg', function(data) {
-	data = JSON.parse(data);
-	if (data.type == 'status') {
-		$('#runTime').text(Math.round(data.time * 100) / 100);
-		setValue($('.playStatus'), data.global.playing);
-		setValue($('.readyStatus'), data.global.ready);
+    var handler;
+    data = JSON.parse(data);
 
-		$.each(data.vehicles, function (index, drone) {
-			var droneRow = $('#drone' + drone.id);
-			var batteryLevel = Math.floor((parseFloat(drone.battery.percent) * 100));
-			var batteryIndicator = Math.floor(batteryLevel / 25);
-			if (!droneRow.length) {
-				droneRow = $($('#droneRow').html());
-				droneRow.attr('id', 'drone' + drone.id);
-				droneRow.find('.droneID').html(drone.id);
-				$('#droneTable').append(droneRow);
-			}
-			setValue(droneRow.find('.armed'), drone.armed);
-			setValue(droneRow.find('.connected') , drone.connected);
-			setValue(droneRow.find('.tracking') , drone.tracking);
-			droneRow.find('.battery-level').addClass('fa-battery-' + batteryIndicator);
-		});
-	} else if (data.type == 'list_reply') {
-		var stringOfOptions = (data.files || []).reduce(function(acc, currentValue) {
-			return acc + '<option>' + currentValue + '</option>';
-		}, '');
-		$('#fileNameList').html(stringOfOptions);
-	} else {
-		console.log('Unknown message type - ' + data.type);
+    switch(data.type) {
+		case 'status':
+		    handler = processStatusMessage;
+		    break;
+		case 'list_reply':
+		    handler = processListReply;
+		    break;
+		case 'load_reply':
+		    handler = processLoadReply;
+		    break;
+		default:
+        	console.log('Unknown message type - ' + data.type);
+        	return;
 	}
+	handler(data);
 });
 
 // Repeatable Functions
 
-function swapControlPanels() {
-	$(".preFlight").slideToggle();
-	$(".flightReady").slideToggle();
-}
-
-function armDrones() {
-	setTrue($(".armed"));
-}
-function trackDrones() {
-	setTrue($(".tracking"));
-}
-function connectToDrones() {
-	setTrue($(".connected"));
-}
-
-function disarm() {
-	setFalse($(".armed"));
-}
+swapControlPanels = function(mode) {
+    // Already in the right view, no-op
+    if (model.view === mode) {
+        return;
+	}
+	model.view = mode;
+	$('.preFlight').slideToggle();
+	$('.flightReady').slideToggle();
+    enable($('#playDrones'));
+    disable($('#pauseDrones'));
+    disable($('#stopDrones'));
+};
 
 function setValue(item, value) {
 	if(value) {
@@ -359,19 +469,30 @@ function setValue(item, value) {
 }
 
 function setTrue(item) {
-	item.removeClass("false tralse").addClass("true");
+	item.removeClass('false tralse').addClass('true');
 }
 
 function setTralse(item) {
-	item.removeClass("false true").addClass("tralse");
+	item.removeClass('false true').addClass('tralse');
 }
 
 function setFalse(item) {
-	item.removeClass("true tralse").addClass("false");	
+	item.removeClass('true tralse').addClass('false');	
+}
+
+function disable(item) {
+	item.prop('disabled', 'true');
+}
+
+function enable(item) {
+	item.removeAttr('disabled');
 }
 
 function gridSetup() {
-	for (var x = 0.5; x < canvasWidth; x += 10) {
+    var halfWidth = canvasWidth / 2;
+    var halfHeight = canvasHeight / 2;
+
+    for (var x = 0.5; x < canvasWidth; x += 10) {
 		context.moveTo(x, 0);
 		context.lineTo(x, canvasHeight);
 	}
@@ -381,11 +502,8 @@ function gridSetup() {
 		context.lineTo(canvasWidth, y);
 	}
 
-	context.strokeStyle = "#eee";
+	context.strokeStyle = '#eee';
 	context.stroke();
-	
-	var halfWidth = canvasWidth/2;
-	var halfHeight = canvasHeight/2;
 	
 	context.beginPath();
 	context.moveTo(halfWidth, 0);
@@ -394,13 +512,13 @@ function gridSetup() {
 	context.moveTo(0, halfHeight);
 	context.lineTo(canvasWidth, halfHeight);
 
-	context.strokeStyle = "#000";
+	context.strokeStyle = '#000';
 	context.stroke();
 }
 
-function drawDrone(data) {
-
-
+drawDrone = function(position, index) {
+    // TODO: Actually draw drones
+	$("#droneRawCoordintes").append("Drone #" + Number(index + 1) + ": [" +  position.x +  ", " +  position.y + "]<br>");
 }
 
 </script>

@@ -4,6 +4,10 @@
 
 namespace tansa {
 
+	std::vector<Breakpoint> JocsPlayer::getBreakpoints() {
+		return breakpoints;
+	}
+
 	std::vector<Point> JocsPlayer::getHomes() {
 		return homes;
 	}
@@ -12,7 +16,7 @@ namespace tansa {
 		return actions;
 	}
 
-	JocsPlayer::JocsPlayer(const std::vector<Vehicle *> &vehicles, const std::vector<unsigned> &jocsActiveIds) {
+	void JocsPlayer::initVehicles(const std::vector<Vehicle *> &vehicles) {
 		this->vehicles = vehicles;
 		this->jocsActiveIds = jocsActiveIds;
 
@@ -56,15 +60,43 @@ namespace tansa {
 		transitionStarts.resize(n, Time(0,0));
 	}
 
+	bool JocsPlayer::canLoad() {
+		for (auto s : states) {
+			if(s != StateInit) {
+				printf("Cannot load a new file: Some drones not in initial state\n");
+				return false;
+			}
+		}
+
+		if (isPlaying()) {
+			printf("Can't load a new jocs file if still playing.\n");
+			return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Load JOCS data from a specified path
 	 */
-	void JocsPlayer::loadJocs(Jocs *j) {
-		currentJocs = j;
+	void JocsPlayer::loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds) {
+		cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ")" << endl;
+		if (!this->canLoad()) {
+			return;
+		}
+
+		delete currentJocs;
+		this->jocsActiveIds = jocsActiveIds;
+		landed = false;
+
+		currentJocs = Jocs::Parse(jocsPath, scale);
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
 		lightActions = currentJocs->GetLightActions();
 		breakpoints = currentJocs->GetBreakpoints();
+		if(homes.size() < jocsActiveIds.size()) {
+			this->jocsActiveIds.resize(homes.size());
+		}
+		cout << "Finished loading jocs" << endl;
 	}
 
 
@@ -162,9 +194,11 @@ namespace tansa {
 				}
 
 				if (paused && (stopRequested || Time::now().since(pauseOffset).seconds() > 20.0)) {
-					cout << (stopRequested ? "Stop requested" : "Paused for more than 20 seconds")
-						 << ", attempting to land." << endl;
-					land();
+					string message = stopRequested ? "Stop requested" : "Paused for more than 20 seconds";
+					cout << message + ", attempting to land." << endl;
+					paused = false;
+					stopRequested = false;
+					this->land();
 					return;
 				}
 				// Do a hover
@@ -238,6 +272,7 @@ namespace tansa {
 				}
 				// Reset state machine
 				else {
+					landed = true;
 					s = StateInit;
 				}
 

@@ -11,7 +11,7 @@
 namespace tansa {
 	class JocsPlayer {
 	public:
-		JocsPlayer(const std::vector<Vehicle *> &vehicles, const std::vector<unsigned> &jocsActiveIds);
+		void initVehicles(const std::vector<Vehicle *> &vehicles);
 
 		// Get ready to fly (arm and takeoff to home point)
 		void prepare();
@@ -30,13 +30,16 @@ namespace tansa {
 
 		void rewind(int steps);
 		void reset();
-		void loadJocs(Jocs *j);
+		void loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds);
 
 
 
 		// TODO: Instead we should use isRunning which checks if any states are not StateInit
-		bool isPlaying() { return this->states[0] == StateFlying; }
-		bool isReady() { return this->states[0] == StateHolding; }
+		bool canLoad();
+		inline bool isPlaying() { return states.size() > 0 && this->states[0] == StateFlying; }
+		inline bool isReady() { return states.size() > 0 && this->states[0] == StateHolding; }
+		inline bool isPaused() { return this->paused; }
+		inline bool isLanded() { return this->landed; }
 
 		/**
 		 * Gets the time relative to the start of the current file
@@ -45,13 +48,15 @@ namespace tansa {
 
 		std::vector<Point> getHomes();
 		std::vector<std::vector<Action*>> getActions();
+		std::vector<Breakpoint> getBreakpoints();
 		void cleanup();
 	private:
 		std::vector<Vehicle *> vehicles;
+		std::vector<vehicle_config> vehicleConfigs;
 		std::vector<unsigned> jocsActiveIds;
 
 		std::vector<Breakpoint> breakpoints;
-		Jocs* currentJocs;
+		Jocs* currentJocs = nullptr;
 		std::vector<std::vector<Action*>> actions;
 		std::vector<std::vector<LightAction*>> lightActions;
 		std::vector<Point> homes;
@@ -70,6 +75,7 @@ namespace tansa {
 		bool paused = false;
 		bool stopRequested = false;
 		bool resetMode = false;
+		bool landed = false;
 		Time start = Time(0,0); // TODO: I will also need a time offset
 		Time pauseOffset = Time(0,0);
 		double timeOffset = 0.0;

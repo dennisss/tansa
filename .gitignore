@@ -32,3 +32,4 @@ config/params/*.calib.json
 
 # IDE Files from CLion
 .idea/
+cmake-build-debug/

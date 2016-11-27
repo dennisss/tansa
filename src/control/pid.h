@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <float.h>
 
+namespace tansa {
 
 /**
  * n-dimensional PID filter
@@ -98,5 +99,6 @@ private:
 };
 
 
+}
 
 #endif

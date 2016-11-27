@@ -21,6 +21,9 @@
 using namespace std;
 using namespace tansa;
 
+// TODO: Resolve this to an absolute path
+static const char *paramsDir = "./config/params/";
+
 static bool running = false;
 static bool initialized = false;
 static bool killmode = false;
@@ -172,13 +175,20 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		if (useMocap) {
 			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
 			vconfigs[i].rport = 14555;
-		} else { // The simulated ones are zero-indexed and
-			vconfigs[i].lport = 14550 + 10*(vconfigs[i].net_id - 1);
-			vconfigs[i].rport = 14555 + 10*(vconfigs[i].net_id - 1);
+		} else { // The simulated ones are zero-indexed and are always in ascending order
+			vconfigs[i].net_id = i;
+
+			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
+			vconfigs[i].rport = 14555 + 10*vconfigs[i].net_id;
 		}
 	}
 
-	int n = vconfigs.size();
+	// Number of drones used (limited by active ids and number of available slots in choreography)
+	int n = jocsActiveIds.size();
+	if(homes.size() < n) {
+		n = homes.size();
+		jocsActiveIds.resize(n);
+	}
 
 	if (n > vconfigs.size()) {
 		printf("Not enough drones on the network\n");
@@ -200,8 +210,12 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		vehicles[i] = new Vehicle();
 
 		// Load default parameters
-		vehicles[i]->readParams("./config/params/default.json");
-		// TODO: Also read in per-drone ones
+		vehicles[i]->readParams(string(paramsDir) + "default.json");
+		string calibId = useMocap? to_string(v.net_id) : "sim";
+
+		if(!vehicles[i]->readParams(string(paramsDir) + to_string(v.net_id) + ".calib.json")) {
+			cout << "#" + to_string(v.net_id) + " not calibrated!" << endl;
+		}
 
 		vehicles[i]->connect(v.lport, v.rport);
 		if (useMocap) {
@@ -214,7 +228,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 	if (!useMocap) {
 		// Only pay attention to homes of active drones
 		vector<Point> spawns;
-		for (int i = 0; i < jocsActiveIds.size(); i++) {
+		for (int i = 0; i < n; i++) {
 			int chosenId = jocsActiveIds[i];
 			// We assume the user only configured for valid IDs..
 			spawns.push_back(homes[chosenId]);
@@ -377,6 +391,36 @@ void osc_on_message(OSCMessage &msg) {
 
 }
 
+/*
+	Must be called when holding in singleDrone.jocs
+	TODO: Provide some distance measure during holding phase to determine if the drone is stable enough to calibrate
+*/
+void do_calibrate() {
+	if(vehicles.size() != 1) {
+		cout << "Can only calibrate one vehicle at a time" << endl;
+		return;
+	}
+
+	if(!player->isReady()) {
+		cout << "Must be holding to start calibration" << endl;
+		return;
+	}
+
+	cout << "Calibrating..." << endl;
+
+	double sum = 0.0;
+	Rate r(10);
+	for(int i = 0; i < 40; i++) {
+		sum += vehicles[0]->lastRawControlInput.z();
+	}
+
+	sum /= 40.0;
+
+	string calibId = useMocap? to_string(vconfigs[0].net_id) : "sim";
+
+	cout << "Done!" << endl;
+}
+
 pthread_t console_handle;
 
 void *console_thread(void *arg) {
@@ -421,6 +465,10 @@ void *console_thread(void *arg) {
 			loadMode = true;
 			loadFromConfigFile(args[1]);
 		}
+		else if(args[0] == "calibrate") {
+			do_calibrate();
+		}
+
 	}
 }
 

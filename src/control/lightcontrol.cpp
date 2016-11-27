@@ -1,8 +1,7 @@
 #include <tansa/control.h>
 
-#include "pid.h"
+namespace tansa {
 
-// TODO: Integrate forward the position, velocity and time based on connection latency (so that commmands are accurate for the cmoment at which they are received)
 
 LightController::LightController(Vehicle *v) {
 	this->vehicle = v;
@@ -27,4 +26,6 @@ void LightController::control(double t) {
 		currentIntensityBot = s2;
 		printf("Light: %.2f and %.2f at %.2f\n", s1, s2, t);
 	}
+}
+
 }

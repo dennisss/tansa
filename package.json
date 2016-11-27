@@ -8,7 +8,8 @@
 		"express": "4.14.0",
 		"body-parser": "1.14.1",
 		"async": "latest",
-		"socket.io": "1.5.0"
+		"socket.io": "1.5.0",
+		"commander": "2.9.0"
 	},
 	"devDependencies": {
 		"webpack": "v2.1.0-beta.14",
@@ -32,6 +33,8 @@
 		"three": "0.78.0",
 		"react": "15.1.0",
 		"react-dom": "15.1.0",
-		"material-ui": "0.15.0"
+		"material-ui": "0.15.0",
+		"jquery": "2.1.4",
+		"roboto-fontface": "0.6.0"
 	}
 }

@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 
+namespace tansa {
 
 // TODO: Move this to a better spot
 // The ground control system represented by this program
@@ -23,6 +24,7 @@ static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
 
 Vehicle::Vehicle() :
 	lastControlInput(0,0,0),
+	lastRawControlInput(0,0,0),
 	lastControlTime(0,0),
 	lastHeartbeatReceived(0,0),
 	lastHeartbeatSent(0,0),
@@ -212,13 +214,8 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	this->estimator.correct(this->state, pos, v, t);
 
 
-	Matrix3d m;
-	m << 1, 0, 0,
-		 0, -1, 0,
-		 0, 0, -1;
-
 	Vector3d pos_ned = enuToFromNed() * pos;
-	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(m);
+	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(baseToFromAirFrame());
 
 	float q[4];
 	q[0] = orient_ned.w();
@@ -301,7 +298,14 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 	// TODO: Once the state is forward predicted, use that time
 	lastControlTime = Time::now();
 
-	Vector3d accel_ned = enuToFromNed() * accel;
+
+	const double hover = params.hoverPoint;
+
+	// Scale to -1 to 1 range and add hover point because PX4 doesn't take m s^-2 input but rather input proportional to thrust percentage
+	Vector3d accel_normal = accel * (hover / GRAVITY_MS) + Vector3d(0, 0, hover);
+	lastRawControlInput = accel_normal;
+
+	Vector3d accel_ned = enuToFromNed() * accel_normal;
 
 	mavlink_message_t msg;
 	mavlink_msg_set_position_target_local_ned_pack_chan(
@@ -320,6 +324,10 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 	);
 
 	send_message(&msg);
+}
+
+void Vehicle::setpoint_zero() {
+	this->setpoint_accel(Vector3d(0,0, -GRAVITY_MS));
 }
 
 void Vehicle::set_lighting(float top, float bottom) {
@@ -354,6 +362,27 @@ void Vehicle::set_beacon(bool on) {
 
 	send_message(&msg);
 }
+
+/*
+// TODO: This should wait for a COMMAND_ACK message (should give a RESULT_ACCEPTED upon start of calibration)
+// These src/modules/commander/calibration_messages.h are
+void Vehicle::calibrate() {
+	bool gyro = true;
+
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
+		&msg,
+		1, 1,
+		MAV_CMD_PREFLIGHT_CALIBRATION,
+		1, // yes we want a confirmation
+		gyro? 1 : 0,
+		0, 0, 0, 0, 0, 0
+	);
+
+	send_message(&msg);
+}
+*/
 
 
 void Vehicle::send_message(mavlink_message_t *msg) {
@@ -418,12 +447,8 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			mavlink_local_position_ned_t lp;
 			mavlink_msg_local_position_ned_decode(msg, &lp);
 
-/*
-			this->position = enuToFromNed() * Vector3d(lp.x, lp.y, lp.z);
-			this->velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
-*/
-
-//			printf("POS: %.2f %.2f %.2f\n", lp.x, lp.y, lp.z);
+			onboardState.position = enuToFromNed() * Vector3d(lp.x, lp.y, lp.z);
+			onboardState.velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
 
 			break;
 
@@ -436,11 +461,21 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			break;
 
-		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION: {
+
+			mavlink_attitude_quaternion_t aq;
+			mavlink_msg_attitude_quaternion_decode(msg, &aq);
+
+			Quaterniond orient_ned(aq.q1, aq.q2, aq.q3, aq.q4);
+
+			Quaterniond orient = Quaterniond(enuToFromNed()) * orient_ned * Quaterniond(baseToFromAirFrame());
+
+			onboardState.orientation = orient;
+			onboardState.time = Time::now();
 
 			break;
 
-
+		}
 		case MAVLINK_MSG_ID_STATUSTEXT:
 
 			// TODO: Also incorporate the severity
@@ -551,4 +586,6 @@ void *vehicle_thread(void *arg) {
 	}
 
 	return NULL;
+}
+
 }

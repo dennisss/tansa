@@ -11,6 +11,7 @@
 	This file should continue to mirror that implementation to maintain compatibility with the synchronization protocol
 */
 
+namespace tansa {
 
 // Given a time received from this Vehicle, return it in this computer's time frame
 uint64_t Vehicle::sync_stamp(uint64_t usec) {
@@ -96,4 +97,6 @@ void Vehicle::send_timesync(int64_t tc1, int64_t ts1) {
 	);
 
 	send_message(&msg);
+}
+
 }

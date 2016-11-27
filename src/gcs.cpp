@@ -466,6 +466,9 @@ void *console_thread(void *arg) {
 		} else if (args[0] == "play") {
 			cout << "Playing..." << endl;
 			playMode = true;
+		} else if (args[0] == "land") {
+			printf("landing...\n");
+			player->land();
 		} else if (args[0] == "pause") {
 			cout << "Pausing..." << endl;
 			pauseMode = true;

@@ -18,7 +18,6 @@ namespace tansa {
 
 	void JocsPlayer::initVehicles(const std::vector<Vehicle *> &vehicles) {
 		this->vehicles = vehicles;
-		this->jocsActiveIds = jocsActiveIds;
 
 		int n = vehicles.size();
 
@@ -43,8 +42,8 @@ namespace tansa {
 		}
 
 		plans.resize(n);
-		for(auto &p : plans) {
-			p = 0;
+		for (int i = 0; i < n; i++) {
+			plans[i] = startIndices[i];
 		}
 
 		lightCounters.resize(n);
@@ -78,8 +77,8 @@ namespace tansa {
 	/**
 	 * Load JOCS data from a specified path
 	 */
-	void JocsPlayer::loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds) {
-		cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ")" << endl;
+	void JocsPlayer::loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start) {
+		cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
 		if (!this->canLoad()) {
 			return;
 		}
@@ -93,9 +92,22 @@ namespace tansa {
 		actions = currentJocs->GetActions();
 		lightActions = currentJocs->GetLightActions();
 		breakpoints = currentJocs->GetBreakpoints();
+
 		if(homes.size() < jocsActiveIds.size()) {
 			this->jocsActiveIds.resize(homes.size());
 		}
+
+		if (start > 0) {
+			this->createBreakpointSection(start);
+			for (int i = 0; i < homes.size(); i++) {
+				homes[i] = getDroneLocationAtTime(startOffset, i);
+			}
+		} else {
+			startIndices.resize(homes.size(), 0);
+			endIndices.resize(homes.size(), (int)actions.size() - 1);
+			startOffset = 0.0;
+		}
+
 		cout << "Finished loading jocs" << endl;
 	}
 
@@ -130,13 +142,13 @@ namespace tansa {
 
 				transitions.resize(n);
 				for(int i = 0; i < n; i++) {
-					Vector3d start = vehicles[i]->state.position,
-							 end = homes[jocsActiveIds[i]];
+					Vector3d startPosition = vehicles[i]->state.position,
+							 endPosition = homes[jocsActiveIds[i]];
 
-					double dur = (start - end).norm() / VEHICLE_ASCENT_MS;
+					double dur = (startPosition - endPosition).norm() / VEHICLE_ASCENT_MS;
 					states[i] = StateTakeoff;
-					transitionStarts[i] = Time::now();
-					transitions[i] = new LinearTrajectory(start, 0, end, dur);
+					transitionStarts[i] = start;
+					transitions[i] = new LinearTrajectory(startPosition, 0, endPosition, dur);
 				}
 				// TODO: Only grab the ones for the active drones
 				holdpoints = homes;
@@ -205,7 +217,10 @@ namespace tansa {
 				hovers[i]->setPoint(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
-				double t = Time::now().since(start).seconds() - timeOffset;
+				double t = Time::now().since(start).seconds() - timeOffset + startOffset;
+				if (((int)t) % 5 == 0 && abs(t - (int)t) < 0.01) {
+					printf("%.2f\n",t);
+				}
 
 				MotionAction *motionAction = static_cast<MotionAction*>(actions[chorI][plans[i]]);
 				Trajectory *motion = motionAction->GetPath();
@@ -380,30 +395,13 @@ namespace tansa {
 		}
 	}
 
-	/**
-	 * Rewind the chreography by a number of 'steps'
-	 * @param steps How far back in the choreography to rewind
-	 */
-	void JocsPlayer::rewind(int steps) {
-
-	}
-
-
 	double JocsPlayer::currentTime() {
 		if(!this->isPlaying()) {
 			return -1;
 		}
 
-		return Time::now().since(start).seconds();
+		return Time::now().since(start).seconds() + startOffset;
 	}
-
-	/**
-	 * Reset the choreography back to the initial position (ie: plans[0])
-	 */
-	void JocsPlayer::reset() {
-		resetMode = true;
-	}
-
 
 	void JocsPlayer::cleanup() {
 		for (int i = 0; i < posctls.size(); i++) {
@@ -507,34 +505,65 @@ namespace tansa {
 		MotionAction* ma = dynamic_cast<MotionAction*>(a);
 		return ma;
 	}
-/*
-	void JocsPlayer::createBreakpointSection(const std::vector<vector> actions, int startPoint, int endPoint = -1) {
-		double startTime, endTime = -1;
-		int bpStartIndex, bpEndIndex = -1;
-		if(startPoint >= 0) {
-			startTime = getBreakpointTime(startPoint);
-		} else {
-			bpStartIndex = 0;
-		}
-		if(startPoint >= 0) {
-			endTime = getBreakpointTime(endPoint);
-		} else {
-			bpEndIndex = actions.size() - 1;
-		}
-		for(int i = 0; i < actions.size(); i++) {
-			if(actions[i][1].start_time.seconds == startTime) {
-				bpStartIndex = i;
-			}
-			if(actions[i][1].start_time.seconds == endTime) {
-				bpEndIndex = i;
-			}
-			if(bpStartIndex != -1 && bpEndIndex != -1) {
-				break;
-			}
-		}
-		startIndex = bpStartIndex;
-		endIndex = bpEndIndex;
-	}
 
-	*/
+	/**
+	 * Compute the indices to start and end at given breakpoints
+	 * @param startPoint
+	 * @param endPoint
+	 */
+	void JocsPlayer::createBreakpointSection(int startPoint, int endPoint) {
+		cout << "createBreakpointSection(" << startPoint << ", " << endPoint << ")" << endl;
+		double startTime = -1.0, endTime = -1.0;
+		int bpStartIndex = -1 , bpEndIndex = -1;
+
+		vector<int> bpStartIndices(actions.size(), -1);
+		vector<int> bpEndIndices(actions.size(), -1);
+
+		if(startPoint >= 0) {
+			startTime = this->getBreakpointTime((unsigned)startPoint);
+		}
+
+		if(endPoint >= 0) {
+			endTime = getBreakpointTime((unsigned)endPoint);
+		}
+
+		if (endPoint != -1 && endPoint <= startPoint) {
+			printf("Start point must be before endpoint...\n");
+			return;
+		}
+
+		for (int i = 0; i < actions.size(); i++) {
+			for (int j = 0; j < actions[i].size(); j++) {
+				if (actions[i][j]->GetStartTime() == startTime) {
+					bpStartIndices[i] = j;
+				}
+
+				if (actions[i][j]->GetEndTime() == endTime) {
+					bpEndIndices[i] = j;
+				}
+
+				if (bpStartIndex != -1 && bpEndIndex != -1) {
+					break;
+				}
+			}
+		}
+
+		for (int i = 0; i < actions.size(); i++) {
+			if (bpStartIndices[i] == -1) {
+				bpStartIndices[i] = 0;
+			}
+
+			if (bpEndIndices[i] == -1) {
+				bpEndIndices[i] = (int)actions[i].size() - 1;
+			}
+		}
+
+		if (startTime == -1) {
+			startTime = 0.0;
+		}
+		startIndices = bpStartIndices;
+		endIndices = bpEndIndices;
+		startOffset = startTime;
+		cout << "createdBreakpoint section: " << startOffset << endl;
+	}
 }

@@ -294,6 +294,24 @@ namespace tansa {
 			}
 		}
 
+		bool inPlace = true;
+		int n = jocsActiveIds.size();
+		for(int i = 0; i < n; i++) {
+			Vector3d start = vehicles[i]->state.position,
+					 end = homes[jocsActiveIds[i]];
+			end.z() = 0;
+
+			double e = (start - end).norm();
+			if(e > 0.5) {
+				printf("Role %d not in place. Off by %.2fm\n", i, e);
+				inPlace = false;
+			}
+		}
+
+		if(!inPlace) {
+			return;
+		}
+
 
 		for(auto &s : states) {
 			s = StateArming;

@@ -229,11 +229,14 @@ void constructLoadResponse() {
 	tansa::send_message(j);
 }
 
+// TODO: This is a bad name as it actually uses the config file as the rawJson
 /**
  * Load a Jocs file with the configuration parameters specified via either the REPL or the GUI
  * @param rawJson 	JSON containing configuration information to initialize (or reconfigure) the JocsPlayer
  */
-void loadJocsFile(const json &rawJson) {
+void loadJocsFile(const json &rawJsonArg) {
+	json rawJson = rawJsonArg;
+
 	if (player == nullptr) {
 		// TODO: Send some kinda error code here
 		printf("Player is null...\n");
@@ -249,6 +252,17 @@ void loadJocsFile(const json &rawJson) {
 	string jocsPath = rawJson["jocsPath"];
 	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
 	scale = rawJson["theaterScale"];
+
+
+	// Load the default config file
+	ifstream defaultConfigStream(jocsConfigPath);
+	std::string defaultConfigData((std::istreambuf_iterator<char>(defaultConfigStream)), std::istreambuf_iterator<char>());
+	nlohmann::json defaultRawJson = nlohmann::json::parse(defaultConfigData);
+
+	// Use default vehicles if the gui didn't send it
+	if(rawJson.count("vehicles") == 0) {
+		rawJson["vehicles"] = defaultRawJson["vehicles"];
+	}
 
 	player->cleanup();
 	player->loadJocs(jocsPath, scale, jocsActiveIds);

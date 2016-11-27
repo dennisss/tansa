@@ -17,6 +17,9 @@
 
 #include <map>
 
+
+namespace tansa {
+
 static gazebo::transport::NodePtr node;
 static gazebo::transport::SubscriberPtr world_sub;
 static gazebo::transport::SubscriberPtr poses_sub;
@@ -24,7 +27,7 @@ static gazebo::transport::PublisherPtr spawn_pub;
 
 static std::map<int, Vehicle *> tracked;
 
-
+// TODO: This needs to use the class's tracked variable
 // TODO: These also come with a timestamp, so we might as well use it
 void gazebo_poses_callback(ConstPosesStampedPtr &posesStamped) {
 
@@ -150,4 +153,6 @@ void GazeboConnector::spawn(const vector<Point> &homes) {
 	}
 
 	spawn_pub->Publish(req);
+}
+
 }

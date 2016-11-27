@@ -1,9 +1,11 @@
-#include <tansa/estimation.h>
-
 /*
 	Simple state estimator for linear parts of motion
 	This is mainly used for latency compensation and filtering of the raw mocap data
 */
+
+#include <tansa/estimation.h>
+
+namespace tansa {
 
 void LinearComplementaryEstimator::predict(State &s, ControlInput u, const Time &t) {
 	double dt = t.since(s.time).seconds();
@@ -25,4 +27,6 @@ void LinearComplementaryEstimator::correct(State &s, const Vector3d &x, const Ve
 
 	s.position = cP*x + (1.0 - cP)*s.position;
 	s.velocity = cV*v + (1.0 - cV)*s.velocity;
+}
+
 }

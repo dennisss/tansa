@@ -8,7 +8,8 @@
 		"express": "4.14.0",
 		"body-parser": "1.14.1",
 		"async": "latest",
-		"socket.io": "1.5.0"
+		"socket.io": "1.5.0",
+		"commander": "2.9.0"
 	},
 	"devDependencies": {
 		"webpack": "v2.1.0-beta.14",

@@ -28,6 +28,8 @@ tmp
 # I use this for holding my flight log dumps
 log
 
+config/params/*.calib.json
+
 # IDE Files from CLion
 .idea/
 cmake-build-debug/

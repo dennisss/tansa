@@ -9,6 +9,7 @@ using namespace std;
 	For talking to the gui and other applications
 */
 
+namespace tansa {
 
 static sio::client h;
 
@@ -26,8 +27,6 @@ void messaging_init() {
 
 }
 
-
-namespace tansa {
 
 void send_message(const json &msg) {
 

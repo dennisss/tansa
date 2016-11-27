@@ -1,6 +1,7 @@
 
 #include <tansa/trajectory.h>
 
+namespace tansa {
 
 PointTrajectory::PointTrajectory(const Point &p)
 	: Trajectory(0, 1000000) {
@@ -18,4 +19,6 @@ TrajectoryState PointTrajectory::evaluate(double t) {
 	s.acceleration = Point::Zero();
 
 	return s;
+}
+
 }

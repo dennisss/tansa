@@ -1,5 +1,7 @@
 #include <tansa/trajectory.h>
 
+namespace tansa {
+
 double LightTrajectory::evaluate(double t) {
 
 	// Calculate percent intensities between start and end times
@@ -16,4 +18,6 @@ double LightTrajectory::evaluate(double t) {
 
 	// Return the whole intensity at this time
 	return intensity;
+}
+
 }

@@ -8,6 +8,8 @@
 
 using namespace Eigen;
 
+namespace tansa {
+
 typedef Vector3d ControlInput;
 
 struct State {
@@ -45,6 +47,6 @@ public:
 
 };
 
-
+}
 
 #endif

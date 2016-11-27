@@ -17,8 +17,11 @@
 using namespace Eigen;
 using namespace std;
 
+namespace tansa {
+
 #define MAV_CMD_BEACON MAV_CMD_USER_1
 
+#define GRAVITY_MS 9.8
 
 struct BatteryStatus {
 	double voltage = -1;
@@ -63,8 +66,9 @@ public:
 	int disconnect();
 
 
-	void readParams(string file);
+	bool readParams(string file);
 
+	void writeParams(string file);
 
 	/**
 	 * Changes the armed state of the drone
@@ -117,6 +121,8 @@ public:
 
 	void setpoint_accel(const Vector3d &a);
 
+	void setpoint_zero();
+
 	// Should do something like waiting for a response
 	void ping();
 
@@ -130,6 +136,13 @@ public:
 	// Physical State : used for visualization and trajectory control
 	State state;
 	LinearComplementaryEstimator estimator;
+
+	ControlInput lastControlInput;
+	ControlInput lastRawControlInput;
+	Time lastControlTime;
+
+	// State as observed by the onboard processor
+	State onboardState;
 
 	BatteryStatus battery;
 
@@ -156,9 +169,6 @@ private:
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
 
-	ControlInput lastControlInput;
-	Time lastControlTime;
-
 
 	Time lastHeartbeatReceived;
 
@@ -181,6 +191,9 @@ private:
  * Don't use this directly. This is used internally by the Vehicle class
  */
 void *vehicle_thread(void *arg);
+
+
+}
 
 
 #endif

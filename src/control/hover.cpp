@@ -3,6 +3,8 @@
 #include "pid.h"
 
 
+namespace tansa {
+
 HoverController::HoverController(Vehicle *v) : PositionController(v) {
 	this->point = Point(0,0,0);
 
@@ -14,8 +16,8 @@ HoverController::HoverController(Vehicle *v) : PositionController(v) {
 	);
 
 	pid->setWindupOutputLimit(
-		Point(-0.1, -0.1, -0.1),
-		Point(0.1, 0.1, 0.1)
+		Point(-2.0, -2.0, -2.0),
+		Point(2.0, 2.0, 2.0)
 	);
 }
 
@@ -31,7 +33,7 @@ void HoverController::control(double t) {
 
 	// If really low to the ground, do nothing
 	if(point.z() < 0.1) {
-		vehicle->setpoint_accel(Point::Zero());
+		vehicle->setpoint_zero();
 		return;
 	}
 
@@ -51,4 +53,6 @@ double HoverController::distance() {
 	     (Vector3d(0,0,0) - vehicle->state.velocity);
 
 	return e.norm();
+}
+
 }

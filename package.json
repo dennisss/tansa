@@ -32,6 +32,8 @@
 		"three": "0.78.0",
 		"react": "15.1.0",
 		"react-dom": "15.1.0",
-		"material-ui": "0.15.0"
+		"material-ui": "0.15.0",
+		"jquery": "2.1.4",
+		"roboto-fontface": "0.6.0"
 	}
 }

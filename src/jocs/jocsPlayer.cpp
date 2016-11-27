@@ -142,13 +142,13 @@ namespace tansa {
 
 				transitions.resize(n);
 				for(int i = 0; i < n; i++) {
-					Vector3d start = vehicles[i]->state.position,
-							 end = homes[jocsActiveIds[i]];
+					Vector3d startPosition = vehicles[i]->state.position,
+							 endPosition = homes[jocsActiveIds[i]];
 
-					double dur = (start - end).norm() / VEHICLE_ASCENT_MS;
+					double dur = (startPosition - endPosition).norm() / VEHICLE_ASCENT_MS;
 					states[i] = StateTakeoff;
 					transitionStarts[i] = start;
-					transitions[i] = new LinearTrajectory(start, 0, end, dur);
+					transitions[i] = new LinearTrajectory(startPosition, 0, endPosition, dur);
 				}
 				// TODO: Only grab the ones for the active drones
 				holdpoints = homes;
@@ -382,7 +382,7 @@ namespace tansa {
 			return -1;
 		}
 
-		return Time::now().since(start).seconds();
+		return Time::now().since(start).seconds() + startOffset;
 	}
 
 	void JocsPlayer::cleanup() {

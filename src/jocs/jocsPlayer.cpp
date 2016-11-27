@@ -173,7 +173,6 @@ namespace tansa {
 				// Do nothing
 				v.setpoint_accel(Vector3d(0,0,0));
 			} else if (s == StateTakeoff) {
-//				double t = Time::now().since(transitionStarts[i]).seconds() + startOffset;
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// If the drones started on the ground and overshot the target, switch to hover
@@ -189,7 +188,6 @@ namespace tansa {
 				// Do nothing
 				v.setpoint_accel(Vector3d(0,0,0));
 			} else if (s == StateHolding) {
-//				double t = Time::now().seconds() + startOffset;
 				double t = Time::now().seconds();
 
 				if (pauseRequested) {
@@ -211,8 +209,7 @@ namespace tansa {
 				hovers[i]->setPoint(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
-//				double t = Time::now().since(start).seconds() - timeOffset + startOffset;
-				double t = Time::now().since(start).seconds() - timeOffset;
+				double t = Time::now().since(start).seconds() - timeOffset + startOffset;
 
 				Trajectory *motion = static_cast<MotionAction*>(actions[chorI][plans[i]])->GetPath();
 
@@ -252,7 +249,6 @@ namespace tansa {
 					}
 				}
 			} else if (s == StateLanding) {
-//				double t = Time::now().since(transitionStarts[i]).seconds() + startOffset;
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// Descend to ground

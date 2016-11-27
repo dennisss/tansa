@@ -5,9 +5,12 @@ What's the tl;dr?
 Explain what's changing: go over any special cases, unusual behavior, open questions, etc.
 
 #### :heavy_check_mark: Testing
-- [ ] Test Case 1
-  - [ ] Test Sub Case 1
-- [ ] Test Case 2
+- [ ] Simulate
+  - [ ] All drones
+  - [ ] Only 1 nonzero drone
+- [ ] Real Life
+  - [ ] All drones
+  - [ ] Only 1 nonzero drone
 
 #### :heavy_check_mark: Verification
 - [ ] Checked for memory leaks

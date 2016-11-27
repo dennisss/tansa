@@ -147,7 +147,12 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		}
 	}
 
-	int n = vconfigs.size();
+	// Number of drones used (limited by active ids and number of available slots in choreography)
+	int n = jocsActiveIds.size();
+	if(homes.size() < n) {
+		n = homes.size();
+		jocsActiveIds.resize(n);
+	}
 
 	if (n > vconfigs.size()) {
 		printf("Not enough drones on the network\n");
@@ -187,7 +192,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 	if (!useMocap) {
 		// Only pay attention to homes of active drones
 		vector<Point> spawns;
-		for (int i = 0; i < jocsActiveIds.size(); i++) {
+		for (int i = 0; i < n; i++) {
 			int chosenId = jocsActiveIds[i];
 			// We assume the user only configured for valid IDs..
 			spawns.push_back(homes[chosenId]);

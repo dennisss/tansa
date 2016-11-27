@@ -93,6 +93,9 @@ namespace tansa {
 		actions = currentJocs->GetActions();
 		lightActions = currentJocs->GetLightActions();
 		breakpoints = currentJocs->GetBreakpoints();
+		if(homes.size() < jocsActiveIds.size()) {
+			this->jocsActiveIds.resize(homes.size());
+		}
 		cout << "Finished loading jocs" << endl;
 	}
 

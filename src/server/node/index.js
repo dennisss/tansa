@@ -11,6 +11,8 @@ var server = http.Server(app);
 
 require('./socket')(server);
 
+app.use('/node_modules', express.static(__dirname + '/../../../node_modules'));
+
 app.use(express.static(__dirname + '/../../../public'));
 
 server.listen(3000, function () {

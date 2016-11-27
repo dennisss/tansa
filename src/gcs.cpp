@@ -299,6 +299,10 @@ void loadJocsFile(const json &rawJsonArg) {
 		rawJson["vehicles"] = defaultRawJson["vehicles"];
 	}
 
+	if(rawJson.count("jocsActiveIds") == 0) {
+		rawJson["jocsActiveIds"] = defaultRawJson["jocsActiveIds"];
+	}
+
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
 	player->loadJocs(jocsPath, scale, jocsActiveIds, startPoint);

@@ -339,7 +339,6 @@ loadButton.click(function() {
 		type: 'load',
 		startPoint: breakPoint,
 		jocsPath: 'data/' + fileName,
-		jocsActiveIds: [0,1,2,3,4,5],
 		theaterScale: scale
 	};
 	socket.emit('msg', JSON.stringify(message));

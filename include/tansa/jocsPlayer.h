@@ -28,9 +28,7 @@ namespace tansa {
 
 		void step();
 
-		void rewind(int steps);
-		void reset();
-		void loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds);
+		void loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
 
 
 
@@ -74,13 +72,15 @@ namespace tansa {
 		bool pauseRequested = false;
 		bool paused = false;
 		bool stopRequested = false;
-		bool resetMode = false;
 		bool landed = false;
 		Time start = Time(0,0); // TODO: I will also need a time offset
 		Time pauseOffset = Time(0,0);
 		double timeOffset = 0.0;
 		std::vector<int> pauseIndices;
 		int stepTick = 0;
+		std::vector<int> startIndices;
+		std::vector<int> endIndices;
+		double startOffset = 0.0;
 
 		double getNextBreakpointTime(double lastTime);
 		double getBreakpointTime(unsigned breakpointNumber);
@@ -88,6 +88,7 @@ namespace tansa {
 		unsigned getBreakpointNumber(double startTime);
 		Point getDroneLocationAtTime(double startTime, unsigned droneId);
 		bool isMotionAction(Action* a);
+		void createBreakpointSection(int startPoint, int endPoint = -1);
 	};
 }
 #endif //TANSA_JOCSPLAYER_H

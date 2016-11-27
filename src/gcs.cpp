@@ -105,11 +105,39 @@ void send_status_message() {
 	tansa::send_message(jsonStatus);
 }
 
+
+/**
+ * Return breakpoint information for a given jocsFile
+ * @param jocsPath	Path to a jocs file.
+ * @return	json array of breakpoint objects
+ */
+json getBreakpoints(string jocsPath) {
+	json jsonBreakpoints = json::array();
+	try {
+		auto jocsData = Jocs::Parse(jocsPath, 1.0);
+		auto breakPoints = jocsData->GetBreakpoints();
+
+		for (auto &breakPoint : breakPoints) {
+			json jsonBreakpoint;
+			jsonBreakpoint["name"] = breakPoint.GetName();
+			jsonBreakpoint["number"] = breakPoint.GetNumber();
+			jsonBreakpoint["startTime"] = breakPoint.GetStartTime();
+			jsonBreakpoints.push_back(jsonBreakpoint);
+		}
+	} catch (std::runtime_error e) {
+		cout << "Encountered an exception in getBreakpoints(" << jocsPath << "): ";
+		std::cerr << e.what() << std::endl;
+	}
+
+	return jsonBreakpoints;
+}
+
 void send_file_list() {
 	json j;
 
 	j["type"] = "list_reply";
 	json files = json::array();
+	json jsonMessage = json::array();
 	DIR *dir;
 	struct dirent *ent;
 	if ((dir = opendir ("data")) != NULL) {
@@ -121,7 +149,15 @@ void send_file_list() {
 	} else {
 		generateError(j, "Could not open directory.");
 	}
-	j["files"] = files;
+
+	for (string file : files) {
+		json message;
+		message["fileName"] = file;
+		message["breakpoints"] = getBreakpoints("data/" + file);
+		jsonMessage.push_back(message);
+	}
+
+	j["files"] = jsonMessage;
 	tansa::send_message(j);
 }
 
@@ -229,11 +265,14 @@ void constructLoadResponse() {
 	tansa::send_message(j);
 }
 
+// TODO: This is a bad name as it actually uses the config file as the rawJson
 /**
  * Load a Jocs file with the configuration parameters specified via either the REPL or the GUI
  * @param rawJson 	JSON containing configuration information to initialize (or reconfigure) the JocsPlayer
  */
-void loadJocsFile(const json &rawJson) {
+void loadJocsFile(const json &rawJsonArg) {
+	json rawJson = rawJsonArg;
+
 	if (player == nullptr) {
 		// TODO: Send some kinda error code here
 		printf("Player is null...\n");
@@ -250,8 +289,19 @@ void loadJocsFile(const json &rawJson) {
 	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
 	scale = rawJson["theaterScale"];
 
+	// Load the default config file
+	ifstream defaultConfigStream(jocsConfigPath);
+	std::string defaultConfigData((std::istreambuf_iterator<char>(defaultConfigStream)), std::istreambuf_iterator<char>());
+	nlohmann::json defaultRawJson = nlohmann::json::parse(defaultConfigData);
+
+	// Use default vehicles if the gui didn't send it
+	if(rawJson.count("vehicles") == 0) {
+		rawJson["vehicles"] = defaultRawJson["vehicles"];
+	}
+
+	int startPoint = rawJson["startPoint"];
 	player->cleanup();
-	player->loadJocs(jocsPath, scale, jocsActiveIds);
+	player->loadJocs(jocsPath, scale, jocsActiveIds, startPoint);
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, jocsActiveIds);
 

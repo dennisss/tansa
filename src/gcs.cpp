@@ -51,6 +51,7 @@ static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static vector<unsigned> jocsActiveIds;
 static bool useMocap;
+static int startPoint = 0;
 
 void signal_sigint(int s) {
 	// TODO: Prevent
@@ -338,13 +339,13 @@ void loadJocsFile(const json &rawJsonArg) {
 	}
 
 
+	startPoint = rawJson["startPoint"];
 	initialized = false;
 	string jocsPath = rawJson["jocsPath"];
 	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
 	scale = rawJson["theaterScale"];
 
 
-	int startPoint = rawJson["startPoint"];
 	player->cleanup();
 	player->loadJocs(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
 	vector<Point> homes = player->getHomes();
@@ -425,15 +426,17 @@ void osc_on_message(OSCMessage &msg) {
 
 		int num = std::stoi(msg.address[1]);
 
-		if(msg.address[2] == "load") {
+		if (msg.address[2] == "load") {
 			player->prepare();
 		}
-		else if(msg.address[2] == "start") {
-			printf("Starting at cue #: %d\n", num);
+		else if (msg.address[2] == "start" && startPoint == num) {
 
 			// Assert that it is already prepared at the given cue
+			printf("Starting at cue #: %d\n", num);
 
 			player->play();
+		} else if (startPoint != num) {
+			cout << "Can't start from the wrong cue" << endl;
 		}
 
 	}

@@ -43,6 +43,7 @@ add_library(
 	src/trajectory/linear.cpp
 	src/trajectory/circle.cpp
 	src/trajectory/point.cpp
+	src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
 	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp

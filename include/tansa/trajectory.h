@@ -175,6 +175,24 @@ private:
 };
 
 
+/*
+	Given a circle trajectory between two
+*/
+class GradualCircleTrajectory : public Trajectory {
+public:
+
+	// theta1 and theta2 should also be provided as vectors of position, velocity, acceleration
+	GradualCircleTrajectory(const Point &origin, const vector<Point> &c1, double t1, const vector<Point> &c2, double t2);
+
+	virtual ~GradualCircleTrajectory();
+
+	virtual TrajectoryState evaluate(double t);
+
+private:
+	PolynomialTrajectory *poly;
+	CircleTrajectory *circle;
+};
+
 /**
  * Does a spiral in the z direction. Implemented as an normalized circle with a moving center trajectory
  */

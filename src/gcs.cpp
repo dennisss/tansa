@@ -284,11 +284,6 @@ void loadJocsFile(const json &rawJsonArg) {
 		return;
 	}
 
-	initialized = false;
-	string jocsPath = rawJson["jocsPath"];
-	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
-	scale = rawJson["theaterScale"];
-
 	// Load the default config file
 	ifstream defaultConfigStream(jocsConfigPath);
 	std::string defaultConfigData((std::istreambuf_iterator<char>(defaultConfigStream)), std::istreambuf_iterator<char>());
@@ -302,6 +297,13 @@ void loadJocsFile(const json &rawJsonArg) {
 	if(rawJson.count("jocsActiveIds") == 0) {
 		rawJson["jocsActiveIds"] = defaultRawJson["jocsActiveIds"];
 	}
+
+
+	initialized = false;
+	string jocsPath = rawJson["jocsPath"];
+	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
+	scale = rawJson["theaterScale"];
+
 
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();

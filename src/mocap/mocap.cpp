@@ -110,6 +110,7 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 
 	// Markers is now the full
 
+	/*
 
 	Vehicle *v = inst->tracked[1];
 
@@ -137,7 +138,7 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 		// Track
 		else {
 			double e = (m - lastPosition).norm();
-			if(/* e < 0.035 && */ e < minError) {
+			if( e < minError) { // e < 0.035 &&
 				minError = e;
 				mainMarkerI = i;
 				mainMarker = m;
@@ -174,6 +175,7 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 
 
 	}
+	*/
 
 	/*
 		If we have 2 markers, then we can determine auto-gyro bias estimation

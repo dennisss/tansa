@@ -15,6 +15,13 @@
    "min": [-1.5,-1.5,-1.5],
    "max": [1.5,1.5,1.5]
  },
+"breakpoints": [{
+ "name": "a",
+ "startTime": 0.0,
+ "number": 1
+
+
+}],
   "repeat":1,
   "chor": [
     {

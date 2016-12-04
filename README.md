@@ -1,5 +1,6 @@
 Tansa: Dancing Robotics Platform
 ================================
+[![Build Status](https://travis-ci.org/dennisss/tansa.svg?branch=master)](https://travis-ci.org/dennisss/tansa)
 
 An open platform for making drones dance! This project includes the following:
 

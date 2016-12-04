@@ -44,4 +44,4 @@ sim: build_firmware build
 build_socketio_cpp:
 	git submodule update --init --recursive
 	mkdir -p build_socketio_cpp
-	cd build_socketio_cpp; cmake ../lib/socket.io-client-cpp -DCMAKE_CXX_FLAGS="-fPIC"; make install
+	cd build_socketio_cpp; cmake ../lib/socket.io-client-cpp -DBUILD_SHARED_LIBS=ON -DBoost_USE_STATIC_LIBS=OFF -DCMAKE_CXX_FLAGS="-fPIC"; make install

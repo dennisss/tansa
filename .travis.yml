@@ -1,0 +1,11 @@
+
+sudo: required
+
+services:
+    - docker
+
+before_install:
+    - docker pull dennisss/tansa-dev
+
+script:
+    - docker run --rm -v `pwd`:`pwd`:rw -w=`pwd` -it dennisss/tansa-dev /bin/bash -c "make test"

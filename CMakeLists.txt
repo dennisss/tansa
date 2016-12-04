@@ -4,7 +4,7 @@ project(tansa)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 include_directories(
@@ -43,7 +43,7 @@ add_library(
 	src/trajectory/linear.cpp
 	src/trajectory/circle.cpp
 	src/trajectory/point.cpp
-	src/trajectory/gradual_circle.cpp
+	#src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
 	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp
@@ -60,8 +60,6 @@ target_link_libraries(
 	pthread
 
 	sioclient
-	boost_system
-
 	${Boost_LIBRARIES}
 )
 

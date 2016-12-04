@@ -18,11 +18,22 @@
 #include <unistd.h>
 #include <iostream>
 
+#include <boost/filesystem.hpp>
+
 using namespace std;
 using namespace tansa;
+namespace fs = boost::filesystem;
 
-// TODO: Resolve this to an absolute path
-static const char *paramsDir = "./config/params/";
+// Working directory for configuration and choreo files
+static string defaultWorkspaceDir = ".";
+static string workspaceDir;
+
+// All these are relative to the workspace dir
+static string paramsDir = "config/params/";
+static string dataDir = "data/";
+static string settingsPath = "config/config.json";
+static string jocsConfigPath = "config/jocs.json";
+
 
 static bool running = false;
 static bool initialized = false;
@@ -40,12 +51,40 @@ static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static vector<unsigned> jocsActiveIds;
 static bool useMocap;
-static string jocsConfigPath = "src/jocsConfig.json";
 
 void signal_sigint(int s) {
 	// TODO: Prevent
 	running = false;
 }
+
+string resolvePath(string a, string b = "", string c = "", string d = "") {
+	fs::path p(a);
+
+	if(b != "") p = p / fs::path(b);
+	if(c != "") p = p / fs::path(c);
+	if(d != "") p = p / fs::path(d);
+
+	return p.string();
+}
+
+// Gets the path in the current workspace (used for reading directories and writing files to )
+string resolveWorkspacePath(string a, string b = "", string c = "") {
+	return resolvePath(workspaceDir, a, b, c);
+}
+
+// Trys to find the path either in the current workspace or in the default one (used for reading files with a graceful fallback to defaults)
+string searchWorkspacePath(string a, string b = "", string c = "") {
+	string cur = resolveWorkspacePath(a, b, c);
+	string dflt = resolvePath(defaultWorkspaceDir, a, b, c);
+
+	// If nothing in current workspace, but there is a default, use the default
+	if(fs::exists(dflt) && !fs::exists(cur)) {
+		return dflt;
+	}
+
+	return cur;
+}
+
 
 /**
  * Construct an array of error objects to include with a response when an error has occurred.
@@ -140,8 +179,8 @@ void send_file_list() {
 	json jsonMessage = json::array();
 	DIR *dir;
 	struct dirent *ent;
-	if ((dir = opendir ("data")) != NULL) {
-		while ((ent = readdir (dir)) != NULL) {
+	if ((dir = opendir(resolveWorkspacePath(dataDir).c_str())) != NULL) {
+		while ((ent = readdir(dir)) != NULL) {
 			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".jocs") != std::string::npos)
 				files.push_back(std::string(ent->d_name));
 		}
@@ -153,7 +192,7 @@ void send_file_list() {
 	for (string file : files) {
 		json message;
 		message["fileName"] = file;
-		message["breakpoints"] = getBreakpoints("data/" + file);
+		message["breakpoints"] = getBreakpoints(resolveWorkspacePath(dataDir, file));
 		jsonMessage.push_back(message);
 	}
 
@@ -210,11 +249,11 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		vehicles[i] = new Vehicle();
 
 		// Load default parameters
-		vehicles[i]->readParams(string(paramsDir) + "default.json");
+		vehicles[i]->readParams(searchWorkspacePath(paramsDir, "default.json"));
 		string calibId = useMocap? to_string(v.net_id) : "sim";
 
-		if(!vehicles[i]->readParams(string(paramsDir) + to_string(v.net_id) + ".calib.json")) {
-			cout << "#" + to_string(v.net_id) + " not calibrated!" << endl;
+		if(!vehicles[i]->readParams(searchWorkspacePath(paramsDir, calibId + ".calib.json"))) {
+			cout << "ID: " + calibId + " not calibrated!" << endl;
 		}
 
 		vehicles[i]->connect(v.lport, v.rport);
@@ -285,7 +324,7 @@ void loadJocsFile(const json &rawJsonArg) {
 	}
 
 	// Load the default config file
-	ifstream defaultConfigStream(jocsConfigPath);
+	ifstream defaultConfigStream(searchWorkspacePath(jocsConfigPath));
 	std::string defaultConfigData((std::istreambuf_iterator<char>(defaultConfigStream)), std::istreambuf_iterator<char>());
 	nlohmann::json defaultRawJson = nlohmann::json::parse(defaultConfigData);
 
@@ -307,7 +346,7 @@ void loadJocsFile(const json &rawJsonArg) {
 
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
-	player->loadJocs(jocsPath, scale, jocsActiveIds, startPoint);
+	player->loadJocs(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, jocsActiveIds);
 
@@ -328,7 +367,7 @@ void loadJocsFile(const json &rawJsonArg) {
  * @param configPath The path to the (JSON) config file.
  */
 void loadFromConfigFile(string configPath) {
-	if (configPath == "default") configPath = jocsConfigPath;
+	if (configPath == "default") configPath = searchWorkspacePath(jocsConfigPath);
 
 	ifstream configStream(configPath);
 
@@ -438,7 +477,7 @@ void do_calibrate() {
 
 	string calibId = useMocap? to_string(vconfigs[0].net_id) : "sim";
 	vehicles[0]->params.hoverPoint = sum;
-	vehicles[0]->writeParams(string(paramsDir) + calibId + ".calib.json");
+	vehicles[0]->writeParams(resolveWorkspacePath(paramsDir, calibId + ".calib.json"));
 
 	cout << "Done!" << endl;
 }
@@ -504,10 +543,19 @@ void console_start() {
 
 int main(int argc, char *argv[]) {
 
+	// Configure data and configuration folders
+	char *wpath = getenv("TANSA_PATH");
+	if(wpath != NULL)
+		workspaceDir = wpath;
+	else
+		workspaceDir = defaultWorkspaceDir;
+
+
 	// TODO: Show a usage message instead
 	assert(argc == 2);
 	string configPath = argv[1];
 
+	// TODO: REad configpath fro workspace?
 	ifstream configStream(configPath);
 	if (!configStream) throw "Unable to read config file!";
 

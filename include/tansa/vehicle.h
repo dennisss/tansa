@@ -42,6 +42,12 @@ struct VehicleParameters {
 	double latency;
 };
 
+struct VehicleForwarder {
+	int netfd;
+	struct sockaddr_in server_addr;
+	struct sockaddr_in client_addr;
+};
+
 
 /**
  * Reprents a single remote quadcopter connected via UDP
@@ -58,12 +64,23 @@ public:
 	/**
 	 * Connect to the vehicle using the specified ports and ip address
 	 *
+	 * @param lport the port on which we should wait for messages
+	 * @param rport the port that is sending the messages (and should be sent outbound messages)
 	 * @param laddr the ip address of the local interface on which to listen for messages
 	 * @param raddr the ip address of the remote vehicle. if null, then this will be determined by the first message received matching the given ports
 	 */
 	int connect(int lport = 14550, int rport = 14555, const char *laddr = NULL, const char *raddr = NULL);
 
 	int disconnect();
+
+
+	/**
+	 * Forward messages to another program
+	 *
+	 * @param lport the port to which messages should be sent
+	 * @param rport the port on which to listen for messages to be reverse forwarded
+	 */
+	int forward(int lport, int rport);
 
 
 	bool readParams(string file);

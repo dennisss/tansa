@@ -45,17 +45,6 @@ struct sockaddr_in forward_addr;
 
 int Vehicle::connect(int lport, int rport, const char *laddr, const char *raddr) {
 
-//	if((forwardfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-//		perror("cannot create socket");
-//		return 1;
-//	}
-
-//	memset((char *)&forward_addr, 0, sizeof(client_addr));
-//	forward_addr.sin_family = AF_INET;
-//	forward_addr.sin_port = htons(14550);
-//	inet_pton(AF_INET, "127.0.0.1", &forward_addr.sin_addr);
-
-
 	if((netfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("cannot create socket");
 		return 1;
@@ -107,6 +96,20 @@ int Vehicle::disconnect() {
 	return 0;
 }
 
+
+int Vehicle::forward(int lport, int rport) {
+
+	if((forwardfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("cannot create socket");
+		return 1;
+	}
+
+	memset((char *)&forward_addr, 0, sizeof(client_addr));
+	forward_addr.sin_family = AF_INET;
+	forward_addr.sin_port = htons(14551);
+	inet_pton(AF_INET, "127.0.0.1", &forward_addr.sin_addr);
+
+}
 
 void Vehicle::arm(bool armed) {
 	mavlink_message_t msg;
@@ -513,6 +516,8 @@ void *vehicle_thread(void *arg) {
 
 	char *buf = (char *) malloc(512);
 
+	// TODO: Also poll all forwarding channels for inbound data
+
 	struct pollfd fds[1];
 	int nfds = 1;
 
@@ -551,7 +556,10 @@ void *vehicle_thread(void *arg) {
 					}
 				}
 
-//				sendto(forwardfd, buf, nread, 0, (struct sockaddr *) &forward_addr, addrlen);
+				// Also send to all forwarding channels
+				/*
+				sendto(forwardfd, buf, nread, 0, (struct sockaddr *) &forward_addr, addrlen);
+				*/
 			}
 		}
 

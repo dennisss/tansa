@@ -182,7 +182,7 @@ class GradualCircleTrajectory : public Trajectory {
 public:
 
 	// theta1 and theta2 should also be provided as vectors of position, velocity, acceleration
-	GradualCircleTrajectory(const Point &origin, const vector<Point> &c1, double t1, const vector<Point> &c2, double t2);
+	GradualCircleTrajectory(const Point &origin, const vector<Point> &c1, double theta1, double t1, const vector<Point> &c2, double theta2, double t2);
 
 	virtual ~GradualCircleTrajectory();
 

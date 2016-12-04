@@ -116,10 +116,10 @@ Jocs* Jocs::Parse(std::string jocsPath, double scale) {
 					if (!pointComp(actionStart, startPoint)) {
 						throw std::runtime_error(
 								"Spatial Discontinuity for Drone: " + std::to_string(j) + ". Jumping from point: " +
-								"[" + std::to_string(startPoint.x()) + " " + std::to_string(startPoint.y()) + " " +
-								std::to_string(startPoint.z()) + "]" +
-								" to point: " "[" + std::to_string(actionStart.x()) + " " +
-								std::to_string(actionStart.y()) + " " + std::to_string(actionStart.z()) + "]" + "\n"
+								"[" + std::to_string(startPoint.x()/FEET_TO_METERS) + " " + std::to_string(startPoint.y()/FEET_TO_METERS) + " " +
+								std::to_string(startPoint.z()/FEET_TO_METERS) + "]" +
+								" to point: " "[" + std::to_string(actionStart.x()/FEET_TO_METERS) + " " +
+								std::to_string(actionStart.y()/FEET_TO_METERS) + " " + std::to_string(actionStart.z()/FEET_TO_METERS) + "]" + "\n"
 								+ "at start time: " + std::to_string(sTime)
 						);
 					}

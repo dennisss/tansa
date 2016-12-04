@@ -18,6 +18,7 @@ enum ActionTypes : unsigned{
 	Hover = 4,
 	Light = 5,
 	Strobe = 6,
+	GradualCricle = 7
 };
 
 typedef unsigned DroneId;

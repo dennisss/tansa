@@ -1,5 +1,6 @@
 {
-	"jocsPath": "data/smallscale.jocs",
+	"jocsPath": "data/singleDrone.jocs",
+	"startPoint": 1,
 	"jocsActiveIds": [0,1,2,3,4,5],
 	"theaterScale": 1.0,
 	"vehicles": [

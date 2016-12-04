@@ -437,6 +437,8 @@ void do_calibrate() {
 	sum /= 40.0;
 
 	string calibId = useMocap? to_string(vconfigs[0].net_id) : "sim";
+	vehicles[0]->params.hoverPoint = sum;
+	vehicles[0]->writeParams(string(paramsDir) + calibId + ".calib.json");
 
 	cout << "Done!" << endl;
 }
@@ -502,6 +504,7 @@ void console_start() {
 
 int main(int argc, char *argv[]) {
 
+	// TODO: Show a usage message instead
 	assert(argc == 2);
 	string configPath = argv[1];
 

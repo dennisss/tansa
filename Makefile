@@ -19,7 +19,7 @@ run: build
 	./build/gcs $(CONFIG_PATH)
 
 test: build
-	cd build; ./test_tansa # make test
+	./build/test_tansa
 
 clean:
 	rm -rf build

@@ -249,13 +249,14 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		vehicles[i] = new Vehicle();
 
 		// Load default parameters
-		vehicles[i]->readParams(searchWorkspacePath(paramsDir, "default.json"));
+		vehicles[i]->read_params(searchWorkspacePath(paramsDir, "default.json"));
 		string calibId = useMocap? to_string(v.net_id) : "sim";
 
-		if(!vehicles[i]->readParams(searchWorkspacePath(paramsDir, calibId + ".calib.json"))) {
+		if(!vehicles[i]->read_params(searchWorkspacePath(paramsDir, calibId + ".calib.json"))) {
 			cout << "ID: " + calibId + " not calibrated!" << endl;
 		}
 
+		vehicles[i]->forward(v.lport + 2, v.rport + 2);
 		vehicles[i]->connect(v.lport, v.rport);
 		if (useMocap) {
 			mocap->track(vehicles[i], i+1);
@@ -477,7 +478,7 @@ void do_calibrate() {
 
 	string calibId = useMocap? to_string(vconfigs[0].net_id) : "sim";
 	vehicles[0]->params.hoverPoint = sum;
-	vehicles[0]->writeParams(resolveWorkspacePath(paramsDir, calibId + ".calib.json"));
+	vehicles[0]->write_params(resolveWorkspacePath(paramsDir, calibId + ".calib.json"));
 
 	cout << "Done!" << endl;
 }

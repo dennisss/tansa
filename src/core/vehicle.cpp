@@ -40,9 +40,6 @@ Vehicle::Vehicle() :
 	nextChannel = (mavlink_channel_t) ((int)channel + 1);
 }
 
-int forwardfd = 0;
-struct sockaddr_in forward_addr;
-
 int Vehicle::connect(int lport, int rport, const char *laddr, const char *raddr) {
 
 	if((netfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -90,6 +87,11 @@ int Vehicle::connect(int lport, int rport, const char *laddr, const char *raddr)
 int Vehicle::disconnect() {
 	running = false;
 	close(netfd);
+	for(auto &f : forwarders) {
+		close(f.netfd);
+	}
+	forwarders.resize(0);
+
 	pthread_join(thread, NULL);
 	netfd = 0;
 	thread = 0;
@@ -99,16 +101,37 @@ int Vehicle::disconnect() {
 
 int Vehicle::forward(int lport, int rport) {
 
-	if((forwardfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		perror("cannot create socket");
+	if(running) {
+		printf("Cannot initialize a forwarder while already connected\n");
 		return 1;
 	}
 
-	memset((char *)&forward_addr, 0, sizeof(client_addr));
-	forward_addr.sin_family = AF_INET;
-	forward_addr.sin_port = htons(14551);
-	inet_pton(AF_INET, "127.0.0.1", &forward_addr.sin_addr);
+	VehicleForwarder f;
 
+	if((f.netfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("forward(): cannot create socket");
+		return 1;
+	}
+
+	memset((char *)&f.client_addr, 0, sizeof(f.client_addr));
+	f.client_addr.sin_family = AF_INET;
+	f.client_addr.sin_port = htons(rport);
+	inet_pton(AF_INET, "127.0.0.1", &f.client_addr.sin_addr);
+
+	memset((char *)&f.server_addr, 0, sizeof(f.server_addr));
+	f.server_addr.sin_family = AF_INET;
+	f.server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	f.server_addr.sin_port = htons(lport);
+
+	if (::bind(f.netfd, (struct sockaddr *) &f.server_addr, (socklen_t) sizeof(server_addr)) < 0) {
+		perror("forward(): bind failed");
+		close(netfd);
+		return 1;
+	}
+
+	forwarders.push_back(f);
+
+	return 0;
 }
 
 void Vehicle::arm(bool armed) {
@@ -509,21 +532,24 @@ void *vehicle_thread(void *arg) {
 
 	int res = 0;
 
-	mavlink_message_t msg; // TODO: This should be set to all zeros initially
+	mavlink_message_t msg; memset(&msg, 0, sizeof(msg));
 	mavlink_status_t status;
 
-	memset(&msg, 0, sizeof(msg));
 
 	char *buf = (char *) malloc(512);
 
-	// TODO: Also poll all forwarding channels for inbound data
-
-	struct pollfd fds[1];
-	int nfds = 1;
+	int nfds = 1 + v->forwarders.size();
+	struct pollfd *fds = (struct pollfd *) malloc(sizeof(struct pollfd) * nfds);
 
 	// First descriptor for udp socket
 	fds[0].fd = v->netfd;
 	fds[0].events = POLLIN; // TODO: Set netfd to non-blocking and allow the OS to buffer the sendto if needed
+
+	// Other ones for forwarders
+	for(int i = 0; i < v->forwarders.size(); i++) {
+		fds[1 + i].fd = v->forwarders[i].netfd;
+		fds[1 + i].events = POLLIN;
+	}
 
 	printf("Waiting for messages...\n");
 
@@ -557,10 +583,32 @@ void *vehicle_thread(void *arg) {
 				}
 
 				// Also send to all forwarding channels
-				/*
-				sendto(forwardfd, buf, nread, 0, (struct sockaddr *) &forward_addr, addrlen);
-				*/
+				for(auto &f : v->forwarders) {
+					sendto(f.netfd, buf, nread, 0, (struct sockaddr *) &f.client_addr, addrlen);
+				}
 			}
+		}
+		else { // Received data on one of the forwarder listeners
+
+			struct sockaddr_in addr;
+			socklen_t addrlen = sizeof(struct sockaddr_in);
+
+			for(int i = 0; i < v->forwarders.size(); i++) {
+				if(!(fds[1 + i].revents & POLLIN))
+					continue;
+
+				auto &f = v->forwarders[i];
+
+				int nread = recvfrom(f.netfd, buf, 512, 0, (struct sockaddr *)&addr, &addrlen);
+
+				// Register the client that is sending us messages
+				f.client_addr.sin_port = addr.sin_port;
+				f.client_addr.sin_addr = addr.sin_addr;
+
+				// Send to vehicle
+				sendto(v->netfd, buf, nread, 0, (struct sockaddr *)&v->client_addr, sizeof(v->client_addr));
+			}
+
 		}
 
 
@@ -592,6 +640,9 @@ void *vehicle_thread(void *arg) {
 
 
 	}
+
+	free(buf);
+	free(fds);
 
 	return NULL;
 }

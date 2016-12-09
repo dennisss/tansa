@@ -9,9 +9,3 @@ Use the tansa::Mocap class and add Vehicles to it
 Updating the source code
 - Take a look at `PacketClient.cpp` from the NatNet SDK and diff it with the one we are currently using (NatNet 2.9).
 - Integrate all the changes into `ClientCore.cpp`
-
-
-License
----------
-
-The files, `optitrack/NatNetClient.h` and `optitrack/NatNetTypes.h`, were derived from the identically named files provided publicly by OptiTrack in their NatNet SDK. Although now explicitly licensed, we use these files under assumptions of fair use without warranty for software interoperability.

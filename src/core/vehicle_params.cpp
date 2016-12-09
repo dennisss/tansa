@@ -5,7 +5,7 @@
 
 namespace tansa {
 
-bool Vehicle::readParams(string file) {
+bool Vehicle::read_params(string file) {
 
 	std::ifstream stream(file);
 	if(!stream) {
@@ -33,7 +33,7 @@ bool Vehicle::readParams(string file) {
 	return true;
 }
 
-void Vehicle::writeParams(string file) {
+void Vehicle::write_params(string file) {
 
 	json j = json::object();
 	j["hoverPoint"] = params.hoverPoint;

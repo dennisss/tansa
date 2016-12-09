@@ -77,15 +77,15 @@ public:
 	/**
 	 * Forward messages to another program
 	 *
-	 * @param lport the port to which messages should be sent
-	 * @param rport the port on which to listen for messages to be reverse forwarded
+	 * @param lport the port on which we will listen for messages
+	 * @param rport the port to which messages received from the vehicle will be sent
 	 */
 	int forward(int lport, int rport);
 
 
-	bool readParams(string file);
+	bool read_params(string file);
 
-	void writeParams(string file);
+	void write_params(string file);
 
 	/**
 	 * Changes the armed state of the drone
@@ -185,6 +185,8 @@ private:
 
 	struct sockaddr_in server_addr;
 	struct sockaddr_in client_addr;
+
+	vector<VehicleForwarder> forwarders;
 
 
 	Time lastHeartbeatReceived;

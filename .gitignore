@@ -33,3 +33,22 @@ config/params/*.calib.json
 # IDE Files from CLion
 .idea/
 cmake-build-debug/
+
+
+# Eagle CAD temporary files
+*.s#?
+*.b#?
+*.l#?
+*.lck
+
+# Gerber files
+*.gbl
+*.gbo
+*.gbp
+*.gbs
+*.gml
+*.gtl
+*.gto
+*.gtp
+*.gts
+*.gpi

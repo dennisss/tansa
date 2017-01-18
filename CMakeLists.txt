@@ -119,7 +119,7 @@ set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++1y")
 set(rotors_description_dir "${CMAKE_CURRENT_SOURCE_DIR}/lib/Firmware/Tools/sitl_gazebo/models/rotors_description")
 set(scripts_dir "${CMAKE_CURRENT_SOURCE_DIR}/lib/Firmware/Tools/sitl_gazebo/scripts")
 set(models_dir "${CMAKE_CURRENT_SOURCE_DIR}/config/gazebo/models")
-set(design_dir "${CMAKE_CURRENT_SOURCE_DIR}/design/x340")
+set(design_dir "${CMAKE_CURRENT_SOURCE_DIR}/hardware/x340/mesh")
 add_custom_command(OUTPUT ${models_dir}/x340/x340.sdf
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND rm -f ${models_dir}/x340/x340.sdf

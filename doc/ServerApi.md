@@ -10,7 +10,7 @@ The stats message is sent every 1/10th of a second with the current state of eve
 
 ```
 {
-	type: 'stats',
+	type: 'status',
 	time: 3.25, // in seconds
 	activeFile: '...',
 	vehicles: [
@@ -28,6 +28,7 @@ The stats message is sent every 1/10th of a second with the current state of eve
 
 			log: ["", ""] // A list of strings (lines) to add to the log since last time
 			position: [x, y, z]
+			orientation: [w, x, y, z]
 			...
 
 		}

@@ -9,48 +9,19 @@
 
 	<title>Tansa</title>
 
+	<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans&amp;subset=latin,greek">
+	<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="http://127.0.0.1:4200/assets/web.css">
 </head>
 <body>
 
-	<button id="takeoffBtn">Takeoff</button>
-	<button id="playBtn">Play</button>
-	<button id="landBtn">Land</button>
-
-
-	<div id="test">
+	<div id="ts-root">
 	</div>
 
 
-
-	<script src="/node_modules/jquery/dist/jquery.min.js"></script>
-	<script src="/socket.io/socket.io.js"></script>
-	<script>
-		var socket = io();
-
-		// This should receive data a few times a second
-		socket.on('msg', function(str) {
-			var data = JSON.parse(str);
-
-			$('#test').html(JSON.stringify(data, null, '\t').replace(/\n/g, '</br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;'));
-		});
-
-
-		$('#takeoffBtn').click(function() {
-			socket.emit('msg', JSON.stringify({type: 'prepare'}))
-		});
-
-		$('#playBtn').click(function() {
-			socket.emit('msg', JSON.stringify({type: 'play'}))
-		});
-
-		$('#landBtn').click(function() {
-			socket.emit('msg', JSON.stringify({type: 'land'}))
-		});
-
-		// To hit play, do socket.emit('msg', JSON.stringify({type: 'play'}));
-
-
-	</script>
-
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" crossorigin="anonymous"></script>
+	<script src="http://127.0.0.1:4200/assets/web.js"></script>
 </body>
 </html>

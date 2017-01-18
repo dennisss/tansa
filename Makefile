@@ -9,9 +9,6 @@ build: build_socketio_cpp
 	rm -f config/gazebo/models/x340/x340.sdf
 	cd build; cmake ..; make
 
-runSim: 
-	./scripts/start_gazebo.sh
-
 server:
 	node ./src/server
 
@@ -39,6 +36,10 @@ build_firmware:
 # Starts an empty sim
 sim: build_firmware build
 	./scripts/start_gazebo.sh
+
+runSim:
+	./scripts/start_gazebo.sh
+
 
 
 build_socketio_cpp:

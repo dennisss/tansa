@@ -124,6 +124,13 @@ void send_status_message() {
 		jsonPosition.push_back(vehicles[i]->state.position.z());
 		jsonVehicle["position"] = jsonPosition;
 
+		json jsonOrientation = json::array();
+		jsonOrientation.push_back(vehicles[i]->state.orientation.w());
+		jsonOrientation.push_back(vehicles[i]->state.orientation.x());
+		jsonOrientation.push_back(vehicles[i]->state.orientation.y());
+		jsonOrientation.push_back(vehicles[i]->state.orientation.z());
+		jsonVehicle["orientation"] = jsonOrientation;
+
 		json jsonBatteryStats = {
 			{"voltage", vehicles[i]->battery.voltage},
 			{"percent", vehicles[i]->battery.percent}
@@ -614,8 +621,8 @@ int main(int argc, char *argv[]) {
 
 	Rate r(100);
 	while (running) {
-		// Regular status messages
-		if (enableMessaging && i % 20 == 0) {
+		// Regular status messages (currently at 100 / 4 == 25Hz)
+		if (enableMessaging && i % 4 == 0) {
 			send_status_message();
 		}
 

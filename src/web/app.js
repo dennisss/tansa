@@ -2,7 +2,8 @@ var React = require('react'),
 	Navbar = require('./navbar'),
 	WorldView = require('./world'),
 	Timeline = require('./timeline'),
-	PropertiesPane = require('./properties');
+	PropertiesPane = require('./properties'),
+	Socket = require('./socket');
 
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
@@ -22,6 +23,22 @@ var App = React.createClass({
 
 	onPlayerReady: function(player){
 		this.player = player;
+
+		Socket.on('msg', function(data) {
+			data = JSON.parse(data);
+
+			if(data.type == 'status') {
+
+				player.update({vehicles: data.vehicles});
+
+
+
+			}
+
+
+		})
+
+
 
 	},
 

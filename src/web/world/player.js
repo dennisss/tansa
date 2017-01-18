@@ -16,7 +16,7 @@ var pointI = 1;
 
 	The state is of the form:
 	{
-		drones: [
+		vehicles: [
 			{ position: Vector3(...), orientation: Vector3(...) }
 			...
 		],
@@ -265,7 +265,7 @@ class WorldPlayer {
 
 
 	// Create initial scene
-	create(){
+	create() {
 		this._droneObjects = [
 			this.addDrone(0),
 			this.addDrone(1)
@@ -292,13 +292,44 @@ class WorldPlayer {
 		this.render();
 	}
 
-	update(){
+	update(newState) {
+
+		// Not yet loaded
+		if(!this._droneObjects) {
+			return;
+		}
+
+		console.log('UPDATE')
+
+		for(var i = 0; i < this._droneObjects.length; i++) {
+
+			if(i >= newState.vehicles.length) {
+				break;
+			}
+
+
+			var p = newState.vehicles[i].position;
+			var o = newState.vehicles[i].orientation[1];
+
+			this._droneObjects[i].drone.position.set(p[0], p[1], p[2])
+
+
+			var q = new THREE.Quaternion(o[1], o[2], o[3], o[0]);
+
+			this._droneObjects[i].drone.rotation.setFromQuaternion(q);
+
+
+		}
+
+		requestAnimationFrame(() => {
+			this.render();
+		})
 
 
 	}
 
 
-	render(){
+	render() {
 		//splines.uniform.mesh.visible = uniform.checked;
 		//splines.centripetal.mesh.visible = centripetal.checked;
 		//splines.chordal.mesh.visible = chordal.checked;

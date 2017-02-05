@@ -112,6 +112,23 @@ target_link_libraries(
 set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
+###### Simple Demo ######
+add_executable(
+	simple
+
+	src/simple.cpp
+)
+
+target_link_libraries(
+	simple
+
+	pthread
+	tansa
+)
+
+set_target_properties(simple PROPERTIES COMPILE_FLAGS "-std=c++1y")
+
+
 
 ########## Targets for Gazebo Simulation ###########
 

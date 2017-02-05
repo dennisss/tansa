@@ -1,0 +1,99 @@
+#ifndef TANSA_CHANNEL_H
+#define TANSA_CHANNEL_H
+
+#include <map>
+#include <vector>
+
+namespace tansa {
+
+class Subscription {
+public:
+	Subscription(void (*func)(void *, void *), void *data) {
+		this->func = func;
+		this->data = data;
+	}
+
+
+	void call(void *raw) {
+		func(raw, data);
+	}
+
+private:
+	void (*func)(void *value, void *data);
+	void *data;
+};
+
+
+template<class T, class V>
+class ClassSubscription : Subscription {
+
+public:
+
+	ClassSubscription(T* inst, void (T::*method)(const V*)) {
+		super(&ClassSubscription<T, V>::callClassMethod, this);
+
+		this->inst = inst;
+		this->method = method;
+	}
+
+	T *inst;
+	void (T::*method)(const V* value);
+
+
+	static void callClassMethod(void *raw, void *data) {
+		ClassSubscription *cs = (ClassSubscription *) data;
+
+		V *val = (V *) raw;
+		cs->inst->*cs->method(val);
+	}
+
+
+};
+
+
+class Channel {
+public:
+
+
+
+protected:
+
+	template<class T>
+	inline void publish(const T &val) {
+
+		int ID = T::ID;
+		if(listeners.count(ID) == 0)
+			return;
+
+		for(auto subp : listeners[ID]) {
+			subp->call((void *) &val);
+		}
+
+	}
+
+	template<class T, class V>
+	inline void subscribe(void (T::*func)(const V*), T *inst) {
+
+		int ID = T::ID;
+		if(listeners.count(ID) == 0) {
+			listeners[ID] = std::vector<Subscription *>();
+		}
+
+		listeners[ID].push_back(new ClassSubscription<T, V>(inst, func));
+	}
+
+
+
+
+
+private:
+
+
+	std::map<int, std::vector<Subscription *>> listeners;
+};
+
+
+}
+
+
+#endif

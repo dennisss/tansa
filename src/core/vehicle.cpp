@@ -389,6 +389,62 @@ void Vehicle::set_beacon(bool on) {
 	send_message(&msg);
 }
 
+void Vehicle::set_rgb_lighting(int color) {
+
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
+		&msg,
+		1, 1,
+		MAV_CMD_RGBLED,
+		0,
+		color,
+		0, 0, 0, 0, 0, 0
+	);
+
+	send_message(&msg);
+}
+
+void Vehicle::hil_sensor(const Vector3d *accel, const Vector3d *gyro, const Vector3d *mag, const Time &t) {
+
+	Vector3d accel_ned, gyro_ned, mag_ned;
+	if(accel != NULL) {
+		accel_ned = enuToFromNed() * (*accel);
+	}
+	if(gyro != NULL) {
+		gyro_ned = enuToFromNed() * (*gyro);
+	}
+	if(mag != NULL) {
+		mag_ned = enuToFromNed() * (*mag);
+	}
+
+
+	mavlink_message_t msg;
+	mavlink_msg_hil_sensor_pack_chan(
+		255, 0, channel,
+		&msg,
+		t.micros(), // TODO: Check this
+		accel_ned.x(),
+		accel_ned.y(),
+		accel_ned.z(),
+		gyro_ned.x(),
+		gyro_ned.y(),
+		gyro_ned.z(),
+		mag_ned.x(),
+		mag_ned.y(),
+		mag_ned.z(),
+		0,
+		0,
+		0,
+		0,
+		// fields_updated
+		(accel != NULL? 0b111 : 0) | (gyro != NULL? 0b111000 : 0) | (mag != NULL? 0b111000000 : 0)
+	);
+
+	send_message(&msg);
+
+}
+
 /*
 // TODO: This should wait for a COMMAND_ACK message (should give a RESULT_ACCEPTED upon start of calibration)
 // These src/modules/commander/calibration_messages.h are
@@ -521,6 +577,20 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 		case MAVLINK_MSG_ID_TIMESYNC:
 			handle_message_timesync(msg);
+			break;
+
+
+		case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
+			mavlink_hil_actuator_controls_t ac;
+			mavlink_msg_hil_actuator_controls_decode(msg, &ac);
+
+			// ac.controls is an array of floats from 0..1 with the motor outputs commanded
+			ActuatorOutputs ao;
+			for(int i = 0; i < 16; i++) {
+				ao.outputs[i] = ac.controls[i];
+			}
+
+			this->publish(ao);
 			break;
 	}
 

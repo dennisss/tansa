@@ -1,9 +1,10 @@
-#ifndef TANSA_VEHICLE_H_
-#define TANSA_VEHICLE_H_
+#ifndef TANSA_VEHICLE_H
+#define TANSA_VEHICLE_H
 
 #include "time.h"
 #include "estimation.h"
 #include "trajectory.h"
+#include "channel.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -21,13 +22,26 @@ namespace tansa {
 
 #define MAV_CMD_BEACON MAV_CMD_USER_1
 
+#define MAV_CMD_RGBLED MAV_CMD_USER_2
+
 #define GRAVITY_MS 9.8
 
+
 struct BatteryStatus {
+	static const int ID = 1;
+
 	double voltage = -1;
 	double percent = -1;
 
 };
+
+struct ActuatorOutputs {
+	static const int ID = 2;
+
+	vector<float> outputs;
+};
+
+
 
 struct VehicleParameters {
 
@@ -52,7 +66,7 @@ struct VehicleForwarder {
 /**
  * Reprents a single remote quadcopter connected via UDP
  */
-class Vehicle {
+class Vehicle : Channel {
 
 public:
 	/**
@@ -122,6 +136,8 @@ public:
 	 */
 	void set_beacon(bool on);
 
+	void set_rgb_lighting(int color);
+
 	/**
 	 * Fuses motion capture information into the current position estimate
 	 */
@@ -143,6 +159,11 @@ public:
 	// Should do something like waiting for a response
 	void ping();
 
+
+	/**
+	 * For sending simulated sensor data to the vehicle
+	 */
+	void hil_sensor(const Vector3d *acc, const Vector3d *gyro, const Vector3d *mag, const Time &t);
 
 	// Connection state
 	bool connected = false;

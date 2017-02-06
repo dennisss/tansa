@@ -66,7 +66,7 @@ struct VehicleForwarder {
 /**
  * Reprents a single remote quadcopter connected via UDP
  */
-class Vehicle : Channel {
+class Vehicle : public Channel {
 
 public:
 	/**

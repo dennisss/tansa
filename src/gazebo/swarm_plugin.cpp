@@ -122,7 +122,7 @@ namespace gazebo {
 			int p = fork();
 			if(p == 0) { // Child
 				char *const bash = (char *const) "/bin/bash";
-				char *const script = (char *const) "scripts/start_sim.sh";
+				char *const script = (char *const) "scripts/start_many_instances.sh";
 				char num[16];
 				strcpy(num, std::to_string(n).c_str());
 				char *const argv[] = { bash, script, num, NULL};

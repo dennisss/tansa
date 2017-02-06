@@ -25,12 +25,12 @@ private:
 
 
 template<class T, class V>
-class ClassSubscription : Subscription {
+class ClassSubscription : public Subscription {
 
 public:
 
-	ClassSubscription(T* inst, void (T::*method)(const V*)) {
-		super(&ClassSubscription<T, V>::callClassMethod, this);
+	ClassSubscription(T* inst, void (T::*method)(const V*))
+	 : Subscription(&ClassSubscription<T, V>::callClassMethod, this) {
 
 		this->inst = inst;
 		this->method = method;
@@ -44,7 +44,7 @@ public:
 		ClassSubscription *cs = (ClassSubscription *) data;
 
 		V *val = (V *) raw;
-		cs->inst->*cs->method(val);
+		(cs->inst->*(cs->method))(val);
 	}
 
 
@@ -54,14 +54,23 @@ public:
 class Channel {
 public:
 
+	template<class T, class V>
+	inline void subscribe(void (T::*func)(const V*), T *inst) {
 
+		int ID = V::ID;
+		if(listeners.count(ID) == 0) {
+			listeners[ID] = std::vector<Subscription *>();
+		}
+
+		listeners[ID].push_back(new ClassSubscription<T, V>(inst, func));
+	}
 
 protected:
 
-	template<class T>
-	inline void publish(const T &val) {
+	template<class V>
+	inline void publish(const V &val) {
 
-		int ID = T::ID;
+		int ID = V::ID;
 		if(listeners.count(ID) == 0)
 			return;
 
@@ -70,19 +79,6 @@ protected:
 		}
 
 	}
-
-	template<class T, class V>
-	inline void subscribe(void (T::*func)(const V*), T *inst) {
-
-		int ID = T::ID;
-		if(listeners.count(ID) == 0) {
-			listeners[ID] = std::vector<Subscription *>();
-		}
-
-		listeners[ID].push_back(new ClassSubscription<T, V>(inst, func));
-	}
-
-
 
 
 

@@ -74,6 +74,16 @@ private:
 	Point point;
 };
 
+
+class AdmittanceController : public HoverController {
+public:
+	AdmittanceController(Vehicle *v);
+	virtual ~AdmittanceController() {}
+
+	virtual void control(double t);
+
+};
+
 /**
  * Controller for following Light Trajectory's
  */

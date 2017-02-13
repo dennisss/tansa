@@ -15,6 +15,7 @@ sleep 1
 n=0
 while [ $n -lt $num ]; do
 	$SCRIPT_DIR/start_instance.sh $n $rc_script &
+	n=$(($n + 1))
 done
 
 

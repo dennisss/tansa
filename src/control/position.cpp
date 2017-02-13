@@ -29,7 +29,7 @@ TrajectoryState PositionController::getTargetState(double t) {
 void PositionController::control(double t) {
 	// Evaluate trajectory
 	TrajectoryState s = this->getTargetState(t);
-	State cur = vehicle->arrival_state();
+	ModelState cur = vehicle->arrival_state();
 
 
 	Vector3d eP = s.position - cur.position;

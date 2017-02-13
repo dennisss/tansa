@@ -14,6 +14,7 @@
 
 #include <Eigen/Dense>
 #include <string>
+#include <memory>
 
 using namespace Eigen;
 using namespace std;
@@ -69,6 +70,8 @@ struct VehicleForwarder {
 class Vehicle : public Channel {
 
 public:
+	typedef std::shared_ptr<Vehicle> Ptr;
+
 	/**
 	 * Initializes a new vehicle and
 	 *
@@ -146,7 +149,7 @@ public:
 	/**
 	 * Computes the approximate state of the vehicle upon receiving a message sent right now
 	 */
-	State arrival_state();
+	ModelState arrival_state();
 
 	// TODO: Change these to use Point
 	// By default, this will preserve the yaw
@@ -172,7 +175,7 @@ public:
 	string mode;
 
 	// Physical State : used for visualization and trajectory control
-	State state;
+	ModelState state;
 	LinearComplementaryEstimator estimator;
 
 	ControlInput lastControlInput;
@@ -180,7 +183,7 @@ public:
 	Time lastControlTime;
 
 	// State as observed by the onboard processor
-	State onboardState;
+	ModelState onboardState;
 
 	BatteryStatus battery;
 

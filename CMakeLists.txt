@@ -30,6 +30,7 @@ add_library(
 	tansa SHARED
 
 	src/core/core.cpp
+	src/core/data.cpp
 	src/core/vehicle.cpp
 	src/core/vehicle_time.cpp
 	src/core/vehicle_params.cpp
@@ -53,7 +54,18 @@ add_library(
 	src/jocs/jocsPlayer.cpp
 	src/trajectory/light.cpp
 	src/trajectory/strobe.cpp
-	src/control/lightcontrol.cpp)
+	src/control/lightcontrol.cpp
+	src/control/admittance.cpp
+
+	# Simulation
+	src/simulate/simulation.cpp
+	src/simulate/motor.cpp
+	src/simulate/model.cpp
+	src/simulate/multirotor.cpp
+	src/simulate/firmware.cpp
+	src/simulate/battery.cpp
+	src/simulate/sensors/imu.cpp
+)
 
 target_link_libraries(
 	tansa
@@ -127,6 +139,23 @@ target_link_libraries(
 )
 
 set_target_properties(simple PROPERTIES COMPILE_FLAGS "-std=c++1y")
+
+
+###### Simulation Test ######
+add_executable(
+	sim
+
+	src/simulate.cpp
+)
+
+target_link_libraries(
+	sim
+
+	pthread
+	tansa
+)
+
+set_target_properties(sim PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
 

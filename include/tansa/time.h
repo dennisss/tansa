@@ -12,6 +12,8 @@ namespace tansa {
 class Time {
 
 public:
+	//Time();
+	Time() : Time(0, 0) { }
 	Time(int secs, int nsecs);
 	Time(double secs);
 
@@ -62,7 +64,6 @@ public:
 	static void setTime(const Time &t, double factor = 0);
 
 private:
-	Time();
 
 	struct timespec val;
 };

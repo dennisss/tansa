@@ -69,10 +69,11 @@ void time_init() {
 	starttime = Time::realNow();
 }
 
-
+/*
 Time::Time() {
 
 }
+*/
 
 Time::Time(int secs, int nsecs) {
 	this->val.tv_sec = secs;

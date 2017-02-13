@@ -278,11 +278,11 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	lastTrackTime = t;
 }
 
-State Vehicle::arrival_state() {
+ModelState Vehicle::arrival_state() {
 	if(params.latency == 0.0)
 		return this->state;
 
-	State newstate = this->state;
+	ModelState newstate = this->state;
 
 	Time eta(Time::now().seconds() + params.latency);
 

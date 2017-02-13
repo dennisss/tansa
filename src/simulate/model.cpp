@@ -1,0 +1,65 @@
+#include <tansa/model.h>
+
+namespace tansa {
+
+Model::Model(const DataObject &desc) {
+	this->mass = desc["mass"];
+	this->mInertia = desc["moments"].matrix<3,3>();
+}
+
+State::Ptr Model::defaultState() {
+	return State::Ptr(new ModelState());
+}
+
+void Model::update(State::Ptr _s, const Time &t) {
+
+	ModelState::Ptr s = std::static_pointer_cast<ModelState>(_s);
+
+	double dt = t.since(s->time).seconds();
+
+	// Unpack old state
+	Vector3d x = s->position;
+	Vector3d v = s->velocity;
+	Matrix3d R = s->orientation.matrix();
+	Vector3d w = s->angularVelocity;
+
+	// Gravity (m/s^2)
+	const double g = 9.81;
+
+	// Perform rigid body dynamics integration
+
+	Vector3d f = this->force(*_s),
+			 tau = this->torque(*_s);
+
+	// Linear acceeration
+	Vector3d a = Vector3d(0,0, -this->mass*g) + R * f;
+	a /= this->mass;
+
+	// Euler equation to get angular acceleration
+	Vector3d dw = this->mInertia.inverse() * (tau - w.cross(this->mInertia * w));
+
+	// Quaternion derivative
+	Quaterniond dq( 0.5 * (Quaterniond(0, w.x(), w.y(), w.z()) * s->orientation).coeffs() );
+
+
+	// Perform the integration
+
+	s->velocity = v + a*dt;
+	s->position = x + v*dt + 0.5*a*dt*dt;
+
+	// Simple ground plane collision clipping
+	// TODO: Instead, planes should apply a normal force equal to the
+	if(s->position.z() < 0) {
+		s->position.z() = 0;
+	}
+
+	s->angularAcceleration = dw;
+	s->angularVelocity = w + dw*dt;
+	s->orientation = Quaterniond( s->orientation.coeffs() + dq.coeffs()*dt );  //dq*s.orientation;
+	s->orientation.normalize();
+
+	s->time = t;
+}
+
+
+}

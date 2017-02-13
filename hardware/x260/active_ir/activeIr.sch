@@ -2244,62 +2244,54 @@ No silk outline, but tDocu layer shows pin location.
 </plain>
 <instances>
 <instance part="Q1" gate="Q" x="53.34" y="45.72"/>
-<instance part="P+1" gate="VCC" x="53.34" y="60.96"/>
-<instance part="GND1" gate="1" x="53.34" y="12.7"/>
-<instance part="D1" gate="G$1" x="53.34" y="27.94"/>
+<instance part="P+1" gate="VCC" x="15.24" y="68.58" rot="R90"/>
+<instance part="GND1" gate="1" x="53.34" y="22.86"/>
+<instance part="D1" gate="G$1" x="53.34" y="55.88"/>
 <instance part="R2" gate="R" x="34.29" y="35.56" rot="R90"/>
 <instance part="R1" gate="R" x="41.91" y="45.72"/>
-<instance part="R3" gate="R" x="48.26" y="35.56" rot="R90"/>
+<instance part="R3" gate="R" x="33.02" y="63.5" rot="R180"/>
 <instance part="J1" gate="J$1" x="8.89" y="43.18"/>
 <instance part="P+2" gate="VCC" x="25.4" y="53.34"/>
 <instance part="GND2" gate="1" x="25.146" y="35.56"/>
-<instance part="R4" gate="R" x="58.42" y="35.56" rot="R90"/>
-<instance part="R5" gate="R" x="53.34" y="35.56" rot="R270"/>
+<instance part="R4" gate="R" x="33.02" y="73.66" rot="R180"/>
+<instance part="R5" gate="R" x="33.02" y="68.58"/>
 </instances>
 <busses>
 </busses>
 <nets>
 <net name="VCC" class="0">
 <segment>
-<pinref part="Q1" gate="Q" pin="D"/>
-<pinref part="P+1" gate="VCC" pin="VCC"/>
-<wire x1="53.34" y1="58.42" x2="53.34" y2="50.8" width="0.1524" layer="91"/>
-</segment>
-<segment>
-<pinref part="J1" gate="J$1" pin="2"/>
+<pinref part="J1" gate="J$1" pin="1"/>
 <pinref part="P+2" gate="VCC" pin="VCC"/>
 <wire x1="25.4" y1="50.8" x2="25.4" y2="43.18" width="0.1524" layer="91"/>
-<wire x1="25.4" y1="43.18" x2="16.51" y2="43.18" width="0.1524" layer="91"/>
+<wire x1="25.4" y1="43.18" x2="16.51" y2="40.64" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="R4" gate="R" pin="2"/>
+<pinref part="P+1" gate="VCC" pin="VCC"/>
+<wire x1="29.21" y1="73.66" x2="17.78" y2="68.58" width="0.1524" layer="91"/>
+<pinref part="R5" gate="R" pin="1"/>
+<wire x1="29.21" y1="68.58" x2="17.78" y2="68.58" width="0.1524" layer="91"/>
+<pinref part="R3" gate="R" pin="2"/>
+<wire x1="29.21" y1="63.5" x2="24.13" y2="68.58" width="0.1524" layer="91"/>
+<wire x1="24.13" y1="68.58" x2="17.78" y2="68.58" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="GND" class="0">
 <segment>
-<pinref part="D1" gate="G$1" pin="C"/>
 <pinref part="GND1" gate="1" pin="GND"/>
-<wire x1="53.34" y1="15.24" x2="53.34" y2="19.05" width="0.1524" layer="91"/>
 <pinref part="R2" gate="R" pin="1"/>
-<wire x1="53.34" y1="19.05" x2="53.34" y2="22.86" width="0.1524" layer="91"/>
-<wire x1="34.29" y1="31.75" x2="34.29" y2="19.05" width="0.1524" layer="91"/>
-<wire x1="34.29" y1="19.05" x2="53.34" y2="19.05" width="0.1524" layer="91"/>
-<junction x="53.34" y="19.05"/>
+<wire x1="53.34" y1="25.4" x2="53.34" y2="29.21" width="0.1524" layer="91"/>
+<wire x1="34.29" y1="31.75" x2="34.29" y2="29.21" width="0.1524" layer="91"/>
+<wire x1="34.29" y1="29.21" x2="53.34" y2="29.21" width="0.1524" layer="91"/>
+<pinref part="Q1" gate="Q" pin="S"/>
+<wire x1="53.34" y1="40.64" x2="53.34" y2="29.21" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="J1" gate="J$1" pin="1"/>
+<pinref part="J1" gate="J$1" pin="3"/>
 <pinref part="GND2" gate="1" pin="GND"/>
 <wire x1="25.146" y1="38.1" x2="25.146" y2="40.64" width="0.1524" layer="91"/>
-<wire x1="25.146" y1="40.64" x2="16.51" y2="40.64" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="N$1" class="0">
-<segment>
-<pinref part="Q1" gate="Q" pin="S"/>
-<pinref part="R3" gate="R" pin="2"/>
-<wire x1="48.26" y1="39.37" x2="53.34" y2="40.64" width="0.1524" layer="91"/>
-<pinref part="R4" gate="R" pin="2"/>
-<wire x1="58.42" y1="39.37" x2="53.34" y2="40.64" width="0.1524" layer="91"/>
-<junction x="53.34" y="40.64"/>
-<pinref part="R5" gate="R" pin="1"/>
-<wire x1="53.34" y1="39.37" x2="53.34" y2="40.64" width="0.1524" layer="91"/>
+<wire x1="25.146" y1="40.64" x2="16.51" y2="45.72" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -2313,23 +2305,31 @@ No silk outline, but tDocu layer shows pin location.
 <segment>
 <pinref part="R3" gate="R" pin="1"/>
 <pinref part="D1" gate="G$1" pin="A"/>
-<wire x1="53.34" y1="30.48" x2="48.26" y2="31.75" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="58.42" x2="53.34" y2="63.5" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="63.5" x2="36.83" y2="63.5" width="0.1524" layer="91"/>
 <pinref part="R4" gate="R" pin="1"/>
-<wire x1="58.42" y1="31.75" x2="53.34" y2="30.48" width="0.1524" layer="91"/>
-<junction x="53.34" y="30.48"/>
+<wire x1="36.83" y1="73.66" x2="53.34" y2="73.66" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="73.66" x2="53.34" y2="58.42" width="0.1524" layer="91"/>
 <pinref part="R5" gate="R" pin="2"/>
-<wire x1="53.34" y1="31.75" x2="53.34" y2="30.48" width="0.1524" layer="91"/>
+<wire x1="36.83" y1="68.58" x2="53.34" y2="68.58" width="0.1524" layer="91"/>
+<wire x1="53.34" y1="68.58" x2="53.34" y2="58.42" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SIGNAL" class="0">
 <segment>
 <pinref part="R1" gate="R" pin="1"/>
-<pinref part="J1" gate="J$1" pin="3"/>
-<wire x1="16.51" y1="45.72" x2="34.29" y2="45.72" width="0.1524" layer="91"/>
+<pinref part="J1" gate="J$1" pin="2"/>
+<wire x1="16.51" y1="43.18" x2="34.29" y2="45.72" width="0.1524" layer="91"/>
 <pinref part="R2" gate="R" pin="2"/>
 <wire x1="34.29" y1="45.72" x2="38.1" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="34.29" y1="45.72" x2="34.29" y2="39.37" width="0.1524" layer="91"/>
 <junction x="34.29" y="45.72"/>
+</segment>
+</net>
+<net name="N$1" class="0">
+<segment>
+<pinref part="Q1" gate="Q" pin="D"/>
+<pinref part="D1" gate="G$1" pin="C"/>
 </segment>
 </net>
 </nets>

@@ -57,12 +57,6 @@ void Simulation::step() {
 
 	this->state.time = t;
 
-
-	// Trigger sensors
-	for(int i = 0; i < this->world.models.size(); i++) {
-		//
-	}
-
 }
 
 

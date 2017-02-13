@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
 		State::Ptr s = m->defaultState();
 
-		ws.models.push_back(s);
+		ws.models[i] = s;
 
 //		m->state.position = Vector3d(1,2,0);
 	}
@@ -31,7 +31,10 @@ int main(int argc, char *argv[]) {
 	Simulation sim(w, ws);
 	// TODO: This should run run in a separate thread
 	// It should also start up the Firmwares for the drones and be ready to communicate
-	sim.step();
+
+	for(int i = 0; i < 10000; i++) {
+		sim.step();
+	}
 
 
 

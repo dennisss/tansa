@@ -6,6 +6,7 @@ namespace tansa {
 MultirotorModel::MultirotorModel(const DataObject &desc) : Model(desc) {
 
 	imu = new IMU(desc["imu"]);
+	gps = new GPS(desc["gps"]);
 
 	battery = new Battery(desc["battery"]);
 
@@ -44,7 +45,11 @@ MultirotorModel::~MultirotorModel() {
 }
 
 State::Ptr MultirotorModel::defaultState() {
-	return State::Ptr(new MultirotorModelState());
+	MultirotorModelState *p = new MultirotorModelState();
+
+	p->motors.resize(motors.size());
+
+	return State::Ptr(p);
 }
 
 
@@ -54,7 +59,6 @@ void MultirotorModel::update(State::Ptr _s, const Time &t) {
 
 
 	// Evolve motor states and controls
-	s->motors.resize(motors.size());
 	for(int i = 0; i < motors.size(); i++) {
 		this->motors[i]->update(s->motors[i], t);
 
@@ -63,6 +67,7 @@ void MultirotorModel::update(State::Ptr _s, const Time &t) {
 	}
 
 	imu->update(s->imu, t);
+	gps->update(s->gps, t);
 	battery->update(s->battery, t);
 
 	// Evolve battery state
@@ -71,6 +76,7 @@ void MultirotorModel::update(State::Ptr _s, const Time &t) {
 	Model::update(_s, t);
 
 	imu->observe(s->imu, *s);
+	gps->observe(s->gps, *s);
 }
 
 

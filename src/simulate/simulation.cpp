@@ -45,9 +45,9 @@ void Simulation::setMotors(Vector4d m){
 
 void Simulation::step() {
 
-	double eps = 0.0001; // Update at 10kHz
+	Time eps(0.0001); // Update at 10kHz
 
-	Time t(this->state.time.seconds() + eps);
+	Time t = this->state.time + eps;
 
 
 	// Update states

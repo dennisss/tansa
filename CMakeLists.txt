@@ -65,6 +65,7 @@ add_library(
 	src/simulate/firmware.cpp
 	src/simulate/battery.cpp
 	src/simulate/sensors/imu.cpp
+	src/simulate/sensors/gps.cpp
 )
 
 target_link_libraries(

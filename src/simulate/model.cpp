@@ -44,6 +44,7 @@ void Model::update(State::Ptr _s, const Time &t) {
 
 	// Perform the integration
 
+	s->acceleration = a;
 	s->velocity = v + a*dt;
 	s->position = x + v*dt + 0.5*a*dt*dt;
 

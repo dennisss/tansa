@@ -7,12 +7,23 @@
 namespace tansa {
 
 
-Firmware::Firmware(MultirotorModel::Ptr model) {
+Firmware::Firmware(const DataObject &desc, MultirotorModel::Ptr model) {
 	currentActuatorOutputs.resize(4, 0);
 
+	this->id = desc["id"];
+	json d = desc;
+	this->rcScript = d["rc"];
+
+	process = 0;
+
+	this->model = model;
 	model->imu->subscribe(&Firmware::onImuData, this);
+	model->gps->subscribe(&Firmware::onGpsData, this);
 }
 
+Firmware::~Firmware() {
+	this->stop();
+}
 
 void Firmware::start() {
 	int p = fork();
@@ -34,7 +45,7 @@ void Firmware::start() {
 	this->process = p;
 
 	this->sim_vehicle = new Vehicle();
-	this->sim_vehicle->connect(14561 + 10*id, 0);
+	this->sim_vehicle->connect(0, 14561 + 10*id);
 	this->sim_vehicle->subscribe(&Firmware::onActuatorOutputs, this);
 }
 
@@ -56,13 +67,25 @@ void Firmware::connectClient(Vehicle *v) {
 }
 
 void Firmware::onImuData(const IMUSensorData *data) {
-	sim_vehicle->hil_sensor(&data->accel, &data->gyro, NULL, data->time);
+	sim_vehicle->hil_sensor(&data->accel, &data->gyro, &data->mag, data->time);
+}
+
+void Firmware::onGpsData(const GPSData *data) {
+	sim_vehicle->hil_gps(data->latLongAlt, data->vel, data->time);
 }
 
 void Firmware::onActuatorOutputs(const ActuatorOutputs *actuators) {
 	currentActuatorOutputs.resize(4);
 	for(int i = 0; i < 4; i++) {
 	 	currentActuatorOutputs[i] = actuators->outputs[i];
+	}
+}
+
+void Firmware::update(State::Ptr _s) {
+	std::shared_ptr<MultirotorModelState> s = std::static_pointer_cast<MultirotorModelState>(_s);
+
+	for(int i = 0; i < 4; i++) {
+		model->motors[i]->control(s->motors[i], currentActuatorOutputs[0]);
 	}
 }
 

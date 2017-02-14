@@ -127,6 +127,12 @@ Time Time::sinceStart() {
 	return since(starttime);
 }
 
+Time operator+(Time lhs, const Time &rhs) {
+	Time sum;
+	timespec_add(&sum.val, &lhs.val, &rhs.val);
+	return sum;
+}
+
 uint64_t Time::nanos() {
 	return (uint64_t) val.tv_nsec + ((uint64_t) val.tv_sec * 1000000000);
 }

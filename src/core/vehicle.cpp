@@ -445,6 +445,33 @@ void Vehicle::hil_sensor(const Vector3d *accel, const Vector3d *gyro, const Vect
 
 }
 
+void Vehicle::hil_gps(const Vector3d &latLongAlt, const Vector3d &vel, const Time &t) {
+
+	Vector3d vel_ned = enuToFromNed() * vel;
+
+	mavlink_message_t msg;
+	mavlink_msg_hil_gps_pack_chan(
+		255, 0, channel,
+		&msg,
+		t.micros(),
+		3,
+		latLongAlt(0) * 1e7,
+		latLongAlt(1) * 1e7,
+		latLongAlt(2) * 1000,
+		65535,
+		65535,
+		65535,
+		vel_ned.x() * 100,
+		vel_ned.y() * 100,
+		vel_ned.z() * 100,
+		65535,
+		255
+	);
+
+	send_message(&msg);
+
+}
+
 /*
 // TODO: This should wait for a COMMAND_ACK message (should give a RESULT_ACCEPTED upon start of calibration)
 // These src/modules/commander/calibration_messages.h are
@@ -586,6 +613,7 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			// ac.controls is an array of floats from 0..1 with the motor outputs commanded
 			ActuatorOutputs ao;
+			ao.outputs.resize(16, 0);
 			for(int i = 0; i < 16; i++) {
 				ao.outputs[i] = ac.controls[i];
 			}

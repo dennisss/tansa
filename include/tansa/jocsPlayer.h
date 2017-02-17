@@ -28,7 +28,7 @@ namespace tansa {
 
 		void step();
 
-		void loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
+		void loadJocs(Jocs *jocsFile, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
 
 
 

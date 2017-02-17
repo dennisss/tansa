@@ -52,6 +52,61 @@ protected:
 
 };
 
+
+class CompoundTrajectory : public Trajectory {
+public:
+
+	CompoundTrajectory(Trajectory *x1, Trajectory *x2, double t1, double t2) : Trajectory(t1, t2) {
+		this->x1 = x1;
+		this->x2 = x2;
+	}
+
+	virtual ~CompoundTrajectory() {}
+
+	virtual TrajectoryState evaluate(double t) {
+
+		TrajectoryState s1 = x1->evaluate(t), s2 = x2->evaluate(t);
+		s1.position += s2.position;
+		s1.velocity += s2.velocity;
+		s1.acceleration += s2.acceleration;
+
+		return s1;
+	}
+
+private:
+	Trajectory *x1;
+	Trajectory *x2;
+
+};
+
+class TransformedTrajectory : public Trajectory {
+public:
+
+	TransformedTrajectory(Trajectory *x, Matrix3d m, Vector3d p, double t1, double t2) : Trajectory(t1, t2) {
+		this->x = x;
+		this->m = m;
+		this->p = p;
+	}
+
+	virtual ~TransformedTrajectory() {}
+
+	virtual TrajectoryState evaluate(double t) {
+
+		TrajectoryState s = x->evaluate(t);
+		s.position = m*s.position + p;
+		s.velocity = m*s.velocity;
+		s.acceleration = m*s.acceleration;
+
+		return s;
+	}
+
+private:
+	Trajectory *x;
+	Matrix3d m;
+	Vector3d p;
+
+};
+
 /**
  * Concatenation of many temporally offset trajectories
  */
@@ -99,21 +154,31 @@ private:
 };
 
 /**
- * A 2d circle in the XY plane. An angle of 0 is on the X axis
+ * A 2d ellipse with radii along the two major XY axes.
  */
-class CircleTrajectory : public Trajectory {
+class EllipseTrajectory : public Trajectory {
 public:
-	CircleTrajectory(const Point &origin, double radius, double theta1, double t1, double theta2, double t2);
-	virtual ~CircleTrajectory(){}
+	EllipseTrajectory(const Point &origin, double radius_x, double radius_y, double theta1, double t1, double theta2, double t2);
+	virtual ~EllipseTrajectory(){}
 	virtual TrajectoryState evaluate(double t);
 
 
 private:
 	Point origin;
-	double radius;
+	double radius_x;
+	double radius_y;
 	double theta1;
 	double dtheta;
 
+};
+
+/**
+ * A 2d circle in the XY plane. An angle of 0 is on the X axis
+ */
+class CircleTrajectory : public EllipseTrajectory {
+public:
+	CircleTrajectory(const Point &origin, double radius, double theta1, double t1, double theta2, double t2)
+		: EllipseTrajectory(origin, radius, radius, theta1, t1, theta2, t2) {}
 };
 
 /**

@@ -62,7 +62,7 @@ void IMU::observe(IMUState &s, const ModelState &ms) {
 
 	// TODO: These all need to be rotated into the body frame
 	// TODO: Add gravity to the acceleration
-	Vector3d a = Ri * (ms.acceleration + Vector3d(0, 0, 9.81)) + noiseVector(accelNoise, gen);
+	Vector3d a = Ri * (ms.acceleration + Vector3d(0, 0, GRAVITY_MS)) + noiseVector(accelNoise, gen);
 	Vector3d g = Ri * ms.angularVelocity + noiseVector(gyroNoise, gen); // + s.gyroBias;
 	Vector3d m = Ri * Vector3d(0, 0.65, 0) + noiseVector(magNoise, gen);
 

@@ -354,7 +354,13 @@ void loadJocsFile(const json &rawJsonArg) {
 
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
-	player->loadJocs(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
+
+	if(jocsPath == "custom") {
+		player->loadJocs(custom_jocs(), scale, jocsActiveIds, startPoint);
+	}
+	else {
+		player->loadJocs(Jocs::Parse(searchWorkspacePath(jocsPath), scale), scale, jocsActiveIds, startPoint);
+	}
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, jocsActiveIds);
 

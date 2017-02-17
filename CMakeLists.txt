@@ -42,7 +42,7 @@ add_library(
 	src/estimation/linear_complementary.cpp
 	src/trajectory/polynomial.cpp
 	src/trajectory/linear.cpp
-	src/trajectory/circle.cpp
+	src/trajectory/ellipse.cpp
 	src/trajectory/point.cpp
 	#src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
@@ -111,6 +111,7 @@ add_test(TansaTests test_tansa)
 add_executable(
 	gcs
 
+	src/custom.cpp
 	src/gcs.cpp
 )
 

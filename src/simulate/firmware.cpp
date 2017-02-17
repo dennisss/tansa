@@ -85,7 +85,7 @@ void Firmware::update(State::Ptr _s) {
 	std::shared_ptr<MultirotorModelState> s = std::static_pointer_cast<MultirotorModelState>(_s);
 
 	for(int i = 0; i < 4; i++) {
-		model->motors[i]->control(s->motors[i], currentActuatorOutputs[0]);
+		model->motors[i]->control(s->motors[i], currentActuatorOutputs[i]);
 	}
 }
 

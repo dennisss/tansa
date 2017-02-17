@@ -39,7 +39,7 @@ public:
 		Matrix<double, N, M> m;
 		for(unsigned i = 0; i < N; i++) {
 			for(unsigned j = 0; j < M; j++) {
-				if(N == 0 || M == 0) { // Case it is a vector
+				if(N == 1 || M == 1) { // Case it is a vector
 					m(i, j) = data[i + j];
 				}
 				else {

@@ -55,6 +55,8 @@ public:
 	static const std::string BPS_KEY;
 	//static const std::string LIGHTS_INCL_KEY;
 
+	friend Jocs *custom_jocs();
+
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
 	~Jocs();
 	/**
@@ -117,5 +119,8 @@ private:
 	 */
 
 };
+
+Jocs *custom_jocs();
+
 }
 #endif //TANSA_JOCSPARSER_H

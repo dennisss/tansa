@@ -30,7 +30,7 @@ void Firmware::start() {
 	if(p == 0) { // Child
 		char *const bash = (char *const) "/bin/bash";
 		char *const script = (char *const) "scripts/start_instance.sh";
-		char *const rc_script = (char *const) this->rcScript.c_str(); // "config/gazebo/x340";
+		char *const rc_script = (char *const) this->rcScript.c_str();
 		char num[16];
 		strcpy(num, std::to_string(this->id).c_str());
 
@@ -53,9 +53,11 @@ void Firmware::stop() {
 	if(process == 0)
 		return;
 
-	kill(process, SIGINT);
+	kill(process, SIGKILL);
+
 	waitpid(process, NULL, 0);
 
+	//this->sim_vehicle->disconnect();
 }
 
 void Firmware::connectClient(Vehicle *v) {
@@ -75,6 +77,7 @@ void Firmware::onGpsData(const GPSData *data) {
 }
 
 void Firmware::onActuatorOutputs(const ActuatorOutputs *actuators) {
+	printf("GOT ACTUATORS\n");
 	currentActuatorOutputs.resize(4);
 	for(int i = 0; i < 4; i++) {
 	 	currentActuatorOutputs[i] = actuators->outputs[i];

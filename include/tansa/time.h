@@ -35,10 +35,14 @@ public:
 	 */
 	Time sinceStart();
 
+
+	friend Time operator+(Time lhs, const Time &rhs);
+
+
 	/**
 	 * Gets the time value in nanoseconds
 	 */
-	uint64_t nanos();
+	uint64_t nanos() const;
 
 	/**
 	 * Gets the time value in microseconds
@@ -48,13 +52,13 @@ public:
 	/**
 	 * Gets the time value in milliseconds
 	 */
-	uint64_t millis();
+	uint64_t millis() const;
 
 	/**
 	 * Gets the time in seconds (with millisecond floating point precision)
 	 * Note: only use this on a time difference. This may not be accurate from a clock time
 	 */
-	double seconds();
+	double seconds() const;
 
 
 	/**
@@ -67,6 +71,8 @@ private:
 
 	struct timespec val;
 };
+
+Time operator+(Time lhs, const Time &rhs);
 
 
 /**

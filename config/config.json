@@ -1,5 +1,5 @@
 {
-	"useMocap": false,
+	"world": "sim",
 	"enableMessaging": true,
 	"enableOSC": true,
 	"hardwareConfig": {

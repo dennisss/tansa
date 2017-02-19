@@ -75,6 +75,13 @@ var App = React.createClass({
 
 	render: function(){
 
+		// For just showing viewer
+		return (
+			<div className="ts-app">
+				<WorldView onPlayerReady={this.onPlayerReady} />
+			</div>
+		)
+
 		return (
 			<div className="ts-app">
 				<Navbar />

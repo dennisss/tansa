@@ -25,9 +25,6 @@ namespace tansa {
 
 #define MAV_CMD_RGBLED MAV_CMD_USER_2
 
-#define GRAVITY_MS 9.8
-
-
 struct BatteryStatus {
 	static const int ID = 1;
 
@@ -167,6 +164,9 @@ public:
 	 * For sending simulated sensor data to the vehicle
 	 */
 	void hil_sensor(const Vector3d *acc, const Vector3d *gyro, const Vector3d *mag, const Time &t);
+
+	void hil_gps(const Vector3d &latLongAlt, const Vector3d &vel, const Time &t);
+
 
 	// Connection state
 	bool connected = false;

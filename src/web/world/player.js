@@ -1,7 +1,11 @@
+'use strict';
+
 var THREE = require('three');
 global.THREE = THREE;
 
 var async = require('async');
+
+var Vehicle = require('./vehicle');
 
 require('./DragControls');
 require('./OrbitControls');
@@ -32,17 +36,15 @@ var pointI = 1;
 class WorldPlayer {
 
 
-	constructor(el, state){
-
-		this.state = state;
+	constructor(el) {
 
 		var width = $(el).width(), height = $(el).height();
 
 
 		var scene = new THREE.Scene();
 		var camera = new THREE.PerspectiveCamera( 70, width / height, 0.1, 20 );
-		camera.position.y = 6;
-		camera.position.x = 2;
+		camera.position.y = -6;
+		camera.position.x = -2;
 		camera.position.z = 2;
 		camera.up.set(0, 0, 1);
 		scene.add( camera );
@@ -108,8 +110,10 @@ class WorldPlayer {
 		// Controls
 		var controls = new THREE.OrbitControls(camera, renderer.domElement);
 		controls.damping = 0.2;
-		controls.addEventListener('change', () => this.render());
+		// TODO: Ensure that this doesn't update too fast
+		//controls.addEventListener('change', () => this.render());
 
+		/*
 		var transformControl = new THREE.TransformControls(camera, renderer.domElement);
 		transformControl.addEventListener('change', () => this.render());
 
@@ -178,16 +182,18 @@ class WorldPlayer {
 			if(hiding) clearTimeout(hiding);
 		}
 
-
+		*/
 
 		this.scene = scene;
 		this.camera = camera;
 		this.renderer = renderer;
 
 		this.controls = controls;
-		this.transformControl = transformControl;
-		this.dragControls = dragControls;
+		//this.transformControl = transformControl;
+		//this.dragControls = dragControls;
 
+
+		this._vehicles = [];
 
 		this.load(() => {
 			this.create();
@@ -200,7 +206,7 @@ class WorldPlayer {
 		this.animate();
 	}
 
-	resize(){
+	resize() {
 
 		// Need to adjust camera aspect ratio and adjust scene size
 
@@ -212,31 +218,24 @@ class WorldPlayer {
 
 	}
 
-	addDrone(i){
+	addVehicle() {
 
 		var positions = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0)];
 
-		var material = new THREE.MeshPhongMaterial({ color: 0x444444, specular: 0x111111, shininess: 200 });
-		var mesh = new THREE.Mesh(this._droneGeometry, material);
-		mesh.position.copy(positions[i]);//.set(0, 0, 0);
-		mesh.rotation.set(0, 0, Math.PI / 4);
-		//	mesh.scale.set( 0.5, 0.5, 0.5 );
-		mesh.castShadow = true;
-		mesh.receiveShadow = true;
-		this.scene.add( mesh );
+		var material = new THREE.MeshLambertMaterial({ color: 0x888888, specular: 0x111111, shininess: 200 });
+		var mesh = new THREE.Mesh(this._bodyGeometry, material);
 
-		//	this.transformControl.attach(mesh);
+		var vehicle = new Vehicle(this._bodyGeometry, this._propGeometry, material);
 
-
-		var bbox = new THREE.BoundingBoxHelper(mesh, 0);
-		bbox.update();
+		//this.transformControl.attach(mesh);
+		//var bbox = new THREE.BoundingBoxHelper(mesh, 0);
+		//bbox.update();
 		//scene.add( bbox );
 
-		bbox.drone = mesh;
+		this.scene.add(vehicle.object());
+		this._vehicles.push(vehicle);
 
-		return bbox; //.object;
-
-		return mesh;
+		return vehicle;
 	}
 
 
@@ -249,27 +248,30 @@ class WorldPlayer {
 		.parallel([
 			(callback) => {
 				var loader = new THREE.STLLoader();
-				loader.load('/models/drone.stl', (geometry) => {
-					this._droneGeometry = geometry;
+				loader.load('/models/body.stl', (geometry) => {
+					this._bodyGeometry = geometry;
 					callback();
 				});
+			},
+			(callback) => {
+				var loader = new THREE.STLLoader();
+				loader.load('/models/propeller.stl', (geometry) => {
+					this._propGeometry = geometry;
+					callback();
+				});
+
 			}
-
-
 		], function(){
 			callback();
 		})
-
 
 	}
 
 
 	// Create initial scene
 	create() {
-		this._droneObjects = [
-			this.addDrone(0),
-			this.addDrone(1)
-		];
+		this.addVehicle();
+
 		this._paths = [];
 
 
@@ -284,65 +286,59 @@ class WorldPlayer {
 
 		var line = new THREE.Line(geometry, material);
 		this.scene.add(line);
-//		debugger;
+
 		this._paths.push(line);
 
+		this._loaded = true;
 
-		this.dragControls.setObjects(this._droneObjects);
-		this.render();
+		//this.dragControls.setObjects(this._droneObjects);
+		//this.render();
 	}
 
-	update(newState) {
+	update(data) {
 
-		// Not yet loaded
-		if(!this._droneObjects) {
+		// Not yet loaded (TODO: Have a better check of whether we are loaded)
+		if(!this._loaded) {
 			return;
 		}
 
-		console.log('UPDATE')
-
-		for(var i = 0; i < this._droneObjects.length; i++) {
-
-			if(i >= newState.vehicles.length) {
-				break;
-			}
-
-
-			var p = newState.vehicles[i].position;
-			var o = newState.vehicles[i].orientation[1];
-
-			this._droneObjects[i].drone.position.set(p[0], p[1], p[2])
-
-
-			var q = new THREE.Quaternion(o[1], o[2], o[3], o[0]);
-
-			this._droneObjects[i].drone.rotation.setFromQuaternion(q);
-
-
+		// Add vehicles
+		while(data.vehicles.length > this._vehicles.length) {
+			this.addVehicle();
+		}
+		// Remove vehicles
+		while(data.vehicles.length < this._vehicles.length) {
+			var last = this._vehicles.pop();
+			this.scene.remove(last.object());
 		}
 
-		requestAnimationFrame(() => {
-			this.render();
-		})
+		// Update states of all vehicles
+		for(var i = 0; i < data.vehicles.length; i++) {
+			this._vehicles[i].update(data.vehicles[i]);
+		}
 
-
+		//requestAnimationFrame(() => {
+		//	this.render();
+		//});
 	}
 
 
 	render() {
-		//splines.uniform.mesh.visible = uniform.checked;
-		//splines.centripetal.mesh.visible = centripetal.checked;
-		//splines.chordal.mesh.visible = chordal.checked;
+		for(var i = 0; i < this._vehicles.length; i++) {
+			this._vehicles[i].render();
+		}
+
 		this.renderer.render(this.scene, this.camera);
 	}
 
 
 	animate(){
-//		requestAnimationFrame(() => this.animate());
 		this.render();
 		//	stats.update();
 		this.controls.update();
-		this.transformControl.update();
+		//this.transformControl.update();
+		requestAnimationFrame(() => this.animate());
+
 	}
 
 }

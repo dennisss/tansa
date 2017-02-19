@@ -11,6 +11,8 @@
 #include "trajectory.h"
 #include "vehicle.h"
 
+#include <pthread.h>
+
 #include <vector>
 
 using namespace std;
@@ -22,12 +24,16 @@ struct WorldState : State {
 	vector<State::Ptr> models;
 };
 
+class Firmware;
+
 /**
  * Set of all physical entities in the simulation environment
  */
 class World {
 public:
 	vector<Model::Ptr> models;
+
+	vector<shared_ptr<Firmware>> firmwares;
 };
 
 
@@ -36,6 +42,8 @@ public:
  */
 class Simulation {
 public:
+	static Simulation *Make();
+
 	Simulation(const DataObject &desc);
 
 	Simulation(World &world, WorldState &state); //json modelDescription);
@@ -50,11 +58,23 @@ public:
 	void step();
 
 	void start();
+	void stop();
+
+	void track(Vehicle *v, int id) { this->tracked = v; }
 
 
 	World world;
 	WorldState state;
 
+private:
+
+	bool running;
+	pthread_t thread;
+
+
+	Vehicle *tracked = NULL;
+
+	friend void *simulation_thread(void *arg);
 };
 
 
@@ -73,8 +93,8 @@ public:
 			- pair of mavlink ports with simulator interface
 			- pair of mavlink ports for regular interface
 	*/
-	Firmware(MultirotorModel::Ptr model);
-
+	Firmware(const DataObject &desc, MultirotorModel::Ptr model);
+	~Firmware();
 
 	void start();
 	void stop();
@@ -85,18 +105,23 @@ public:
 
 	Vehicle *getSimVehicle();
 
+	// Given the state of a multi-rotor, this controls it
+	void update(State::Ptr s);
+
 private:
 
 	int id;
 	string rcScript;
 
 
+	MultirotorModel::Ptr model;
+
 	int process;
 
 	Vehicle *sim_vehicle;
 
 	void onImuData(const IMUSensorData *data);
-
+	void onGpsData(const GPSData *data);
 	void onActuatorOutputs(const ActuatorOutputs *actuators);
 };
 

@@ -133,7 +133,7 @@ Time operator+(Time lhs, const Time &rhs) {
 	return sum;
 }
 
-uint64_t Time::nanos() {
+uint64_t Time::nanos() const {
 	return (uint64_t) val.tv_nsec + ((uint64_t) val.tv_sec * 1000000000);
 }
 
@@ -141,11 +141,11 @@ uint64_t Time::micros() const {
 	return ((uint64_t) val.tv_nsec / 1000) + ((uint64_t) val.tv_sec * 1000000);
 }
 
-uint64_t Time::millis() {
+uint64_t Time::millis() const {
 	return ((uint64_t) val.tv_nsec / 1000000) + ((uint64_t) val.tv_sec * 1000);
 }
 
-double Time::seconds() {
+double Time::seconds() const {
 	return ((double) val.tv_sec) + (((double) val.tv_nsec) / 1000000000.0);
 }
 

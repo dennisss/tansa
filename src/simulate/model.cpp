@@ -23,8 +23,6 @@ void Model::update(State::Ptr _s, const Time &t) {
 	Matrix3d R = s->orientation.matrix();
 	Vector3d w = s->angularVelocity;
 
-	// Gravity (m/s^2)
-	const double g = 9.81;
 
 	// Perform rigid body dynamics integration
 
@@ -32,7 +30,7 @@ void Model::update(State::Ptr _s, const Time &t) {
 			 tau = this->torque(*_s);
 
 	// Linear acceeration
-	Vector3d a = Vector3d(0,0, -this->mass*g) + R * f;
+	Vector3d a = Vector3d(0,0, -this->mass*GRAVITY_MS) + R * f;
 	a /= this->mass;
 
 	// Euler equation to get angular acceleration
@@ -44,15 +42,17 @@ void Model::update(State::Ptr _s, const Time &t) {
 
 	// Perform the integration
 
+	// Simple ground plane collision clipping
+	// TODO: Instead, planes should apply a normal force equal to the
+	if(s->position.z() <= 0 && a.z() < 0) {
+		a.z() = 0; // Adding a normal force equivalent to the downward force
+		x.z() = 0;
+		v.z() = 0;
+	}
+
 	s->acceleration = a;
 	s->velocity = v + a*dt;
 	s->position = x + v*dt + 0.5*a*dt*dt;
-
-	// Simple ground plane collision clipping
-	// TODO: Instead, planes should apply a normal force equal to the
-	if(s->position.z() < 0) {
-		s->position.z() = 0;
-	}
 
 	s->angularAcceleration = dw;
 	s->angularVelocity = w + dw*dt;

@@ -14,6 +14,10 @@ using namespace Eigen;
 
 namespace tansa {
 
+
+#define GRAVITY_MS 9.8
+
+
 /**
  * Base class for all types of state data
  */
@@ -108,8 +112,11 @@ public:
 
 
 struct MotorState : State {
-	double speed;
-	double commandedSpeed;
+	//double speed;
+	//double commandedSpeed;
+
+	double throttle = 0;
+	double commandedThrottle = 0;
 };
 
 /**
@@ -139,7 +146,7 @@ public:
 
 
 struct IMUState : State {
-	Vector3d gyroBias;
+	Vector3d gyroBias = Vector3d(0, 0, 0);
 
 	Time lastReading;
 };
@@ -175,8 +182,42 @@ private:
 	double gyroRate;
 	std::normal_distribution<> gyroNoise;
 	std::normal_distribution<> gyroBiasWalkNoise;
+
+	std::normal_distribution<> magNoise;
 };
 
+
+struct GPSState : State {
+	Vector3d gyroBias = Vector3d(0, 0, 0);
+
+	Time lastReading;
+};
+
+struct GPSData {
+	static const int ID = 1;
+
+	Time time;
+	Vector3d latLongAlt;
+	Vector3d vel;
+};
+
+class GPS : public Channel {
+
+public:
+
+	GPS(const DataObject &desc);
+
+	void update(GPSState &s, const Time &t);
+
+	void observe(GPSState &s, const ModelState &ms);
+
+private:
+	std::default_random_engine gen;
+
+	double rate;
+	std::normal_distribution<> noise;
+
+};
 
 
 
@@ -186,6 +227,7 @@ struct MultirotorModelState : ModelState {
 	std::vector<MotorState> motors;
 
 	IMUState imu;
+	GPSState gps;
 };
 
 /**
@@ -218,6 +260,7 @@ public:
 	// Various sub-components of the multi-rotor
 	std::vector<Motor *> motors;
 	IMU *imu;
+	GPS *gps;
 	Battery *battery;
 
 };

@@ -6,6 +6,7 @@
 #include <tansa/jocsPlayer.h>
 #include <tansa/mocap.h>
 #include <tansa/gazebo.h>
+#include <tansa/simulate.h>
 #include <tansa/osc.h>
 
 #ifdef  __linux__
@@ -47,10 +48,12 @@ static float scale = 1.0;
 static JocsPlayer* player = nullptr;
 static GazeboConnector *gazebo = nullptr;
 static Mocap *mocap = nullptr;
+static Simulation *sim = nullptr;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static vector<unsigned> jocsActiveIds;
-static bool useMocap;
+static string worldMode;
+static bool inRealLife;
 
 void signal_sigint(int s) {
 	// TODO: Prevent
@@ -218,7 +221,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 
 	for (unsigned i = 0; i < rawJson["vehicles"].size(); i++) {
 		vconfigs[i].net_id = rawJson["vehicles"][i]["net_id"];
-		if (useMocap) {
+		if (inRealLife) {
 			vconfigs[i].lport = 14550 + 10*vconfigs[i].net_id;
 			vconfigs[i].rport = 14555;
 		} else { // The simulated ones are zero-indexed and are always in ascending order
@@ -257,7 +260,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 
 		// Load default parameters
 		vehicles[i]->read_params(searchWorkspacePath(paramsDir, "default.json"));
-		string calibId = useMocap? to_string(v.net_id) : "sim";
+		string calibId = inRealLife? to_string(v.net_id) : "sim";
 
 		if(!vehicles[i]->read_params(searchWorkspacePath(paramsDir, calibId + ".calib.json"))) {
 			cout << "ID: " + calibId + " not calibrated!" << endl;
@@ -265,14 +268,16 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 
 		vehicles[i]->forward(v.lport + 2, v.rport + 2);
 		vehicles[i]->connect(v.lport, v.rport);
-		if (useMocap) {
+		if (inRealLife) {
 			mocap->track(vehicles[i], i+1);
-		} else {
+		} else if(worldMode == "gazebo") {
 			gazebo->track(vehicles[i], i);
+		} else if(worldMode == "sim") {
+			sim->track(vehicles[i], i);
 		}
 	}
 
-	if (!useMocap) {
+	if (worldMode == "gazebo") {
 		// Only pay attention to homes of active drones
 		vector<Point> spawns;
 		for (int i = 0; i < n; i++) {
@@ -489,7 +494,7 @@ void do_calibrate() {
 
 	sum /= 40.0;
 
-	string calibId = useMocap? to_string(vconfigs[0].net_id) : "sim";
+	string calibId = inRealLife? to_string(vconfigs[0].net_id) : "sim";
 	vehicles[0]->params.hoverPoint = sum;
 	vehicles[0]->write_params(resolveWorkspacePath(paramsDir, calibId + ".calib.json"));
 
@@ -577,11 +582,12 @@ int main(int argc, char *argv[]) {
 	std::string configData((std::istreambuf_iterator<char>(configStream)), std::istreambuf_iterator<char>());
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
 	hardware_config config;
-	useMocap = rawJson["useMocap"];
+	worldMode = rawJson["world"];
+	inRealLife = worldMode == "real";
 	bool enableMessaging = rawJson["enableMessaging"];
 	bool enableOSC = rawJson["enableOSC"];
 
-	if (useMocap) {
+	if (inRealLife) {
 		nlohmann::json hardwareConfig = rawJson["hardwareConfig"];
 		config.clientAddress = hardwareConfig["clientAddress"];
 		config.serverAddress = hardwareConfig["serverAddress"];
@@ -595,12 +601,15 @@ int main(int argc, char *argv[]) {
 
 	// Only pay attention to homes of active drones
 	// TODO: Have a better check for mocap initialization/health
-	if (useMocap) {
+	if (inRealLife) {
 		mocap = new Mocap();
 		mocap->connect(config.clientAddress, config.serverAddress);
-	} else {
+	} else if(worldMode == "gazebo") {
 		gazebo = new GazeboConnector();
 		gazebo->connect();
+	} else if(worldMode == "sim") {
+		sim = Simulation::Make();
+		sim->start();
 	}
 
 	if (enableOSC) {
@@ -629,7 +638,7 @@ int main(int argc, char *argv[]) {
 	while (running) {
 		// Regular status messages (currently at 100 / 4 == 25Hz)
 		if (enableMessaging && i % 4 == 0) {
-			send_status_message();
+			//send_status_message();
 		}
 
 		if (killmode) {
@@ -660,12 +669,15 @@ int main(int argc, char *argv[]) {
 	}
 
 	/// Cleanup
-	if (useMocap) {
+	if (inRealLife) {
 		mocap->disconnect();
 		delete mocap;
-	} else {
+	} else if(worldMode == "gazebo") {
 		gazebo->disconnect();
 		delete gazebo;
+	} else if(worldMode == "sim") {
+		sim->stop();
+		delete sim;
 	}
 
 	// Stop all vehicles

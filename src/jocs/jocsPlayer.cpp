@@ -77,8 +77,8 @@ namespace tansa {
 	/**
 	 * Load JOCS data from a specified path
 	 */
-	void JocsPlayer::loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start) {
-		cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
+	void JocsPlayer::loadJocs(Jocs *jocsFile, float scale, const std::vector<unsigned> &jocsActiveIds, int start) {
+		//cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
 		if (!this->canLoad()) {
 			return;
 		}
@@ -87,7 +87,8 @@ namespace tansa {
 		this->jocsActiveIds = jocsActiveIds;
 		landed = false;
 
-		currentJocs = Jocs::Parse(jocsPath, scale);
+		currentJocs = jocsFile;
+		//currentJocs = Jocs::Parse(jocsPath, scale);
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
 		lightActions = currentJocs->GetLightActions();

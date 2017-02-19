@@ -23,10 +23,6 @@ enum ActionTypes : unsigned{
 
 typedef unsigned DroneId;
 /**
- * @enum Defines the different lights on the drone
- */
-//typedef unsigned LightId;
-/**
  * @interface Defines an interface for all Actions to implement
  */
 class Action {
@@ -46,16 +42,18 @@ public:
 	 * @return Double representing the seconds after initialization that this action should end at
 	 */
 	virtual double GetEndTime() const = 0;
-
 	/**
 	 * @return Id of drone this action refers to
 	 */
 	inline DroneId GetDrone() { return droneId; }
-
 	/**
 	 * @return false if action needs to be calculated in post-process step
 	 */
 	inline bool IsCalculated() { return isCalculated; }
+	/**
+	 * Used polymorphically to determine type of action.
+	 * @return what type of action this is.
+	 */
 	inline ActionTypes GetActionType() { return type; }
 
 protected:
@@ -70,12 +68,16 @@ class EmptyAction : public Action {
 public:
     EmptyAction(DroneId id, double s, double e): Action(id,ActionTypes::Transition), startTime(s), endTime(e){}
 	virtual ~EmptyAction(){}
+	/**
+	 * @virtual
+	 * @return Double representing the seconds after initialization that this action should start at
+	 */
     virtual double GetStartTime() const { return startTime; }
-
+	/**
+	 * @virtual
+	 * @return Double representing the seconds after initialization that this action should end at
+	 */
     virtual double GetEndTime() const { return endTime; }
-
-
-
 private:
     double startTime;
     double endTime;

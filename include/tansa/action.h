@@ -29,6 +29,7 @@ class Action {
 public:
 	/**
 	 * @param id Id of the drone this action refers to
+	 * @param type The type of action that this object refers to.
 	 */
 	Action(DroneId id, ActionTypes type) : droneId(id), type(type) {}
 	virtual ~Action(){}
@@ -55,7 +56,6 @@ public:
 	 * @return what type of action this is.
 	 */
 	inline ActionTypes GetActionType() { return type; }
-
 protected:
 	DroneId droneId;
 	ActionTypes type;
@@ -88,18 +88,40 @@ private:
  */
 class MotionAction : public Action {
 public:
+	/**
+	 * Construct an instance of a action the involves drone movement. Motion actions are always calculated when constructed.
+	 * @param id Id of the drone that this action applies to.
+	 * @param t The mathematical representation of the path that this action represents.
+	 * @param type Type of motion action that this is.
+	 * @return Motion action with given parameters
+	 */
 	MotionAction(DroneId id, Trajectory* t, ActionTypes type) : Action(id, type), path(t) { isCalculated = true; }
 	virtual ~MotionAction(){ delete path; }
-
+	/**
+	 * Get TrajectoryState of evaluating the path at a given time.
+	 * @param t The time in seconds that the path should be evaluated at.
+	 * @return The Trajectory state on the given path at the given time.
+	 */
 	inline TrajectoryState GetPathState(double t){ return path->evaluate(t); }
-
+	/**
+	 * @return A pointer to the trajectory object contained within this object.
+	 */
 	inline Trajectory* GetPath(){return path;}
-
+	/**
+	 * @return The start time in seconds of this object's path.
+	 */
 	virtual double GetStartTime() const { return path->startTime(); }
-
+	/**
+	 * @return The end time in seconds of this object's path
+	 */
 	virtual double GetEndTime() const { return path->endTime(); }
-
+	/**
+	 * @return The start point of the trajectory obtained by evaluating the trajectory at its start time.
+	 */
 	inline Point GetStartPoint() const { return path->evaluate(path->startTime()).position; }
+	/**
+	 * @return The end point of the trajectory obtained by evaluating the trajectory at its end time.
+	 */
 	inline Point GetEndPoint() const { return path->evaluate(path->endTime()).position; }
 
 private:
@@ -111,24 +133,47 @@ private:
  */
 class LightAction : public Action {
 public:
+	/**
+	 * Constructs a light action. Takes ownership of the LightTrajectory passed in.
+	 * @param did The id of the drone that will execute this action
+	 * @param t The trajectory that the light should follow. In other words, how does the light change over time?
+	 * @return A LightAction instance that encapsulates the relevant trajectory and state.
+	 */
 	LightAction(DroneId did, LightTrajectory* t) :
 			Action(did, ActionTypes::Light), path(t)
 			{ isCalculated = true; }
+	/**
+	 * Deletes its path on deletion. This object owns the trajectory.
+	 * TODO: Make this an owned pointer.
+	 */
 	virtual ~LightAction(){ delete path; }
 
-	inline double GetPathState(double t) { return path->evaluate(t); }
-
-	inline LightTrajectory* GetPath() { return path; }
-
-	virtual double GetStartTime() const { return path->getStartTime(); }
-	virtual double GetEndTime() const { return path->getEndTime(); }
-
 	/**
-	 * @return Current set intensity of the light
+	 * Get intensity value of evaluating the path at a given time.
+	 * @param t The time in seconds that the path should be evaluated at.
+	 * @return The intensity of the light on the given trajectory at the given time.
+	 */
+	inline double GetPathState(double t) { return path->evaluate(t); }
+	/**
+	 * @return The lights trajectory, how it changes over time.
+	 */
+	inline LightTrajectory* GetPath() { return path; }
+	/**
+	 * @return The start time for the trajectory
+	 */
+	virtual double GetStartTime() const { return path->getStartTime(); }
+	/**
+	 * @return The end time for the trajectory
+	 */
+	virtual double GetEndTime() const { return path->getEndTime(); }
+	/**
+	 * @return The intensity of the light at the start of its trajectory
 	 */
 	inline double GetStartIntensity() { return path->evaluate(path->getStartIntensity()); }
+	/**
+	 * @return The intensity of the light at the end of its trajectory
+	 */
 	inline double GetEndIntensity() { return path->evaluate(path->getEndIntensity()); }
-
 	/**
 	 * @return Which light this action is referring to.
 	 */

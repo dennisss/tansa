@@ -16,3 +16,11 @@ RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y --force-yes nodejs
 
 RUN apt-get install -y --force-yes libcgal-dev
+
+# Needed for building the firmware
+RUN apt-get install -y python-setuptools python-dev build-essential
+
+RUN apt-get install -y python-empy
+RUN easy_install pip
+RUN pip install catkin_pkg
+RUN apt-get install -y libopencv-dev

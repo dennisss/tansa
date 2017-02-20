@@ -1,5 +1,5 @@
 {
-	"world": "sim",
+	"world": "gazebo",
 	"enableMessaging": true,
 	"enableOSC": true,
 	"hardwareConfig": {

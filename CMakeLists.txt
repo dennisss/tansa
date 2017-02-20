@@ -6,12 +6,14 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(CGAL QUIET COMPONENTS)
 
 include_directories(
 	${EIGEN3_INCLUDE_DIR}
 	include
 )
 
+include(${CGAL_USE_FILE})
 
 ######## Headers and libraries for prebuilt socket.io client ########
 
@@ -41,6 +43,7 @@ add_library(
 	src/control/hover.cpp
 	src/estimation/linear_complementary.cpp
 	src/trajectory/polynomial.cpp
+	src/trajectory/minsnap.cpp
 	src/trajectory/linear.cpp
 	src/trajectory/ellipse.cpp
 	src/trajectory/point.cpp
@@ -74,6 +77,7 @@ target_link_libraries(
 
 	sioclient
 	${Boost_LIBRARIES}
+	${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES}
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")

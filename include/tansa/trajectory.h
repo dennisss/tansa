@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <vector>
+#include <initializer_list>
 
 using namespace Eigen;
 using namespace std;
@@ -13,6 +14,78 @@ namespace tansa {
 const unsigned PointDims = 3;
 // TODO: Should eventually be Vector4d to incorporate yaw
 typedef Vector3d Point;
+
+enum PointDerivative {
+	PointPosition = 0,
+	PointVelocity = 1,
+	PointAcceleration = 2,
+	PointJerk = 3,
+	PointSnap = 4,
+	PointMaxOrder = 5
+};
+
+
+/**
+ * A Point with one or more Points constraining the derivates at that point
+ */
+class ConstrainedPoint {
+public:
+
+	/**
+	 * Creates a constrained point which is not moving
+	 */
+	static ConstrainedPoint Stationary(const Point &p) {
+		ConstrainedPoint cp;
+		cp.constrain((PointDerivative) 0, p);
+		for(int i = 1; i < PointMaxOrder; i++) {
+			cp.constrain((PointDerivative) i, Point::Zero());
+		}
+
+		return cp;
+	}
+
+	ConstrainedPoint() {
+		for(int i = 0; i < PointMaxOrder; i++)
+			constrained[i] = false;
+	}
+
+	ConstrainedPoint(std::initializer_list<Point> l) {
+		auto it = l.begin();
+		for(int i = 0; i < PointMaxOrder; i++) {
+			if(it != l.end()) {
+				//cout << *it << endl;
+				constrain((PointDerivative) i, *it);
+				it++;
+			}
+			else {
+				constrained[i] = false;
+			}
+		}
+    }
+
+	void constrain(PointDerivative order, const Point &p) {
+		points[order] = p;
+		constrained[order] = true;
+	}
+
+	bool isConstrained(unsigned order) const {
+		return constrained[order];
+	}
+
+	Point &operator[](std::size_t idx) {
+		return points[idx];
+	}
+
+	const Point &operator[](std::size_t idx) const {
+		return points[idx];
+	}
+
+private:
+	// We currently support constraining at most position, velocity, and acceleration
+	Point points[PointMaxOrder];
+	bool constrained[PointMaxOrder];
+
+};
 
 
 // Used for determining feasibility of trajectories
@@ -112,7 +185,45 @@ private:
  */
 class PiecewiseTrajectory : public Trajectory {
 public:
+	PiecewiseTrajectory(vector<Trajectory *> trajs, double ts, double te) : Trajectory(ts, te) {
+		double tot = 0;
+		for(Trajectory *tr : trajs) {
+			tot += tr->endTime() - tr->startTime();
+		}
 
+		// TODO: Assert tot = ts - te
+
+		this->trajs = trajs;
+	}
+
+	virtual ~PiecewiseTrajectory() {}
+
+
+	virtual TrajectoryState evaluate(double t) {
+		double ts = this->startTime();
+		int i = 0;
+		for(i = 0; i < trajs.size(); i++) {
+			double dur = trajs[i]->endTime() - trajs[i]->startTime();
+
+			if(t >= ts && t <= dur + ts) {
+				break;
+			}
+
+			ts += dur;
+		}
+
+		if(i >= trajs.size()) {
+			i = trajs.size() - 1;
+			t = this->endTime();
+		}
+
+		return trajs[i]->evaluate(t - ts);
+	}
+
+
+
+private:
+	vector<Trajectory *> trajs; // TODO: Switch to unique pointers
 
 };
 
@@ -120,7 +231,8 @@ class PolynomialTrajectory : public Trajectory {
 public:
 
 	PolynomialTrajectory(const VectorXd c[], double t1, double t2);
-	virtual ~PolynomialTrajectory(){}
+	virtual ~PolynomialTrajectory() {}
+
 	/**
 	 * Computes an 'optimal' polynomial trajectory between two times given some constraints on the derivatives of the start and end points
 	 */
@@ -134,6 +246,22 @@ private:
 	// Store coefficients for x, y, z
 	VectorXd coeffs[PointDims];
 };
+
+
+/**
+ * Generates a piecewise polynomial trajectory with minimal snap through the given waypoints at the given times
+ *
+ * Based on 'Minimum Snap Trajectory Generation and Control for Quadrotors' by Mellinger and Kumar
+ *
+ * See 'Polynomial Trajectory Planning for Quadrotor Flight' by Richter et. al. for a full derivation.
+ * This is the constrained QP formulation
+ *
+ * @param x waypoints through which the trajectory will go
+ * @param t time for each waypoint
+ * @param corridors (optional) if specified, this is the maximum distance away from the straight line between points i and i+1. only applies if the value is > 0
+ */
+Trajectory *compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> corridors = {});
+
 
 /**
  * Smoothly goes in a straight line through two points

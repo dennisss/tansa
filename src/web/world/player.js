@@ -111,7 +111,7 @@ class WorldPlayer {
 		var controls = new THREE.OrbitControls(camera, renderer.domElement);
 		controls.damping = 0.2;
 		// TODO: Ensure that this doesn't update too fast
-		//controls.addEventListener('change', () => this.render());
+		controls.addEventListener('change', () => this._dirty = true);
 
 		/*
 		var transformControl = new THREE.TransformControls(camera, renderer.domElement);
@@ -201,6 +201,7 @@ class WorldPlayer {
 
 
 
+		this._dirty = true;
 
 		this.render();
 		this.animate();
@@ -317,6 +318,8 @@ class WorldPlayer {
 			this._vehicles[i].update(data.vehicles[i]);
 		}
 
+		this._dirty = true;
+
 		//requestAnimationFrame(() => {
 		//	this.render();
 		//});
@@ -333,10 +336,15 @@ class WorldPlayer {
 
 
 	animate(){
-		this.render();
-		//	stats.update();
-		this.controls.update();
-		//this.transformControl.update();
+		if(this._dirty) {
+
+			this.render();
+			//	stats.update();
+			this.controls.update();
+			//this.transformControl.update();
+
+			this._dirty = false;
+		}
 		requestAnimationFrame(() => this.animate());
 
 	}

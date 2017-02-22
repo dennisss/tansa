@@ -60,6 +60,7 @@ public:
 	virtual ~HoverController() {}
 
 	void setPoint(const Point &p) { this->point = p; }
+	Point getPoint() { return this->point; }
 
 	virtual TrajectoryState getTargetState(double t);
 

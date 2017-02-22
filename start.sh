@@ -2,5 +2,6 @@
 
 # Quickstart script
 
-make runSim &
-make run
+HEADLESS=1 make runSim &
+./run.js &
+make runGcs

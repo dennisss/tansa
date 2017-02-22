@@ -109,6 +109,9 @@ struct TrajectoryState {
  */
 class Trajectory {
 public:
+
+	typedef shared_ptr<Trajectory> Ptr;
+
 	Trajectory(double t1, double t2) {
 		this->t1 = t1;
 		this->t2 = t2;
@@ -185,9 +188,9 @@ private:
  */
 class PiecewiseTrajectory : public Trajectory {
 public:
-	PiecewiseTrajectory(vector<Trajectory *> trajs, double ts, double te) : Trajectory(ts, te) {
+	PiecewiseTrajectory(const vector<Trajectory::Ptr> &trajs, double ts, double te) : Trajectory(ts, te) {
 		double tot = 0;
-		for(Trajectory *tr : trajs) {
+		for(auto tr : trajs) {
 			tot += tr->endTime() - tr->startTime();
 		}
 
@@ -223,7 +226,7 @@ public:
 
 
 private:
-	vector<Trajectory *> trajs; // TODO: Switch to unique pointers
+	vector<Trajectory::Ptr> trajs;
 
 };
 
@@ -258,9 +261,20 @@ private:
  *
  * @param x waypoints through which the trajectory will go
  * @param t time for each waypoint
- * @param corridors (optional) if specified, this is the maximum distance away from the straight line between points i and i+1. only applies if the value is > 0
+ * @param corridors if specified, this is the maximum distance away from the straight line between points i and i+1. only applies if the value is > 0. use {} if no corridors are needed
+ * @param out where to put the output trajectory
+ * @param cost where to put the output cost of the trajectory
+ * @return whether or not the optimization succeded
  */
-Trajectory *compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> corridors = {});
+bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory **out, double *cost);
+
+// TODO: Maybe allow ConstrainedPoints to be time constrained and then we can create trajectories with an arbitrary number of constrained times (at least one at beginning and at the end)
+/**
+ * Similar to compute_minsnap_mellinger11, but takes a total time argument and computes the best possible time intervals for the other segments
+ *
+ * Optimization implemented using backtracking linear search as per the paper
+ */
+bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, double ts, double te, vector<double> corridors, Trajectory **out);
 
 
 /**

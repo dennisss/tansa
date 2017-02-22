@@ -10,7 +10,7 @@ inline VectorXd diffvec(const VectorXd t, int n) {
 	VectorXd dt = VectorXd::Zero(t.size());
 
 	for(int i = n; i < t.size(); i++) {
-		float c = 1;
+		double c = 1;
 		for(int p = i; p > i - n; p--) {
 			c *= p;
 		}

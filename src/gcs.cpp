@@ -638,7 +638,7 @@ int main(int argc, char *argv[]) {
 	while (running) {
 		// Regular status messages (currently at 100 / 4 == 25Hz)
 		if (enableMessaging && i % 4 == 0) {
-			//send_status_message();
+			send_status_message();
 		}
 
 		if (killmode) {

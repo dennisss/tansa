@@ -24,25 +24,28 @@ typedef CGAL::Quadratic_program_solution<ET> Solution;
 namespace tansa {
 
 
-VectorXd qp_solve(MatrixXd Q, MatrixXd A, VectorXd b);
+bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost);
 
 
-Trajectory *compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, vector<double> corridors) {
+bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory **out, double *cost) {
 
 	// Number of coefficients generated segments : c_(n-1) * t^(n-1) + c_(n-2) * t^(n-2) + ... + c_0
 	// Note that in the Richter paper, big N is the polynomial order (N-1)
 	int N = 10;
 
+	// Number of intermediate points for each corridor
+	int n_intermediate = 8;
+
 	int M = x.size() - 1; // number of segments
 
 	if(t.size() != x.size()) {
 		printf("Wrong number of times provided\n");
-		return NULL;
+		return false;
 	}
 
 	if(corridors.size() > M) {
 		printf("Too many corridors\n");
-		return NULL;
+		return false;
 	}
 
 	/*
@@ -97,13 +100,15 @@ Trajectory *compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const
 	// Building constraints and solving each axis
 
 	vector<VectorXd> xs;
+	VectorXd costs(PointDims);
 
 	// Iterate over each axis
-	for(int d = 0; d < PointDims; d++) {
+	for(unsigned d = 0; d < PointDims; d++) {
 
 		// For holding the constrains (it is easier to vectorize them them put them in a matrix right away)
 		vector<MatrixXd> Arows;
 		vector<double> brows;
+		vector<CGAL::Comparison_result> rels; // relation between A and b
 
 		#define EmptyConstraintRow MatrixXd::Zero(1, M*N)
 
@@ -127,22 +132,57 @@ Trajectory *compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const
 					a.block(0, i*N, 1, N) = diffvec(tvecS, j).transpose();
 					double b = x[i][j](d);
 					Arows.push_back(a); brows.push_back(b);
+					rels.push_back(CGAL::EQUAL);
 				}
 				if(endConstrained) {
 					MatrixXd a = EmptyConstraintRow;
 					a.block(0, i*N, 1, N) = diffvec(tvecE, j).transpose();
 					double b = x[i+1][j](d);
 					Arows.push_back(a); brows.push_back(b);
+					rels.push_back(CGAL::EQUAL);
 				}
 
 				// Add continuity constraint for all internal points between segments
 				if(!endConstrained && i < M - 1) {
 					MatrixXd a = EmptyConstraintRow;
 					a.block(0, i*N, 1, N) = diffvec(tvecE, j).transpose(); // +derivative at end
-					a.block(0, (i+1)*N, 1, N) = -diffvec(tvecS, j).transpose(); // this technically is wrong but works as tvecS is constant between segments (but really should be recomputed for the next segment)
+					a.block(0, (i+1)*N, 1, N) = -1.0 * diffvec(tvecS, j).transpose(); // this technically is wrong but works as tvecS is constant between segments (but really should be recomputed for the next segment)
 
 					double b = 0;
 					Arows.push_back(a); brows.push_back(b);
+					rels.push_back(CGAL::EQUAL);
+
+				}
+			}
+
+
+			// Adding corridor constraint
+			if(i < corridors.size() && corridors[i] > 0) {
+
+				// Unit vector along segment
+				Vector3d ti = (x[i+1][0] - x[i][0]).normalized();
+
+				// Loop through intermediate points;
+				for(int j = 0; j < n_intermediate; j++) {
+
+					// Time for this intermediate point
+					double tj = ((1.0*j) / (1 + n_intermediate)) * (t[i+1] - t[i]);
+
+					// Vectorized powers of time (represents the matrix coefficients for position)
+					VectorXd tvec = powvec(tj, N);
+
+
+					// distance from segment:
+					// -> (p(t) - waypoint) - ((p(t) - waypoint) dot ray)
+					// -> (tvec - waypoint_x) - (tvec * ray_x) - waypoint * ray_x <= delta
+					// (tvec - tvec*ray_x) <= delta + waypoint_x + (waypoint_x * ray_x)
+					MatrixXd a = EmptyConstraintRow;
+					a.block(0, i*N, 1, N) = diffvec(tvec, 0); // * (1 - x[i][0](d));
+					double bp = corridors[i] + x[i][0](d) * (1 + ti(d)); // for d <= delta
+					double bn = -corridors[i] + x[i][0](d) * (1 + ti(d)); // for d >= -delta
+
+					Arows.push_back(a); brows.push_back(bp); rels.push_back(CGAL::SMALLER);
+					Arows.push_back(a); brows.push_back(bn); rels.push_back(CGAL::LARGER);
 				}
 			}
 		}
@@ -158,26 +198,142 @@ Trajectory *compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const
 			b(i) = brows[i];
 		}
 
+		VectorXd x;
+		double cost;
 
-		VectorXd x = qp_solve(Q, A, b);
+		bool success = qp_solve(Q, A, b, rels, x, cost);
+
+		if(!success) {
+			return false;
+		}
+
 		xs.push_back(x);
+		costs(d) = cost;
 	}
 
 
 	// Creating the trajectory objects
-	vector<Trajectory *> segs;
+	vector<Trajectory::Ptr> segs;
 	for(int i = 0; i < M; i++) {
 		VectorXd cs[PointDims];
 		for(int d = 0; d < PointDims; d++) {
 			cs[d] = xs[d].segment(i*N, N);
 		}
 
-		Trajectory *poly = new PolynomialTrajectory(cs, 0, t[i+1] - t[i]);
+		Trajectory::Ptr poly( new PolynomialTrajectory(cs, 0, t[i+1] - t[i]) );
 		segs.push_back( poly );
 	}
 
-	return new PiecewiseTrajectory( segs, t[0], t[t.size() - 1] );
+	if(out != NULL)
+		*out = new PiecewiseTrajectory( segs, t[0], t[t.size() - 1] );
+
+	if(cost != NULL)
+		*cost = costs.norm();
+
+	return true;
 }
+
+bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, double ts, double te, vector<double> corridors, Trajectory **out) {
+
+	// Number of segments
+	int m = x.size() - 1;
+
+	// Current best trajectory
+	vector<double> t;
+	Trajectory *tr;
+	double f;
+
+	// Initially try a uniform time distribution
+	for(int i = 0; i < x.size(); i++) {
+		t.push_back(ts + i * ((te - ts) / m) ); // TODO: Instead base this on the distance between points
+	}
+
+	// Compute initial cost
+	if(!compute_minsnap_mellinger11(x, t, corridors, &tr, &f))
+		return false;
+
+	// Set of all directions in which we will descend
+	vector<VectorXd> g;
+	for(int i = 0; i < m; i++) {
+		VectorXd gi(m);
+
+		for(int j = 0; j < m; j++) {
+			gi(j) = i == j? 1.0 : (- 1.0 / (m - 1));
+		}
+
+		g.push_back(gi);
+	}
+
+	// Max number of iterations to do
+	int maxit = 0;
+	// Current incrementation step in seconds : initially set to half the average segment length
+	double h = 0.5 * ((te - ts) / m);
+
+	for(int it = 0; it < maxit; it++) {
+
+		// starting time vector for this iteration
+		vector<double> T = t;
+
+		// Try every direction
+		for(int i = 0; i < g.size(); i++) {
+			Trajectory *trI;
+			double fI;
+
+			vector<double> ti;
+			ti.push_back(ts);
+			bool valid = true;
+			for(int j = 1; j < x.size(); j++) {
+				// Duration of this segment
+				double tseg = (T[j] - T[j - 1]) + h*g[i](j - 1);
+
+				// If negative, then it is impossible. Also if really small then we are probably going too fast and numerically unstable
+				if(tseg <= 0.01) {
+					valid = false;
+					break;
+				}
+
+				ti.push_back(ti[j - 1] + tseg);
+			}
+
+			cout << valid << endl;
+
+			if(!valid || !compute_minsnap_mellinger11(x, ti, corridors, &trI, &fI)) {
+				continue;
+			}
+
+			cout << fI << endl;
+
+			if(fI < f) {
+				delete tr;
+				tr = trI;
+				t = ti;
+				f = fI;
+			}
+		}
+
+		/*
+		// Cost changed by less than 1%: stop early
+		if(abs(f - F) / F < 0.01) {
+			break;
+		}
+		*/
+
+		// Decrease step size
+		h *= 0.6;
+	}
+
+	/*
+	for(auto ti : t ) {
+		cout << ti << " ";
+	}
+	cout << endl;
+	*/
+
+	*out = tr;
+
+	return true;
+}
+
 
 /*
 	Our QP is of the form:
@@ -188,7 +344,7 @@ Trajectory *compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const
 	Q becomes D
 */
 
-VectorXd qp_solve(MatrixXd Q, MatrixXd A, VectorXd b) {
+bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost) {
 
 	Program qp(CGAL::EQUAL, false, 0, false, 0);
 
@@ -205,23 +361,29 @@ VectorXd qp_solve(MatrixXd Q, MatrixXd A, VectorXd b) {
 			qp.set_a(j, i, A(i, j));
 		}
 		qp.set_b(i, b(i));
+		qp.set_r(i, rels[i]);
 	}
 
 	// solve the program, using ET as the exact type
 	Solution s = CGAL::solve_quadratic_program(qp, ET());
-	assert(s.solves_quadratic_program(qp));
-	// output solution
-	//std::cout << s << endl;;
 
-	VectorXd x(A.cols());
+	if(s.is_infeasible() || !s.solves_quadratic_program(qp)) {
+		return false;
+	}
+
+	// output solution
+	//std::cout << s << endl;
+
+	x.resize(A.cols());
 	int i = 0;
 	for(auto it = s.variable_values_begin(); it != s.variable_values_end(); it++) {
 		x(i) = CGAL::to_double(*it);
 		i++;
 	}
 
+	cost = CGAL::to_double(s.objective_value());
 
-	return x;
+	return true;
 
 }
 

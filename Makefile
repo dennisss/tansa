@@ -12,7 +12,9 @@ build: build_socketio_cpp
 server:
 	node ./src/server
 
-run: build
+run: build runGcs
+
+runGcs:
 	./build/gcs $(CONFIG_PATH)
 
 test: build

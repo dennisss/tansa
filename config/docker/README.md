@@ -18,7 +18,7 @@ Quickstart
 
 - To get a running environment, do
 	- Run `docker pull dennisss/tansa-prebuilt:latest`
-	- Run `docker run tansa-prebuilt` every time you want to start it
+	- Run `docker run --rm -p 4000:4000 tansa-prebuilt` every time you want to start it
 	- Rerun the `pull` command from above whenever there are new changes to this repo
 
 
@@ -29,6 +29,7 @@ These are the commands I use to
 
 - `docker build -t dennisss/tansa-prebuilt .`
 	- `docker tag 7d9495d03763 dennisss/tansa-prebuilt:latest` (optionally if tagged with something else using the tag id from `docker images`)
+	- The `--no-cache=true` option for building is also very useful
 - `docker login`
 - `docker push dennisss/tansa-prebuilt`
 - Handy command to start up a shell `docker exec -it tansa-dev bash`

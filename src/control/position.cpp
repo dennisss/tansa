@@ -13,7 +13,8 @@ PositionController::PositionController(Vehicle *v) {
 
 	pid->setGains(
 		v->params.gains.p,
-		Point::Zero(), // Don't use
+		Vector3d(0, 0, v->params.gains.i.z()),
+		//Point::Zero(), // Don't use
 		v->params.gains.d
 	);
 }

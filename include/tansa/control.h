@@ -34,7 +34,7 @@ public:
 	/**
 	 * Specifies which trajectory should do followed
 	 */
-	void track(Trajectory *traj);
+	void track(Trajectory::Ptr traj);
 
 	virtual TrajectoryState getTargetState(double t);
 
@@ -49,7 +49,7 @@ protected:
 	PID<PointDims> *pid;
 
 private:
-	Trajectory *trajectory;
+	Trajectory::Ptr trajectory;
 
 };
 

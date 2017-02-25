@@ -86,12 +86,12 @@ private:
  */
 class MotionAction : public Action {
 public:
-	MotionAction(DroneId id, Trajectory* t, ActionTypes type) : Action(id, type), path(t) { isCalculated = true; }
-	virtual ~MotionAction(){ delete path; }
+	MotionAction(DroneId id, Trajectory::Ptr t, ActionTypes type) : Action(id, type), path(t) { isCalculated = true; }
+	virtual ~MotionAction(){ }
 
 	inline TrajectoryState GetPathState(double t){ return path->evaluate(t); }
 
-	inline Trajectory* GetPath(){return path;}
+	inline Trajectory::Ptr GetPath(){return path;}
 
 	virtual double GetStartTime() const { return path->startTime(); }
 
@@ -101,7 +101,7 @@ public:
 	inline Point GetEndPoint() const { return path->evaluate(path->endTime()).position; }
 
 private:
-	Trajectory* path;
+	Trajectory::Ptr path;
 };
 
 /**

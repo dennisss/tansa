@@ -19,7 +19,7 @@ PositionController::PositionController(Vehicle *v) {
 	);
 }
 
-void PositionController::track(Trajectory *traj) {
+void PositionController::track(Trajectory::Ptr traj) {
 	this->trajectory = traj;
 }
 

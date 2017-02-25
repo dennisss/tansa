@@ -24,7 +24,6 @@ GradualCircleTrajectory::GradualCircleTrajectory(const Point &origin, const vect
 
 GradualCircleTrajectory::~GradualCircleTrajectory() {
 	delete circle;
-	delete poly;
 }
 
 

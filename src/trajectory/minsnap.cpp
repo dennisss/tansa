@@ -27,7 +27,7 @@ namespace tansa {
 bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost);
 
 
-bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory **out, double *cost) {
+bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory::Ptr *out, double *cost) {
 
 	// Number of coefficients generated segments : c_(n-1) * t^(n-1) + c_(n-2) * t^(n-2) + ... + c_0
 	// Note that in the Richter paper, big N is the polynomial order (N-1)
@@ -225,7 +225,7 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 	}
 
 	if(out != NULL)
-		*out = new PiecewiseTrajectory( segs, t[0], t[t.size() - 1] );
+		*out = make_shared<PiecewiseTrajectory>( segs, t[0], t[t.size() - 1] );
 
 	if(cost != NULL)
 		*cost = costs.norm();
@@ -233,14 +233,14 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 	return true;
 }
 
-bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, double ts, double te, vector<double> corridors, Trajectory **out) {
+bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, double ts, double te, vector<double> corridors, Trajectory::Ptr *out) {
 
 	// Number of segments
 	int m = x.size() - 1;
 
 	// Current best trajectory
 	vector<double> t;
-	Trajectory *tr;
+	Trajectory::Ptr tr;
 	double f;
 
 	// Initially try a uniform time distribution
@@ -276,7 +276,7 @@ bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, doub
 
 		// Try every direction
 		for(int i = 0; i < g.size(); i++) {
-			Trajectory *trI;
+			Trajectory::Ptr trI;
 			double fI;
 
 			vector<double> ti;
@@ -304,7 +304,6 @@ bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, doub
 			cout << fI << endl;
 
 			if(fI < f) {
-				delete tr;
 				tr = trI;
 				t = ti;
 				f = fI;

@@ -314,6 +314,40 @@ void constructLoadResponse() {
 	}
 	j["cues"] = nums;
 	j["target_positions"] = positions;
+
+
+	json paths = json::array();
+
+	std::vector<std::vector<tansa::Action*>> actions = player->getActions();
+	for(int i = 0; i < actions.size(); i++) {
+		json pts = json::array();
+
+		for(int j = 0; j < actions[i].size(); j++) {
+
+			MotionAction *m = (MotionAction *) actions[i][j];
+
+			Trajectory::Ptr path = m->GetPath();
+			for(double t = m->GetStartTime(); t <= m->GetEndTime(); t += 0.1) {
+
+				Vector3d pt = path->evaluate(t).position;
+				json jpt = json::array();
+				jpt.push_back(pt.x()); jpt.push_back(pt.y()); jpt.push_back(pt.z());
+
+				//if(pts.size() >= 2 && ((pts[pts.size() - 1] - pts[pts.size() - 2]) - (pt - pts[pts.size() - 2])).norm() < 0.001) {
+
+				//}
+				//else {
+					pts.push_back(jpt);
+				//}
+			}
+		}
+
+		paths.push_back(pts);
+	}
+
+	j["paths"] = paths;
+
+
 	tansa::send_message(j);
 }
 

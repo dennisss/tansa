@@ -47,6 +47,7 @@ add_library(
 	src/trajectory/linear.cpp
 	src/trajectory/ellipse.cpp
 	src/trajectory/point.cpp
+	src/trajectory/spiral.cpp
 	#src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
 	src/mocap/registration.cpp
@@ -145,6 +146,22 @@ target_link_libraries(
 )
 
 set_target_properties(simple PROPERTIES COMPILE_FLAGS "-std=c++1y")
+
+
+add_executable(
+	arc
+
+	src/arc.cpp
+)
+
+target_link_libraries(
+	arc
+
+	tansa
+)
+
+set_target_properties(arc PROPERTIES COMPILE_FLAGS "-std=c++1y")
+
 
 
 ###### Simulation Test ######

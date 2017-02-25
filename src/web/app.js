@@ -28,12 +28,12 @@ var App = React.createClass({
 			data = JSON.parse(data);
 
 			if(data.type == 'status') {
-
 				player.update({vehicles: data.vehicles});
-
-
-
 			}
+			else if(data.type == 'load_reply') {
+				player.setPaths(data.paths);
+			}
+
 
 
 		})

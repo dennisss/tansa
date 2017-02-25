@@ -239,6 +239,9 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 
 	this->estimator.correct(this->state, pos, v, t);
 
+	// TODO: Filter this?
+	this->state.orientation = orient;
+
 
 	Vector3d pos_ned = enuToFromNed() * pos;
 	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(baseToFromAirFrame());
@@ -348,6 +351,39 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 		accel_ned.z(),
 		0,0
 	);
+
+	send_message(&msg);
+}
+
+void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
+
+	Quaterniond att_ned = Quaterniond(enuToFromNed()) * att * Quaterniond(baseToFromAirFrame());
+
+	// TODO: This is redundant with setpoint_accel
+	const double hover = params.hoverPoint;
+	double thrust = accel_z * (hover / GRAVITY_MS);
+	if(thrust < 0.01)
+		thrust = 0.01;
+
+	float att_arr[4];
+	att_arr[0] = (float) att_ned.w();
+	att_arr[1] = (float) att_ned.x();
+	att_arr[2] = (float) att_ned.y();
+	att_arr[3] = (float) att_ned.z();
+
+	mavlink_message_t msg;
+	mavlink_msg_set_attitude_target_pack_chan(
+		255, 0, channel,
+		&msg,
+		0,
+		1, 1,
+		0b111, // Ignore body rates
+		att_arr,
+		0, 0, 0,
+		thrust
+	);
+
+	cout << thrust << endl;
 
 	send_message(&msg);
 }

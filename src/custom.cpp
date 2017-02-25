@@ -13,17 +13,36 @@ using namespace tansa;
 
 #define PI 3.14149
 
+
+#define CUSTOM_VERT_ELLIPSE
+
 namespace tansa {
 
 Jocs *custom_jocs() {
 
 	Jocs *j = Jocs::Parse("data/singleDrone.jocs", 1); //new Jocs(false, false, false);
 
+#ifdef CUSTOM_SPIRAL
+	j->homes.resize(1);
+	j->homes[0] = Vector3d(0, 0, 1);
+
+
+	Trajectory::Ptr tr( new SpiralTrajectory(Vector3d(0, 0, 1), 3, 0, 0, 6*PI, 20) );
+
+	j->actions[0].resize(0);
+	j->actions[0].push_back(new MotionAction(
+		0,
+		tr,
+		ActionTypes::Line
+	));
+#endif
+
+#ifdef CUSTOM_ARC1
 	j->homes.resize(1);
 	j->homes[0] = Vector3d(-2, 0, 1);
 
 
-	Trajectory *tr;
+	Trajectory::Ptr tr;
 
 	compute_minsnap_mellinger11({
 		ConstrainedPoint::Stationary({-2, 0, 1}),
@@ -39,45 +58,21 @@ Jocs *custom_jocs() {
 		tr,
 		ActionTypes::Line
 	));
+#endif
 
+#ifdef CUSTOM_HELIX
+	j->homes.resize(2);
+	j->homes[0] = Vector3d(0, 0, 0.5);
+	j->homes[1] = Vector3d(0, -0.5, 0.5);
 
-	//j->homes[0] = Vector3d(0, 0, 0.5);
-	//j->homes[1] = Vector3d(0, -0.5, 0.5);
-
-//	string name = "a";
-//	j->breakpoints.push_back(Breakpoint(name, 1, 0.0));
-
-	//j->actions.resize(2);
-	//j->actions[0].resize(0);
-
-
-	/*
-	AngleAxis<double> aa(PI/2, Vector3d(0,1,0));
-	auto linez = new LinearTrajectory(Vector3d(0,0,2), 5, Vector3d(6,0,2), 30);
-	auto circle = new CircleTrajectory(Vector3d(0,0,0), 1, 0, 5, 8*PI, 30);
-	auto rotCircle = new TransformedTrajectory(circle, aa.toRotationMatrix(), Vector3d(0,0,0), 5, 30);
-	auto t2 = new CompoundTrajectory(linez, rotCircle, 5, 30);
-	*/
-
-	/*
-	auto linez = new LinearTrajectory(Vector3d(0,0,1), 5, Vector3d(0,0,4), 30);
-	auto circle = new CircleTrajectory(Vector3d(0,0,0), 3, 0, 5, 6*PI, 30);
-
-	auto t2 = new CompoundTrajectory(linez, circle, 5, 30);
-	*/
-
-	/*
-	auto t2 = new EllipseTrajectory(Vector3d(0,0,1), 4, 2, PI, 5, 4*PI, 30);
-
-	*/
-
-	/*
+	j->actions.resize(2);
+	j->actions[0].resize(0);
 
 	for(int i = 0; i < 2; i++) {
-		auto linez = new LinearTrajectory(Vector3d(0,0, 0.5), 5, Vector3d(0,0,2), 30);
-		auto circle = new CircleTrajectory(Vector3d(0,0,0), 1, i*PI, 5, 6*PI + i*PI, 30);
+		auto linez = make_shared<LinearTrajectory>(Vector3d(0,0, 0.5), 5, Vector3d(0,0,2), 30);
+		auto circle = make_shared<CircleTrajectory>(Vector3d(0,0,0), 1, i*PI, 5, 6*PI + i*PI, 30);
 
-		auto t2 = new CompoundTrajectory(linez, circle, 5, 30);
+		auto t2 = make_shared<CompoundTrajectory>(linez, circle, 5, 30);
 
 		auto t = PolynomialTrajectory::compute(
 			{j->homes[i]},
@@ -98,6 +93,91 @@ Jocs *custom_jocs() {
 			ActionTypes::Line
 		));
 	}
+#endif
+
+#ifdef CUSTOM_ARC2
+	j->homes.resize(1);
+	j->homes[0] = Vector3d(-2, 0, 1);
+
+
+	Trajectory::Ptr tr;
+
+	compute_minsnap_mellinger11({
+		ConstrainedPoint::Stationary({-2, 0, 1}),
+		{ {0, 1, 2} },
+		{ {-1, 1, 1} },
+		ConstrainedPoint::Stationary({2, -1, 1})
+	}, { 0, 4, 8, 12 }, {}, &tr, NULL);
+
+
+	j->actions[0].resize(0);
+	j->actions[0].push_back(new MotionAction(
+		0,
+		tr,
+		ActionTypes::Line
+	));
+#endif
+
+
+#ifdef CUSTOM_VERT_ELLIPSE
+	j->homes.resize(1);
+	j->homes[0] = Vector3d(-2, 0, 1);
+
+
+	double time1 = 3;
+	double time2 = 7;
+
+	Trajectory::Ptr t2 = make_shared<EllipseTrajectory>( Vector3d(0, 0, 0), 1, 1.5, 0, time1, 2*PI, time2 );
+
+
+	Matrix3d m = Quaterniond::FromTwoVectors(Vector3d(0,0,1), Vector3d(0, 1, 0)).toRotationMatrix();
+	Vector3d p = Vector3d(0, 0, 2);
+	t2 = Trajectory::Ptr( new TransformedTrajectory(
+		t2,
+		m,
+		p,
+		time1, time2
+	) );
+
+	auto t = PolynomialTrajectory::compute(
+		{j->homes[0]},
+		0,
+		{t2->evaluate(time1).position, t2->evaluate(time1).velocity, t2->evaluate(time1).acceleration},
+		time1
+	);
+
+	j->actions[0].resize(0);
+	j->actions[0].push_back(new MotionAction(
+		0,
+		t,
+		ActionTypes::Transition
+	));
+
+	j->actions[0].push_back(new MotionAction(
+		0,
+		t2,
+		ActionTypes::Line
+	));
+#endif
+
+
+	/*
+	AngleAxis<double> aa(PI/2, Vector3d(0,1,0));
+	auto linez = new LinearTrajectory(Vector3d(0,0,2), 5, Vector3d(6,0,2), 30);
+	auto circle = new CircleTrajectory(Vector3d(0,0,0), 1, 0, 5, 8*PI, 30);
+	auto rotCircle = new TransformedTrajectory(circle, aa.toRotationMatrix(), Vector3d(0,0,0), 5, 30);
+	auto t2 = new CompoundTrajectory(linez, rotCircle, 5, 30);
+	*/
+
+	/*
+	auto linez = new LinearTrajectory(Vector3d(0,0,1), 5, Vector3d(0,0,4), 30);
+	auto circle = new CircleTrajectory(Vector3d(0,0,0), 3, 0, 5, 6*PI, 30);
+
+	auto t2 = new CompoundTrajectory(linez, circle, 5, 30);
+	*/
+
+	/*
+	auto t2 = new EllipseTrajectory(Vector3d(0,0,1), 4, 2, PI, 5, 4*PI, 30);
 
 	*/
 

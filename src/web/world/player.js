@@ -236,7 +236,30 @@ class WorldPlayer {
 		this.scene.add(vehicle.object());
 		this._vehicles.push(vehicle);
 
+		var colors = [0x0000ff, 0xff0000, 0x00ff00, 0x00ffff, 0xff00ff, 0xffff00];
+
+		// Make a line
+		var lineMaterial = new THREE.LineBasicMaterial({
+			color: colors[this._vehicles.length - 1]
+		});
+		var lineGeometry = new THREE.Geometry();
+		//for(var i = 0; i < 10; i++)
+		//	geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+
+		var line = new THREE.Line(lineGeometry, lineMaterial);
+		this.scene.add(line);
+		vehicle._path = line;
+
+
 		return vehicle;
+	}
+
+	/**
+	 * Removes all visual elements of the vehicle from the scene
+	 */
+	removeVehicle(v) {
+		this.scene.remove(v.object());
+		this.scene.remove(v._path);
 	}
 
 
@@ -273,23 +296,6 @@ class WorldPlayer {
 	create() {
 		this.addVehicle();
 
-		this._paths = [];
-
-
-		// Make a line
-		var material = new THREE.LineBasicMaterial({
-			color: 0x0000ff
-		});
-		var geometry = new THREE.Geometry();
-		for(var i = 0; i < 10; i++)
-			geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-
-
-		var line = new THREE.Line(geometry, material);
-		this.scene.add(line);
-
-		this._paths.push(line);
-
 		this._loaded = true;
 
 		//this.dragControls.setObjects(this._droneObjects);
@@ -310,7 +316,7 @@ class WorldPlayer {
 		// Remove vehicles
 		while(data.vehicles.length < this._vehicles.length) {
 			var last = this._vehicles.pop();
-			this.scene.remove(last.object());
+			this.removeVehicle(last);
 		}
 
 		// Update states of all vehicles
@@ -323,6 +329,28 @@ class WorldPlayer {
 		//requestAnimationFrame(() => {
 		//	this.render();
 		//});
+	}
+
+	setPaths(paths) {
+
+		for(var i = 0; i < paths.length; i++) {
+			if(i <= this._vehicles.length)
+				this.addVehicle();
+
+			var p = this._vehicles[i]._path;
+
+			// Resize vertices
+			while(p.geometry.vertices.length > paths[i].length) p.geometry.vertices.pop();
+			while(p.geometry.vertices.length < paths[i].length) p.geometry.vertices.push(null);
+
+			for(var j = 0; j < paths[i].length; j++) {
+				var vec = new THREE.Vector3(paths[i][j][0], paths[i][j][1], paths[i][j][2]);
+				p.geometry.vertices[j] = vec;
+			}
+
+			p.geometry.verticesNeedUpdate = true;
+
+		}
 	}
 
 

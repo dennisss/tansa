@@ -154,6 +154,8 @@ public:
 
 	void setpoint_accel(const Vector3d &a);
 
+	void setpoint_attitude(const Quaterniond &att, double accel_z);
+
 	void setpoint_zero();
 
 	// Should do something like waiting for a response

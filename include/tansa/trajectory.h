@@ -132,7 +132,7 @@ protected:
 class CompoundTrajectory : public Trajectory {
 public:
 
-	CompoundTrajectory(Trajectory *x1, Trajectory *x2, double t1, double t2) : Trajectory(t1, t2) {
+	CompoundTrajectory(Trajectory::Ptr x1, Trajectory::Ptr x2, double t1, double t2) : Trajectory(t1, t2) {
 		this->x1 = x1;
 		this->x2 = x2;
 	}
@@ -150,15 +150,15 @@ public:
 	}
 
 private:
-	Trajectory *x1;
-	Trajectory *x2;
+	Trajectory::Ptr x1;
+	Trajectory::Ptr x2;
 
 };
 
 class TransformedTrajectory : public Trajectory {
 public:
 
-	TransformedTrajectory(Trajectory *x, Matrix3d m, Vector3d p, double t1, double t2) : Trajectory(t1, t2) {
+	TransformedTrajectory(Trajectory::Ptr x, Matrix3d m, Vector3d p, double t1, double t2) : Trajectory(t1, t2) {
 		this->x = x;
 		this->m = m;
 		this->p = p;
@@ -177,7 +177,7 @@ public:
 	}
 
 private:
-	Trajectory *x;
+	Trajectory::Ptr x;
 	Matrix3d m;
 	Vector3d p;
 
@@ -239,7 +239,7 @@ public:
 	/**
 	 * Computes an 'optimal' polynomial trajectory between two times given some constraints on the derivatives of the start and end points
 	 */
-	static PolynomialTrajectory *compute(const vector<Point> &c1, double t1, const vector<Point> &c2, double t2);
+	static PolynomialTrajectory::Ptr compute(const vector<Point> &c1, double t1, const vector<Point> &c2, double t2);
 
 
 	virtual TrajectoryState evaluate(double t);
@@ -266,7 +266,7 @@ private:
  * @param cost where to put the output cost of the trajectory
  * @return whether or not the optimization succeded
  */
-bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory **out, double *cost);
+bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory::Ptr *out, double *cost);
 
 // TODO: Maybe allow ConstrainedPoints to be time constrained and then we can create trajectories with an arbitrary number of constrained times (at least one at beginning and at the end)
 /**
@@ -274,7 +274,7 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
  *
  * Optimization implemented using backtracking linear search as per the paper
  */
-bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, double ts, double te, vector<double> corridors, Trajectory **out);
+bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, double ts, double te, vector<double> corridors, Trajectory::Ptr *out);
 
 
 /**
@@ -284,13 +284,13 @@ class LinearTrajectory : public Trajectory {
 public:
 
 	LinearTrajectory(Point x1, double t1, Point x2, double t2);
-	virtual ~LinearTrajectory();
+	virtual ~LinearTrajectory() {};
 
 	virtual TrajectoryState evaluate(double t);
 
 private:
 
-	PolynomialTrajectory *inner;
+	PolynomialTrajectory::Ptr inner;
 
 
 };
@@ -396,23 +396,30 @@ public:
 	virtual TrajectoryState evaluate(double t);
 
 private:
-	PolynomialTrajectory *poly;
+	PolynomialTrajectory::Ptr poly;
 	CircleTrajectory *circle;
 };
 
 /**
- * Does a spiral in the z direction. Implemented as an normalized circle with a moving center trajectory
+ * An Archimedean spiral
  */
 class SpiralTrajectory : public Trajectory {
 public:
+
+	SpiralTrajectory(const Point &origin, double radius, double theta1, double ts, double theta2, double te);
+	virtual ~SpiralTrajectory() {};
 
 
 	virtual TrajectoryState evaluate(double t);
 
 
 private:
-	LinearTrajectory *center;
-	CircleTrajectory *circle;
+
+	Point origin;
+	double radius;
+	double theta1;
+	double theta2;
+
 };
 
 

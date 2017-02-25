@@ -149,7 +149,7 @@ namespace tansa {
 					double dur = (startPosition - endPosition).norm() / VEHICLE_ASCENT_MS;
 					states[i] = StateTakeoff;
 					transitionStarts[i] = start;
-					transitions[i] = new LinearTrajectory(startPosition, 0, endPosition, dur);
+					transitions[i] = Trajectory::Ptr( new LinearTrajectory(startPosition, 0, endPosition, dur) );
 				}
 				// TODO: Only grab the ones for the active drones
 				holdpoints = homes;
@@ -224,7 +224,7 @@ namespace tansa {
 				}
 
 				MotionAction *motionAction = static_cast<MotionAction*>(actions[chorI][plans[i]]);
-				Trajectory *motion = motionAction->GetPath();
+				Trajectory::Ptr motion = motionAction->GetPath();
 
 				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
 					if (plans[i] == actions[chorI].size()-1) {
@@ -233,7 +233,7 @@ namespace tansa {
 						Point lastPoint = motion->evaluate(t).position;
 						Point groundPoint(lastPoint.x(), lastPoint.y(), 0);
 						double dur = lastPoint.z() / VEHICLE_DESCENT_MS;
-						transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, dur);
+						transitions[i] = Trajectory::Ptr( new LinearTrajectory(lastPoint, 0, groundPoint, dur) );
 						transitionStarts[i] = Time::now();
 						continue;
 					}
@@ -391,7 +391,7 @@ namespace tansa {
 			Point lastPoint = holdpoints[jocsActiveIds[i]];
 			Point groundPoint = lastPoint; groundPoint.z() = 0;
 			double dur = lastPoint.z() / VEHICLE_DESCENT_MS;
-			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, dur);
+			transitions[i] = Trajectory::Ptr( new LinearTrajectory(lastPoint, 0, groundPoint, dur) );
 			transitionStarts[i] = Time::now();
 		}
 	}
@@ -415,11 +415,6 @@ namespace tansa {
 
 		for (int i = 0; i < hovers.size(); i++) {
 			delete hovers[i];
-		}
-
-		// TODO: They will memory leak
-		for (int i = 0; i < transitions.size(); i++) {
-			delete transitions[i];
 		}
 	}
 

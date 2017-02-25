@@ -292,7 +292,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 								actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 						end*=conversionFactor;
 						actions[drone].push_back(new MotionAction(
-								drone, new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration), ActionTypes::Line));
+								drone, Trajectory::Ptr(new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration)), ActionTypes::Line));
 						break;
 					}
 					case ActionTypes::Circle: {
@@ -312,7 +312,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 						// TODO: use separate offset key for circle and hover
 						actions[drone].push_back(new MotionAction(
 								drone,
-								new CircleTrajectory(origin + startOffset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration),
+								Trajectory::Ptr(new CircleTrajectory(origin + startOffset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration)),
 								ActionTypes::Circle
 						));
 						break;
@@ -327,7 +327,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 						// TODO: use separate offset key for circle and hover
 						actions[drone].push_back(new MotionAction(
 								drone,
-								new LinearTrajectory(hoverPoint + startOffset, lastTime +  startTime, hoverPoint + endOffset, lastTime + startTime + duration),
+								Trajectory::Ptr(new LinearTrajectory(hoverPoint + startOffset, lastTime +  startTime, hoverPoint + endOffset, lastTime + startTime + duration)),
 								ActionTypes::Hover
 						));
 						break;

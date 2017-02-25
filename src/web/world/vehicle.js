@@ -39,6 +39,8 @@ class Vehicle {
 			angles: [0, 0, 0, 0], // Yaw angle of each propeller (in radians)
 			lastTime: new Date() // Last time at which the model was rendered
 		}
+
+		this._t = new Date();
 	}
 
 	/**
@@ -60,7 +62,11 @@ class Vehicle {
 		var p = data.position;
 		s.position.set(p[0], p[1], p[2]);
 
-		s.speeds = data.motors;
+		s.speeds = data.armed? [0.5, 0.5, 0.5, 0.5] : [0,0,0,0];  //data.motors;
+
+		var t = new Date();
+		var dt = (t - this._t) / 1000;
+		this._t = t;
 	}
 
 	/**
@@ -73,7 +79,7 @@ class Vehicle {
 
 		// TODO: Also make sure that the motor speeds come with the right spin
 		for(var i = 0; i < this._props.length; i++) {
-			//this._props[i].rotateZ(dt*s.speeds[i]);
+			this._props[i].rotateZ(dt*s.speeds[i]*60);
 		}
 		s.lastTime = t;
 

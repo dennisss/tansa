@@ -67,7 +67,7 @@ namespace tansa {
 		std::vector<int> plans;
 
 		// Separate trajectories and timings for doing takeoff and landings
-		std::vector<Trajectory *> transitions;
+		std::vector<Trajectory::Ptr> transitions;
 		vector<Time> transitionStarts;
 		bool pauseRequested = false;
 		bool paused = false;

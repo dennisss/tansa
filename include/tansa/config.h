@@ -4,11 +4,17 @@
 #define VEHICLE_ASCENT_MS 0.2
 #define VEHICLE_DESCENT_MS 0.3
 
+/**
+ * @struct Contains client and server address for drone netcode.
+ */
 struct hardware_config {
 	string clientAddress;
 	string serverAddress;
 };
 
+/**
+ * @struct Contains config info for drone
+ */
 struct vehicle_config {
 	unsigned net_id; // The number printed on the physical
 	unsigned chor_id; // The id between 1 and 6 respesenting which drone in the choreography it w
@@ -17,7 +23,7 @@ struct vehicle_config {
 };
 
 /**
- * State assigned to a vehicle controlled by a player
+ * @enum State assigned to a vehicle controlled by a player
  */
 enum PlayerVehicleState {
 	/**

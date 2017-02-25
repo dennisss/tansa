@@ -13,7 +13,7 @@
 #include "tansa/breakpoint.h"
 namespace tansa {
 /**
- * Class representing the
+ * @class Represents and encapsulates choreographies.
  */
 class Jocs {
 public:
@@ -57,6 +57,13 @@ public:
 
 	friend Jocs *custom_jocs();
 
+	/**
+	 * Constructs a Jocs instance that encapsulates a choreography
+	 * @param convertMeters If true, the input units of length will be taken as feet and will be converted to meters
+	 * @param convertRadians If true, the input units of angle will be taken as degrees and will be converted to radians
+	 * @param numRepeat How many times should the choreography repeat?
+	 * @return
+	 */
 	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
 	~Jocs();
 	/**
@@ -66,10 +73,21 @@ public:
 	 * @return A vector containing unique_ptrs to Actions
 	 */
 	static Jocs* Parse(std::string jocsPath, double scale);
-
+	/**
+	 * @return The starting positions of the drones in the given Choreography.
+	 */
 	inline std::vector<Point> GetHomes() const { return homes; }
+	/**
+	 * @return Returns a std::vector where each index of the vector contains the actions for a drone of DroneId == index
+	 */
 	inline const std::vector<std::vector<Action*>>& GetActions() const { return actions; }
+	/**
+	 * @return Returns a std::vector where each index of the vector contains the light actions for a drone of DroneId == index
+	 */
 	inline const std::vector<std::vector<LightAction*>>& GetLightActions() const { return lightActions; }
+	/**
+	 * @return Returns a std::vector of Breakpoints that are present in the choreography represented by this object.
+	 */
 	inline std::vector<Breakpoint> GetBreakpoints() const { return breakpoints; }
 
 
@@ -87,12 +105,14 @@ private:
 
 	/**
 	 * Parse all actions in a given Jocs json object
+	 * @private
 	 * @param data [in] Jocs json data
 	 * @param actions [out] Will be filled with actions
 	 */
 	 void parseActions(const nlohmann::json &data, double scale);
 	/**
 	 * Parse all breakpoints in a given Jocs json object representing list of breakpoints
+	 * @private
 	 * @param data [in] Jocs json data
 	 */
 	void parseBreakpoints(const nlohmann::json &data);

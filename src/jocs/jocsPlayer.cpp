@@ -17,45 +17,25 @@ namespace tansa {
 	}
 
 	void JocsPlayer::initVehicles(const std::vector<Vehicle *> &vehicles) {
+		//THIS IS NOT A DEEP COPY. We have pointers to wherever these vehicles came from
+		//TODO: Currently this vector is a global variable that we are passing in here. Potential gotcha if we start messing with the vehicles in some other module.
 		this->vehicles = vehicles;
-
-		int n = vehicles.size();
-
+		auto n = vehicles.size();
 		hovers.resize(n);
+		posctls.resize(n);
+		lightctls.resize(n);
+
 		for(int i = 0; i < n; i++) {
 			hovers[i] = new HoverController(vehicles[i]);
-		}
-
-		posctls.resize(n);
-		for(int i = 0; i < n; i++) {
 			posctls[i] = new PositionController(vehicles[i]);
-		}
-
-		lightctls.resize(n);
-		for(int i = 0; i < n; i++) {
 			lightctls[i] = new LightController(vehicles[i]);
 		}
 
-		states.resize(n);
-		for(auto& state : states){
-			state = StateInit;
-		}
-
+		states.resize(n, StateInit);
 		plans.resize(n);
-		for (int i = 0; i < n; i++) {
-			plans[i] = startIndices[i];
-		}
-
-		lightCounters.resize(n);
-		for(auto &lc : lightCounters) {
-			lc = 0;
-		}
-
-		pauseIndices.resize(n);
-		for(auto &pi : pauseIndices){
-			pi = 0;
-		}
-
+		std::copy(startIndices.begin(), startIndices.end(), plans.begin());
+		lightCounters.resize(n, 0);
+		pauseIndices.resize(n, 0);
 		transitionStarts.resize(n, Time(0,0));
 	}
 

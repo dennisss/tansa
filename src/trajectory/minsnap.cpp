@@ -20,6 +20,8 @@ typedef CGAL::Quadratic_program<double> Program;
 typedef CGAL::Quadratic_program_solution<ET> Solution;
 
 
+bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost);
+
 
 namespace tansa {
 
@@ -201,7 +203,11 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 		VectorXd x;
 		double cost;
 
+#ifdef USE_CPLEX
+		bool success = qp_solve_cplex(Q, A, b, rels, x, cost);
+#else
 		bool success = qp_solve(Q, A, b, rels, x, cost);
+#endif
 
 		if(!success) {
 			return false;
@@ -388,3 +394,83 @@ bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vec
 
 
 }
+
+#ifdef USE_CPLEX
+
+#define IL_STD
+
+#include <ilcplex/ilocplex.h>
+ILOSTLBEGIN
+
+bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost) {
+
+	IloEnv env;
+
+	IloModel model(env);
+	IloNumVarArray vars(env);
+	IloRangeArray cons(env);
+
+	// Adding all variables
+	for(int i = 0; i < Q.rows(); i++) {
+		vars.add(IloNumVar(env, -IloInfinity, IloInfinity));
+	}
+
+	// Adding objective matrix
+	IloExpr expr(env);
+	for(int i = 0; i < Q.rows(); i++) {
+		for(int j = 0; j < Q.cols(); j++) {
+			expr += Q(i, j) * vars[i]*vars[j];
+		}
+	}
+	model.add(IloMinimize(env, expr));
+
+	//cout << "Vars: " << Q.rows() << endl;
+	//cout << "Constraints: " << A.rows() << endl;
+
+	// Adding linear constraints
+	for(int i = 0; i < A.rows(); i++) {
+		IloExpr e(env);
+		for(int j = 0; j < A.cols(); j++) {
+			e += A(i, j) * vars[j];
+		}
+
+		if(rels[i] == CGAL::EQUAL)
+			cons.add(IloRange(env, b(i), e, b(i)));
+		else if(rels[i] == CGAL::LARGER)
+			cons.add(e >= b(i));
+		else if(rels[i] == CGAL::SMALLER) {
+			cons.add(e <= b(i));
+		}
+	}
+	model.add(cons);
+
+
+
+
+	IloCplex cplex(model);
+	cplex.setParam(IloCplex::RootAlg, IloCplex::Network); // ::Primal
+	cplex.setOut(env.getNullStream());
+
+	cplex.exportModel("axis.lp");
+
+	// Optimize the problem and obtain solution.
+	if(!cplex.solve()) {
+		env.error() << "Failed to optimize LP" << endl;
+		return false;
+	}
+
+	IloNumArray vals(env);
+	cplex.getValues(vals, vars);
+	x.resize(A.cols());
+	for(int i = 0; i < A.cols(); i++) {
+		x(i) = vals[i];
+	}
+
+	cost = cplex.getObjValue();
+
+	env.end();
+
+	return true;
+}
+
+#endif

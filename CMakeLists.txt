@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(CGAL QUIET COMPONENTS)
+find_package(Cplex)
 
 include_directories(
 	${EIGEN3_INCLUDE_DIR}
@@ -84,6 +85,20 @@ target_link_libraries(
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")
 
 
+## We can optionally build with CPLEX
+if(CPLEX_FOUND)
+	target_include_directories(
+		tansa PRIVATE
+		${CPLEX_INCLUDE_DIRS}
+	)
+
+	target_link_libraries(
+		tansa
+		${CPLEX_LIBRARIES}
+	)
+
+	add_definitions(-DUSE_CPLEX)
+endif()
 
 ######## Extensions ########
 

@@ -134,6 +134,11 @@ void send_status_message() {
 		jsonOrientation.push_back(vehicles[i]->state.orientation.z());
 		jsonVehicle["orientation"] = jsonOrientation;
 
+		json jsonLights = json::array();
+		for(double d : vehicles[i]->lightState)
+			jsonLights.push_back(d);
+		jsonVehicle["lights"] = jsonLights;
+
 		json jsonBatteryStats = {
 			{"voltage", vehicles[i]->battery.voltage},
 			{"percent", vehicles[i]->battery.percent}

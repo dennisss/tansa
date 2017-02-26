@@ -59,8 +59,6 @@ class WorldPlayer {
 		light.shadow.mapSize.height = 1024;
 		scene.add( light );
 
-		// scene.add( new THREE.CameraHelper( light.shadow.camera ) );
-
 
 		/*
 		var planeGeometry = new THREE.PlaneGeometry( 2000, 2000 );
@@ -74,26 +72,28 @@ class WorldPlayer {
 		scene.add( plane );
 		*/
 
+		var matFloor = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 1 });
+		var geoFloor = new THREE.BoxGeometry( 100, 100, 1 );
+		var mshFloor = new THREE.Mesh( geoFloor, matFloor );
+		mshFloor.position.set(0, 0, -0.5);
+		mshFloor.receiveShadow = true;
+
+		scene.add(mshFloor);
+
 
 		// Make a 6 x 9 meter grid
-		var helper = new THREE.GridHelper( 3, 0.5 );
-		var helper2 = new THREE.GridHelper( 3, 0.5 );
+		var helper = new THREE.GridHelper( 3, 6, 0x888888, 0x888888 );
+		var helper2 = new THREE.GridHelper( 3, 6, 0x888888, 0x888888 );
 		helper.rotateX(Math.PI / 2);
 		helper.position.x = 1.5
-		helper.material.opacity = 0.25;
-		helper.material.transparent = true;
 		scene.add(helper);
 		helper2.rotateX(Math.PI / 2);
 		helper2.position.x = -1.5
-		helper2.material.opacity = 0.25;
-		helper2.material.transparent = true;
 		scene.add(helper2);
 
 		var axis = new THREE.AxisHelper(1);
 		axis.position.set(0, 0, 0);
 		scene.add(axis);
-
-
 
 
 
@@ -223,7 +223,7 @@ class WorldPlayer {
 
 		var positions = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0)];
 
-		var material = new THREE.MeshLambertMaterial({ color: 0x888888, specular: 0x111111, shininess: 200 });
+		var material = new THREE.MeshLambertMaterial({ color: 0xBBBBBB, specular: 0x111111, shininess: 200 });
 		var mesh = new THREE.Mesh(this._bodyGeometry, material);
 
 		var vehicle = new Vehicle(this._bodyGeometry, this._propGeometry, material);
@@ -234,6 +234,7 @@ class WorldPlayer {
 		//scene.add( bbox );
 
 		this.scene.add(vehicle.object());
+		this.scene.add(vehicle._lightHelper);
 		this._vehicles.push(vehicle);
 
 		var colors = [0x0000ff, 0xff0000, 0x00ff00, 0x00ffff, 0xff00ff, 0xffff00];
@@ -259,6 +260,7 @@ class WorldPlayer {
 	 */
 	removeVehicle(v) {
 		this.scene.remove(v.object());
+		this.scene.remove(v._lightHelper);
 		this.scene.remove(v._path);
 	}
 

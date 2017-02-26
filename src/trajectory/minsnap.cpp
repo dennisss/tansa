@@ -271,7 +271,7 @@ bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, doub
 	}
 
 	// Max number of iterations to do
-	int maxit = 0;
+	int maxit = 7;
 	// Current incrementation step in seconds : initially set to half the average segment length
 	double h = 0.5 * ((te - ts) / m);
 

@@ -186,6 +186,7 @@ public:
 
 	// State as observed by the onboard processor
 	ModelState onboardState;
+	vector<double> lightState;
 
 	BatteryStatus battery;
 

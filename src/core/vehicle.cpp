@@ -383,8 +383,6 @@ void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
 		thrust
 	);
 
-	cout << thrust << endl;
-
 	send_message(&msg);
 }
 
@@ -404,6 +402,9 @@ void Vehicle::set_lighting(float top, float bottom) {
 		bottom,
 		0, 0, 0, 0, 0
 	);
+
+	lightState.resize(1);
+	lightState[0] = bottom;
 
 	send_message(&msg);
 }
@@ -437,6 +438,11 @@ void Vehicle::set_rgb_lighting(int color) {
 		color,
 		0, 0, 0, 0, 0, 0
 	);
+
+	lightState.resize(3);
+	lightState[0] = ((color >> 16) & 0xff) / 0xff;
+	lightState[1] = ((color >> 8) & 0xff) / 0xff;
+	lightState[2] = ((color >> 0) & 0xff) / 0xff;
 
 	send_message(&msg);
 }

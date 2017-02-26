@@ -30,13 +30,41 @@ class Vehicle {
 		}
 
 
+		var spotLight = new THREE.SpotLight( 0x000000, 1 );
+		this._spotLight = spotLight;
+		spotLight.position.set( 0, 0, -0.02 );
+		//spotLight.rotation.set(0, Math.PI/2, 0)
+		spotLight.castShadow = true;
+		spotLight.angle = 25 * (Math.PI / 180);
+		spotLight.penumbra = 0.2;
+		spotLight.decay = 2;
+		spotLight.distance = 10;
+		spotLight.shadow.mapSize.width = 1024;
+		spotLight.shadow.mapSize.height = 1024;
+		spotLight.shadow.camera.near = 0.5;
+		spotLight.shadow.camera.far = 200;
+
+		// Point downwards
+		spotLight.target.position.set(0, 0, -1);
+
+
+		this._lightHelper = new THREE.SpotLightHelper( spotLight );
+		this._lightHelper.visible = false;
+
+		//this._group.add(this._lightHelper);
+		this._group.add(spotLight)
+		this._group.add(spotLight.target);
+
+		//spotLight.target.position.set(0, 0, -3)
+
 		// State for the purposes of animation
 		this._state = {
-			position: new THREE.Vector3(0, 0, 0), // Position of the whole body
+			position: new THREE.Vector3(0, 0, 2), // Position of the whole body
 			orientation: new THREE.Quaternion(0, 0, 0, 1),
 
 			speeds: [0, 0, 0, 0], // Speed of each motor from 0 to 1 for now
 			angles: [0, 0, 0, 0], // Yaw angle of each propeller (in radians)
+			lights: [],
 			lastTime: new Date() // Last time at which the model was rendered
 		}
 
@@ -64,6 +92,8 @@ class Vehicle {
 
 		s.speeds = data.armed? [0.5, 0.5, 0.5, 0.5] : [0,0,0,0];  //data.motors;
 
+		s.lights = data.lights;
+
 		var t = new Date();
 		var dt = (t - this._t) / 1000;
 		this._t = t;
@@ -85,6 +115,21 @@ class Vehicle {
 
 		this._group.position.copy(s.position)
 		this._group.rotation.setFromQuaternion(s.orientation);
+
+
+		var color = 0x000000;
+		var channels = s.lights.slice() || [];
+		if(channels.length == 1) {
+			channels = [channels[0], channels[0], channels[0]];
+		}
+		if(channels.length == 3) {
+			color = ((channels[0]*0xff) << 16) | ((channels[1]*0xff) << 8) | (channels[2]*0xff)
+		}
+
+		this._lightHelper.visible = color > 0;
+		this._spotLight.color.set(color);
+
+		this._lightHelper.update();
 	}
 
 }

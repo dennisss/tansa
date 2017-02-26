@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <vector>
+#include <memory>
 #include <initializer_list>
 
 using namespace Eigen;

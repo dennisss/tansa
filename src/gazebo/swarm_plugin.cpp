@@ -42,6 +42,8 @@ namespace gazebo {
 			node->Init(world->GetName());
 			spawnSub = node->Subscribe("~/spawn", &SwarmPlugin::spawn_callback, this);
 
+			requestPub = node->Advertise<gazebo::msgs::Request>("~/request");
+
 		}
 
 
@@ -49,16 +51,37 @@ namespace gazebo {
 
 			world->SetPaused(true);
 
-			// Remove all old vehicle models
-			std::vector<physics::ModelPtr> models = world->GetModels();
-			for(int i = 0; i < models.size(); i++) {
-				std::string name = models[i]->GetName();
+			stop_sitl();
+
+			// Figure out what to do with existing models in the world
+			int nexist = 0;
+			for(physics::ModelPtr m : world->GetModels()) {
+				std::string name = m->GetName();
 				if(strncmp(name.c_str(), "vehicle_", 8) == 0) {
 					// TODO: This doesn't work
 					// See issue: https://bitbucket.org/osrf/gazebo/issues/1629/removing-model-from-plugin-crashes-with
-					world->RemoveModel(models[i]);
+					//world->RemoveModel(models[i]);
+
+					int num = atoi(name.c_str() + 8);
+					if(num < msg->vehicles_size()) { // Reuse it
+						const tansa::msgs::SpawnRequest_Vehicle &v = msg->vehicles(num);
+						m->SetRelativePose(math::Pose(
+							v.pos().x(),
+							v.pos().y(),
+							v.pos().z(),
+							v.orient().x(),
+							v.orient().y(),
+							v.orient().z()
+						));
+						nexist++;
+					}
+					else { // Delete it
+						msgs::Request *msg = gazebo::msgs::CreateRequest("entity_delete", name);
+						requestPub->Publish(*msg, true);
+					}
 				}
 			}
+
 
 
 			std::ifstream t("config/gazebo/models/x340/x340.sdf");
@@ -84,7 +107,7 @@ namespace gazebo {
 			sdf::ElementPtr port = plugin->GetElement("mavlink_udp_port");
 
 
-			for(int i = 0; i < msg->vehicles_size(); i++) {
+			for(int i = nexist; i < msg->vehicles_size(); i++) {
 				const tansa::msgs::SpawnRequest_Vehicle &v = msg->vehicles(i);
 
 				model->GetAttribute("name")->Set("vehicle_" + std::to_string(i));
@@ -103,10 +126,7 @@ namespace gazebo {
 
 			world->SetPaused(false);
 
-			stop_sitl();
 			start_sitl(msg->vehicles_size());
-
-
 		}
 
 
@@ -141,6 +161,7 @@ namespace gazebo {
 
 		transport::NodePtr node;
 		transport::SubscriberPtr spawnSub;
+		transport::PublisherPtr requestPub;
 		physics::WorldPtr world;
 
 		transport::SubscriberPtr world_sub;

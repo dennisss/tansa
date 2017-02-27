@@ -106,9 +106,6 @@ void generateError(json &response, string message) {
 void send_status_message() {
 	json jsonStatus;
 
-	jsonStatus["type"] = "status";
-	jsonStatus["time"] = player->currentTime();
-
 	json jsonVehicles = json::array();
 	for(int i = 0; i < vehicles.size(); i++) {
 		json jsonVehicle;
@@ -118,17 +115,16 @@ void send_status_message() {
 		jsonVehicle["armed"] = vehicles[i]->armed;
 		jsonVehicle["tracking"] = vehicles[i]->tracking;
 
-		json jsonPosition = json::array();
-		jsonPosition.push_back(vehicles[i]->state.position.x());
-		jsonPosition.push_back(vehicles[i]->state.position.y());
-		jsonPosition.push_back(vehicles[i]->state.position.z());
-		jsonVehicle["position"] = jsonPosition;
+		jsonVehicle["position"] = {
+			{"x", vehicles[i]->state.position.x()},
+			{"y", vehicles[i]->state.position.y()},
+			{"z", vehicles[i]->state.position.z()}
+		};
 
-		json jsonBatteryStats = {
+		jsonVehicle["battery"] = {
 			{"voltage", vehicles[i]->battery.voltage},
 			{"percent", vehicles[i]->battery.percent}
 		};
-		jsonVehicle["battery"] = jsonBatteryStats;
 
 		jsonVehicles.push_back(jsonVehicle);
 	}
@@ -136,12 +132,14 @@ void send_status_message() {
 
 	json globalStatus;
 	globalStatus["playing"] = player->isPlaying();
+	globalStatus["initialized"] = initialized;
 	globalStatus["ready"] = player->isReady();
 	globalStatus["paused"] = player->isPaused();
 	globalStatus["landed"] = player->isLanded();
+	globalStatus["time"] = player->currentTime();
 	jsonStatus["global"] = globalStatus;
 
-	tansa::send_message(jsonStatus);
+	tansa::send_message("status", jsonStatus);
 }
 
 
@@ -160,7 +158,7 @@ json getBreakpoints(string jocsPath) {
 			json jsonBreakpoint;
 			jsonBreakpoint["name"] = breakPoint.GetName();
 			jsonBreakpoint["number"] = breakPoint.GetNumber();
-			jsonBreakpoint["startTime"] = breakPoint.GetStartTime();
+			jsonBreakpoint["start"] = breakPoint.GetStartTime();
 			jsonBreakpoints.push_back(jsonBreakpoint);
 		}
 	} catch (std::runtime_error e) {
@@ -174,7 +172,6 @@ json getBreakpoints(string jocsPath) {
 void send_file_list() {
 	json j;
 
-	j["type"] = "list_reply";
 	json files = json::array();
 	json jsonMessage = json::array();
 	DIR *dir;
@@ -191,13 +188,13 @@ void send_file_list() {
 
 	for (string file : files) {
 		json message;
-		message["fileName"] = file;
+		message["name"] = file;
 		message["breakpoints"] = getBreakpoints(resolveWorkspacePath(dataDir, file));
 		jsonMessage.push_back(message);
 	}
 
 	j["files"] = jsonMessage;
-	tansa::send_message(j);
+	tansa::send_message("list_reply", j);
 }
 
 /**
@@ -287,7 +284,6 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 void constructLoadResponse() {
 	auto breakpoints = player->getBreakpoints();
 	json j;
-	j["type"] = "load_reply";
 	json nums = json::array();
 	for (auto& b : breakpoints){
 		nums.push_back(b.GetNumber());
@@ -302,7 +298,7 @@ void constructLoadResponse() {
 	}
 	j["cues"] = nums;
 	j["target_positions"] = positions;
-	tansa::send_message(j);
+	tansa::send_message("load_reply", j);
 }
 
 // TODO: This is a bad name as it actually uses the config file as the rawJson
@@ -355,8 +351,6 @@ void loadJocsFile(const json &rawJsonArg) {
 	// TODO: Prepare the jocs file to start at this cue.
 	// TODO: Need to make sure this gets deleted. Will have to delete inside the JocsPlayer class when we load a new file.
 	// In other words, we transfer ownership of the jocs object to the player here.
-
-	constructLoadResponse();
 
 	initialized = true;
 	loadMode = false;

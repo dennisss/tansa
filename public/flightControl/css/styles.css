@@ -1,0 +1,62 @@
+button.btn.btn-fab.actionFab {
+    border-radius: 50%;
+    font-size: 15vmin;
+    height: 25vmin;
+    margin: auto;
+    min-width: 56px;
+    width: 25vmin;
+    padding: 0;
+    overflow: hidden;
+    -webkit-box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+    box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+    position: relative;
+    line-height: normal;
+    background-color: white;
+}
+.status {
+    font-size: 5vmin;
+}
+.gap {
+    padding-bottom: 15px;
+}
+body {
+    font-size: 2vw;
+}
+h1 {
+    font-size: 5vh;
+}
+div.container-fluid {
+    margin:  3vmin;
+}
+.green {
+    color: green;
+}
+.yellow {
+    color: yellow;
+}
+.red {
+    color: red;
+}
+.droneData > div {
+    font-size: 2.0vw;
+}
+.noMargin {
+    margin: 0 !important;
+}
+.noPad {
+    padding: 0 !important;
+}
+.droneLog {
+    font-size:  2vw !important;
+}
+.modal-lg-all {
+    min-width: 675px;
+    width: 60vw;
+}
+.white {
+    -webkit-box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+    box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+    position: relative;
+    line-height: normal;
+    background-color: white !important;
+}

@@ -15,6 +15,7 @@ node_modules
 # Build output
 build
 build_*
+dist
 
 # Compiled 3d printer instructions
 *.gcode

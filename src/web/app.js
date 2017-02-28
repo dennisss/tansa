@@ -21,17 +21,17 @@ var App = React.createClass({
 	},
 
 
-	onPlayerReady: function(player){
-		this.player = player;
+	onRendererReady: function(renderer){
+		this.renderer = renderer;
 
 		Socket.on('msg', function(data) {
 			data = JSON.parse(data);
 
 			if(data.type == 'status') {
-				player.update({vehicles: data.vehicles});
+				renderer.update({vehicles: data.vehicles});
 			}
 			else if(data.type == 'load_reply') {
-				player.setPaths(data.paths);
+				renderer.setPaths(data.paths);
 			}
 
 
@@ -75,13 +75,6 @@ var App = React.createClass({
 
 	render: function(){
 
-		// For just showing viewer
-		return (
-			<div className="ts-app">
-				<WorldView onPlayerReady={this.onPlayerReady} />
-			</div>
-		)
-
 		return (
 			<div className="ts-app">
 				<Navbar />
@@ -103,12 +96,24 @@ var App = React.createClass({
 												<PropertiesPane />
 											</td>
 											<td style={{position: 'relative'}}>
+												<div style={{position: 'absolute', top: 10, right: 10}}>
+													<div className="btn-group">
+														<button onClick={() => this.changeView('top')} className="btn btn-default">Top</button>
+														<button onClick={() => this.changeView('front')} className="btn btn-default">Front</button>
+														<button onClick={() => this.changeView('right')} className="btn btn-default">Right</button>
+													</div>
 
-												<div className="btn-group" style={{position: 'absolute', top: 10, right: 10}}>
-													<button onClick={() => this.changeView('top')} className="btn btn-default">Top</button>
-													<button onClick={() => this.changeView('front')} className="btn btn-default">Front</button>
-													<button onClick={() => this.changeView('right')} className="btn btn-default">Right</button>
+
+													<div>
+														<div>
+															<input type="check" checked={this.player? this.player.options.showTrajectories : false} onChange={(e) => { this.player.options.showTrajectories = e.target.checked; this.forceUpdate() } } /> Show Trajectory Line
+														</div>
+
+													</div>
+
+
 												</div>
+
 
 												<div className="btn-group" style={{position: 'absolute', bottom: 10, right: 10}}>
 													<button onClick={() => this.player.addPoint()} className="btn btn-default">+</button>
@@ -122,7 +127,7 @@ var App = React.createClass({
 													- allow drones to to dragged around (transform active point)
 													- stroke the current proposed trajectories for point-to-point plans
 												*/}
-												<WorldView onPlayerReady={this.onPlayerReady} />
+												<WorldView onRendererReady={this.onRendererReady} />
 											</td>
 										</tr>
 									</tbody>

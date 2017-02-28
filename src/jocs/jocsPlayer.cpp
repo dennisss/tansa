@@ -74,11 +74,18 @@ namespace tansa {
 		return true;
 	}
 
-	/**
-	 * Load JOCS data from a specified path
-	 */
-	void JocsPlayer::loadJocs(Jocs *jocsFile, float scale, const std::vector<unsigned> &jocsActiveIds, int start) {
-		//cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
+/**
+ * Load JOCS data from a specified path
+ */
+void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start) {
+	cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
+	Jocs *jocsFile = Jocs::Parse(jocsPath, scale);
+	this->loadJocs(jocsFile, jocsActiveIds, start);
+}
+
+
+	void JocsPlayer::loadJocs(Jocs *jocsFile, const std::vector<unsigned> &jocsActiveIds, int start) {
+
 		if (!this->canLoad()) {
 			return;
 		}
@@ -88,7 +95,6 @@ namespace tansa {
 		landed = false;
 
 		currentJocs = jocsFile;
-		//currentJocs = Jocs::Parse(jocsPath, scale);
 		homes = currentJocs->GetHomes();
 		actions = currentJocs->GetActions();
 		lightActions = currentJocs->GetLightActions();

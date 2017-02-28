@@ -126,10 +126,15 @@ class Vehicle {
 			color = ((channels[0]*0xff) << 16) | ((channels[1]*0xff) << 8) | (channels[2]*0xff)
 		}
 
-		this._lightHelper.visible = color > 0;
-		this._spotLight.color.set(color);
+		var visible = color > 0;
+		this._lightHelper.visible = visible;
+		this._spotLight.visible = visible;
 
-		this._lightHelper.update();
+		if(visible) {
+			this._spotLight.color.set(color);
+
+			this._lightHelper.update();
+		}
 	}
 
 }

@@ -65,16 +65,7 @@ Jocs::~Jocs() {
 }
 
 Jocs* Jocs::Parse(std::string jocsPath, double scale) {
-	ifstream jocsStream(jocsPath);
-	if(!jocsStream.is_open()){
-		throw std::runtime_error("Failed to open jocs file at path: " + jocsPath);
-	}
-	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
-	//For some reason this regex didn't like the end of line $...but does work without it
-	jocsData = std::move(std::regex_replace(jocsData, std::regex("//.*"), ""));
-	assert(jocsData.find("//") == std::string::npos);
-	auto rawJson = nlohmann::json::parse(jocsData);
-
+	json rawJson = DataObject::LoadFile(jocsPath);
 	auto units = rawJson[UNITS_KEY];
 	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");

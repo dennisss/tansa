@@ -6,7 +6,7 @@ namespace tansa {
 
 // TODO: Integrate forward the position, velocity and time based on connection latency (so that commmands are accurate for the cmoment at which they are received)
 
-PositionController::PositionController(Vehicle *v) {
+PositionController::PositionController(Vehicle *v, bool directAttitudeControl) {
 	this->vehicle = v;
 
 	pid = new PID<PointDims>();
@@ -17,6 +17,8 @@ PositionController::PositionController(Vehicle *v) {
 		//Point::Zero(), // Don't use
 		v->params.gains.d
 	);
+
+	this->directAttitudeControl = directAttitudeControl;
 }
 
 void PositionController::track(Trajectory::Ptr traj) {
@@ -38,7 +40,15 @@ void PositionController::control(double t) {
 
 	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + s.acceleration;
 
-	vehicle->setpoint_accel(a);
+	if(directAttitudeControl) {
+		a += Vector3d(0, 0, GRAVITY_MS);
+
+		Quaterniond att = Quaterniond::FromTwoVectors(Vector3d(0,0,1), a.normalized());
+		vehicle->setpoint_attitude(att, a.norm());
+	}
+	else {
+		vehicle->setpoint_accel(a);
+	}
 }
 
 }

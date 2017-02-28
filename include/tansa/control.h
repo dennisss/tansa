@@ -28,7 +28,13 @@ template<unsigned int N> class PID;
  */
 class PositionController : public Controller {
 public:
-	PositionController(Vehicle *v);
+	/**
+	 * Creates a position controller for a vehicle
+	 *
+	 * @param v
+	 * @param directAttitudeControl (optional) setting to true will directly control the attitude of the drone: this bypasses PX4 position controller safety features but is requested for close to inverted acrobatics. otherwise, acclerations will be fed to PX4
+	 */
+	PositionController(Vehicle *v, bool directAttitudeControl = true);
 	virtual ~PositionController() {}
 
 	/**
@@ -50,7 +56,7 @@ protected:
 
 private:
 	Trajectory::Ptr trajectory;
-
+	bool directAttitudeControl;
 };
 
 

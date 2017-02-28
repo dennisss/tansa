@@ -33,7 +33,7 @@ var pointI = 1;
 	}
 
  */
-class WorldPlayer {
+class WorldRenderer {
 
 
 	constructor(el) {
@@ -73,7 +73,7 @@ class WorldPlayer {
 		*/
 
 		var matFloor = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 1 });
-		var geoFloor = new THREE.BoxGeometry( 100, 100, 1 );
+		var geoFloor = new THREE.BoxGeometry( 16, 9, 1 );
 		var mshFloor = new THREE.Mesh( geoFloor, matFloor );
 		mshFloor.position.set(0, 0, -0.5);
 		mshFloor.receiveShadow = true;
@@ -205,6 +205,10 @@ class WorldPlayer {
 
 		this.render();
 		this.animate();
+
+		this.options = {
+			showTrajectories: true
+		}
 	}
 
 	resize() {
@@ -381,4 +385,4 @@ class WorldPlayer {
 
 }
 
-module.exports = WorldPlayer;
+module.exports = WorldRenderer;

@@ -92,7 +92,7 @@ Reply looks like
 {
 	type: "load_reply",
 	cues: [....] // A list of all cues in the file
-	paths: [ [ [x,y],[x,y], .. ], ... ], // List of a list of points specifying line segment approximations of the entire motion paths of the drones
+	paths: [ [ [x,y,z],[x,y,z], .. ], ... ], // List of a list of points specifying line segment approximations of the entire motion paths of the drones
 	target_positions: [ [x,y], ... ] // A list of 2d positions at which the drones should be at
 }
 ```

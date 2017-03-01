@@ -211,7 +211,8 @@ class WorldRenderer {
 		this.animate();
 
 		this.options = {
-			showTrajectories: true
+			showTrajectories: true,
+			showVehicles: true
 		}
 	}
 
@@ -365,6 +366,7 @@ class WorldRenderer {
 	render() {
 		for(var i = 0; i < this._vehicles.length; i++) {
 			this._vehicles[i].render();
+			this._vehicles[i].object().visible = this.options.showVehicles;
 			this._vehicles[i]._path.visible = this.options.showTrajectories;
 		}
 

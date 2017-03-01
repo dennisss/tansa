@@ -34,7 +34,7 @@ TEST(MocapRegistrationTest, CorrespondenceSolving) {
 
 	// Determine correspondence
 	vector<unsigned> order_out;
-	correspondence_solve_ideal(as, bs, order_out);
+	correspondence_solve_ideal(as, bs, &order_out);
 	// TODO: Assert
 
 	// Unshuffle according to order

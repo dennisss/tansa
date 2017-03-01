@@ -6,7 +6,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(CGAL QUIET COMPONENTS)
+find_package(CGAL REQUIRED)
 find_package(Cplex)
 
 include_directories(
@@ -14,7 +14,9 @@ include_directories(
 	include
 )
 
+set(CGAL_DONT_OVERRIDE_CMAKE_FLAGS TRUE CACHE BOOL "Force CGAL to maintain CMAKE flags")
 include(${CGAL_USE_FILE})
+
 
 ######## Headers and libraries for prebuilt socket.io client ########
 
@@ -25,7 +27,6 @@ include_directories(
 link_directories(
 	build_socketio_cpp
 )
-
 
 ######## Main Tansa Library ########
 
@@ -79,7 +80,7 @@ target_link_libraries(
 
 	sioclient
 	${Boost_LIBRARIES}
-	${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES}
+	${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} # TODO: Also add CGAL_CXX_* flags
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")
@@ -99,6 +100,7 @@ if(CPLEX_FOUND)
 
 	add_definitions(-DUSE_CPLEX)
 endif()
+
 
 ######## Extensions ########
 
@@ -163,22 +165,6 @@ target_link_libraries(
 set_target_properties(simple PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
-add_executable(
-	arc
-
-	src/arc.cpp
-)
-
-target_link_libraries(
-	arc
-
-	tansa
-)
-
-set_target_properties(arc PROPERTIES COMPILE_FLAGS "-std=c++1y")
-
-
-
 ###### Simulation Test ######
 add_executable(
 	sim
@@ -194,22 +180,3 @@ target_link_libraries(
 )
 
 set_target_properties(sim PROPERTIES COMPILE_FLAGS "-std=c++1y")
-
-
-
-########## Targets for Gazebo Simulation ###########
-
-
-set(rotors_description_dir "${CMAKE_CURRENT_SOURCE_DIR}/lib/Firmware/Tools/sitl_gazebo/models/rotors_description")
-set(scripts_dir "${CMAKE_CURRENT_SOURCE_DIR}/lib/Firmware/Tools/sitl_gazebo/scripts")
-set(models_dir "${CMAKE_CURRENT_SOURCE_DIR}/config/gazebo/models")
-set(design_dir "${CMAKE_CURRENT_SOURCE_DIR}/hardware/x340/mesh")
-add_custom_command(OUTPUT ${models_dir}/x340/x340.sdf
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND rm -f ${models_dir}/x340/x340.sdf
-	COMMAND python ${scripts_dir}/xacro.py -o  ${models_dir}/x340/x340_base.urdf  ${models_dir}/x340/x340_base.xacro rotors_description_dir:=${rotors_description_dir} models_dir:=${models_dir} design_dir:=${design_dir}
-	COMMAND gz sdf -p  ${models_dir}/x340/x340_base.urdf >> ${models_dir}/x340/x340.sdf
-	COMMAND rm -f ${models_dir}/x340/x340_base.urdf
-)
-
-add_custom_target(sdf ALL DEPENDS ${models_dir}/x340/x340.sdf)

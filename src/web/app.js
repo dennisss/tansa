@@ -39,6 +39,7 @@ var App = React.createClass({
 		})
 
 
+		this.forceUpdate();
 
 	},
 
@@ -104,9 +105,12 @@ var App = React.createClass({
 													</div>
 
 
-													<div>
+													<div style={{color: '#444'}}>
 														<div>
 															<input type="checkbox" checked={this.renderer? this.renderer.options.showTrajectories : false} onChange={(e) => { this.renderer.options.showTrajectories = e.target.checked; this.forceUpdate() } } /> Show Trajectory Line
+														</div>
+														<div>
+															<input type="checkbox" checked={this.renderer? this.renderer.options.showVehicles : false} onChange={(e) => { this.renderer.options.showVehicles = e.target.checked; this.forceUpdate() } } /> Show Vehicles
 														</div>
 
 													</div>

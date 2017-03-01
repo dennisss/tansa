@@ -149,6 +149,21 @@ double Time::seconds() const {
 	return ((double) val.tv_sec) + (((double) val.tv_nsec) / 1000000000.0);
 }
 
+std::string Time::dateString() const {
+	struct tm t;
+
+	char buf[64];
+
+	tzset();
+	if(localtime_r(&(val.tv_sec), &t) == NULL)
+		return "Unknown-" + std::to_string(val.tv_sec);
+
+	strftime(buf, sizeof(buf), "%F %T", &t);
+
+	return std::string(buf);
+}
+
+
 Rate::Rate(unsigned int hz) : lasttime(0,0) {
 	this->hz = hz;
 	this->lasttime = Time::now();

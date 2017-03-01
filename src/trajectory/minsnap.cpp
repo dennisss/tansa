@@ -451,7 +451,7 @@ bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, con
 	cplex.setParam(IloCplex::RootAlg, IloCplex::Network); // ::Primal
 	cplex.setOut(env.getNullStream());
 
-	cplex.exportModel("axis.lp");
+	//cplex.exportModel("axis.lp");
 
 	// Optimize the problem and obtain solution.
 	if(!cplex.solve()) {

@@ -60,7 +60,7 @@ void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, v
 	}
 }
 
-void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> &c) {
+void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c) {
 
 	if(as.size() != bs.size()) {
 		printf("Both sets must be complete!\n");
@@ -99,7 +99,7 @@ void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3
 	//cout << Qa.transpose() << endl << endl;
 	//cout << Qb.transpose() << endl << endl;
 
-	c.resize(as.size());
+	c->resize(as.size());
 
 	// Determine column permutation matrix based on best matches
 	//MatrixXd P = MatrixXd::Zero(as.size(), bs.size());
@@ -117,7 +117,7 @@ void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3
 			}
 		}
 
-		c[i] = bestJ;
+		(*c)[i] = bestJ;
 
 		//P(bestJ, i) = 1;
 	}

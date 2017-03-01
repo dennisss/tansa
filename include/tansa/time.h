@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <time.h>
 
+#include <string>
+
+
 namespace tansa {
 
 /**
@@ -60,6 +63,10 @@ public:
 	 */
 	double seconds() const;
 
+	/**
+	 * Generates a string consisting of the date and the time in a user readable format relative to the current timezones
+	 */
+	std::string dateString() const;
 
 	/**
 	 * Sets the current time to be some other time.

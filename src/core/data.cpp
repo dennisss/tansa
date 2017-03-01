@@ -31,7 +31,7 @@ DataObject DataObject::LoadFile(std::string filename) {
 	json data = json::parse(rawdata);
 
 	// JS driver
-	if(data.find("error") == 1) {
+	if(data.count("error") == 1) {
 		std::cout << data["error"] << std::endl;
 
 		throw std::runtime_error("Failed to parse file: " + filename);

@@ -160,7 +160,7 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 				holdpoints = homes;
 
 				// Opening file for logging data
-				logfile.open("log/" + Time::realNow().dateString(), ios::write);
+				logfile.open("log/" + Time::realNow().dateString(), ofstream::out);
 
 				return;
 			}

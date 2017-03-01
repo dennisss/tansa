@@ -18,7 +18,7 @@ Quickstart
 
 - To get a running environment, do
 	- Run `docker pull dennisss/tansa-prebuilt:latest`
-	- Run `docker run --rm -p 4000:4000 tansa-prebuilt` every time you want to start it
+	- Run `docker run --rm -p 3000:3000 tansa-prebuilt` every time you want to start it
 	- Rerun the `pull` command from above whenever there are new changes to this repo
 
 

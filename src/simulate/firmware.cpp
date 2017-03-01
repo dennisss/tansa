@@ -2,6 +2,7 @@
 
 #include <signal.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 
 namespace tansa {
@@ -77,7 +78,6 @@ void Firmware::onGpsData(const GPSData *data) {
 }
 
 void Firmware::onActuatorOutputs(const ActuatorOutputs *actuators) {
-	printf("GOT ACTUATORS\n");
 	currentActuatorOutputs.resize(4);
 	for(int i = 0; i < 4; i++) {
 	 	currentActuatorOutputs[i] = actuators->outputs[i];

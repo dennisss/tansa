@@ -62,11 +62,12 @@ Jocs *custom_jocs() {
 
 #ifdef CUSTOM_HELIX
 	j->homes.resize(2);
-	j->homes[0] = Vector3d(0, 0, 0.5);
+	j->homes[0] = Vector3d(0, 0.5, 0.5);
 	j->homes[1] = Vector3d(0, -0.5, 0.5);
 
 	j->actions.resize(2);
 	j->actions[0].resize(0);
+	j->lightActions.resize(2);
 
 	for(int i = 0; i < 2; i++) {
 		auto linez = make_shared<LinearTrajectory>(Vector3d(0,0, 0.5), 5, Vector3d(0,0,2), 30);

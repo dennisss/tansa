@@ -126,7 +126,6 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 
 		int n = jocsActiveIds.size();
 
-
 		// Check for state transitions
 		if (states[0] == StateInit) {
 			// No implicit transitions
@@ -159,6 +158,9 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 				}
 				// TODO: Only grab the ones for the active drones
 				holdpoints = homes;
+
+				// Opening file for logging data
+				logfile.open("log/" + Time::realNow().dateString(), ios::write);
 
 				return;
 			}
@@ -224,6 +226,8 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 				hovers[i]->setPoint(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
+				this->log();
+
 				double t = Time::now().since(start).seconds() - timeOffset + startOffset;
 				if (((int)t) % 5 == 0 && abs(t - (int)t) < 0.01) {
 					printf("%.2f\n",t);
@@ -568,4 +572,17 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 		startOffset = startTime;
 		cout << "createdBreakpoint section: " << startOffset << endl;
 	}
+
+void JocsPlayer::log() {
+
+	logfile << Time::now().since(start).seconds() << endl;
+	for(Vehicle *v : vehicles) {
+		Vector3d pos = v->state.position;
+		logfile << pos.x() << "," << pos.y() << "," << pos.z() << ",";
+	}
+
+	logfile << endl;
+
+}
+
 }

@@ -25,9 +25,6 @@ inline Vector3d centroid(const vector<Vector3d> &ps) {
 }
 
 
-/*
-	Pretty standard SVD based recovery of labeled point set rigid transformation recovery
-*/
 void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t) {
 
 	/* Compute set centers */
@@ -63,12 +60,6 @@ void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, v
 	}
 }
 
-/*
-	Given two sets of unlabeled points, this will compute the transform that best matches them,
-	So: b_j = M * a_i
-
-	Based on approach in 'Determining Correspondences and Rigid Motion of 3-D Point Sets with Missing Data' by Wang et al.
-*/
 void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> &c) {
 
 	if(as.size() != bs.size()) {

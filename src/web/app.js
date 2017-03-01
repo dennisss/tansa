@@ -44,31 +44,31 @@ var App = React.createClass({
 
 	changeView: function(name){
 
-		var cam = this.player.camera;
+		var cam = this.renderer.camera;
 
-		if(name == 'top'){
+		if(name == 'top') {
 			cam.rotation.x = 0;
-			cam.rotation.y = 0; //Math.Pi;
-			cam.rotation.z = Math.Pi; //-Math.Pi/ 2;
+			cam.rotation.y = 0;
+			cam.rotation.z = Math.Pi;
 
 			cam.position.y = 0;
 			cam.position.x = 0;
 			cam.position.z = 6;
 		}
-		else if(name == 'front'){
-			cam.rotation.x = -Math.Pi / 2;
+		else if(name == 'front') {
+			cam.rotation.x = 0;
 			cam.rotation.y = 0;
 			cam.rotation.z = 0;
 
 
-			cam.position.y = 6;
+			cam.position.y = -6;
 			cam.position.x = 0;
 			cam.position.z = 0;
 
 		}
 
-		this.player.controls.update();
-		this.player.render();
+		this.renderer.controls.update();
+		this.renderer.render();
 
 
 	},
@@ -106,7 +106,7 @@ var App = React.createClass({
 
 													<div>
 														<div>
-															<input type="check" checked={this.player? this.player.options.showTrajectories : false} onChange={(e) => { this.player.options.showTrajectories = e.target.checked; this.forceUpdate() } } /> Show Trajectory Line
+															<input type="checkbox" checked={this.renderer? this.renderer.options.showTrajectories : false} onChange={(e) => { this.renderer.options.showTrajectories = e.target.checked; this.forceUpdate() } } /> Show Trajectory Line
 														</div>
 
 													</div>

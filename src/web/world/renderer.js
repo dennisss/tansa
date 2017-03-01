@@ -15,6 +15,10 @@ require('./STLLoader');
 
 var pointI = 1;
 
+// Colors to use to identify unique vehicle ids
+var vehicleColors = [0x0000ff, 0xff0000, 0x00ff00, 0x00ffff, 0xff00ff, 0xffff00];
+
+
 /**
 	Draws the 3d world state.
 
@@ -227,7 +231,7 @@ class WorldRenderer {
 
 		var positions = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0)];
 
-		var material = new THREE.MeshLambertMaterial({ color: 0xBBBBBB, specular: 0x111111, shininess: 200 });
+		var material = new THREE.MeshLambertMaterial({ color: vehicleColors[this._vehicles.length ] /*0xBBBBBB*/, specular: 0x111111, shininess: 200 });
 		var mesh = new THREE.Mesh(this._bodyGeometry, material);
 
 		var vehicle = new Vehicle(this._bodyGeometry, this._propGeometry, material);
@@ -241,11 +245,9 @@ class WorldRenderer {
 		this.scene.add(vehicle._lightHelper);
 		this._vehicles.push(vehicle);
 
-		var colors = [0x0000ff, 0xff0000, 0x00ff00, 0x00ffff, 0xff00ff, 0xffff00];
-
 		// Make a line
 		var lineMaterial = new THREE.LineBasicMaterial({
-			color: colors[this._vehicles.length - 1]
+			color: vehicleColors[this._vehicles.length - 1]
 		});
 		var lineGeometry = new THREE.Geometry();
 		//for(var i = 0; i < 10; i++)
@@ -363,6 +365,7 @@ class WorldRenderer {
 	render() {
 		for(var i = 0; i < this._vehicles.length; i++) {
 			this._vehicles[i].render();
+			this._vehicles[i]._path.visible = this.options.showTrajectories;
 		}
 
 		this.renderer.render(this.scene, this.camera);

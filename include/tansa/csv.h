@@ -23,6 +23,18 @@ enum csv_positions : uint32_t {
 	DroneKeyPos = 7,
 };
 struct Choreography {
+	~Choreography() {
+		for(const auto& d: actions){
+			for(const auto& a: d){
+				delete a;
+			}
+		}
+		for(const auto& d: lightActions){
+			for(const auto& a: d){
+				delete a;
+			}
+		}
+	}
 	std::vector<std::vector<Action*>> actions;
 	std::vector<Breakpoint> breakpoints;
 	std::vector<Point> homes;
@@ -30,24 +42,7 @@ struct Choreography {
 	bool needConvertToMeters = false;
 	bool needConvertToRadians = false;
 };
-std::stringstream read_whole_file(const char* filepath);
 
-template<typename Out>
-void split(const std::string &s, char delim, Out result) {
-	std::stringstream ss;
-	ss.str(s);
-	std::string item;
-	while (std::getline(ss, item, delim)) {
-		*(result++) = item;
-	}
-}
-
-
-std::vector<std::string> split(const std::string &s, char delim) {
-	std::vector<std::string> elems;
-	split(s, delim, std::back_inserter(elems));
-	return elems;
-}
 ActionTypes parse_action_type(const std::string& data){
 	if(data == "transition")
 		return ActionTypes::Transition;
@@ -74,6 +69,11 @@ double parse_time(std::string& time);
 std::vector<unsigned long> parse_drones(std::string drone_field, const std::map<std::string, unsigned long>& drone_map);
 Action* parse_motion_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line);
 LightAction* parse_light_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line);
+Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+Action* parse_circle_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
 
 }
 #endif

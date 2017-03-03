@@ -1,14 +1,14 @@
-Breakpoint,Start Time,End Time,Action type,Drones ,Params,Drones,AAA,BBB,CCC,DDD,,,,,,
+Breakpoint,Start Time,End Time,Action type,Drones ,Params,Drone Keys,AAA,BBB,CCC,DDD,,,,,,
 break1,0.00,5.00,line,(AAA; BBB; CCC; DDD),startX,1,startY,1,startZ,0,endX,0,endY,0,endZ,1
-,5.00,10.00,circle,(AAA; BBB; CCC; DDD),radius,1,x,1,y,0,z,0,,,,
+,5.00,10.00,circle,(AAA; BBB; CCC; DDD),radius,1,theta1,0,theta2,360,x,1,y,0,z,0
 ,10.00,15.00,hover,(AAA; BBB; CCC; DDD),x,1,y,0,z,0,,,,,,
 breakpointName,15.00,20.00,line,(AAA; BBB; CCC; DDD),startX,1,startY,1,startZ,0,endX,0,endY,0,endZ,1
-,20.00,25.00,circle,(AAA; BBB; CCC; DDD),radius,1,x,1,y,0,z,0,,,,
+,20.00,25.00,circle,(AAA; BBB; CCC; DDD),radius,1,theta1,0,theta2,360,x,1,y,0,z,0
 ,25.00,30.00,hover,(AAA; BBB; CCC; DDD),x,1,y,0,z,0,,,,,,
-,30.00,35.00,circle,(AAA; BBB; CCC; DDD),radius,1,x,1,y,0,z,0,,,,
+,30.00,35.00,circle,(AAA; BBB; CCC; DDD),radius,1,theta1,0,theta2,360,x,1,y,0,z,0
 ,35.00,45.00,hover,(AAA; BBB; CCC; DDD),x,1,y,0,z,0,,,,,,
 ,45.00,50.00,line,(AAA; BBB; CCC; DDD),startX,1,startY,1,startZ,0,endX,0,endY,0,endZ,1
 ,50.00,55.00,line,(AAA; BBB; CCC; DDD),startX,1,startY,1,startZ,0,endX,0,endY,0,endZ,1
-,55.00,60.00,circle,(AAA; BBB; CCC; DDD),radius,1,x,1,y,0,z,0,,,,
+,55.00,60.00,circle,(AAA; BBB; CCC; DDD),radius,1,theta1,0,theta2,360,x,1,y,0,z,0
 ,60.00,65.00,line,(AAA; BBB; CCC; DDD),startX,1,startY,1,startZ,0,endX,0,endY,0,endZ,1
 ,65.00,70.00,line,(AAA; BBB; CCC; DDD),startX,1,startY,1,startZ,0,endX,0,endY,0,endZ,1

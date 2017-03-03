@@ -7,7 +7,7 @@
 #include <tansa/mocap.h>
 #include <tansa/gazebo.h>
 #include <tansa/osc.h>
-
+#include <tansa/csv.h>
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
@@ -544,6 +544,7 @@ void console_start() {
 
 int main(int argc, char *argv[]) {
 
+	parse_csv("/home/kyle/Documents/tansa/data/test.csv");
 	// Configure data and configuration folders
 	char *wpath = getenv("TANSA_PATH");
 	if(wpath != NULL)

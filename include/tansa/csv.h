@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <map>
 #include <iterator>
 #include "tansa/action.h"
 #include "tansa/vehicle.h"
@@ -71,7 +72,8 @@ std::vector<string> read_csv_line(std::string& line);
 Choreography* parse_csv(const char* filepath);
 double parse_time(std::string& time);
 std::vector<unsigned long> parse_drones(std::string drone_field, const std::map<std::string, unsigned long>& drone_map);
-
+Action* parse_motion_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line);
+LightAction* parse_light_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line);
 
 }
 #endif

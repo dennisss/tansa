@@ -64,8 +64,9 @@ Choreography* parse_csv(const char* filepath){
 		double end_time = parse_time(split_line[csv_positions::EndTimePos]);
 		ActionTypes action_type = parse_action_type(split_line[csv_positions::ActionTypePos]);
 		std::vector<unsigned long> drones = parse_drones(split_line[csv_positions::DronesPos], drone_map);
+		//currently only supporting one drone per line so just parse that one.
 		if(is_light_action(action_type)) {
-			for(int i = 0; i < drones.size(); i++){
+			for(int i = 0; i < 1; i++){
 				auto light_action = parse_light_action(
 						action_type,
 						start_time,
@@ -75,7 +76,7 @@ Choreography* parse_csv(const char* filepath){
 				ret->lightActions[drones[i]].push_back(light_action);
 			}
 		} else{
-			for(int i = 0; i < drones.size(); i++) {
+			for(int i = 0; i < 1; i++) {
 				auto motion_action = parse_motion_action(
 						action_type,
 						start_time,

@@ -1,7 +1,6 @@
 #include <tansa/action.h>
 #include <tansa/control.h>
 #include <tansa/core.h>
-#include <tansa/jocsParser.h>
 #include <tansa/config.h>
 #include <tansa/jocsPlayer.h>
 #include <tansa/mocap.h>
@@ -153,8 +152,8 @@ void send_status_message() {
 json getBreakpoints(string jocsPath) {
 	json jsonBreakpoints = json::array();
 	try {
-		auto jocsData = Jocs::Parse(jocsPath, 1.0);
-		auto breakPoints = jocsData->GetBreakpoints();
+		auto jocsData = parse_csv(jocsPath.c_str());
+		auto breakPoints = jocsData->breakpoints;
 
 		for (auto &breakPoint : breakPoints) {
 			json jsonBreakpoint;
@@ -181,7 +180,7 @@ void send_file_list() {
 	struct dirent *ent;
 	if ((dir = opendir(resolveWorkspacePath(dataDir).c_str())) != NULL) {
 		while ((ent = readdir(dir)) != NULL) {
-			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".jocs") != std::string::npos)
+			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".csv") != std::string::npos)
 				files.push_back(std::string(ent->d_name));
 		}
 		closedir (dir);
@@ -347,7 +346,7 @@ void loadJocsFile(const json &rawJsonArg) {
 
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
-	player->loadJocs(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
+	player->loadChoreography(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, jocsActiveIds);
 

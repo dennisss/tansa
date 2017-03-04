@@ -23,6 +23,28 @@ std::vector<std::string> split(const std::string &s, char delim) {
 	return elems;
 }
 
+ActionTypes parse_action_type(const std::string& data){
+	if(data == "transition")
+		return ActionTypes::Transition;
+	else if (data == "line")
+		return ActionTypes::Line;
+	else if (data == "circle")
+		return ActionTypes::Circle;
+	else if (data == "hover")
+		return ActionTypes::Hover;
+	else if (data == "light")
+		return ActionTypes::Light;
+	else if (data == "strobe")
+		return ActionTypes::Strobe;
+	return ActionTypes::None;
+}
+
+bool is_light_action(ActionTypes type){
+	if (type == ActionTypes::Strobe || type == ActionTypes::Light)
+		return true;
+	return false;
+}
+
 std::vector<string> read_csv_line(std::string& line){
 	auto ret = split(line, ',');
 	return std::move(ret);
@@ -159,11 +181,6 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 			break;
 	}
 	return ret;
-}
-
-bool is_number(const std::string& s) {
-	return !s.empty() && std::find_if(s.begin(),
-									  s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }
 
 Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line) {

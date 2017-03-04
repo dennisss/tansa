@@ -5,7 +5,7 @@
 #include <tansa/control.h>
 
 
-#include "tansa/jocsParser.h"
+#include "tansa/csv.h"
 #include "tansa/config.h"
 
 namespace tansa {
@@ -51,7 +51,7 @@ public:
 	 * @param jocsActiveIds Which drones are actually being used? Non active drones don't fly.
 	 * @param start Which breakpoint should we start at? Defaults to -1 which means start from the beginning.
 	 */
-	void loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
+	void loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
 	// TODO: Instead we should use isRunning which checks if any states are not StateInit
 	bool canLoad();
 	/**
@@ -96,7 +96,7 @@ private:
 	std::vector<unsigned> jocsActiveIds;
 
 	std::vector<Breakpoint> breakpoints;
-	Jocs* currentJocs = nullptr;
+	Choreography* currentJocs = nullptr;
 	std::vector<std::vector<Action*>> actions;
 	std::vector<std::vector<LightAction*>> lightActions;
 	std::vector<Point> homes;

@@ -47,31 +47,13 @@ struct Choreography {
  * @param data
  * @return
  */
-ActionTypes parse_action_type(const std::string& data){
-	if(data == "transition")
-		return ActionTypes::Transition;
-	else if (data == "line")
-		return ActionTypes::Line;
-	else if (data == "circle")
-		return ActionTypes::Circle;
-	else if (data == "hover")
-		return ActionTypes::Hover;
-	else if (data == "light")
-		return ActionTypes::Light;
-	else if (data == "strobe")
-		return ActionTypes::Strobe;
-	return ActionTypes::None;
-}
+ActionTypes parse_action_type(const std::string& data);
 /**
  *
  * @param type
  * @return
  */
-bool is_light_action(ActionTypes type){
-	if (type == ActionTypes::Strobe || type == ActionTypes::Light)
-		return true;
-	return false;
-}
+bool is_light_action(ActionTypes type);
 /**
  *
  * @param line

@@ -275,13 +275,16 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		vehicles[i]->connect(v.lport, v.rport);
 		if (inRealLife) {
 			mocap->track(vehicles[i], i+1);
+#ifdef USE_GAZEBO
 		} else if(worldMode == "gazebo") {
 			gazebo->track(vehicles[i], i);
+#endif
 		} else if(worldMode == "sim") {
 			sim->track(vehicles[i], i);
 		}
 	}
 
+#ifdef USE_GAZEBO
 	if (worldMode == "gazebo") {
 		// Only pay attention to homes of active drones
 		vector<Point> spawns;
@@ -293,6 +296,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		}
 		gazebo->spawn(spawns);
 	}
+#endif
 
 	// Initialize the vehicles within the jocsPlayer
 	player->initVehicles(vehicles);
@@ -643,9 +647,11 @@ int main(int argc, char *argv[]) {
 	if (inRealLife) {
 		mocap = new Mocap();
 		mocap->connect(config.clientAddress, config.serverAddress);
+#ifdef USE_GAZEBO
 	} else if(worldMode == "gazebo") {
 		gazebo = new GazeboConnector();
 		gazebo->connect();
+#endif
 	} else if(worldMode == "sim") {
 		sim = Simulation::Make();
 		sim->start();
@@ -711,9 +717,11 @@ int main(int argc, char *argv[]) {
 	if (inRealLife) {
 		mocap->disconnect();
 		delete mocap;
+#ifdef USE_GAZEBO
 	} else if(worldMode == "gazebo") {
 		gazebo->disconnect();
 		delete gazebo;
+#endif
 	} else if(worldMode == "sim") {
 		sim->stop();
 		delete sim;

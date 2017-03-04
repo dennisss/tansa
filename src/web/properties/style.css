@@ -5,6 +5,17 @@
 
 }
 
+.ta-pane-header {
+	border-bottom: 1px solid #000;
+	background-color: #222;
+	padding: 2px 4px;
+}
+
+.ta-props-header {
+	background-color: #555;
+	border-bottom: 1px solid #000;
+	padding: 2px 4px;
+}
 
 .transparent-input {
 	background-color: transparent;

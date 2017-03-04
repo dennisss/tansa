@@ -575,7 +575,7 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 
 void JocsPlayer::log() {
 
-	logfile << Time::now().since(start).seconds() << endl;
+	logfile << Time::now().since(start).seconds() << " ";
 	for(Vehicle *v : vehicles) {
 		Vector3d pos = v->state.position;
 		logfile << pos.x() << "," << pos.y() << "," << pos.z() << ",";

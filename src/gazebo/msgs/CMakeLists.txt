@@ -17,5 +17,5 @@ set(msgs
 
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${msgs})
 
-add_library(tansa_gazebo_msgs SHARED ${PROTO_SRCS} ${PROTO_HDRS})
-target_link_libraries(tansa_gazebo_msgs ${PROTOBUF_LIBRARIES} ${GAZEBO_LIBRARIES})
+add_library(tansa_gazebo_msgs SHARED spawn.pb.cc vector3d.pb.h ) # ${PROTO_SRCS})
+target_link_libraries(tansa_gazebo_msgs ${PROTOBUF_LIBRARY} ${GAZEBO_LIBRARIES})

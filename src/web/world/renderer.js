@@ -77,12 +77,12 @@ class WorldRenderer {
 		*/
 
 		var matFloor = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 1 });
-		var geoFloor = new THREE.BoxGeometry( 16, 9, 1 );
+		var geoFloor = new THREE.BoxGeometry( 16, 9, 0.001 );
 		var mshFloor = new THREE.Mesh( geoFloor, matFloor );
-		mshFloor.position.set(0, 0, -0.5);
+		mshFloor.position.set(0, 0, -0.0005);
 		mshFloor.receiveShadow = true;
 
-		scene.add(mshFloor);
+		//scene.add(mshFloor);
 
 
 		// Make a 6 x 9 meter grid
@@ -268,7 +268,10 @@ class WorldRenderer {
 	removeVehicle(v) {
 		this.scene.remove(v.object());
 		this.scene.remove(v._lightHelper);
-		this.scene.remove(v._path);
+		if(v._path)
+			this.scene.remove(v._path);
+		if(v._homeMarker)
+			this.scene.remove(v._homeMarker);
 	}
 
 
@@ -304,6 +307,7 @@ class WorldRenderer {
 	// Create initial scene
 	create() {
 		this.addVehicle();
+		this.setHomes([ [2, 3, 0] ])
 
 		this._loaded = true;
 
@@ -331,6 +335,12 @@ class WorldRenderer {
 		// Update states of all vehicles
 		for(var i = 0; i < data.vehicles.length; i++) {
 			this._vehicles[i].update(data.vehicles[i]);
+
+			if(data.vehicles[i].armed && this._vehicles[i]._homeMarker) {
+				this.scene.remove(this._vehicles[i]._homeMarker);
+				this._vehicles[i]._homeMarker = null;
+			}
+
 		}
 
 		this._dirty = true;
@@ -360,6 +370,26 @@ class WorldRenderer {
 			p.geometry.verticesNeedUpdate = true;
 
 		}
+	}
+
+	setHomes(homes) {
+
+		for(var i = 0; i < homes.length; i++) {
+
+			var v = this._vehicles[i];
+
+			var radius = 0.2; // TODO: Base this on the vehicle size
+			var height = 0.4;
+			var geometry = new THREE.CylinderGeometry(radius, radius, height, 32, 1, true);
+			var material = new THREE.MeshBasicMaterial({ color: vehicleColors[i], opacity: 0.2, transparent: true, side: THREE.DoubleSide });
+
+			var obj = new THREE.Mesh(geometry, material);
+			obj.rotation.x = Math.PI / 2;
+			obj.position.set(homes[i][0], homes[i][1], homes[i][2] + (height / 2));
+			v._homeMarker = obj;
+			this.scene.add(v._homeMarker);
+		}
+
 	}
 
 

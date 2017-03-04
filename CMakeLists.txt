@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tansa)
 
+option(BUILD_GAZEBO "Builds support for the Gazebo simulator" OFF)
+
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
@@ -103,9 +105,11 @@ endif()
 
 
 ######## Extensions ########
+if(BUILD_GAZEBO)
+	add_subdirectory(src/gazebo)
 
-add_subdirectory(src/gazebo)
-
+	add_definitions(-DUSE_GAZEBO)
+endif()
 
 ######## Test Suite ########
 
@@ -142,8 +146,14 @@ target_link_libraries(
 
 	pthread
 	tansa
-	tansa_gazebo
 )
+
+if(BUILD_GAZEBO)
+	target_link_libraries(
+		gcs
+		tansa_gazebo
+	)
+endif()
 
 set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++1y")
 

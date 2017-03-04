@@ -1,3 +1,8 @@
+/*
+	Bare minimum loop for testing vehicle functions on a single physical vehicle
+	Currently set up for testing lighting
+*/
+
 #include <tansa/action.h>
 #include <tansa/control.h>
 #include <tansa/core.h>

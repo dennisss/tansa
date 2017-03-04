@@ -158,7 +158,7 @@ std::string Time::dateString() const {
 	if(localtime_r(&(val.tv_sec), &t) == NULL)
 		return "Unknown-" + std::to_string(val.tv_sec);
 
-	strftime(buf, sizeof(buf), "%F %T", &t);
+	strftime(buf, sizeof(buf), "%F_%T", &t);
 
 	return std::string(buf);
 }

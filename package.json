@@ -9,7 +9,9 @@
 		"body-parser": "1.14.1",
 		"async": "latest",
 		"socket.io": "1.5.0",
-		"commander": "2.9.0"
+		"commander": "2.9.0",
+		"request": "2.80.0",
+		"formidable": "1.0.17"
 	},
 	"devDependencies": {
 		"webpack": "v2.1.0-beta.14",

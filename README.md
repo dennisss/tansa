@@ -41,11 +41,12 @@ For running the simulations, all dependencies on the PX4 toolchain/gazebo SITL e
 - See http://dev.px4.io/simulation-gazebo.html
 	- We test with Gazebo 7
 
+Recommended/Optional Dependencies:
+- The IBM CPLEX library is a recommended addition if you are using advanced trajectory generation. It is required for making collision free trajectories. If not included, it will fallback to the less stable CGAL solvers when possible.
+
 
 Building
 --------
-
-In `lib/Firmware`, run `make posix_sitl_default gazebo` to start the simulator.
 
 Alternatively, run `make sim` to start up a multidrone simulator
 
@@ -57,6 +58,9 @@ UI
 
 Before doing `make run`, do `make server`. Then see the UI at `http://127.0.0.1:3000`
 
+- The root url will take you to the web-based 3d viewer
+
+- Go to `http://127.0.0.1:3000/flightControl` for full the flight controls.
 
 Documentation
 -------------

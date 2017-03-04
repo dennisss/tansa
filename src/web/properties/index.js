@@ -9,7 +9,10 @@ var PropertiesPane = React.createClass({
 
 		return (
 			<div className="ta-pane">
-				<div style={{borderBottom: '1px solid #000', backgroundColor: '#222', padding: '2px 4px'}} className="ta-pane-header">
+
+
+
+				<div className="ta-pane-header">
 					Properties
 
 					<div style={{float: 'right'}}>
@@ -18,8 +21,16 @@ var PropertiesPane = React.createClass({
 				</div>
 				<div class="ta-pane-body">
 
+					<div>
+						<select></select>
+
+
+					</div>
+
+
+
 					<div className="ta-props" style={{fontSize: 12}}>
-						<div style={{backgroundColor: '#555', borderBottom: '1px solid #000', padding: '2px 4px'}}>
+						<div className="ta-props-header">
 							<i className="fa fa-minus-square-o" />&nbsp;
 							Settings
 						</div>
@@ -36,7 +47,7 @@ var PropertiesPane = React.createClass({
 					</div>
 
 					<div className="ta-props" style={{fontSize: 12}}>
-						<div style={{backgroundColor: '#555', borderBottom: '1px solid #000', padding: '2px 4px'}}>
+						<div className="ta-props-header">
 							<i className="fa fa-minus-square-o" />&nbsp;
 							Points
 						</div>

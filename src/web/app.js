@@ -32,6 +32,7 @@ var App = React.createClass({
 			}
 			else if(data.type == 'load_reply') {
 				renderer.setPaths(data.paths);
+				renderer.setHomes(data.target_positions);
 			}
 
 
@@ -87,6 +88,7 @@ var App = React.createClass({
 								<table style={{width: '100%', height: '100%'}}>
 									<tbody>
 										<tr>
+											{/*
 											<td style={{width: 200, borderRight: '2px solid #222', verticalAlign: 'top'}}>
 												{/*
 													Drone list
@@ -94,8 +96,10 @@ var App = React.createClass({
 													- Double click on to open up a modal for more settings
 													- 'SetHome' by dragging in the world (or expert coordinates)
 												*/}
+											{/*
 												<PropertiesPane />
 											</td>
+											*/}
 											<td style={{position: 'relative'}}>
 												<div style={{position: 'absolute', top: 10, right: 10}}>
 													<div className="btn-group">
@@ -139,6 +143,8 @@ var App = React.createClass({
 							</td>
 						</tr>
 
+
+						{/*
 						<tr>
 							<td style={{height: 200, borderTop: '2px solid #222'}}>
 								{/*
@@ -153,11 +159,12 @@ var App = React.createClass({
 									- Each sequential tab will be
 
 								*/}
-
-								<Timeline />
+						{/*
+								<Timeline parent={this} />
 
 							</td>
 						</tr>
+						*/}
 					</tbody>
 
 				</table>

@@ -179,6 +179,11 @@ bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std:
  * @param actions
  */
 void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes);
-
+/**
+ *
+ * @param point
+ * @return
+ */
+Point parse_point(std::string point);
 }
 #endif

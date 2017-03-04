@@ -42,7 +42,11 @@ struct Choreography {
 	bool needConvertToMeters = false;
 	bool needConvertToRadians = false;
 };
-
+/**
+ *
+ * @param data
+ * @return
+ */
 ActionTypes parse_action_type(const std::string& data){
 	if(data == "transition")
 		return ActionTypes::Transition;
@@ -58,22 +62,123 @@ ActionTypes parse_action_type(const std::string& data){
 		return ActionTypes::Strobe;
 	return ActionTypes::None;
 }
+/**
+ *
+ * @param type
+ * @return
+ */
 bool is_light_action(ActionTypes type){
 	if (type == ActionTypes::Strobe || type == ActionTypes::Light)
 		return true;
 	return false;
 }
+/**
+ *
+ * @param line
+ * @return
+ */
 std::vector<string> read_csv_line(std::string& line);
+/**
+ *
+ * @param filepath
+ * @return
+ */
 Choreography* parse_csv(const char* filepath);
+/**
+ *
+ * @param time
+ * @return
+ */
 double parse_time(std::string& time);
+/**
+ *
+ * @param drone_field
+ * @param drone_map
+ * @return
+ */
 std::vector<unsigned long> parse_drones(std::string drone_field, const std::map<std::string, unsigned long>& drone_map);
+/**
+ *
+ * @param type
+ * @param start
+ * @param end
+ * @param droneid
+ * @param split_line
+ * @return
+ */
 Action* parse_motion_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line);
+/**
+ *
+ * @param type
+ * @param start
+ * @param end
+ * @param droneid
+ * @param split_line
+ * @return
+ */
 LightAction* parse_light_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line);
+/**
+ *
+ * @param type
+ * @param start
+ * @param end
+ * @param droneid
+ * @param split_line
+ * @return
+ */
 Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+/**
+ *
+ * @param type
+ * @param start
+ * @param end
+ * @param droneid
+ * @param split_line
+ * @return
+ */
 Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+/**
+ *
+ * @param type
+ * @param start
+ * @param end
+ * @param droneid
+ * @param split_line
+ * @return
+ */
 Action* parse_circle_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+/**
+ *
+ * @param type
+ * @param start
+ * @param end
+ * @param droneid
+ * @param split_line
+ * @return
+ */
 LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+/**
+ *
+ * @param type
+ * @param start
+ * @param end
+ * @param droneid
+ * @param split_line
+ * @return
+ */
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+/**
+ * NOTE: This also sorts each sub array of actions by start time.
+ * @param actions
+ * @param homes
+ * @return
+ */
+bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes);
+/**
+ *
+ * @param actions
+ */
+void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes);
 
 }
 #endif

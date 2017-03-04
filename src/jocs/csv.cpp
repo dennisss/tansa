@@ -17,7 +17,6 @@ void split(const std::string &s, char delim, Out result) {
 	}
 }
 
-
 std::vector<std::string> split(const std::string &s, char delim) {
 	std::vector<std::string> elems;
 	split(s, delim, std::back_inserter(elems));
@@ -87,8 +86,12 @@ Choreography* parse_csv(const char* filepath){
 			}
 		}
 	}
-	std::cout << "Done!" << std::endl;
-
+	insert_transitions(ret->actions, ret->homes);
+	if(has_no_discontinuity(ret->actions, ret->homes)){
+		return ret;
+	} else {
+		return nullptr;
+	}
 }
 
 double parse_time(std::string& time){
@@ -132,6 +135,7 @@ Action* parse_motion_action(ActionTypes type, double start, double end, unsigned
 	}
 	return ret;
 }
+
 LightAction* parse_light_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line){
 	LightAction* ret = nullptr;
 	switch (type){
@@ -151,6 +155,7 @@ bool is_number(const std::string& s) {
 	return !s.empty() && std::find_if(s.begin(),
 									  s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }
+
 Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line) {
 
 	Point hover;
@@ -184,6 +189,7 @@ Action* parse_line_action(double start, double end, unsigned long droneid, const
 			new LinearTrajectory(start_point, start, end_point, end),
 			ActionTypes::Line);
 }
+
 Action* parse_circle_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line) {
 	Point origin;
 	double theta1 = std::atof(split_line[3].c_str());
@@ -203,9 +209,108 @@ LightAction* parse_light_action(double start, double end, unsigned long droneid,
 
 
 }
+
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 
 
+}
+
+bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes){
+
+	std::vector<std::string> errors;
+	auto floatComp = [](double a, double b) -> bool { return fabs(a-b) < 0.1; };
+	auto pointComp = [](Point a, Point b) -> bool { return fabs((a-b).norm()) < 0.1; };
+	for (unsigned j = 0; j < actions.size(); j++) {
+		auto startPoint = homes[j];
+		double startTime = 0.0;
+		//Sort actions for each drone based on start time
+		std::sort(actions[j].begin(), actions[j].end(),
+				  [](Action *const &lhs, Action *const &rhs) { return lhs->GetStartTime() < rhs->GetStartTime(); });
+		for (unsigned i = 0; i < actions[j].size(); i++) {
+			Action *a = actions[j][i];
+			double sTime = a->GetStartTime();
+			double eTime = a->GetEndTime();
+			//Check temporal continuity
+			if (!is_light_action(a->GetActionType())) {
+				if (!floatComp(sTime, startTime)) {
+					errors.push_back(
+							"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
+							std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
+				}
+				startTime = eTime;
+			}
+			//Check spatial continuity
+			if (!is_light_action(a->GetActionType())) {
+				auto ma = dynamic_cast<MotionAction *>(a);
+				auto actionStart = ma->GetStartPoint();
+				if (!pointComp(actionStart, startPoint)) {
+					errors.push_back(
+							"Spatial Discontinuity for Drone: " + std::to_string(j) + ". Jumping from point: " +
+							"[" + std::to_string(startPoint.x()) + " " + std::to_string(startPoint.y()) + " " +
+							std::to_string(startPoint.z()) + "]" +
+							" to point: " "[" + std::to_string(actionStart.x()) + " " +
+							std::to_string(actionStart.y()) + " " + std::to_string(actionStart.z()) + "]" + "\n"
+							+ "at start time: " + std::to_string(sTime)
+					);
+				}
+				startPoint = ma->GetEndPoint();
+			}
+		}
+	}
+	for(const auto& s : errors){
+		std::cout << s << std::endl;
+	}
+	return (errors.size() == 0);
+}
+
+void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes ){
+	// Go back and review actions such that transitions can be created with polynomial trajectories
+	for (unsigned i = 0; i < actions.size(); i++) {
+		// Each entry in "actions" has a vector full of actions for that drone
+		for (unsigned j = 0; j < actions[i].size(); j++) {
+			if (!actions[i][j]->IsCalculated()) {
+				double thisStart = actions[i][j]->GetStartTime();
+				double thisEnd = actions[i][j]->GetEndTime();
+				if (j == 0) {
+					MotionAction *next = static_cast<MotionAction *>(actions[i][j + 1]);
+					auto endState = next->GetPathState(next->GetStartTime());
+					delete actions[i][j];
+					actions[i][j] = new MotionAction(i,
+													 PolynomialTrajectory::compute(
+															 {homes[i]},
+															 thisStart,
+															 {endState.position, endState.velocity,
+															  endState.acceleration},
+															 thisEnd
+													 ),
+													 ActionTypes::Transition
+					);
+				} else if (j == (actions[i].size() - 1)) {
+					//TODO: Handle the case of the last action being a transition, where our ending velocity and acceleration are 0 and destination is home.
+				} else {
+
+					// Calculate previous and next motion to generate what's needed for the transition
+					// - can safely assume all are motions since made separate array for lights
+					MotionAction* prev = dynamic_cast<MotionAction*>(actions[i][j - 1]);
+					MotionAction* next = dynamic_cast<MotionAction*>(actions[i][j + 1]);
+
+					// Get states from the previous and next state that were found
+					auto startState = prev->GetPathState(prev->GetEndTime());
+					auto endState = next->GetPathState(next->GetStartTime());
+					// Cleanup object and replace with a new MotionAction
+					delete actions[i][j];
+					actions[i][j] = new MotionAction(i, PolynomialTrajectory::compute(
+							{startState.position, startState.velocity, startState.acceleration},
+							thisStart,
+							{endState.position, endState.velocity, endState.acceleration},
+							thisEnd
+													 ),
+													 ActionTypes::Transition
+					);
+				}
+			}
+		}
+	}
 }
 
 }

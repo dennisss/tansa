@@ -76,7 +76,7 @@ var App = React.createClass({
 	load: function(filename, cue) {
 		var message = {
 			type: 'load',
-			startPoint: this.state.cue,
+			startPoint: this.state.cue*1,
 			jocsPath: 'data/' + this.state.availableFiles[this.state.filenameI].fileName,
 			theaterScale: this.state.scale
 		};

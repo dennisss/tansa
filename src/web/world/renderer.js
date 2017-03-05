@@ -85,7 +85,7 @@ class WorldRenderer {
 		mshFloor.position.set(0, 0, -0.0005);
 		mshFloor.receiveShadow = true;
 
-		//scene.add(mshFloor);
+		scene.add(mshFloor);
 
 
 		// Make a 6 x 9 meter grid

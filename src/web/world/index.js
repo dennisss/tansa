@@ -21,8 +21,6 @@ var WorldView = React.createClass({
 	},
 
 	shouldComponentUpdate: function(){
-		// TODO: Manage resizing the window
-
 		if(this.renderer)
 			this.renderer._dirty = true;
 
@@ -36,7 +34,7 @@ var WorldView = React.createClass({
 
 	render: function(){
 		return (
-			<div className="ts-world" style={{width: '100%', height: '100%'}}></div>
+			<div className="ts-world" style={{width: '100%', height: '100%', overflowY: 'hidden'}}></div>
 		);
 	}
 

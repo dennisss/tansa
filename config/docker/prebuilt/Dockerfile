@@ -2,7 +2,7 @@
 FROM dennisss/tansa-dev:latest
 
 RUN cd /opt; git clone https://github.com/dennisss/tansa
-RUN cd /opt/tansa; git checkout new; make build
+RUN cd /opt/tansa; make build
 RUN cd /opt/tansa; npm install; make build_firmware
 
 # Preload all the models as we will assume that no internet connection is available

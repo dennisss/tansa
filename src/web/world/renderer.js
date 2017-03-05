@@ -82,7 +82,7 @@ class WorldRenderer {
 		var matFloor = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 1 });
 		var geoFloor = new THREE.BoxGeometry( 16, 9, 0.001 );
 		var mshFloor = new THREE.Mesh( geoFloor, matFloor );
-		mshFloor.position.set(0, 0, -0.0005);
+		mshFloor.position.set(0, 0, -0.005);
 		mshFloor.receiveShadow = true;
 
 		scene.add(mshFloor);

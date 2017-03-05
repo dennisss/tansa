@@ -22,6 +22,10 @@ run: build
 test: build
 	./build/test_tansa
 
+deps:
+	npm install
+	cd public/flightControl; npm install
+
 clean:
 	rm -rf build
 	rm -rf build_firmware

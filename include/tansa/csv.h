@@ -127,6 +127,7 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
  * @param end End time in seconds
  * @param droneid Numeric id of the drone.
  * @param split_line Split CSV line from parse_csv_line
+ * @param length_conversion Conversion factor for length
  * @return The parsed HoverAction for the given drone.
  */
 Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion);
@@ -137,6 +138,7 @@ Action* parse_hover_action(double start, double end, unsigned long droneid, cons
  * @param end End time in seconds
  * @param droneid Numeric id of the drone.
  * @param split_line Split CSV line from parse_csv_line
+ * @param length_conversion Conversion factor for length
  * @return The parsed LineAction for the given drone.
  */
 Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion);
@@ -147,6 +149,8 @@ Action* parse_line_action(double start, double end, unsigned long droneid, const
  * @param end End time in seconds
  * @param droneid Numeric id of the drone.
  * @param split_line Split CSV line from parse_csv_line
+ * @param length_conversion Conversion factor for length
+ * @param angle_conversion Conversion factor for angle
  * @return The parsed CircleAction for the given drone.
  */
 Action* parse_circle_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion);

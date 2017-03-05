@@ -13,6 +13,8 @@ require('./TransformControls');
 
 require('./STLLoader');
 
+import { MeshText2D, textAlign } from 'three-text2d'
+
 var pointI = 1;
 
 // Colors to use to identify unique vehicle ids
@@ -94,6 +96,13 @@ class WorldRenderer {
 		helper2.rotateX(Math.PI / 2);
 		helper2.position.x = -1.5
 		scene.add(helper2);
+
+
+		var text = new MeshText2D("FRONT", { align: textAlign.center, font: '30px Arial', fillStyle: '#888888', antialias: false });
+		text.scale.x = 0.01
+		text.scale.y = 0.01;
+		text.position.y = -1.75
+		scene.add(text)
 
 		var axis = new THREE.AxisHelper(1);
 		axis.position.set(0, 0, 0);

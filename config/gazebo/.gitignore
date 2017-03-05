@@ -1,0 +1,5 @@
+# Ignore cached model directory
+db
+
+# These are prebuilt from other files
+*.urdf

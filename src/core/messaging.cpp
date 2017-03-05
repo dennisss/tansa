@@ -22,7 +22,7 @@ void messaging_on_connected() {
 
 void messaging_init() {
 
-	h.connect("http://127.0.0.1:3000");
+	h.connect("http://127.0.0.1:4000");
 	h.set_open_listener(messaging_on_connected);
 
 }

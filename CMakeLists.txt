@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tansa)
 
-option(BUILD_GAZEBO "Builds support for the Gazebo simulator" OFF)
+option(BUILD_GAZEBO "Builds support for the Gazebo simulator" ON)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 

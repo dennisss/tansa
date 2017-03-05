@@ -1,4 +1,5 @@
-var React = require('react');
+var React = require('react'),
+	StatusSign = require('./statusSign');
 
 import Toggle from 'material-ui/Toggle';
 
@@ -43,35 +44,25 @@ var Navbar = React.createClass({
 
 							<li className="dropdown">
 								<a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+									<StatusSign />
 									Status
-									<span style={{paddingLeft: 5, color: '#f00',}}>
-										<i className="fa fa-circle" />
-									</span>
 								</a>
 								<ul className="dropdown-menu">
 									<li><a href="#">
+										<StatusSign />
 										Mocap Ready
-										<span style={{float: 'right', color: '#f00',}}>
-											<i className="fa fa-circle" />
-										</span>
 									</a></li>
 									<li><a href="#">
+										<StatusSign />
 										Vehicle Link
-										<span style={{float: 'right', color: '#f00',}}>
-											<i className="fa fa-circle" />
-										</span>
 									</a></li>
 									<li><a href="#">
+										<StatusSign />
 										Object Sync
-										<span style={{float: 'right', color: '#f00',}}>
-											<i className="fa fa-circle" />
-										</span>
 									</a></li>
 									<li><a href="#">
+										<StatusSign />
 										Armed
-										<span style={{float: 'right', color: '#f00',}}>
-											<i className="fa fa-circle" />
-										</span>
 									</a></li>
 									<li role="separator" className="divider" />
 									<li><a href="#">More...</a></li>

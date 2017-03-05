@@ -316,9 +316,10 @@ void constructLoadResponse() {
 	json positions = json::array();
 	for (Point home : player->getHomes()){
 		//TODO: need to fill in the starting positions for breakpoints. Not contained in breakpoints currently
-		json position;
-		position["x"] = home.x();
-		position["y"] = home.y();
+		json position = json::array();
+		position.push_back(home.x());
+		position.push_back(home.y());
+		position.push_back(home.z());
 		positions.push_back(position);
 	}
 	j["cues"] = nums;

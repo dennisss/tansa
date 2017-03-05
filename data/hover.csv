@@ -1,4 +1,4 @@
 Breakpoint,Start Time,End Time,Action type,Drones ,Params,Feet, Degrees,Drone Keys,AAA,,,
-home,0,0,home,(AAA),(0;2;0),,,,,
-,0,5,transition,(AAA),,,,,,
-break1,5.00,15.00,hover,(AAA),x,0,y,2,z,2
+home,0,0,home,(AAA),(0;2;0),,,,,,,
+,0,5,transition,(AAA),,,,,,,,
+break1,5.00,15.00,hover,(AAA),x,0,y,2,z,2,,

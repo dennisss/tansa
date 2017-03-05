@@ -7,7 +7,8 @@ build: build_socketio_cpp
 	git submodule update --init --recursive
 	mkdir -p build
 	rm -f config/gazebo/models/x340/x340.sdf
-	cd build; cmake ..; make
+	cd build; cmake ..; make;
+	cd public/flightControl; ./node_modules/.bin/webpack;
 
 runSim: 
 	./scripts/start_gazebo.sh
@@ -20,6 +21,10 @@ run: build
 
 test: build
 	./build/test_tansa
+
+deps:
+	npm install
+	cd public/flightControl; npm install
 
 clean:
 	rm -rf build

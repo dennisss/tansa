@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "alwaysStrict": true,
+        "jsx": "react",
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "target": "es2015"
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}

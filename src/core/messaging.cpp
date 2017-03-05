@@ -28,13 +28,13 @@ void messaging_init() {
 }
 
 
-void send_message(const json &msg) {
+void send_message(const string type, const json &msg) {
 
 	sio::message::ptr obj = sio::string_message::create(msg.dump());
 	sio::message::list li(obj);
 
 	sio::socket::ptr sock = h.socket();
-	sock->emit("msg", li);
+	sock->emit(type, li);
 }
 
 static tansa_message_listener listener;

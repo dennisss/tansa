@@ -14,7 +14,7 @@ namespace tansa {
  */
 void init(bool enableMessaging);
 
-void send_message(const json &msg);
+void send_message(const std::string type, const json &msg);
 
 void on_message(tansa_message_listener l);
 

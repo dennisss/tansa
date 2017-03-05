@@ -1,5 +1,6 @@
 var React = require('react'),
-	StatsSection = require('./stats');
+	StatsSection = require('./stats'),
+	UploadButton = require('./upload');
 
 require('./style.css')
 
@@ -51,9 +52,14 @@ var PropertiesPane = React.createClass({
 				<div className="ta-pane-body" style={{padding: 5}}>
 					<div className="form-group">
 						<span>File</span>
-						<select className="form-control" value={p.state.filenameI} onChange={this.onFileChanged}>
-							{p.state.availableFiles.map((f, i) => <option key={i} value={i}>{f.fileName}</option> )}
-						</select>
+						<div className="input-group">
+							<select className="form-control" value={p.state.filenameI} onChange={this.onFileChanged}>
+								{p.state.availableFiles.map((f, i) => <option key={i} value={i}>{f.fileName}</option> )}
+							</select>
+							<span className="input-group-btn">
+								<UploadButton parent={p} />
+							</span>
+						</div>
 					</div>
 					<div className="row">
 						<div className="col-sm-6">

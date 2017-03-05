@@ -40,13 +40,12 @@ var App = React.createClass({
 	onRendererReady: function(renderer){
 		this.renderer = renderer;
 
-		var i = 0;
+		var it = 0;
 		Socket.on('msg', function(data) {
 			data = JSON.parse(data);
 
 			if(data.type == 'status') {
-
-				if(i++ % 10 == 0) {
+				if((it++) % 10 == 0) {
 					this.setState({stats: data});
 				}
 				renderer.update({vehicles: data.vehicles});
@@ -57,13 +56,22 @@ var App = React.createClass({
 			}
 			else if(data.type == 'list_reply') {
 				this.setState({availableFiles: data.files});
+
+				// Right after an upload, set the new file as the default selected
+				if(this._uploadedName) {
+					for(var i = 0; i < data.files.length; i++) {
+						if(data.files[i].fileName == this._uploadedName) {
+							this.setState({filenameI: i});
+							break;
+						}
+					}
+				}
 			}
 
 		}.bind(this));
 
 		// Get initial list of files
-		Socket.emit('msg', JSON.stringify({ type: 'list' }));
-
+		this.load_filelist();
 
 		this.forceUpdate();
 	},
@@ -83,12 +91,24 @@ var App = React.createClass({
 		this.send(message);
 	},
 
+	load_filelist: function() {
+		Socket.emit('msg', JSON.stringify({ type: 'list' }));
+	},
+
 	prepare: function() { this.send({ type: 'prepare' }); },
 	play: function() { this.send({ type: 'play' }); },
 	pause: function() { this.send({ type: 'pause' }); },
 	stop: function() { this.send({ type: 'stop' }); },
 	kill: function() {
 		this.send({ type: 'kill', enabled: true });
+	},
+
+	upload: function(name, text) {
+		Socket.emit('upload', { name: name, data: text });
+		Socket.once('upload_reply', function() {
+			this.load_filelist();
+			this._uploadedName = name;
+		}.bind(this))
 	},
 
 	changeView: function(name){

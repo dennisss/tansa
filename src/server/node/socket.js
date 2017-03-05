@@ -1,5 +1,7 @@
 'use strict';
 
+var fs = require('fs');
+
 /*
 	All commands and data with the browser as sent via this socket
 
@@ -37,6 +39,11 @@ module.exports = function(server){
 		socket.on('msg', function(data) {
 			socket.broadcast.emit('msg', data);
 		})
+
+		socket.on('upload', function(data) {
+			fs.writeFileSync(__dirname + '/../../../data/' + data.name, data.data);
+			socket.emit('upload_reply', {});
+		});
 
 	});
 

@@ -15,7 +15,7 @@ The stats message is sent every 1/10th of a second with the current state of eve
 	activeFile: '...',
 	vehicles: [
 		{
-			num: 0, // The number in order of the choroegraphy 0-5
+			role: 0, // The number in order of the choroegraphy 0-5
 			id: 7, // The network id written on the drone, used to distinguish physical drones
 			tracking: true,
 			connected: true,
@@ -25,6 +25,10 @@ The stats message is sent every 1/10th of a second with the current state of eve
 			// flying will coincide with global.playing
 			state: 'init|takeoff|holding|flying|landing',
 
+			battery: {
+				voltage: 7.4,
+				percent: 0.95 // From 0-1
+			},
 
 			log: ["", ""] // A list of strings (lines) to add to the log since last time
 			position: [x, y, z]
@@ -82,8 +86,9 @@ Load a JOCS file at some cue using this: (if no cue is specified, then it will l
 ```
 {
 	type: "load",
-	filename: "....", // Something from list
-	cue: 1643
+	jocsPath: "....", // Something from list
+	startPoint: 1643,
+	theaterScale: 1
 }
 ```
 

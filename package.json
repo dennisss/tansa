@@ -36,11 +36,14 @@
 		"three": "0.84.0",
 		"react": "15.1.0",
 		"react-dom": "15.1.0",
+		"react-bootstrap": "0.30.7",
 		"material-ui": "0.15.0",
 		"jquery": "2.1.4",
 		"roboto-fontface": "0.6.0",
 		"bootstrap": "3.3.6",
 		"socket.io-client": "1.5.0",
-		"three-text2d": "0.3.2"
+		"three-text2d": "0.3.2",
+		"font-awesome": "4.7.0",
+		"open-sans-fontface": "1.4.0"
 	}
 }

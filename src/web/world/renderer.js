@@ -208,6 +208,8 @@ class WorldRenderer {
 
 
 		this._vehicles = [];
+		this._homes = [];
+		this._paths = [];
 
 		this.load(() => {
 			this.create();
@@ -227,6 +229,9 @@ class WorldRenderer {
 	}
 
 	resize() {
+		// Force it to respond to the same page size
+		$(this.el).css('width', '100%').css('height', '100%');
+
 		var w = $(this.el).width(), h = $(this.el).height();
 
 		// Need to adjust camera aspect ratio and adjust scene size
@@ -236,9 +241,9 @@ class WorldRenderer {
 		this.renderer.setSize(w, h);
 	}
 
+	createGround() {
 
-	addPoint(){
-		pointI++;
+
 
 	}
 
@@ -260,19 +265,6 @@ class WorldRenderer {
 		this.scene.add(vehicle._lightHelper);
 		this._vehicles.push(vehicle);
 
-		// Make a line
-		var lineMaterial = new THREE.LineBasicMaterial({
-			color: vehicleColors[this._vehicles.length - 1]
-		});
-		var lineGeometry = new THREE.Geometry();
-		//for(var i = 0; i < 10; i++)
-		//	geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-
-		var line = new THREE.Line(lineGeometry, lineMaterial);
-		this.scene.add(line);
-		vehicle._path = line;
-
-
 		return vehicle;
 	}
 
@@ -282,10 +274,6 @@ class WorldRenderer {
 	removeVehicle(v) {
 		this.scene.remove(v.object());
 		this.scene.remove(v._lightHelper);
-		if(v._path)
-			this.scene.remove(v._path);
-		if(v._homeMarker)
-			this.scene.remove(v._homeMarker);
 	}
 
 
@@ -320,8 +308,6 @@ class WorldRenderer {
 
 	// Create initial scene
 	create() {
-		this.addVehicle();
-		this.setHomes([ [2, 3, 0] ])
 
 		this._loaded = true;
 
@@ -346,31 +332,48 @@ class WorldRenderer {
 			this.removeVehicle(last);
 		}
 
+		var allArmed = true;
+
 		// Update states of all vehicles
 		for(var i = 0; i < data.vehicles.length; i++) {
 			this._vehicles[i].update(data.vehicles[i]);
 
-			if(data.vehicles[i].armed && this._vehicles[i]._homeMarker) {
-				this.scene.remove(this._vehicles[i]._homeMarker);
-				this._vehicles[i]._homeMarker = null;
+			if(data.vehicles[i].armed && this._homes.length > i) {
+				this._homes[i].visible = false;
+			}
+			if(!data.vehicles[i].armed) {
+				allArmed = false;
 			}
 
 		}
 
-		this._dirty = true;
+		if(allArmed && this._homes.length > 0) {
+			this.setHomes([]);
+		}
 
-		//requestAnimationFrame(() => {
-		//	this.render();
-		//});
+		this._dirty = true;
 	}
 
 	setPaths(paths) {
 
-		for(var i = 0; i < paths.length; i++) {
-			if(i <= this._vehicles.length)
-				this.addVehicle();
+		while(this._paths.length > paths.length) {
+			var l = this._paths.pop();
+			this.scene.remove(l);
+		}
+		while(this._paths.length < paths.length) {
+			// Make a line
+			var lineMaterial = new THREE.LineBasicMaterial({
+				color: vehicleColors[this._paths.length]
+			});
+			var lineGeometry = new THREE.Geometry();
 
-			var p = this._vehicles[i]._path;
+			var line = new THREE.Line(lineGeometry, lineMaterial);
+			this.scene.add(line);
+			this._paths.push(line);
+		}
+
+		for(var i = 0; i < paths.length; i++) {
+			var p = this._paths[i];
 
 			// Resize vertices
 			while(p.geometry.vertices.length > paths[i].length) p.geometry.vertices.pop();
@@ -388,6 +391,11 @@ class WorldRenderer {
 
 	setHomes(homes) {
 
+		for(var i = 0; i < this._homes.length; i++) {
+			this.scene.remove(this._homes[i]);
+		}
+		this._homes = [];
+
 		for(var i = 0; i < homes.length; i++) {
 
 			var v = this._vehicles[i];
@@ -398,10 +406,11 @@ class WorldRenderer {
 			var material = new THREE.MeshBasicMaterial({ color: vehicleColors[i], opacity: 0.2, transparent: true, side: THREE.DoubleSide });
 
 			var obj = new THREE.Mesh(geometry, material);
+			console.log(homes[i])
 			obj.rotation.x = Math.PI / 2;
-			obj.position.set(homes[i][0], homes[i][1], homes[i][2] + (height / 2));
-			v._homeMarker = obj;
-			this.scene.add(v._homeMarker);
+			obj.position.set(homes[i][0], homes[i][1], /* homes[i][2] + */ (height / 2));
+			this._homes.push(obj);
+			this.scene.add(obj);
 		}
 
 	}
@@ -411,7 +420,10 @@ class WorldRenderer {
 		for(var i = 0; i < this._vehicles.length; i++) {
 			this._vehicles[i].render();
 			this._vehicles[i].object().visible = this.options.showVehicles;
-			this._vehicles[i]._path.visible = this.options.showTrajectories;
+		}
+
+		for(var i = 0; i < this._paths.length; i++) {
+			this._paths[i].visible = this.options.showTrajectories;
 		}
 
 		this.renderer.render(this.scene, this.camera);

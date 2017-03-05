@@ -1,92 +1,99 @@
-var React = require('react');
+var React = require('react'),
+	StatsSection = require('./stats');
 
 require('./style.css')
 
 var PropertiesPane = React.createClass({
 
-	render: function(){
+	onFileChanged: function(e) {
+		var p = this.props.parent;
 
+		var i = e.target.value;
+
+		var cue = p.state.cue;
+		if(p.state.availableFiles[i].breakpoints.indexOf(cue) < 0) {
+			cue = 0;
+		}
+
+		p.setState({filenameI: e.target.value, cue: cue});
+
+	},
+
+	render: function() {
+
+		var p = this.props.parent;
+
+		var initialState = false, playing = false;
+
+
+		var cues = [];
+		if(p.state.filenameI < p.state.availableFiles.length) {
+			cues = p.state.availableFiles[p.state.filenameI].breakpoints;
+		}
+
+		var someArmed = false;
+		if(p.state.stats && p.state.stats.vehicles.length >= 1) {
+			if(p.state.stats.vehicles[0].armed)
+				someArmed = true;
+		}
 
 		return (
-			<div className="ta-pane">
-
-
+			<div className="ta-pane" style={{height: '100%', overflowY: 'scroll', overflowX: 'hidden', marginRight: -15 /* This margin will hide the scroll bar */}}>
 
 				<div className="ta-pane-header">
-					Properties
+					Input
 
 					<div style={{float: 'right'}}>
 						<i className="fa fa-caret-square-o-left" />
 					</div>
 				</div>
-				<div class="ta-pane-body">
 
-					<div>
-						<select></select>
-
-
+				<div className="ta-pane-body" style={{padding: 5}}>
+					<div className="form-group">
+						<span>File</span>
+						<select className="form-control" value={p.state.filenameI} onChange={this.onFileChanged}>
+							{p.state.availableFiles.map((f, i) => <option key={i} value={i}>{f.fileName}</option> )}
+						</select>
 					</div>
-
-
-
-					<div className="ta-props" style={{fontSize: 12}}>
-						<div className="ta-props-header">
-							<i className="fa fa-minus-square-o" />&nbsp;
-							Settings
-						</div>
-						<div>
-							<div className="ta-prop">
-								Speed:
-								<div style={{float: 'right'}}>
-									<input className="transparent-input" style={{width: 40}} type="number" value={35} />%
-								</div>
+					<div className="row">
+						<div className="col-sm-6">
+							<div className="form-group">
+								<span>Breakpoint</span>
+								<select className="form-control" value={p.state.cue} onChange={(e) => p.setState({cue: e.target.value})}>
+									{cues.map((c, i) => <option key={i} value={c.number}>{c.name}</option>)}
+								</select>
 							</div>
 						</div>
-
-
-					</div>
-
-					<div className="ta-props" style={{fontSize: 12}}>
-						<div className="ta-props-header">
-							<i className="fa fa-minus-square-o" />&nbsp;
-							Points
+						<div className="col-sm-6">
+							<div className="form-group">
+								<span>Scale</span>
+								<input className="form-control" type="number" step="0.1" min="0" max="4" value={p.state.scale} onChange={(e) => p.setState({scale: e.target.value})} />
+							</div>
 						</div>
-						<div>
-							{[1,2,3].map(function(pt, i){
-
-								return (
-									<div className="ta-prop">
-										<span style={{fontWeight: 'bold', paddingRight: 10}}>
-											{i+1}:
-										</span>
-										<span>
-											x: <input className="transparent-input" style={{width: 40}} type="number" value={0} />
-										</span>
-										<span>
-											y: <input className="transparent-input" style={{width: 40}} type="number" value={0} />
-										</span>
-										<span>
-											z: <input className="transparent-input" style={{width: 40}} type="number" value={2} />
-										</span>
-										<span style={{float: 'right'}}>
-											<i className="fa fa-times" />
-										</span>
-										<br />
-										<span style={{paddingLeft: 20}}>
-											Time: <input className="transparent-input" style={{width: 80}} type="number" value={0.43} />s
-										</span>
-									</div>
-								);
-
-							})}
-						</div>
-
-
 					</div>
-
-
+					<button className="btn btn-sm btn-primary" style={{width: '100%'}} onClick={p.load}>Load File</button>
 
 				</div>
+
+				<div className="ta-pane-header">
+					Controls
+				</div>
+				<div className="ta-pane-body" style={{padding: 5}}>
+					<div className="btn-group btn-group-sm" style={{width: '100%'}}>
+						{someArmed? (
+							<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.play}><i className="fa fa-play" style={{paddingRight: 5}} /> Play</button>
+						) : (
+							<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.prepare}>Takeoff</button>
+						)}
+						<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.pause}><i className="fa fa-pause" style={{paddingRight: 5}} /> Pause</button>
+						<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.stop}><i className="fa fa-stop" style={{paddingRight: 5}} /> Stop</button>
+					</div>
+
+					<button className="btn btn-sm btn-danger" onClick={p.kill} style={{width: '100%', marginTop: 5}}>Kill</button>
+				</div>
+
+				{p.state.stats? <StatsSection parent={p} /> : null}
+
 			</div>
 		);
 	}

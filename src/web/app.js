@@ -2,7 +2,8 @@ var React = require('react'),
 	Navbar = require('./navbar'),
 	WorldView = require('./world'),
 	Timeline = require('./timeline'),
-	PropertiesPane = require('./properties');
+	PropertiesPane = require('./properties'),
+	Socket = require('./socket');
 
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
@@ -20,38 +21,59 @@ var App = React.createClass({
 	},
 
 
-	onPlayerReady: function(player){
-		this.player = player;
+	onRendererReady: function(renderer){
+		this.renderer = renderer;
+
+		Socket.on('msg', function(data) {
+			data = JSON.parse(data);
+
+			if(data.type == 'status') {
+				renderer.update({vehicles: data.vehicles});
+			}
+			else if(data.type == 'load_reply') {
+				renderer.setPaths(data.paths);
+				renderer.setHomes(data.target_positions);
+			}
+
+
+
+		})
+
+
+		this.forceUpdate();
 
 	},
 
 	changeView: function(name){
 
-		var cam = this.player.camera;
+		var cam = this.renderer.camera;
 
-		if(name == 'top'){
+		if(name == 'top') {
 			cam.rotation.x = 0;
-			cam.rotation.y = 0; //Math.Pi;
-			cam.rotation.z = Math.Pi; //-Math.Pi/ 2;
+			cam.rotation.y = 0;
+			cam.rotation.z = Math.Pi;
 
 			cam.position.y = 0;
 			cam.position.x = 0;
 			cam.position.z = 6;
 		}
-		else if(name == 'front'){
-			cam.rotation.x = -Math.Pi / 2;
+		else if(name == 'front') {
+			cam.rotation.x = 0;
 			cam.rotation.y = 0;
 			cam.rotation.z = 0;
 
-
-			cam.position.y = 6;
+			cam.position.y = -6;
 			cam.position.x = 0;
 			cam.position.z = 0;
-
+		}
+		else if(name == 'right') {
+			cam.position.y = 0;
+			cam.position.x = 6;
+			cam.position.z = 0;
 		}
 
-		this.player.controls.update();
-		this.player.render();
+		this.renderer.controls.update();
+		this.renderer.render();
 
 
 	},
@@ -69,6 +91,7 @@ var App = React.createClass({
 								<table style={{width: '100%', height: '100%'}}>
 									<tbody>
 										<tr>
+											{/*
 											<td style={{width: 200, borderRight: '2px solid #222', verticalAlign: 'top'}}>
 												{/*
 													Drone list
@@ -76,15 +99,32 @@ var App = React.createClass({
 													- Double click on to open up a modal for more settings
 													- 'SetHome' by dragging in the world (or expert coordinates)
 												*/}
+											{/*
 												<PropertiesPane />
 											</td>
+											*/}
 											<td style={{position: 'relative'}}>
+												<div style={{position: 'absolute', top: 10, right: 10}}>
+													<div className="btn-group">
+														<button onClick={() => this.changeView('top')} className="btn btn-default">Top</button>
+														<button onClick={() => this.changeView('front')} className="btn btn-default">Front</button>
+														<button onClick={() => this.changeView('right')} className="btn btn-default">Right</button>
+													</div>
 
-												<div className="btn-group" style={{position: 'absolute', top: 10, right: 10}}>
-													<button onClick={() => this.changeView('top')} className="btn btn-default">Top</button>
-													<button onClick={() => this.changeView('front')} className="btn btn-default">Front</button>
-													<button onClick={() => this.changeView('right')} className="btn btn-default">Right</button>
+
+													<div style={{color: '#444'}}>
+														<div>
+															<input type="checkbox" checked={this.renderer? this.renderer.options.showTrajectories : false} onChange={(e) => { this.renderer.options.showTrajectories = e.target.checked; this.forceUpdate() } } /> Show Trajectory Line
+														</div>
+														<div>
+															<input type="checkbox" checked={this.renderer? this.renderer.options.showVehicles : false} onChange={(e) => { this.renderer.options.showVehicles = e.target.checked; this.forceUpdate() } } /> Show Vehicles
+														</div>
+
+													</div>
+
+
 												</div>
+
 
 												<div className="btn-group" style={{position: 'absolute', bottom: 10, right: 10}}>
 													<button onClick={() => this.player.addPoint()} className="btn btn-default">+</button>
@@ -98,7 +138,7 @@ var App = React.createClass({
 													- allow drones to to dragged around (transform active point)
 													- stroke the current proposed trajectories for point-to-point plans
 												*/}
-												<WorldView onPlayerReady={this.onPlayerReady} />
+												<WorldView onRendererReady={this.onRendererReady} />
 											</td>
 										</tr>
 									</tbody>
@@ -106,6 +146,8 @@ var App = React.createClass({
 							</td>
 						</tr>
 
+
+						{/*
 						<tr>
 							<td style={{height: 200, borderTop: '2px solid #222'}}>
 								{/*
@@ -120,11 +162,12 @@ var App = React.createClass({
 									- Each sequential tab will be
 
 								*/}
-
-								<Timeline />
+						{/*
+								<Timeline parent={this} />
 
 							</td>
 						</tr>
+						*/}
 					</tbody>
 
 				</table>

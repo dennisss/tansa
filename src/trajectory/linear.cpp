@@ -24,10 +24,6 @@ LinearTrajectory::LinearTrajectory(Point x1, double t1, Point x2, double t2)
 	inner = PolynomialTrajectory::compute({x1}, t1, {x2}, t2);
 }
 
-LinearTrajectory::~LinearTrajectory() {
-	delete inner;
-}
-
 
 TrajectoryState LinearTrajectory::evaluate(double t) {
 	return inner->evaluate(t);

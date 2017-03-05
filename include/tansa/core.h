@@ -1,8 +1,7 @@
-#ifndef TANSA_CORE_H_
-#define TANSA_CORE_H_
+#ifndef TANSA_CORE_H
+#define TANSA_CORE_H
 
-#include "json.hpp"
-using json = nlohmann::json;
+#include "data.h"
 
 typedef void (*tansa_message_listener)(const json &data);
 

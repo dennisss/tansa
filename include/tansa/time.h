@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <time.h>
 
+#include <string>
+
+
 namespace tansa {
 
 /**
@@ -12,6 +15,8 @@ namespace tansa {
 class Time {
 
 public:
+	//Time();
+	Time() : Time(0, 0) { }
 	Time(int secs, int nsecs);
 	Time(double secs);
 
@@ -33,10 +38,14 @@ public:
 	 */
 	Time sinceStart();
 
+
+	friend Time operator+(Time lhs, const Time &rhs);
+
+
 	/**
 	 * Gets the time value in nanoseconds
 	 */
-	uint64_t nanos();
+	uint64_t nanos() const;
 
 	/**
 	 * Gets the time value in microseconds
@@ -46,14 +55,18 @@ public:
 	/**
 	 * Gets the time value in milliseconds
 	 */
-	uint64_t millis();
+	uint64_t millis() const;
 
 	/**
 	 * Gets the time in seconds (with millisecond floating point precision)
 	 * Note: only use this on a time difference. This may not be accurate from a clock time
 	 */
-	double seconds();
+	double seconds() const;
 
+	/**
+	 * Generates a string consisting of the date and the time in a user readable format relative to the current timezones
+	 */
+	std::string dateString() const;
 
 	/**
 	 * Sets the current time to be some other time.
@@ -62,10 +75,11 @@ public:
 	static void setTime(const Time &t, double factor = 0);
 
 private:
-	Time();
 
 	struct timespec val;
 };
+
+Time operator+(Time lhs, const Time &rhs);
 
 
 /**

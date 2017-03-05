@@ -239,6 +239,9 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 
 	this->estimator.correct(this->state, pos, v, t);
 
+	// TODO: Filter this?
+	this->state.orientation = orient;
+
 
 	Vector3d pos_ned = enuToFromNed() * pos;
 	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(baseToFromAirFrame());
@@ -278,11 +281,11 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	lastTrackTime = t;
 }
 
-State Vehicle::arrival_state() {
+ModelState Vehicle::arrival_state() {
 	if(params.latency == 0.0)
 		return this->state;
 
-	State newstate = this->state;
+	ModelState newstate = this->state;
 
 	Time eta(Time::now().seconds() + params.latency);
 
@@ -352,6 +355,37 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 	send_message(&msg);
 }
 
+void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
+
+	Quaterniond att_ned = Quaterniond(enuToFromNed()) * att * Quaterniond(baseToFromAirFrame());
+
+	// TODO: This is redundant with setpoint_accel
+	const double hover = params.hoverPoint;
+	double thrust = accel_z * (hover / GRAVITY_MS);
+	if(thrust < 0.01)
+		thrust = 0.01;
+
+	float att_arr[4];
+	att_arr[0] = (float) att_ned.w();
+	att_arr[1] = (float) att_ned.x();
+	att_arr[2] = (float) att_ned.y();
+	att_arr[3] = (float) att_ned.z();
+
+	mavlink_message_t msg;
+	mavlink_msg_set_attitude_target_pack_chan(
+		255, 0, channel,
+		&msg,
+		0,
+		1, 1,
+		0b111, // Ignore body rates
+		att_arr,
+		0, 0, 0,
+		thrust
+	);
+
+	send_message(&msg);
+}
+
 void Vehicle::setpoint_zero() {
 	this->setpoint_accel(Vector3d(0,0, -GRAVITY_MS));
 }
@@ -368,6 +402,9 @@ void Vehicle::set_lighting(float top, float bottom) {
 		bottom,
 		0, 0, 0, 0, 0
 	);
+
+	lightState.resize(1);
+	lightState[0] = bottom;
 
 	send_message(&msg);
 }
@@ -387,6 +424,94 @@ void Vehicle::set_beacon(bool on) {
 	);
 
 	send_message(&msg);
+}
+
+void Vehicle::set_rgb_lighting(int color) {
+
+	mavlink_message_t msg;
+	mavlink_msg_command_long_pack_chan(
+		255, 0, channel,
+		&msg,
+		1, 1,
+		MAV_CMD_RGBLED,
+		0,
+		color,
+		0, 0, 0, 0, 0, 0
+	);
+
+	lightState.resize(3);
+	lightState[0] = ((color >> 16) & 0xff) / 0xff;
+	lightState[1] = ((color >> 8) & 0xff) / 0xff;
+	lightState[2] = ((color >> 0) & 0xff) / 0xff;
+
+	send_message(&msg);
+}
+
+void Vehicle::hil_sensor(const Vector3d *accel, const Vector3d *gyro, const Vector3d *mag, const Time &t) {
+
+	Vector3d accel_ned, gyro_ned, mag_ned;
+	if(accel != NULL) {
+		accel_ned = enuToFromNed() * (*accel);
+	}
+	if(gyro != NULL) {
+		gyro_ned = enuToFromNed() * (*gyro);
+	}
+	if(mag != NULL) {
+		mag_ned = enuToFromNed() * (*mag);
+	}
+
+
+	mavlink_message_t msg;
+	mavlink_msg_hil_sensor_pack_chan(
+		255, 0, channel,
+		&msg,
+		t.micros(), // TODO: Check this
+		accel_ned.x(),
+		accel_ned.y(),
+		accel_ned.z(),
+		gyro_ned.x(),
+		gyro_ned.y(),
+		gyro_ned.z(),
+		mag_ned.x(),
+		mag_ned.y(),
+		mag_ned.z(),
+		0,
+		0,
+		0,
+		0,
+		// fields_updated
+		(accel != NULL? 0b111 : 0) | (gyro != NULL? 0b111000 : 0) | (mag != NULL? 0b111000000 : 0)
+	);
+
+	send_message(&msg);
+
+}
+
+void Vehicle::hil_gps(const Vector3d &latLongAlt, const Vector3d &vel, const Time &t) {
+
+	Vector3d vel_ned = enuToFromNed() * vel;
+
+	mavlink_message_t msg;
+	mavlink_msg_hil_gps_pack_chan(
+		255, 0, channel,
+		&msg,
+		t.micros(),
+		3,
+		latLongAlt(0) * 1e7,
+		latLongAlt(1) * 1e7,
+		latLongAlt(2) * 1000,
+		65535,
+		65535,
+		65535,
+		vel_ned.x() * 100,
+		vel_ned.y() * 100,
+		vel_ned.z() * 100,
+		65535,
+		255
+	);
+
+	send_message(&msg);
+
 }
 
 /*
@@ -521,6 +646,21 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 		case MAVLINK_MSG_ID_TIMESYNC:
 			handle_message_timesync(msg);
+			break;
+
+
+		case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
+			mavlink_hil_actuator_controls_t ac;
+			mavlink_msg_hil_actuator_controls_decode(msg, &ac);
+
+			// ac.controls is an array of floats from 0..1 with the motor outputs commanded
+			ActuatorOutputs ao;
+			ao.outputs.resize(16, 0);
+			for(int i = 0; i < 16; i++) {
+				ao.outputs[i] = ac.controls[i];
+			}
+
+			this->publish(ao);
 			break;
 	}
 

@@ -41,23 +41,28 @@ namespace tansa {
 			state = StateInit;
 		}
 
-		plans.resize(n);
-		for (int i = 0; i < n; i++) {
-			plans[i] = startIndices[i];
-		}
-
-		lightCounters.resize(n);
-		for(auto &lc : lightCounters) {
-			lc = 0;
-		}
-
-		pauseIndices.resize(n);
-		for(auto &pi : pauseIndices){
-			pi = 0;
-		}
-
 		transitionStarts.resize(n, Time(0,0));
 	}
+
+void JocsPlayer::reset() {
+	int n = vehicles.size();
+
+	plans.resize(n);
+	for (int i = 0; i < n; i++) {
+		plans[i] = startIndices[i];
+	}
+
+	lightCounters.resize(n);
+	for(auto &lc : lightCounters) {
+		lc = 0;
+	}
+
+	pauseIndices.resize(n);
+	for(auto &pi : pauseIndices){
+		pi = 0;
+	}
+}
+
 
 	bool JocsPlayer::canLoad() {
 		for (auto s : states) {
@@ -74,12 +79,16 @@ namespace tansa {
 		return true;
 	}
 
-	/**
-	 * Load JOCS data from a specified path
-	 */
-	void JocsPlayer::loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds,
-									  int start){
-		cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
+void JocsPlayer::loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start){
+	cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
+	Choreography *choreography = parse_csv(jocsPath.c_str(), scale);
+	this->loadChoreography(choreography, jocsActiveIds, start);
+}
+
+/**
+* Load JOCS data from a specified path
+*/
+void JocsPlayer::loadChoreography(Choreography *chor, const std::vector<unsigned> &jocsActiveIds, int start) {
 		if (!this->canLoad()) {
 			return;
 		}
@@ -88,7 +97,7 @@ namespace tansa {
 		this->jocsActiveIds = jocsActiveIds;
 		landed = false;
 
-		currentJocs = parse_csv(jocsPath.c_str(), scale);
+		currentJocs = chor;
 		homes = currentJocs->homes;
 		actions = currentJocs->actions;
 		lightActions = currentJocs->lightActions;
@@ -120,7 +129,6 @@ namespace tansa {
 
 		int n = jocsActiveIds.size();
 
-
 		// Check for state transitions
 		if (states[0] == StateInit) {
 			// No implicit transitions
@@ -149,10 +157,13 @@ namespace tansa {
 					double dur = (startPosition - endPosition).norm() / VEHICLE_ASCENT_MS;
 					states[i] = StateTakeoff;
 					transitionStarts[i] = start;
-					transitions[i] = new LinearTrajectory(startPosition, 0, endPosition, dur);
+					transitions[i] = Trajectory::Ptr( new LinearTrajectory(startPosition, 0, endPosition, dur) );
 				}
 				// TODO: Only grab the ones for the active drones
 				holdpoints = homes;
+
+				// Opening file for logging data
+				logfile.open("log/" + Time::realNow().dateString() + ".csv", ofstream::out);
 
 				return;
 			}
@@ -218,13 +229,15 @@ namespace tansa {
 				hovers[i]->setPoint(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
 				hovers[i]->control(t);
 			} else if (s == StateFlying) {
+				this->log();
+
 				double t = Time::now().since(start).seconds() - timeOffset + startOffset;
 				if (((int)t) % 5 == 0 && abs(t - (int)t) < 0.01) {
 					printf("%.2f\n",t);
 				}
 
 				MotionAction *motionAction = static_cast<MotionAction*>(actions[chorI][plans[i]]);
-				Trajectory *motion = motionAction->GetPath();
+				Trajectory::Ptr motion = motionAction->GetPath();
 
 				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
 					if (plans[i] == actions[chorI].size()-1) {
@@ -233,7 +246,7 @@ namespace tansa {
 						Point lastPoint = motion->evaluate(t).position;
 						Point groundPoint(lastPoint.x(), lastPoint.y(), 0);
 						double dur = lastPoint.z() / VEHICLE_DESCENT_MS;
-						transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, dur);
+						transitions[i] = Trajectory::Ptr( new LinearTrajectory(lastPoint, 0, groundPoint, dur) );
 						transitionStarts[i] = Time::now();
 						continue;
 					}
@@ -354,6 +367,7 @@ namespace tansa {
 			}
 		} else {
 			start = Time::now();
+			reset();
 		}
 
 		for(auto &s : states) {
@@ -391,7 +405,7 @@ namespace tansa {
 			Point lastPoint = holdpoints[jocsActiveIds[i]];
 			Point groundPoint = lastPoint; groundPoint.z() = 0;
 			double dur = lastPoint.z() / VEHICLE_DESCENT_MS;
-			transitions[i] = new LinearTrajectory(lastPoint, 0, groundPoint, dur);
+			transitions[i] = Trajectory::Ptr( new LinearTrajectory(lastPoint, 0, groundPoint, dur) );
 			transitionStarts[i] = Time::now();
 		}
 	}
@@ -415,11 +429,6 @@ namespace tansa {
 
 		for (int i = 0; i < hovers.size(); i++) {
 			delete hovers[i];
-		}
-
-		// TODO: They will memory leak
-		for (int i = 0; i < transitions.size(); i++) {
-			delete transitions[i];
 		}
 	}
 
@@ -567,4 +576,17 @@ namespace tansa {
 		startOffset = startTime;
 		cout << "createdBreakpoint section: " << startOffset << endl;
 	}
+
+void JocsPlayer::log() {
+
+	logfile << Time::now().since(start).seconds() << " ";
+	for(Vehicle *v : vehicles) {
+		Vector3d pos = v->state.position;
+		logfile << pos.x() << "," << pos.y() << "," << pos.z() << ",";
+	}
+
+	logfile << endl;
+
+}
+
 }

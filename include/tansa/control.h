@@ -28,13 +28,19 @@ template<unsigned int N> class PID;
  */
 class PositionController : public Controller {
 public:
-	PositionController(Vehicle *v);
+	/**
+	 * Creates a position controller for a vehicle
+	 *
+	 * @param v
+	 * @param directAttitudeControl (optional) setting to true will directly control the attitude of the drone: this bypasses PX4 position controller safety features but is requested for close to inverted acrobatics. otherwise, acclerations will be fed to PX4
+	 */
+	PositionController(Vehicle *v, bool directAttitudeControl = true);
 	virtual ~PositionController() {}
 
 	/**
 	 * Specifies which trajectory should do followed
 	 */
-	void track(Trajectory *traj);
+	void track(Trajectory::Ptr traj);
 
 	virtual TrajectoryState getTargetState(double t);
 
@@ -49,8 +55,8 @@ protected:
 	PID<PointDims> *pid;
 
 private:
-	Trajectory *trajectory;
-
+	Trajectory::Ptr trajectory;
+	bool directAttitudeControl;
 };
 
 
@@ -60,6 +66,7 @@ public:
 	virtual ~HoverController() {}
 
 	void setPoint(const Point &p) { this->point = p; }
+	Point getPoint() { return this->point; }
 
 	virtual TrajectoryState getTargetState(double t);
 
@@ -72,6 +79,16 @@ public:
 
 private:
 	Point point;
+};
+
+
+class AdmittanceController : public HoverController {
+public:
+	AdmittanceController(Vehicle *v);
+	virtual ~AdmittanceController() {}
+
+	virtual void control(double t);
+
 };
 
 /**

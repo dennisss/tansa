@@ -9,12 +9,15 @@
 		"body-parser": "1.14.1",
 		"async": "latest",
 		"socket.io": "1.5.0",
-		"commander": "2.9.0"
+		"commander": "2.9.0",
+		"request": "2.80.0",
+		"formidable": "1.0.17"
 	},
 	"devDependencies": {
 		"webpack": "v2.1.0-beta.14",
 		"webpack-dev-server": "1.14.1",
 		"progress-bar-webpack-plugin": "1.8.0",
+		"babel-core": "6.21.0",
 		"babel-loader": "6.2.4",
 		"style-loader": "0.13.0",
 		"css-loader": "0.23.1",
@@ -30,12 +33,14 @@
 		"babel-preset-stage-1": "6.5.0",
 		"babel-plugin-transform-runtime": "6.9.0",
 		"chokidar": "1.6.0",
-		"three": "0.78.0",
+		"three": "0.84.0",
 		"react": "15.1.0",
 		"react-dom": "15.1.0",
 		"material-ui": "0.15.0",
 		"jquery": "2.1.4",
 		"roboto-fontface": "0.6.0",
-		"bootstrap": "3.3.6"
+		"bootstrap": "3.3.6",
+		"socket.io-client": "1.5.0",
+		"three-text2d": "0.3.2"
 	}
 }

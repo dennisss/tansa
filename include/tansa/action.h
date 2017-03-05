@@ -95,8 +95,8 @@ public:
 	 * @param type Type of motion action that this is.
 	 * @return Motion action with given parameters
 	 */
-	MotionAction(DroneId id, Trajectory* t, ActionTypes type) : Action(id, type), path(t) { isCalculated = true; }
-	virtual ~MotionAction(){ delete path; }
+	MotionAction(DroneId id, Trajectory::Ptr t, ActionTypes type) : Action(id, type), path(t) { isCalculated = true; }
+	virtual ~MotionAction(){ }
 	/**
 	 * Get TrajectoryState of evaluating the path at a given time.
 	 * @param t The time in seconds that the path should be evaluated at.
@@ -106,7 +106,7 @@ public:
 	/**
 	 * @return A pointer to the trajectory object contained within this object.
 	 */
-	inline Trajectory* GetPath(){return path;}
+	inline Trajectory::Ptr GetPath(){return path;}
 	/**
 	 * @return The start time in seconds of this object's path.
 	 */
@@ -125,7 +125,7 @@ public:
 	inline Point GetEndPoint() const { return path->evaluate(path->endTime()).position; }
 
 private:
-	Trajectory* path;
+	Trajectory::Ptr path;
 };
 
 /**

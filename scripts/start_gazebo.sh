@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Starts up a Gazebo server and client using the default empty world and spawning plugin
+# This script blocks until a sigint (ctrl-c) is received
+# If the enviroment variable HEADLESS=1 is specified, then the official gazebo client is not started
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 root_path="$SCRIPT_DIR/.." # Root of this repository
 

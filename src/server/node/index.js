@@ -1,5 +1,6 @@
 var http = require('http'),
-	express = require('express');
+	express = require('express'),
+	request = require('request');
 
 var app = express();
 var server = http.Server(app);
@@ -15,6 +16,11 @@ app.use('/node_modules', express.static(__dirname + '/../../../node_modules'));
 
 app.use(express.static(__dirname + '/../../../public'));
 
-server.listen(3000, function () {
-	console.log('Example app listening on port 3000!');
+app.use('/assets', function(req, res) {
+	var url = 'http://127.0.0.1:4200/assets'+ req.url;
+	req.pipe(request(url)).pipe(res);
+});
+
+server.listen(4000, function () {
+	console.log('Communications server started on port 4000');
 });

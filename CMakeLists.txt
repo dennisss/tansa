@@ -1,16 +1,23 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tansa)
 
+option(BUILD_GAZEBO "Builds support for the Gazebo simulator" ON)
+
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(CGAL REQUIRED)
+find_package(Cplex)
 
 include_directories(
 	${EIGEN3_INCLUDE_DIR}
 	include
 )
+
+set(CGAL_DONT_OVERRIDE_CMAKE_FLAGS TRUE CACHE BOOL "Force CGAL to maintain CMAKE flags")
+include(${CGAL_USE_FILE})
 
 
 ######## Headers and libraries for prebuilt socket.io client ########
@@ -23,13 +30,13 @@ link_directories(
 	build_socketio_cpp
 )
 
-
 ######## Main Tansa Library ########
 
 add_library(
 	tansa SHARED
 
 	src/core/core.cpp
+	src/core/data.cpp
 	src/core/vehicle.cpp
 	src/core/vehicle_time.cpp
 	src/core/vehicle_params.cpp
@@ -40,9 +47,11 @@ add_library(
 	src/control/hover.cpp
 	src/estimation/linear_complementary.cpp
 	src/trajectory/polynomial.cpp
+	src/trajectory/minsnap.cpp
 	src/trajectory/linear.cpp
-	src/trajectory/circle.cpp
+	src/trajectory/ellipse.cpp
 	src/trajectory/point.cpp
+	src/trajectory/spiral.cpp
 	#src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
 	src/mocap/registration.cpp
@@ -55,6 +64,17 @@ add_library(
 	src/trajectory/strobe.cpp
 	src/control/lightcontrol.cpp
 	src/jocs/csv.cpp
+	src/control/admittance.cpp
+
+	# Simulation
+	src/simulate/simulation.cpp
+	src/simulate/motor.cpp
+	src/simulate/model.cpp
+	src/simulate/multirotor.cpp
+	src/simulate/firmware.cpp
+	src/simulate/battery.cpp
+	src/simulate/sensors/imu.cpp
+	src/simulate/sensors/gps.cpp
 )
 
 target_link_libraries(
@@ -63,16 +83,34 @@ target_link_libraries(
 
 	sioclient
 	${Boost_LIBRARIES}
+	${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} # TODO: Also add CGAL_CXX_* flags
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")
 
 
+## We can optionally build with CPLEX
+if(CPLEX_FOUND)
+	target_include_directories(
+		tansa PRIVATE
+		${CPLEX_INCLUDE_DIRS}
+	)
+
+	target_link_libraries(
+		tansa
+		${CPLEX_LIBRARIES}
+	)
+
+	add_definitions(-DUSE_CPLEX)
+endif()
+
 
 ######## Extensions ########
+if(BUILD_GAZEBO)
+	add_subdirectory(src/gazebo)
 
-add_subdirectory(src/gazebo)
-
+	add_definitions(-DUSE_GAZEBO)
+endif()
 
 ######## Test Suite ########
 
@@ -100,6 +138,7 @@ add_test(TansaTests test_tansa)
 add_executable(
 	gcs
 
+	src/custom.cpp
 	src/gcs.cpp
 )
 
@@ -108,26 +147,47 @@ target_link_libraries(
 
 	pthread
 	tansa
-	tansa_gazebo
 )
+
+if(BUILD_GAZEBO)
+	target_link_libraries(
+		gcs
+		tansa_gazebo
+	)
+endif()
 
 set_target_properties(gcs PROPERTIES COMPILE_FLAGS "-std=c++1y")
 
 
+###### Simple Demo ######
+add_executable(
+	simple
 
-########## Targets for Gazebo Simulation ###########
-
-
-set(rotors_description_dir "${CMAKE_CURRENT_SOURCE_DIR}/lib/Firmware/Tools/sitl_gazebo/models/rotors_description")
-set(scripts_dir "${CMAKE_CURRENT_SOURCE_DIR}/lib/Firmware/Tools/sitl_gazebo/scripts")
-set(models_dir "${CMAKE_CURRENT_SOURCE_DIR}/config/gazebo/models")
-set(design_dir "${CMAKE_CURRENT_SOURCE_DIR}/design/x340")
-add_custom_command(OUTPUT ${models_dir}/x340/x340.sdf
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND rm -f ${models_dir}/x340/x340.sdf
-	COMMAND python ${scripts_dir}/xacro.py -o  ${models_dir}/x340/x340_base.urdf  ${models_dir}/x340/x340_base.xacro rotors_description_dir:=${rotors_description_dir} models_dir:=${models_dir} design_dir:=${design_dir}
-	COMMAND gz sdf -p  ${models_dir}/x340/x340_base.urdf >> ${models_dir}/x340/x340.sdf
-	COMMAND rm -f ${models_dir}/x340/x340_base.urdf
+	src/simple.cpp
 )
 
-add_custom_target(sdf ALL DEPENDS ${models_dir}/x340/x340.sdf)
+target_link_libraries(
+	simple
+
+	pthread
+	tansa
+)
+
+set_target_properties(simple PROPERTIES COMPILE_FLAGS "-std=c++1y")
+
+
+###### Simulation Test ######
+add_executable(
+	sim
+
+	src/simulate.cpp
+)
+
+target_link_libraries(
+	sim
+
+	pthread
+	tansa
+)
+
+set_target_properties(sim PROPERTIES COMPILE_FLAGS "-std=c++1y")

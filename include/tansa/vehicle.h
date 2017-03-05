@@ -1,9 +1,10 @@
-#ifndef TANSA_VEHICLE_H_
-#define TANSA_VEHICLE_H_
+#ifndef TANSA_VEHICLE_H
+#define TANSA_VEHICLE_H
 
 #include "time.h"
 #include "estimation.h"
 #include "trajectory.h"
+#include "channel.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -13,6 +14,7 @@
 
 #include <Eigen/Dense>
 #include <string>
+#include <memory>
 
 using namespace Eigen;
 using namespace std;
@@ -21,13 +23,23 @@ namespace tansa {
 
 #define MAV_CMD_BEACON MAV_CMD_USER_1
 
-#define GRAVITY_MS 9.8
+#define MAV_CMD_RGBLED MAV_CMD_USER_2
 
 struct BatteryStatus {
+	static const int ID = 1;
+
 	double voltage = -1;
 	double percent = -1;
 
 };
+
+struct ActuatorOutputs {
+	static const int ID = 2;
+
+	vector<float> outputs;
+};
+
+
 
 struct VehicleParameters {
 
@@ -52,9 +64,11 @@ struct VehicleForwarder {
 /**
  * Reprents a single remote quadcopter connected via UDP
  */
-class Vehicle {
+class Vehicle : public Channel {
 
 public:
+	typedef std::shared_ptr<Vehicle> Ptr;
+
 	/**
 	 * Initializes a new vehicle and
 	 *
@@ -122,6 +136,8 @@ public:
 	 */
 	void set_beacon(bool on);
 
+	void set_rgb_lighting(int color);
+
 	/**
 	 * Fuses motion capture information into the current position estimate
 	 */
@@ -130,7 +146,7 @@ public:
 	/**
 	 * Computes the approximate state of the vehicle upon receiving a message sent right now
 	 */
-	State arrival_state();
+	ModelState arrival_state();
 
 	// TODO: Change these to use Point
 	// By default, this will preserve the yaw
@@ -138,10 +154,20 @@ public:
 
 	void setpoint_accel(const Vector3d &a);
 
+	void setpoint_attitude(const Quaterniond &att, double accel_z);
+
 	void setpoint_zero();
 
 	// Should do something like waiting for a response
 	void ping();
+
+
+	/**
+	 * For sending simulated sensor data to the vehicle
+	 */
+	void hil_sensor(const Vector3d *acc, const Vector3d *gyro, const Vector3d *mag, const Time &t);
+
+	void hil_gps(const Vector3d &latLongAlt, const Vector3d &vel, const Time &t);
 
 
 	// Connection state
@@ -151,7 +177,7 @@ public:
 	string mode;
 
 	// Physical State : used for visualization and trajectory control
-	State state;
+	ModelState state;
 	LinearComplementaryEstimator estimator;
 
 	ControlInput lastControlInput;
@@ -159,7 +185,8 @@ public:
 	Time lastControlTime;
 
 	// State as observed by the onboard processor
-	State onboardState;
+	ModelState onboardState;
+	vector<double> lightState;
 
 	BatteryStatus battery;
 

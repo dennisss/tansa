@@ -213,7 +213,7 @@ Action* parse_hover_action(double start, double end, unsigned long droneid, cons
 	hover.z() = std::atof(split_line[5].c_str());
 	return new MotionAction(
 					(unsigned) droneid,
-					new LinearTrajectory(hover*length_conversion, start, hover*length_conversion, end),
+					make_shared<LinearTrajectory>(hover*length_conversion, start, hover*length_conversion, end),
 					ActionTypes::Hover);
 }
 
@@ -227,7 +227,7 @@ Action* parse_line_action(double start, double end, unsigned long droneid, const
 	end_point.z() = std::atof(split_line[11].c_str());
 	return new MotionAction(
 			(unsigned) droneid,
-			new LinearTrajectory(start_point*length_conversion, start, end_point*length_conversion, end),
+			make_shared<LinearTrajectory>(start_point*length_conversion, start, end_point*length_conversion, end),
 			ActionTypes::Line);
 }
 
@@ -241,7 +241,7 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
 	origin.z() = std::atof(split_line[11].c_str());
 	return new MotionAction(
 			(unsigned) droneid,
-			new CircleTrajectory(origin * length_conversion, radius * length_conversion ,theta1 * angle_conversion, start, theta2 * angle_conversion, end),
+			make_shared<CircleTrajectory>(origin * length_conversion, radius * length_conversion ,theta1 * angle_conversion, start, theta2 * angle_conversion, end),
 			ActionTypes::Circle);
 }
 

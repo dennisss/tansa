@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cassert>
+
 #include <CGAL/basic.h>
 #include <CGAL/QP_models.h>
 #include <CGAL/QP_functions.h>
@@ -15,41 +16,38 @@ typedef CGAL::Gmpz ET;
 typedef CGAL::MP_Float ET;
 #endif
 // program and solution types
-typedef CGAL::Quadratic_program<int> Program; // TODO: This will need to change
+typedef CGAL::Quadratic_program<double> Program;
 typedef CGAL::Quadratic_program_solution<ET> Solution;
 
 
-/*
-	Contains the generator of a minimum snap trajectory through points in the differentially flat space [x, y, z, yaw]
-
-	-
-
-	Given:
-	- A desired polynomial order
-	- A set of points [p0, pN]
-	- Desired velocities through v0 and vN
-*/
+bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost);
 
 
-/**
- * Generates a piecewise polynomial trajectory with minimal snap through the given waypoints at the given times
- *
- * See 'Polynomial Trajectory Planning for Quadrotor Flight' by Richter et. al. for a full derivation.
- * This is the constrained QP formulation
- *
- * Currently this assumes we start at rest and end at rest
- */
-void compute_min_snap(const vector<Point> &x, const vector<double> &t) {
+namespace tansa {
+
+
+bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost);
+
+
+bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory::Ptr *out, double *cost) {
 
 	// Number of coefficients generated segments : c_(n-1) * t^(n-1) + c_(n-2) * t^(n-2) + ... + c_0
 	// Note that in the Richter paper, big N is the polynomial order (N-1)
 	int N = 10;
 
+	// Number of intermediate points for each corridor
+	int n_intermediate = 8;
+
 	int M = x.size() - 1; // number of segments
 
 	if(t.size() != x.size()) {
 		printf("Wrong number of times provided\n");
-		return;
+		return false;
+	}
+
+	if(corridors.size() > M) {
+		printf("Too many corridors\n");
+		return false;
 	}
 
 	/*
@@ -68,6 +66,9 @@ void compute_min_snap(const vector<Point> &x, const vector<double> &t) {
 		// Sub-cost matrix for derivatives of this segment
 		MatrixXd Qs(N, N);
 
+		// Duration of this segment
+		double T = t[s+1] - t[s];
+
 		// The order of the derivative we are minimizing
 		// Currently the cost of all other derivates is 0
 		int r = R;
@@ -78,15 +79,13 @@ void compute_min_snap(const vector<Point> &x, const vector<double> &t) {
 					Qs(i, l) = 0;
 					continue;
 				}
-				// else i >= r && l >= r
+				// below: else i >= r && l >= r
 
 				int pi = 1;
-				for(int m = 0; m < r - 1; m++) {
+				for(int m = 0; m <= r - 1; m++) {
 					pi *= (i - m) * (l - m);
 				}
 
-				// Duration of this segment
-				double T = t[i+1] - t[i];
 
 				int e = i + l - 2*r + 1;
 				Qs(i, l) = 2.0 * ((double) pi) * pow(T, e) / ((double) e);
@@ -98,54 +97,248 @@ void compute_min_snap(const vector<Point> &x, const vector<double> &t) {
 	}
 
 
-	// Build constraints (one axis at a time)
-	// Of the form Ax = b
-	// - start and stop: pos, vel, accel, jerk constraints
-	// - continuitity of all intermediate positions derivatives
-	// Note: A fixed position for an internal point would appear twice
-	// - so we will have two of most of the position
-	// -> (M+1)*(R-1) + 
-	// -> (M+1)*r
-	int nc = (M+1)*R; // Number of contraints
 
+
+	// Building constraints and solving each axis
+
+	vector<VectorXd> xs;
+	VectorXd costs(PointDims);
 
 	// Iterate over each axis
-	for(int d = 0; d < PointDims; d++) {
+	for(unsigned d = 0; d < PointDims; d++) {
 
-		// Setup constraints
+		// For holding the constrains (it is easier to vectorize them them put them in a matrix right away)
+		vector<MatrixXd> Arows;
+		vector<double> brows;
+		vector<CGAL::Comparison_result> rels; // relation between A and b
 
-		MatrixXd A = MatrixXd::Zero(nc, N * M);
-		VectorXd b = MatrixXd::Zero(nc);
+		#define EmptyConstraintRow MatrixXd::Zero(1, M*N)
 
-
+		// Fill A
+		// Loop over segments
 		for(int i = 0; i < M; i++) {
 
 			// Start of end time vectors for this segment
-			VectorXd tvecS = powvec(0, N);
-			VectorXd tvecE = powvec(t[i+1] - t[i]);
+			VectorXd tvecS = powvec(0, N); // This is the same for every segment
+			VectorXd tvecE = powvec(t[i+1] - t[i], N);
 
-			// First R rows for the start
-			for(int j = 0; j < R; j++) {
-				//
-				A.block<> = diffvec(tvecS, j)
 
+			// Loop over derivative degree
+			for(int j = 0; j <= R; j++) {
+
+				bool startConstrained = x[i].isConstrained(j), // j == 0 || i == 0, //x[i].size() < j,
+					 endConstrained = x[i+1].isConstrained(j); // j == 0 || i == M - 1; //x[i+1].size() < j;
+
+				if(startConstrained) {
+					MatrixXd a = EmptyConstraintRow;
+					a.block(0, i*N, 1, N) = diffvec(tvecS, j).transpose();
+					double b = x[i][j](d);
+					Arows.push_back(a); brows.push_back(b);
+					rels.push_back(CGAL::EQUAL);
+				}
+				if(endConstrained) {
+					MatrixXd a = EmptyConstraintRow;
+					a.block(0, i*N, 1, N) = diffvec(tvecE, j).transpose();
+					double b = x[i+1][j](d);
+					Arows.push_back(a); brows.push_back(b);
+					rels.push_back(CGAL::EQUAL);
+				}
+
+				// Add continuity constraint for all internal points between segments
+				if(!endConstrained && i < M - 1) {
+					MatrixXd a = EmptyConstraintRow;
+					a.block(0, i*N, 1, N) = diffvec(tvecE, j).transpose(); // +derivative at end
+					a.block(0, (i+1)*N, 1, N) = -1.0 * diffvec(tvecS, j).transpose(); // this technically is wrong but works as tvecS is constant between segments (but really should be recomputed for the next segment)
+
+					double b = 0;
+					Arows.push_back(a); brows.push_back(b);
+					rels.push_back(CGAL::EQUAL);
+
+				}
 			}
 
 
+			// Adding corridor constraint
+			if(i < corridors.size() && corridors[i] > 0) {
+
+				// Unit vector along segment
+				Vector3d ti = (x[i+1][0] - x[i][0]).normalized();
+
+				// Loop through intermediate points;
+				for(int j = 0; j < n_intermediate; j++) {
+
+					// Time for this intermediate point
+					double tj = ((1.0*j) / (1 + n_intermediate)) * (t[i+1] - t[i]);
+
+					// Vectorized powers of time (represents the matrix coefficients for position)
+					VectorXd tvec = powvec(tj, N);
+
+
+					// distance from segment:
+					// -> (p(t) - waypoint) - ((p(t) - waypoint) dot ray)
+					// -> (tvec - waypoint_x) - (tvec * ray_x) - waypoint * ray_x <= delta
+					// (tvec - tvec*ray_x) <= delta + waypoint_x + (waypoint_x * ray_x)
+					MatrixXd a = EmptyConstraintRow;
+					a.block(0, i*N, 1, N) = diffvec(tvec, 0); // * (1 - x[i][0](d));
+					double bp = corridors[i] + x[i][0](d) * (1 + ti(d)); // for d <= delta
+					double bn = -corridors[i] + x[i][0](d) * (1 + ti(d)); // for d >= -delta
+
+					Arows.push_back(a); brows.push_back(bp); rels.push_back(CGAL::SMALLER);
+					Arows.push_back(a); brows.push_back(bn); rels.push_back(CGAL::LARGER);
+				}
+			}
 		}
 
 
+		// Setup constraints
+		unsigned nc = Arows.size();
+		MatrixXd A = MatrixXd::Zero(nc, N * M);
+		VectorXd b = VectorXd::Zero(nc);
+
+		for(int i = 0; i < nc; i++) {
+			A.block(i, 0, 1, N*M) = Arows[i];
+			b(i) = brows[i];
+		}
+
+		VectorXd x;
+		double cost;
+
+#ifdef USE_CPLEX
+		bool success = qp_solve_cplex(Q, A, b, rels, x, cost);
+#else
+		bool success = qp_solve(Q, A, b, rels, x, cost);
+#endif
+
+		if(!success) {
+			return false;
+		}
+
+		xs.push_back(x);
+		costs(d) = cost;
 	}
 
 
-	// essentially, I need to reuse the diffvec() stuff from polynomial.cpp to set the d
+	// Creating the trajectory objects
+	vector<Trajectory::Ptr> segs;
+	for(int i = 0; i < M; i++) {
+		VectorXd cs[PointDims];
+		for(int d = 0; d < PointDims; d++) {
+			cs[d] = xs[d].segment(i*N, N);
+		}
 
-	// continuity constraints should look something like [0, 0, .., Aderiv, -Bderiv, .. 0, 0,] = [0]
+		Trajectory::Ptr poly( new PolynomialTrajectory(cs, 0, t[i+1] - t[i]) );
+		segs.push_back( poly );
+	}
 
+	if(out != NULL)
+		*out = make_shared<PiecewiseTrajectory>( segs, t[0], t[t.size() - 1] );
 
+	if(cost != NULL)
+		*cost = costs.norm();
 
-
+	return true;
 }
+
+bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, double ts, double te, vector<double> corridors, Trajectory::Ptr *out) {
+
+	// Number of segments
+	int m = x.size() - 1;
+
+	// Current best trajectory
+	vector<double> t;
+	Trajectory::Ptr tr;
+	double f;
+
+	// Initially try a uniform time distribution
+	for(int i = 0; i < x.size(); i++) {
+		t.push_back(ts + i * ((te - ts) / m) ); // TODO: Instead base this on the distance between points
+	}
+
+	// Compute initial cost
+	if(!compute_minsnap_mellinger11(x, t, corridors, &tr, &f))
+		return false;
+
+	// Set of all directions in which we will descend
+	vector<VectorXd> g;
+	for(int i = 0; i < m; i++) {
+		VectorXd gi(m);
+
+		for(int j = 0; j < m; j++) {
+			gi(j) = i == j? 1.0 : (- 1.0 / (m - 1));
+		}
+
+		g.push_back(gi);
+	}
+
+	// Max number of iterations to do
+	int maxit = 7;
+	// Current incrementation step in seconds : initially set to half the average segment length
+	double h = 0.5 * ((te - ts) / m);
+
+	for(int it = 0; it < maxit; it++) {
+
+		// starting time vector for this iteration
+		vector<double> T = t;
+
+		// Try every direction
+		for(int i = 0; i < g.size(); i++) {
+			Trajectory::Ptr trI;
+			double fI;
+
+			vector<double> ti;
+			ti.push_back(ts);
+			bool valid = true;
+			for(int j = 1; j < x.size(); j++) {
+				// Duration of this segment
+				double tseg = (T[j] - T[j - 1]) + h*g[i](j - 1);
+
+				// If negative, then it is impossible. Also if really small then we are probably going too fast and numerically unstable
+				if(tseg <= 0.01) {
+					valid = false;
+					break;
+				}
+
+				ti.push_back(ti[j - 1] + tseg);
+			}
+
+			cout << valid << endl;
+
+			if(!valid || !compute_minsnap_mellinger11(x, ti, corridors, &trI, &fI)) {
+				continue;
+			}
+
+			cout << fI << endl;
+
+			if(fI < f) {
+				tr = trI;
+				t = ti;
+				f = fI;
+			}
+		}
+
+		/*
+		// Cost changed by less than 1%: stop early
+		if(abs(f - F) / F < 0.01) {
+			break;
+		}
+		*/
+
+		// Decrease step size
+		h *= 0.6;
+	}
+
+	/*
+	for(auto ti : t ) {
+		cout << ti << " ";
+	}
+	cout << endl;
+	*/
+
+	*out = tr;
+
+	return true;
+}
+
 
 /*
 	Our QP is of the form:
@@ -155,27 +348,129 @@ void compute_min_snap(const vector<Point> &x, const vector<double> &t) {
 	In CGAL
 	Q becomes D
 */
-VectorXd qp_solve(MatrixXd Q, MatrixXd A, VectorXd b) {
 
-	// Solving the quadratic program
+bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost) {
 
-	// by default, we have a nonnegative QP with Ax <= b
-	Program qp(CGAL::EQUAL, true, 0, false, 0);
+	Program qp(CGAL::EQUAL, false, 0, false, 0);
 
-	// now set the non-default entries:
-	const int X = 0;
-	const int Y = 1;
-	qp.set_a(X, 0,  1); qp.set_a(Y, 0, 1); qp.set_b(0, 7);  //  x + y  <= 7
-	qp.set_a(X, 1, -1); qp.set_a(Y, 1, 2); qp.set_b(1, 4);  // -x + 2y <= 4
-	qp.set_u(Y, true, 4);                                   //       y <= 4
-	qp.set_d(X, X, 2); qp.set_d (Y, Y, 8); // !!specify 2D!!    x^2 + 4 y^2
-	qp.set_c(Y, -32);                                       // -32y
-	qp.set_c0(64);                                          // +64
+
+	// Copying values into program
+	for(int i = 0; i < Q.rows(); i++) {
+		for(int j = 0; j < Q.cols(); j++) {
+			qp.set_d(i, j, Q(i, j));
+		}
+	}
+
+	for(int i = 0; i < A.rows(); i++) {
+		for(int j = 0; j < A.cols(); j++) {
+			qp.set_a(j, i, A(i, j));
+		}
+		qp.set_b(i, b(i));
+		qp.set_r(i, rels[i]);
+	}
+
 	// solve the program, using ET as the exact type
 	Solution s = CGAL::solve_quadratic_program(qp, ET());
-	assert (s.solves_quadratic_program(qp));
+
+	if(s.is_infeasible() || !s.solves_quadratic_program(qp)) {
+		return false;
+	}
+
 	// output solution
-	std::cout << s;
-	return 0;
+	//std::cout << s << endl;
+
+	x.resize(A.cols());
+	int i = 0;
+	for(auto it = s.variable_values_begin(); it != s.variable_values_end(); it++) {
+		x(i) = CGAL::to_double(*it);
+		i++;
+	}
+
+	cost = CGAL::to_double(s.objective_value());
+
+	return true;
 
 }
+
+
+}
+
+#ifdef USE_CPLEX
+
+#define IL_STD
+
+#include <ilcplex/ilocplex.h>
+ILOSTLBEGIN
+
+bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost) {
+
+	IloEnv env;
+
+	IloModel model(env);
+	IloNumVarArray vars(env);
+	IloRangeArray cons(env);
+
+	// Adding all variables
+	for(int i = 0; i < Q.rows(); i++) {
+		vars.add(IloNumVar(env, -IloInfinity, IloInfinity));
+	}
+
+	// Adding objective matrix
+	IloExpr expr(env);
+	for(int i = 0; i < Q.rows(); i++) {
+		for(int j = 0; j < Q.cols(); j++) {
+			expr += Q(i, j) * vars[i]*vars[j];
+		}
+	}
+	model.add(IloMinimize(env, expr));
+
+	//cout << "Vars: " << Q.rows() << endl;
+	//cout << "Constraints: " << A.rows() << endl;
+
+	// Adding linear constraints
+	for(int i = 0; i < A.rows(); i++) {
+		IloExpr e(env);
+		for(int j = 0; j < A.cols(); j++) {
+			e += A(i, j) * vars[j];
+		}
+
+		if(rels[i] == CGAL::EQUAL)
+			cons.add(IloRange(env, b(i), e, b(i)));
+		else if(rels[i] == CGAL::LARGER)
+			cons.add(e >= b(i));
+		else if(rels[i] == CGAL::SMALLER) {
+			cons.add(e <= b(i));
+		}
+	}
+	model.add(cons);
+
+
+
+
+	IloCplex cplex(model);
+	cplex.setParam(IloCplex::RootAlg, IloCplex::Network); // ::Primal
+	cplex.setOut(env.getNullStream());
+
+	//cplex.exportModel("axis.lp");
+
+	// Optimize the problem and obtain solution.
+	if(!cplex.solve()) {
+		env.error() << "Failed to optimize LP" << endl;
+		return false;
+	}
+
+	IloNumArray vals(env);
+	cplex.getValues(vals, vars);
+	x.resize(A.cols());
+	for(int i = 0; i < A.cols(); i++) {
+		x(i) = vals[i];
+	}
+
+	cost = cplex.getObjValue();
+
+	env.end();
+
+	return true;
+}
+
+#endif

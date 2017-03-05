@@ -47,9 +47,12 @@ export class FlightControl extends React.Component<undefined, FlightControlState
 	}
 
 	public render(): JSX.Element {
+		// Only allow the 'liftoff'/prepare button to be enabled when the backend has been initialized AND all vehicles are connected.
+		const initialized = this.state.global.initialized && this.state.vehicles.every(vehicle => vehicle.connected);
+
 		const panel = (this.state.global.ready || this.state.global.playing || this.state.global.paused) ?
 			<FlightPanel socket={this.state.socket} globalStatus={this.state.global} /> :
-			<PreFlightPanel socket={this.state.socket} initialized={this.state.global.initialized} />;
+			<PreFlightPanel socket={this.state.socket} initialized={initialized} />;
 
 		return (
 			<div>

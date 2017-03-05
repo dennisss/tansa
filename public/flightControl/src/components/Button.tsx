@@ -12,6 +12,14 @@ export class Button extends React.Component<ButtonProps, undefined> {
 		super(props);
 	}
 
+	public shouldComponentUpdate(nextProps: ButtonProps): boolean {
+		return (
+			nextProps.containerClass !== this.props.containerClass ||
+			nextProps.disabled !== this.props.disabled ||
+			nextProps.iconClass !== this.props.iconClass
+		);
+	}
+
 	public render(): JSX.Element {
 		return (
 			<div className={this.props.containerClass}>

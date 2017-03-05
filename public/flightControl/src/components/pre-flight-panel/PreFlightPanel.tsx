@@ -37,6 +37,16 @@ export class PreFlightPanel extends React.Component<PreFlightProps, PreFlightSta
 		this.props.socket.emit('msg', JSON.stringify({ type: 'list' }));
 	}
 
+	public shouldComponentUpdate(nextProps: PreFlightProps, nextState: PreFlightState): boolean {
+		return (
+			nextProps.initialized !== this.props.initialized ||
+			nextState.files.length !== this.state.files.length ||
+			nextState.filename !== this.state.filename ||
+			nextState.breakpoint !== this.state.breakpoint ||
+			nextState.scale !== this.state.scale
+		);
+	}
+
 	/**
 	 * TODO: Whatever behavior is supposed to be triggered by this button.
 	 */
@@ -51,7 +61,7 @@ export class PreFlightPanel extends React.Component<PreFlightProps, PreFlightSta
 		// TODO: More sophisticated form validation
 		const conditions: Array<[boolean, string]> = [
 			[this.state.breakpoint < 0, 'Invalid breakpoint selected'],
-			[!this.state.files.some(file => file.name == this.state.filename), 'Invalid File Selected'],
+			[!this.state.files.some(file => file.name === this.state.filename), 'Invalid File Selected'],
 			[this.state.scale <= 0 || this.state.scale > 1, 'Invalid Scale entered']
 		];
 
@@ -88,7 +98,7 @@ export class PreFlightPanel extends React.Component<PreFlightProps, PreFlightSta
 
 	public render(): JSX.Element {
 		const containerClass = 'col-xs-4 text-center';
-		const selectedFile = this.state.files.find(file => file.name == this.state.filename);
+		const selectedFile = this.state.files.find(file => file.name === this.state.filename);
 		const breakpoints = (selectedFile && selectedFile.breakpoints) || [];
 		const filenames = this.state.files.map(file => file.name);
 

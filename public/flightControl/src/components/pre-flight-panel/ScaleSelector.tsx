@@ -21,7 +21,7 @@ export class ScaleSelector extends React.Component<ScaleSelectorProps, ScaleSele
 	 * The distinction is needed because this event will fire for every character being entered (ie: the decimal point).
 	 */
 	private handleChange(event: React.ChangeEvent<HTMLInputElement>): void {
-		const scale = event.currentTarget.valueAsNumber;
+		const scale = +event.currentTarget.value;
 		this.setState({ value: event.currentTarget.value });
 
 		if (!isNaN(scale)) {

@@ -12,6 +12,10 @@ export class KillButton extends React.Component<KillButtonProps, undefined> {
 		this.sendKillMessage = this.sendKillMessage.bind(this);
 	}
 
+	public shouldComponentUpdate(nextProps: KillButtonProps): boolean {
+		return nextProps.class !== this.props.class;
+	}
+
 	private sendKillMessage(): void {
 		this.props.socket.emit('msg', JSON.stringify({ type: 'kill', enabled: true }));
 	}

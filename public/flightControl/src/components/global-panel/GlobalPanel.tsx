@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { GlobalIcon } from './GlobalIcon';
 import { GlobalStatus } from '../../messaging/dtos';
 
 interface GlobalStatusPanelProps {
@@ -35,11 +36,7 @@ export class GlobalStatusPanel extends React.Component<GlobalStatusPanelProps, u
 			['Ready:', statusClass(this.props.status.ready)],
 			['Playing:', statusClass(this.props.status.playing)],
 			['Run Time:' + this.timeConvert(this.props.status.time), '']
-		].map(([text, icon]) =>
-			<div className={colClass} key={text}>
-				{text}  <i className={icon} aria-hidden='true' />
-			</div>
-		);
+		].map(([text, icon]) => <GlobalIcon key={text} colClass={colClass} icon={icon} text={text} />);
 
 		return (
 			<div className='row'>

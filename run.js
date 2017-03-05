@@ -13,7 +13,7 @@ function run(){
 
 	var server = null;
 
-	function start(){
+	function start() {
 
 		server = child_process.spawn('/usr/bin/env', ['node', 'src/server/node'], {
 			cwd: __dirname,
@@ -21,7 +21,7 @@ function run(){
 		});
 
 		// Restart server on exit
-		server.on('exit', function(code, signal){
+		server.on('exit', function(code, signal) {
 			console.log('Server exited.');
 			start();
 		});
@@ -29,7 +29,7 @@ function run(){
 
 	start();
 
-	//buildServer();
+	buildServer();
 
 
 	var watcher = chokidar.watch(path.resolve(__dirname, '../src/server/node/**/*.js'), {
@@ -49,7 +49,7 @@ function run(){
 	});
 
 
-	process.on('exit', function(){
+	process.on('exit', function() {
 		if(server != null){
 			console.log('Killing server')
 			server.kill('SIGINT');
@@ -60,7 +60,7 @@ function run(){
 }
 
 
-function buildServer(){
+function buildServer() {
 	var config = require("./webpack.config.js");
 	var compiler = webpack(config);
 	var server = new WebpackDevServer(compiler, {

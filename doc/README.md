@@ -18,6 +18,6 @@ When calibrating the motion system, the below coordinate system should be marked
 ![](coordinate-frame.jpg)
 
 
-When setting up Optitrack Motive, the following settings should be used. Please note that the program is set to unicast and streams both rigid bodies and unlabeled markers.
+When setting up OptiTrack Motive, the following settings should be used. Please note that the program is set to unicast and streams both rigid bodies and unlabeled markers.
 
 ![](motive-settings.png)

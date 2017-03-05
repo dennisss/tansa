@@ -28,7 +28,7 @@ TrajectoryState PolynomialTrajectory::evaluate(double t) {
 	return s;
 }
 
-PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, double t1, const vector<Point> &c2, double t2) {
+PolynomialTrajectory::Ptr PolynomialTrajectory::compute(const vector<Point> &c1, double t1, const vector<Point> &c2, double t2) {
 
 	int n = 6; // number of coefficients to use
 
@@ -80,7 +80,7 @@ PolynomialTrajectory *PolynomialTrajectory::compute(const vector<Point> &c1, dou
 		xs[i] = x;
 	}
 
-	return new PolynomialTrajectory(xs, t1, t2);
+	return PolynomialTrajectory::Ptr( new PolynomialTrajectory(xs, t1, t2) );
 }
 
 }

@@ -55,6 +55,8 @@ public:
 	static const std::string BPS_KEY;
 	//static const std::string LIGHTS_INCL_KEY;
 
+	friend Jocs *custom_jocs();
+
 	/**
 	 * Constructs a Jocs instance that encapsulates a choreography
 	 * @param convertMeters If true, the input units of length will be taken as feet and will be converted to meters
@@ -137,5 +139,8 @@ private:
 	 */
 
 };
+
+Jocs *custom_jocs();
+
 }
 #endif //TANSA_JOCSPARSER_H

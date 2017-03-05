@@ -3,10 +3,10 @@
 
 #include <tansa/core.h>
 #include <tansa/control.h>
+#include <tansa/jocsParser.h>
+#include <tansa/config.h>
 
-
-#include "tansa/jocsParser.h"
-#include "tansa/config.h"
+#include <fstream>
 
 namespace tansa {
 /**
@@ -51,7 +51,10 @@ public:
 	 * @param jocsActiveIds Which drones are actually being used? Non active drones don't fly.
 	 * @param start Which breakpoint should we start at? Defaults to -1 which means start from the beginning.
 	 */
-	void loadJocs(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
+	void loadJocs(const char *jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
+
+	void loadJocs(Jocs *jocsFile, const std::vector<unsigned> &jocsActiveIds, int start = -1);
+
 	// TODO: Instead we should use isRunning which checks if any states are not StateInit
 	bool canLoad();
 	/**
@@ -109,7 +112,7 @@ private:
 	std::vector<int> plans;
 
 	// Separate trajectories and timings for doing takeoff and landings
-	std::vector<Trajectory *> transitions;
+	std::vector<Trajectory::Ptr> transitions;
 	vector<Time> transitionStarts;
 	bool pauseRequested = false;
 	bool paused = false;
@@ -124,6 +127,9 @@ private:
 	std::vector<int> endIndices;
 	double startOffset = 0.0;
 
+	ofstream logfile;
+
+	void reset();
 	double getNextBreakpointTime(double lastTime);
 	double getBreakpointTime(unsigned breakpointNumber);
 	double getBreakpointTime(std::string breakpointName);
@@ -131,6 +137,7 @@ private:
 	Point getDroneLocationAtTime(double startTime, unsigned droneId);
 	bool isMotionAction(Action* a);
 	void createBreakpointSection(int startPoint, int endPoint = -1);
+	void log();
 };
 
 }

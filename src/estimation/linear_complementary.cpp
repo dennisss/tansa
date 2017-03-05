@@ -7,7 +7,7 @@
 
 namespace tansa {
 
-void LinearComplementaryEstimator::predict(State &s, ControlInput u, const Time &t) {
+void LinearComplementaryEstimator::predict(ModelState &s, ControlInput u, const Time &t) {
 	double dt = t.since(s.time).seconds();
 
 	Vector3d a_xyz = u.segment<3>(0);
@@ -20,7 +20,7 @@ void LinearComplementaryEstimator::predict(State &s, ControlInput u, const Time 
 	s.time = t;
 }
 
-void LinearComplementaryEstimator::correct(State &s, const Vector3d &x, const Vector3d &v, const Time &t) {
+void LinearComplementaryEstimator::correct(ModelState &s, const Vector3d &x, const Vector3d &v, const Time &t) {
 
 	double cP = 0.99;
 	double cV = 0.80;

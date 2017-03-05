@@ -6,6 +6,13 @@ sudo: required
 services:
     - docker
 
+notifications:
+    email: false
+
+branches:
+    only:
+        - master
+
 before_install:
     - docker pull dennisss/tansa-dev
 

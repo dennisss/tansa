@@ -1,6 +1,6 @@
 var React = require('react'),
 	ReactDOM = require('react-dom'),
-	Player = require('./player');
+	Renderer = require('./renderer');
 
 /*
 	The 3d world and object viewer / editor built on Three.js
@@ -8,16 +8,30 @@ var React = require('react'),
 var WorldView = React.createClass({
 
 	componentDidMount: function(){
-		this.player = new Player(ReactDOM.findDOMNode(this));
+		this.renderer = new Renderer(ReactDOM.findDOMNode(this));
 
-		if(this.props.onPlayerReady)
-			this.props.onPlayerReady(this.player);
+		window.addEventListener('resize', this._windowResize);
+
+		if(this.props.onRendererReady)
+			this.props.onRendererReady(this.renderer);
+	},
+
+	componentWillUpdate: function(nextProps, nextState) {
+
 	},
 
 	shouldComponentUpdate: function(){
 		// TODO: Manage resizing the window
 
+		if(this.renderer)
+			this.renderer._dirty = true;
+
 		return false;
+	},
+
+	_windowResize: function() {
+		this.renderer.resize();
+		this.renderer._dirty = true;
 	},
 
 	render: function(){

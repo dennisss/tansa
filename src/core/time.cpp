@@ -69,10 +69,11 @@ void time_init() {
 	starttime = Time::realNow();
 }
 
-
+/*
 Time::Time() {
 
 }
+*/
 
 Time::Time(int secs, int nsecs) {
 	this->val.tv_sec = secs;
@@ -126,7 +127,13 @@ Time Time::sinceStart() {
 	return since(starttime);
 }
 
-uint64_t Time::nanos() {
+Time operator+(Time lhs, const Time &rhs) {
+	Time sum;
+	timespec_add(&sum.val, &lhs.val, &rhs.val);
+	return sum;
+}
+
+uint64_t Time::nanos() const {
 	return (uint64_t) val.tv_nsec + ((uint64_t) val.tv_sec * 1000000000);
 }
 
@@ -134,13 +141,28 @@ uint64_t Time::micros() const {
 	return ((uint64_t) val.tv_nsec / 1000) + ((uint64_t) val.tv_sec * 1000000);
 }
 
-uint64_t Time::millis() {
+uint64_t Time::millis() const {
 	return ((uint64_t) val.tv_nsec / 1000000) + ((uint64_t) val.tv_sec * 1000);
 }
 
-double Time::seconds() {
+double Time::seconds() const {
 	return ((double) val.tv_sec) + (((double) val.tv_nsec) / 1000000000.0);
 }
+
+std::string Time::dateString() const {
+	struct tm t;
+
+	char buf[64];
+
+	tzset();
+	if(localtime_r(&(val.tv_sec), &t) == NULL)
+		return "Unknown-" + std::to_string(val.tv_sec);
+
+	strftime(buf, sizeof(buf), "%F_%T", &t);
+
+	return std::string(buf);
+}
+
 
 Rate::Rate(unsigned int hz) : lasttime(0,0) {
 	this->hz = hz;

@@ -1,5 +1,5 @@
 {
-	"useMocap": false,
+	"world": "gazebo",
 	"enableMessaging": true,
 	"enableOSC": true,
 	"hardwareConfig": {

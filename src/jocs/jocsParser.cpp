@@ -65,16 +65,7 @@ Jocs::~Jocs() {
 }
 
 Jocs* Jocs::Parse(std::string jocsPath, double scale) {
-	ifstream jocsStream(jocsPath);
-	if(!jocsStream.is_open()){
-		throw std::runtime_error("Failed to open jocs file at path: " + jocsPath);
-	}
-	std::string jocsData((std::istreambuf_iterator<char>(jocsStream)), std::istreambuf_iterator<char>());
-	//For some reason this regex didn't like the end of line $...but does work without it
-	jocsData = std::move(std::regex_replace(jocsData, std::regex("//.*"), ""));
-	assert(jocsData.find("//") == std::string::npos);
-	auto rawJson = nlohmann::json::parse(jocsData);
-
+	json rawJson = DataObject::LoadFile(jocsPath);
 	auto units = rawJson[UNITS_KEY];
 	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
@@ -292,7 +283,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 								actionsArrayElement[ACTION_DATA_KEY][ENDPOS_KEY][2]);
 						end*=conversionFactor;
 						actions[drone].push_back(new MotionAction(
-								drone, new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration), ActionTypes::Line));
+								drone, Trajectory::Ptr(new LinearTrajectory(start + startOffset, lastTime + startTime, end + endOffset, lastTime + startTime + duration)), ActionTypes::Line));
 						break;
 					}
 					case ActionTypes::Circle: {
@@ -312,7 +303,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 						// TODO: use separate offset key for circle and hover
 						actions[drone].push_back(new MotionAction(
 								drone,
-								new CircleTrajectory(origin + startOffset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration),
+								Trajectory::Ptr(new CircleTrajectory(origin + startOffset, radius, theta1, lastTime+startTime, theta2, lastTime + startTime + duration)),
 								ActionTypes::Circle
 						));
 						break;
@@ -327,7 +318,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 						// TODO: use separate offset key for circle and hover
 						actions[drone].push_back(new MotionAction(
 								drone,
-								new LinearTrajectory(hoverPoint + startOffset, lastTime +  startTime, hoverPoint + endOffset, lastTime + startTime + duration),
+								Trajectory::Ptr(new LinearTrajectory(hoverPoint + startOffset, lastTime +  startTime, hoverPoint + endOffset, lastTime + startTime + duration)),
 								ActionTypes::Hover
 						));
 						break;

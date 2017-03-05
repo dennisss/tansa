@@ -40,9 +40,7 @@ ActionTypes parse_action_type(const std::string& data){
 }
 
 bool is_light_action(ActionTypes type){
-	if (type == ActionTypes::Strobe || type == ActionTypes::Light)
-		return true;
-	return false;
+	return type == ActionTypes::Strobe || type == ActionTypes::Light;
 }
 
 std::vector<string> read_csv_line(std::string& line){
@@ -50,77 +48,101 @@ std::vector<string> read_csv_line(std::string& line){
 	return std::move(ret);
 
 }
-Choreography* parse_csv(const char* filepath){
-	auto csv = ifstream(filepath);
-	auto ret = new Choreography();
-	auto drone_map = std::map<std::string, unsigned long>();
-	std::string line;
-	getline(csv, line); //Contains dronekey
-	std::vector<std::string> split_line;
-	split_line = split(line, ',');
-	unsigned break_num = 0;
-	//TODO: Parse Dronekey
-	int start_index = csv_positions::DroneKeyPos;
-	unsigned long num_drones = 0;
-	for (int i = start_index; i < split_line.size(); i++){
-		if(split_line[i].empty())
-			break;
-		drone_map[split_line[i]] = num_drones;
-		num_drones++;
-	}
-	ret->actions.resize(num_drones);
-	ret->lightActions.resize(num_drones);
-	getline(csv, line); //contains homes
-	auto home_split = split(line, ',');
-	for(int i = csv_positions::ParamStartPos; i < home_split.size(); i++){
-		ret->homes.push_back(parse_point(home_split[i]));
-		if(ret->homes.size() == num_drones)
-			break;
-	}
-
-	//TODO: Parse homes
-	while(getline(csv,line)){ //Iterate line by line
-		split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
-
-		//Parse breakpoints
-		if(!split_line[csv_positions::BreakpointPos].empty()){
-			ret->breakpoints.push_back(
-					Breakpoint(split_line[csv_positions::BreakpointPos],
-							   break_num++,
-							   parse_time(split_line[csv_positions::StartTimePos])));
+Choreography* parse_csv(const char* filepath, double scale){
+	Choreography* ret = nullptr;
+	try {
+		auto csv = ifstream(filepath);
+		ret = new Choreography();
+		auto drone_map = std::map<std::string, unsigned long>();
+		std::string line;
+		getline(csv, line); //Contains dronekey and meters/feet
+		std::vector<std::string> split_line;
+		split_line = split(line, ',');
+		unsigned break_num = 0;
+		double conversion_factor = scale;
+		double angle_conversion = 1.0;
+		std::string length_units = split_line[csv_positions::LengthUnitPos];
+		std::string angle_units = split_line[csv_positions::AngleMeasurePos];
+		ret->needConvertToMeters = length_units != "meters" && length_units != "Meters";
+		ret->needConvertToRadians = angle_units != "radians" && angle_units != "Radians";
+		if(ret->needConvertToMeters) {
+			conversion_factor *= FEET_TO_METERS;
+		}
+		if(ret->needConvertToRadians) {
+			angle_conversion *= DEGREES_TO_RADIANS;
+		}
+		int start_index = csv_positions::DroneKeyPos;
+		unsigned long num_drones = 0;
+		for (int i = start_index; i < split_line.size(); i++) {
+			if (split_line[i].empty())
+				break;
+			drone_map[split_line[i]] = num_drones;
+			num_drones++;
+		}
+		ret->actions.resize(num_drones);
+		ret->lightActions.resize(num_drones);
+		getline(csv, line); //contains homes
+		auto home_split = split(line, ',');
+		for (int i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
+			ret->homes.push_back(parse_point(home_split[i]));
+			if (ret->homes.size() == num_drones)
+				break;
 		}
 
-		double start_time = parse_time(split_line[csv_positions::StartTimePos]);
-		double end_time = parse_time(split_line[csv_positions::EndTimePos]);
-		ActionTypes action_type = parse_action_type(split_line[csv_positions::ActionTypePos]);
-		std::vector<unsigned long> drones = parse_drones(split_line[csv_positions::DronesPos], drone_map);
-		//currently only supporting one drone per line so just parse that one.
-		if(is_light_action(action_type)) {
-			for(int j = 0; j < 1; j++){
-				auto light_action = parse_light_action(
-						action_type,
-						start_time,
-						end_time,
-						drones[j],
-						std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos, split_line.end()));
-				ret->lightActions[drones[j]].push_back(light_action);
+		//TODO: Parse homes
+		while (getline(csv, line)) { //Iterate line by line
+			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
+
+			//Parse breakpoints
+			if (!split_line[csv_positions::BreakpointPos].empty()) {
+				ret->breakpoints.push_back(
+						Breakpoint(split_line[csv_positions::BreakpointPos],
+								   break_num++,
+								   parse_time(split_line[csv_positions::StartTimePos])));
 			}
-		} else{
-			for(int j = 0; j < 1; j++) {
-				auto motion_action = parse_motion_action(
-						action_type,
-						start_time,
-						end_time,
-						drones[j],
-						std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos, split_line.end()));
-				ret->actions[drones[j]].push_back(motion_action);
+
+			double start_time = parse_time(split_line[csv_positions::StartTimePos]);
+			double end_time = parse_time(split_line[csv_positions::EndTimePos]);
+			ActionTypes action_type = parse_action_type(split_line[csv_positions::ActionTypePos]);
+			std::vector<unsigned long> drones = parse_drones(split_line[csv_positions::DronesPos], drone_map);
+			//currently only supporting one drone per line so just parse that one.
+			if (is_light_action(action_type)) {
+				for (int j = 0; j < 1; j++) {
+					auto light_action = parse_light_action(
+							action_type,
+							start_time,
+							end_time,
+							drones[j],
+							std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos,
+													 split_line.end()));
+					ret->lightActions[drones[j]].push_back(light_action);
+				}
+			} else {
+				for (int j = 0; j < 1; j++) {
+					auto motion_action = parse_motion_action(
+							action_type,
+							start_time,
+							end_time,
+							drones[j],
+							std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos,
+													 split_line.end()),
+							conversion_factor,
+							angle_conversion
+					);
+					ret->actions[drones[j]].push_back(motion_action);
+				}
 			}
 		}
-	}
-	insert_transitions(ret->actions, ret->homes);
-	if(has_no_discontinuity(ret->actions, ret->homes)){
-		return ret;
-	} else {
+		insert_transitions(ret->actions, ret->homes);
+		if(has_no_discontinuity(ret->actions, ret->homes)){
+			return ret;
+		} else {
+			delete ret;
+			return nullptr;
+		}
+	} catch (const std::exception& e) {
+		delete ret;
+		std::cout << e.what() << std::endl;
 		return nullptr;
 	}
 }
@@ -143,17 +165,17 @@ std::vector<unsigned long> parse_drones(std::string drone_field, const std::map<
 	return std::move(ret);
 }
 
-Action* parse_motion_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line) {
+Action* parse_motion_action(ActionTypes type, double start, double end, unsigned long droneid, std::vector<std::string> split_line, double length_conversion, double angle_conversion) {
 	Action* ret = nullptr;
 	switch (type){
 		case ActionTypes::Hover:
-			ret = parse_hover_action(start, end, droneid, split_line);
+			ret = parse_hover_action(start, end, droneid, split_line, length_conversion);
 			break;
 		case ActionTypes::Line:
-			ret = parse_line_action(start, end, droneid, split_line);
+			ret = parse_line_action(start, end, droneid, split_line, length_conversion);
 			break;
 		case ActionTypes::Circle:
-			ret = parse_circle_action(start, end, droneid, split_line);
+			ret = parse_circle_action(start, end, droneid, split_line, length_conversion, angle_conversion);
 			break;
 		case ActionTypes::Transition:
 			ret = new EmptyAction((unsigned)droneid, start, end); //Transitions replaced later.
@@ -171,7 +193,7 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 	LightAction* ret = nullptr;
 	switch (type){
 		case ActionTypes::Light:
-			ret = parse_light_action(start, end, droneid, split_line);
+			ret = parse_simple_light_action(start, end, droneid, split_line);
 			break;
 		case ActionTypes::Strobe:
 			ret = parse_strobe_action(start, end, droneid, split_line);
@@ -183,7 +205,7 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 	return ret;
 }
 
-Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line) {
+Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
 
 	Point hover;
 	hover.x() = std::atof(split_line[1].c_str());
@@ -191,11 +213,11 @@ Action* parse_hover_action(double start, double end, unsigned long droneid, cons
 	hover.z() = std::atof(split_line[5].c_str());
 	return new MotionAction(
 					(unsigned) droneid,
-					new LinearTrajectory(hover, start, hover, end),
+					new LinearTrajectory(hover*length_conversion, start, hover*length_conversion, end),
 					ActionTypes::Hover);
 }
 
-Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line) {
+Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
 	Point start_point, end_point;
 	start_point.x() = std::atof(split_line[1].c_str());
 	start_point.y() = std::atof(split_line[3].c_str());
@@ -205,11 +227,11 @@ Action* parse_line_action(double start, double end, unsigned long droneid, const
 	end_point.z() = std::atof(split_line[11].c_str());
 	return new MotionAction(
 			(unsigned) droneid,
-			new LinearTrajectory(start_point, start, end_point, end),
+			new LinearTrajectory(start_point*length_conversion, start, end_point*length_conversion, end),
 			ActionTypes::Line);
 }
 
-Action* parse_circle_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line) {
+Action* parse_circle_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line,double length_conversion,double angle_conversion) {
 	Point origin;
 	double theta1 = std::atof(split_line[3].c_str());
 	double theta2 = std::atof(split_line[5].c_str());
@@ -219,11 +241,11 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
 	origin.z() = std::atof(split_line[11].c_str());
 	return new MotionAction(
 			(unsigned) droneid,
-			new CircleTrajectory(origin, radius,theta1, start, theta2, end),
+			new CircleTrajectory(origin * length_conversion, radius * length_conversion ,theta1 * angle_conversion, start, theta2 * angle_conversion, end),
 			ActionTypes::Circle);
 }
 
-LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 
 }
 

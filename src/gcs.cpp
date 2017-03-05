@@ -152,7 +152,7 @@ void send_status_message() {
 json getBreakpoints(string jocsPath) {
 	json jsonBreakpoints = json::array();
 	try {
-		auto jocsData = parse_csv(jocsPath.c_str());
+		auto jocsData = parse_csv(jocsPath.c_str(), 1.0);
 		auto breakPoints = jocsData->breakpoints;
 
 		for (auto &breakPoint : breakPoints) {
@@ -542,8 +542,6 @@ void console_start() {
 
 
 int main(int argc, char *argv[]) {
-
-	parse_csv("/home/kyle/Documents/tansa/data/test.csv");
 	// Configure data and configuration folders
 	char *wpath = getenv("TANSA_PATH");
 	if(wpath != NULL)

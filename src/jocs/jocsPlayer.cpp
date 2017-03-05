@@ -88,7 +88,7 @@ namespace tansa {
 		this->jocsActiveIds = jocsActiveIds;
 		landed = false;
 
-		currentJocs = parse_csv(jocsPath.c_str());
+		currentJocs = parse_csv(jocsPath.c_str(), scale);
 		homes = currentJocs->homes;
 		actions = currentJocs->actions;
 		lightActions = currentJocs->lightActions;

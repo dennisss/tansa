@@ -261,7 +261,7 @@ void JocsPlayer::loadChoreography(Choreography *chor, const std::vector<unsigned
 					}
 				}
 
-				if(motionAction->GetActionType() == Hover) {
+				if(motionAction->GetActionType() == ActionTypes::Hover) {
 					hovers[i]->setPoint(motion->evaluate(t).position); // TODO: This line will be a constant for this type of action
 					hovers[i]->control(t);
 				}

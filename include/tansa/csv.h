@@ -161,6 +161,53 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
  * @param end End time in seconds
  * @param droneid Numeric id of the drone.
  * @param split_line Split CSV line from parse_csv_line
+ * @param length_conversion Conversion factor for length
+ * @param angle_conversion Conversion factor for angle
+ * @return The parsed EllispseAction for the given drone.
+ */
+Action* parse_ellipse_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion);
+/**
+ *
+ * @param type Type of action
+ * @param start Start time in seconds
+ * @param end End time in seconds
+ * @param droneid Numeric id of the drone.
+ * @param split_line Split CSV line from parse_csv_line
+ * @param length_conversion Conversion factor for length
+ * @param angle_conversion Conversion factor for angle
+ * @return The parsed SpiralAction for the given drone.
+ */
+Action* parse_spiral_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion);
+/**
+ *
+ * @param type Type of action
+ * @param start Start time in seconds
+ * @param end End time in seconds
+ * @param droneid Numeric id of the drone.
+ * @param split_line Split CSV line from parse_csv_line
+ * @param length_conversion Conversion factor for length
+ * @return The parsed ArcAction for the given drone.
+ */
+Action* parse_arc_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion);
+/**
+ * Any trajectory rotated or translated
+ * @param type Type of action
+ * @param start Start time in seconds
+ * @param end End time in seconds
+ * @param droneid Numeric id of the drone.
+ * @param split_line Split CSV line from parse_csv_line
+ * @param length_conversion Conversion factor for length
+ * @param angle_conversion Conversion factor for angle
+ * @return The parsed trajectory for the given drone.
+ */
+Action* parse_trajectory_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion);
+/**
+ *
+ * @param type Type of action
+ * @param start Start time in seconds
+ * @param end End time in seconds
+ * @param droneid Numeric id of the drone.
+ * @param split_line Split CSV line from parse_csv_line
  * @return The parsed LightAction for the given drone.
  */
 LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);

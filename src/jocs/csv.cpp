@@ -36,6 +36,14 @@ ActionTypes parse_action_type(const std::string& data){
 		return ActionTypes::Light;
 	else if (data == "strobe")
 		return ActionTypes::Strobe;
+	else if (data == "ellipse")
+		return ActionTypes::Ellipse;
+	else if (data == "spiral")
+		return ActionTypes::Spiral;
+	else if (data == "arc")
+		return ActionTypes::Arc;
+	else if (data == "trajectory")
+		return ActionTypes::TransformedTraj;
 	return ActionTypes::None;
 }
 
@@ -71,9 +79,9 @@ Choreography* parse_csv(const char* filepath, double scale){
 		if(ret->needConvertToRadians) {
 			angle_conversion *= DEGREES_TO_RADIANS;
 		}
-		int start_index = csv_positions::DroneKeyPos;
+		size_t start_index = csv_positions::DroneKeyPos;
 		unsigned long num_drones = 0;
-		for (int i = start_index; i < split_line.size(); i++) {
+		for (size_t i = start_index; i < split_line.size(); i++) {
 			if (split_line[i].empty())
 				break;
 			drone_map[split_line[i]] = num_drones;
@@ -83,7 +91,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 		ret->lightActions.resize(num_drones);
 		getline(csv, line); //contains homes
 		auto home_split = split(line, ',');
-		for (int i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
+		for (size_t i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
 			ret->homes.push_back(parse_point(home_split[i])*conversion_factor);
 			if (ret->homes.size() == num_drones)
 				break;
@@ -245,12 +253,29 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
 			ActionTypes::Circle);
 }
 
-LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+Action* parse_ellipse_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion) {
+
 
 }
 
-LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+Action* parse_spiral_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion){
 
+}
+
+Action* parse_arc_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion){
+
+}
+
+Action* parse_trajectory_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion){
+
+}
+
+LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+	return nullptr;
+}
+
+LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+	return nullptr;
 }
 
 bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes){

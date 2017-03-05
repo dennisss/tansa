@@ -10,7 +10,7 @@ namespace tansa {
  * Type representing the different actions in jocs
  * @enum
  */
-enum ActionTypes : unsigned{
+enum class ActionTypes : unsigned{
 	None = 0,
 	Transition = 1,
 	Line = 2,
@@ -18,7 +18,10 @@ enum ActionTypes : unsigned{
 	Hover = 4,
 	Light = 5,
 	Strobe = 6,
-	GradualCricle = 7
+	Ellipse = 7,
+	Spiral = 8,
+	Arc = 9,
+	TransformedTraj = 10,
 };
 
 typedef unsigned DroneId;

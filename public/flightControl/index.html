@@ -13,12 +13,12 @@
 		<link rel="stylesheet" href="css/styles.css">
 
 		<!-- Style Dependecies -->
-		<link async rel="stylesheet" href="/node_modules/roboto-fontface/css/roboto/roboto-fontface.css">
+		<link async rel="stylesheet" href="node_modules/roboto-fontface/css/roboto/roboto-fontface.css">
 		<link async rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
 		<link async rel="stylesheet" href="node_modules/material-design-lite/material.min.css">
 		<link async rel="stylesheet" href="node_modules/bootstrap-material-design/dist/css/ripples.min.css">
+		<link async rel="stylesheet" href="node_modules/bootstrap-material-design/dist/css/bootstrap-material-design.min.css">
 		<link async rel="stylesheet" href="css/fontawesome/css/font-awesome.min.css">
-
 		<!-- JS Dependencies -->
 		<script src="node_modules/react/dist/react.js"></script>
 		<script src="node_modules/react-dom/dist/react-dom.js"></script>
@@ -26,13 +26,15 @@
 		<script src='node_modules/jquery/dist/jquery.min.js'></script>
 		<script src='node_modules/bootstrap/dist/js/bootstrap.min.js'></script>
 		<script src="node_modules/material-design-lite/material.min.js"></script>
+		<script src="node_modules/bootstrap-material-design/dist/js/ripples.min.js"></script>
+		<script src="node_modules/bootstrap-material-design/dist/js/material.min.js"></script>
 		<script src="materials.min.js"></script>
 	</head>
 	<body>
 		<div id="root"></div>
 
 		<!-- Dependency Initialization -->
-		<script>$.material.init();</script>
+		<script>window.onload = function () { $.material.init(); }</script>
 
 		<!-- Main -->
 		<script src="dist/bundle.js"></script>

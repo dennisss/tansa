@@ -214,52 +214,115 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 }
 
 Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
-
+	enum indices : unsigned {
+		start_x_loc 	= 1,
+		start_y_loc 	= 3,
+		start_z_loc 	= 5,
+	};
 	Point hover;
-	hover.x() = std::atof(split_line[1].c_str());
-	hover.y() = std::atof(split_line[3].c_str());
-	hover.z() = std::atof(split_line[5].c_str());
+	hover.x() 			= std::atof(split_line[start_x_loc].c_str());
+	hover.y() 			= std::atof(split_line[start_y_loc].c_str());
+	hover.z() 			= std::atof(split_line[start_z_loc].c_str());
+	hover				= hover * length_conversion;
 	return new MotionAction(
 					(unsigned) droneid,
-					make_shared<LinearTrajectory>(hover*length_conversion, start, hover*length_conversion, end),
+					make_shared<LinearTrajectory>(hover, start, hover, end),
 					ActionTypes::Hover);
 }
 
 Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
+	enum indices : unsigned {
+		start_x_loc 	= 1,
+		start_y_loc 	= 3,
+		start_z_loc 	= 5,
+		end_x_loc 		= 7,
+		end_y_loc 		= 9,
+		end_z_loc 		= 11
+	};
 	Point start_point, end_point;
-	start_point.x() = std::atof(split_line[1].c_str());
-	start_point.y() = std::atof(split_line[3].c_str());
-	start_point.z() = std::atof(split_line[5].c_str());
-	end_point.x() = std::atof(split_line[7].c_str());
-	end_point.y() = std::atof(split_line[9].c_str());
-	end_point.z() = std::atof(split_line[11].c_str());
+	start_point.x() 	= std::atof(split_line[start_x_loc].c_str());
+	start_point.y() 	= std::atof(split_line[start_y_loc].c_str());
+	start_point.z() 	= std::atof(split_line[start_z_loc].c_str());
+	end_point.x() 		= std::atof(split_line[end_x_loc].c_str());
+	end_point.y() 		= std::atof(split_line[end_y_loc].c_str());
+	end_point.z() 		= std::atof(split_line[end_z_loc].c_str());
+	start_point 		= start_point * length_conversion;
+	end_point 			= end_point * length_conversion;
 	return new MotionAction(
 			(unsigned) droneid,
-			make_shared<LinearTrajectory>(start_point*length_conversion, start, end_point*length_conversion, end),
+			make_shared<LinearTrajectory>(start_point, start, end_point, end),
 			ActionTypes::Line);
 }
 
 Action* parse_circle_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line,double length_conversion,double angle_conversion) {
+	enum indices : unsigned {
+		radius_loc 		= 1,
+		theta1_loc 		= 3,
+		theta2_loc 		= 5,
+		x_loc 			= 7,
+		y_loc 			= 9,
+		z_loc 			= 11
+	};
 	Point origin;
-	double theta1 = std::atof(split_line[3].c_str());
-	double theta2 = std::atof(split_line[5].c_str());
-	double radius = std::atof(split_line[1].c_str());
-	origin.x() = std::atof(split_line[7].c_str());
-	origin.y() = std::atof(split_line[9].c_str());
-	origin.z() = std::atof(split_line[11].c_str());
+	double radius 		= std::atof(split_line[radius_loc].c_str()) * length_conversion;
+	double theta1 		= std::atof(split_line[theta1_loc].c_str()) * angle_conversion;
+	double theta2 		= std::atof(split_line[theta2_loc].c_str()) * angle_conversion;
+	origin.x() 			= std::atof(split_line[x_loc].c_str());
+	origin.y() 			= std::atof(split_line[y_loc].c_str());
+	origin.z() 			= std::atof(split_line[z_loc].c_str());
+	origin 				= origin * length_conversion;
 	return new MotionAction(
 			(unsigned) droneid,
-			make_shared<CircleTrajectory>(origin * length_conversion, radius * length_conversion ,theta1 * angle_conversion, start, theta2 * angle_conversion, end),
+			make_shared<CircleTrajectory>(origin, radius,theta1, start, theta2, end),
 			ActionTypes::Circle);
 }
 
 Action* parse_ellipse_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion) {
-
-
+	enum indices : unsigned {
+		radius_x_loc 	= 1,
+		radius_y_loc 	= 3,
+		theta1_loc 	 	= 5,
+		theta2_loc	 	= 7,
+		x_loc 		 	= 9,
+		y_loc			= 11,
+		z_loc 			= 13
+	};
+	Point origin;
+	double radius_x 	= std::atof(split_line[radius_x_loc].c_str()) * length_conversion;
+	double radius_y 	= std::atof(split_line[radius_y_loc].c_str()) * length_conversion;
+	double theta1 		= std::atof(split_line[theta1_loc].c_str()) * angle_conversion;
+	double theta2 		= std::atof(split_line[theta2_loc].c_str()) * angle_conversion;
+	origin.x() 			= std::atof(split_line[x_loc].c_str());
+	origin.y() 			= std::atof(split_line[y_loc].c_str());
+	origin.z() 			= std::atof(split_line[z_loc].c_str());
+	origin 				= origin * length_conversion;
+	return new MotionAction(
+			(unsigned) droneid,
+			make_shared<EllipseTrajectory>(origin, radius_x, radius_y, theta1, start, theta2, end),
+			ActionTypes::Ellipse);
 }
 
 Action* parse_spiral_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion){
-
+	enum indices : unsigned {
+		radius_loc 		= 1,
+		theta1_loc 	 	= 3,
+		theta2_loc	 	= 5,
+		x_loc 		 	= 7,
+		y_loc			= 9,
+		z_loc 			= 11
+	};
+	Point origin;
+	double radius	 	= std::atof(split_line[radius_loc].c_str()) * length_conversion;
+	double theta1 		= std::atof(split_line[theta1_loc].c_str()) * angle_conversion;
+	double theta2 		= std::atof(split_line[theta2_loc].c_str()) * angle_conversion;
+	origin.x() 			= std::atof(split_line[x_loc].c_str());
+	origin.y() 			= std::atof(split_line[y_loc].c_str());
+	origin.z() 			= std::atof(split_line[z_loc].c_str());
+	origin 				= origin * length_conversion;
+	return new MotionAction(
+			(unsigned) droneid,
+			make_shared<SpiralTrajectory>(origin, radius, theta1, start, theta2, end),
+			ActionTypes::Spiral);
 }
 
 Action* parse_arc_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion){

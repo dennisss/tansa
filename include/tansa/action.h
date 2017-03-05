@@ -11,17 +11,18 @@ namespace tansa {
  * @enum
  */
 enum class ActionTypes : unsigned{
-	None = 0,
-	Transition = 1,
-	Line = 2,
-	Circle = 3,
-	Hover = 4,
-	Light = 5,
-	Strobe = 6,
-	Ellipse = 7,
-	Spiral = 8,
-	Arc = 9,
+	None 			= 0,
+	Transition 		= 1,
+	Line 			= 2,
+	Circle			= 3,
+	Hover 			= 4,
+	Light 			= 5,
+	Strobe 			= 6,
+	Ellipse 		= 7,
+	Spiral 			= 8,
+	Arc 			= 9,
 	TransformedTraj = 10,
+	GradualCircle 	= 11,
 };
 
 typedef unsigned DroneId;

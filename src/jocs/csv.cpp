@@ -84,7 +84,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 		getline(csv, line); //contains homes
 		auto home_split = split(line, ',');
 		for (int i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
-			ret->homes.push_back(parse_point(home_split[i]));
+			ret->homes.push_back(parse_point(home_split[i])*conversion_factor);
 			if (ret->homes.size() == num_drones)
 				break;
 		}

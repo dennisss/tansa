@@ -129,6 +129,7 @@ private:
 
 	ofstream logfile;
 
+	void reset();
 	double getNextBreakpointTime(double lastTime);
 	double getBreakpointTime(unsigned breakpointNumber);
 	double getBreakpointTime(std::string breakpointName);

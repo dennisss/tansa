@@ -56,6 +56,6 @@ if [ ! -d $working_dir ]; then
 fi
 
 pushd "$working_dir" &>/dev/null
-echo "Starting instance #$n in $(pwd)"
+echo "Starting instance #$id in $(pwd)"
 sudo -u $user ${root_path}/build_firmware/src/firmware/posix/px4 -d "$root_path/lib/Firmware" rcS >out.log 2>err.log
 popd &>/dev/null

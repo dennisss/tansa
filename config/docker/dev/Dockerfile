@@ -25,3 +25,5 @@ RUN apt-get install -y python-empy
 RUN easy_install pip
 RUN pip install catkin_pkg
 RUN apt-get install -y libopencv-dev
+
+RUN apt-get install -y sudo

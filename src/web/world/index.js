@@ -10,6 +10,8 @@ var WorldView = React.createClass({
 	componentDidMount: function(){
 		this.renderer = new Renderer(ReactDOM.findDOMNode(this));
 
+		window.addEventListener('resize', this._windowResize);
+
 		if(this.props.onRendererReady)
 			this.props.onRendererReady(this.renderer);
 	},
@@ -28,6 +30,7 @@ var WorldView = React.createClass({
 	},
 
 	_windowResize: function() {
+		this.renderer.resize();
 		this.renderer._dirty = true;
 	},
 

@@ -41,23 +41,28 @@ namespace tansa {
 			state = StateInit;
 		}
 
-		plans.resize(n);
-		for (int i = 0; i < n; i++) {
-			plans[i] = startIndices[i];
-		}
-
-		lightCounters.resize(n);
-		for(auto &lc : lightCounters) {
-			lc = 0;
-		}
-
-		pauseIndices.resize(n);
-		for(auto &pi : pauseIndices){
-			pi = 0;
-		}
-
 		transitionStarts.resize(n, Time(0,0));
 	}
+
+void JocsPlayer::reset() {
+	int n = vehicles.size();
+
+	plans.resize(n);
+	for (int i = 0; i < n; i++) {
+		plans[i] = startIndices[i];
+	}
+
+	lightCounters.resize(n);
+	for(auto &lc : lightCounters) {
+		lc = 0;
+	}
+
+	pauseIndices.resize(n);
+	for(auto &pi : pauseIndices){
+		pi = 0;
+	}
+}
+
 
 	bool JocsPlayer::canLoad() {
 		for (auto s : states) {
@@ -364,6 +369,7 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 			}
 		} else {
 			start = Time::now();
+			reset();
 		}
 
 		for(auto &s : states) {

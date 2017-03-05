@@ -368,6 +368,8 @@ void constructLoadResponse() {
 void loadJocsFile(const json &rawJsonArg) {
 	json rawJson = rawJsonArg;
 
+	loadMode = true;
+
 	if (player == nullptr) {
 		// TODO: Send some kinda error code here
 		printf("Player is null...\n");
@@ -467,7 +469,6 @@ void socket_on_message(const json &data) {
 		send_file_list();
 	} else if (type == "load"){
 		printf("Loading jocs file...\n");
-		loadMode = true;
 		loadJocsFile(data);
 	} else if (type == "kill") {
 		bool enabled = data["enabled"];
@@ -588,7 +589,6 @@ void *console_thread(void *arg) {
 			killmode = args.size() <= 1 || !(args[1] == "off");
 		} else if (args[0] == "load" && args.size() > 1) {
 			cout << "Loading..." << endl;
-			loadMode = true;
 			loadFromConfigFile(args[1]);
 		}
 		else if(args[0] == "calibrate") {

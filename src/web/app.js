@@ -62,11 +62,14 @@ var App = React.createClass({
 			cam.rotation.y = 0;
 			cam.rotation.z = 0;
 
-
 			cam.position.y = -6;
 			cam.position.x = 0;
 			cam.position.z = 0;
-
+		}
+		else if(name == 'right') {
+			cam.position.y = 0;
+			cam.position.x = 6;
+			cam.position.z = 0;
 		}
 
 		this.renderer.controls.update();

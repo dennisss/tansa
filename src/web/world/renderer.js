@@ -43,6 +43,7 @@ class WorldRenderer {
 
 
 	constructor(el) {
+		this.el = el;
 
 		var width = $(el).width(), height = $(el).height();
 
@@ -113,7 +114,7 @@ class WorldRenderer {
 		var renderer = new THREE.WebGLRenderer({ antialias: true });
 		renderer.setClearColor(0xf0f0f0);
 		renderer.setPixelRatio(window.devicePixelRatio);
-		renderer.setSize($(el).width(), $(el).height()); //renderer.setSize( window.innerWidth, window.innerHeight );
+		renderer.setSize(width, height);
 		renderer.shadowMap.enabled = true;
 		el.appendChild(renderer.domElement);
 
@@ -226,9 +227,13 @@ class WorldRenderer {
 	}
 
 	resize() {
+		var w = $(this.el).width(), h = $(this.el).height();
 
 		// Need to adjust camera aspect ratio and adjust scene size
+		this.camera.aspect = w / h;
+		this.camera.updateProjectionMatrix();
 
+		this.renderer.setSize(w, h);
 	}
 
 

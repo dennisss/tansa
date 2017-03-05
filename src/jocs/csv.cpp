@@ -188,6 +188,18 @@ Action* parse_motion_action(ActionTypes type, double start, double end, unsigned
 		case ActionTypes::Transition:
 			ret = new EmptyAction((unsigned)droneid, start, end); //Transitions replaced later.
 			break;
+		case ActionTypes::Arc:
+			ret = parse_arc_action(start, end, droneid, split_line, length_conversion);
+			break;
+		case ActionTypes::Ellipse:
+			ret = parse_ellipse_action(start, end, droneid, split_line, length_conversion, angle_conversion);
+			break;
+		case ActionTypes::Spiral:
+			ret = parse_spiral_action(start, end, droneid, split_line, length_conversion, angle_conversion);
+			break;
+		case ActionTypes::TransformedTraj:
+			ret = parse_trajectory_action(start, end, droneid, split_line, length_conversion, angle_conversion);
+			break;
 		case ActionTypes::None:
 			break;
 		default:
@@ -326,11 +338,56 @@ Action* parse_spiral_action(double start, double end, unsigned long droneid, con
 }
 
 Action* parse_arc_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion){
+	constexpr unsigned NUM_PER_SEGMENT = 8;
+	std::vector<ConstrainedPoint> points;
+	std::vector<double> times;
+	std::vector<string> line = split_line;
+	//Remove all empty cells
+	std::remove_if(line.begin(), line.end(), [](const std::string& i) { return i.empty();});
+	assert((split_line.size() % NUM_PER_SEGMENT) == 0);
 
+	unsigned to_process = (unsigned)split_line.size() / NUM_PER_SEGMENT;
+	unsigned processed 	= 0;
+	auto process 		= [&](const std::vector<std::string> &line) {
+		enum indices : unsigned {
+			time_loc 	= 1,
+			x_loc 		= 3,
+			y_loc		= 5,
+			z_loc 		= 7
+		};
+
+		Point p;
+		unsigned time 	= (unsigned)std::atof(line[time_loc].c_str()); //TODO: warn about non integer times
+		p.x() 			= std::atof(line[x_loc].c_str());
+		p.y()			= std::atof(line[y_loc].c_str());
+		p.z()			= std::atof(line[z_loc].c_str());
+		p 				= p * length_conversion;
+		times.push_back(time);
+		points.push_back({p});
+	};
+	while (to_process > 0) {
+		process(std::vector<std::string>(line.begin() + processed, line.begin() + processed + NUM_PER_SEGMENT));
+		processed += NUM_PER_SEGMENT;
+		to_process--;
+	}
+	Trajectory::Ptr out;
+	if(compute_minsnap_mellinger11(points, times, {}, &out, NULL)) {
+		return new MotionAction(
+				(unsigned) droneid,
+				out,
+				ActionTypes::Arc
+		);
+	} else {
+		//TODO: Return null here and handle above instead of just throwing an exception.
+		throw new std::runtime_error("Failed to compute Arc trajectory for drone id"
+									 + std::to_string(droneid)
+									 + "at start time: "
+									 + std::to_string(start));
+	}
 }
 
 Action* parse_trajectory_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion){
-
+	return nullptr;
 }
 
 LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
@@ -441,11 +498,11 @@ Point parse_point(std::string point) {
 	boost::erase_all(point, ")");
 	boost::erase_all(point, "\"");
 	boost::erase_all(point, " ");
-	auto split_point = split(point, ';');
 	Point ret;
-	ret.x() = std::atof(split_point[0].c_str());
-	ret.y() = std::atof(split_point[1].c_str());
-	ret.z() = std::atof(split_point[2].c_str());
+	auto split_point 	= split(point, ';');
+	ret.x() 			= std::atof(split_point[0].c_str());
+	ret.y() 			= std::atof(split_point[1].c_str());
+	ret.z() 			= std::atof(split_point[2].c_str());
 	return ret;
 }
 

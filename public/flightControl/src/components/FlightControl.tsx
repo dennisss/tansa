@@ -32,6 +32,10 @@ export class FlightControl extends React.Component<undefined, FlightControlState
 		this.state.socket.on('status', this.processStatusMessage.bind(this));
 	}
 
+	public componentWillUnmount() {
+		this.state.socket.removeListener('status');
+	}
+
 	// Event Handlers
 	private processStatusMessage(message: any): void {
 		const json = JSON.parse(message);

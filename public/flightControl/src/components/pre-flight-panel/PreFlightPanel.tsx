@@ -37,6 +37,10 @@ export class PreFlightPanel extends React.Component<PreFlightProps, PreFlightSta
 		this.props.socket.emit('msg', JSON.stringify({ type: 'list' }));
 	}
 
+	public componentWillUnmount() {
+		this.props.socket.removeListener('list_reply');
+	}
+
 	public shouldComponentUpdate(nextProps: PreFlightProps, nextState: PreFlightState): boolean {
 		return (
 			nextProps.initialized !== this.props.initialized ||

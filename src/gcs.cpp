@@ -115,11 +115,11 @@ void send_status_message() {
 		jsonVehicle["armed"] = vehicles[i]->armed;
 		jsonVehicle["tracking"] = vehicles[i]->tracking;
 
-		jsonVehicle["position"] = {
-			{"x", vehicles[i]->state.position.x()},
-			{"y", vehicles[i]->state.position.y()},
-			{"z", vehicles[i]->state.position.z()}
-		};
+		json jsonPosition = json::array();
+		jsonPosition.push_back(vehicles[i]->state.position.x());
+		jsonPosition.push_back(vehicles[i]->state.position.y());
+		jsonPosition.push_back(vehicles[i]->state.position.z());
+		jsonVehicle["position"] = jsonPosition;
 
 		jsonVehicle["battery"] = {
 			{"voltage", vehicles[i]->battery.voltage},

@@ -32,7 +32,7 @@ export interface Vehicle {
 	},
 	connected: boolean,
 	id: number,
-	position: Point,
+	position: [number, number, number],
 	role: number,
 	tracking: boolean
 }

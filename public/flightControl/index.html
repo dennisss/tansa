@@ -24,6 +24,7 @@
 		<script src="node_modules/react-dom/dist/react-dom.js"></script>
 		<script src="node_modules/socket.io-client/socket.io.js"></script>
 		<script src='node_modules/jquery/dist/jquery.min.js'></script>
+		<script src="node_modules/arrive/minified/arrive.min.js"></script>
 		<script src='node_modules/bootstrap/dist/js/bootstrap.min.js'></script>
 		<script src="node_modules/material-design-lite/material.min.js"></script>
 		<script src="node_modules/bootstrap-material-design/dist/js/ripples.min.js"></script>
@@ -34,7 +35,7 @@
 		<div id="root"></div>
 
 		<!-- Dependency Initialization -->
-		<script>window.onload = function () { $.material.init(); }</script>
+		<script>window.onload = () => $.material.init();</script>
 
 		<!-- Main -->
 		<script src="dist/bundle.js"></script>

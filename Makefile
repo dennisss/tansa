@@ -8,7 +8,7 @@ build: build_socketio_cpp
 	mkdir -p build
 	rm -f config/gazebo/models/x340/x340.sdf
 	cd build; cmake ..; make;
-	cd public/flightControl; webpack;
+	cd public/flightControl; ./node_modules/.bin/webpack;
 
 runSim: 
 	./scripts/start_gazebo.sh

@@ -9,7 +9,7 @@ interface PanelProps {
 	vehicles: Array<Vehicle>
 }
 
-export class VehiclePanel extends React.Component<PanelProps, undefined> {   
+export class VehiclePanel extends React.Component<PanelProps, undefined> {
 	constructor(props: PanelProps) {
 		super(props);
 	}

@@ -459,7 +459,7 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 0; i < breakpointsLength; i++) {
 			unsigned ret = breakpoints[i].GetNumber();
 			if (ret == breakpointNumber) {
 				return breakpoints[i].GetStartTime();

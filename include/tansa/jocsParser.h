@@ -9,13 +9,14 @@
 #include "tansa/vehicle.h"
 #include "tansa/core.h"
 #include "tansa/trajectory.h"
-#include "tansa/action.h"
-#include "tansa/breakpoint.h"
+#include "tansa/routine.h"
+
+
 namespace tansa {
 /**
  * @class Represents and encapsulates choreographies.
  */
-class Jocs {
+class Jocs : public Routine {
 public:
 	static const std::string HOME_KEY;
 	static const std::string ID_KEY;
@@ -64,8 +65,11 @@ public:
 	 * @param numRepeat How many times should the choreography repeat?
 	 * @return
 	 */
-	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : needConvertToMeters(convertMeters), needConvertToRadians(convertRadians), repeat(numRepeat){}
-	~Jocs();
+	Jocs(bool convertMeters, bool convertRadians, unsigned numRepeat) : Routine(), repeat(numRepeat){
+		this->needConvertToMeters = convertMeters;
+		this->needConvertToRadians = convertRadians;
+	}
+	virtual ~Jocs();
 	/**
 	 * Parses a given Jocs file
 	 * @public
@@ -95,12 +99,7 @@ public:
 	//bool isMotionAction(Action* a);
 
 private:
-	bool needConvertToMeters = false;
-	bool needConvertToRadians = false;
-	std::vector<Point> homes;
-	std::vector<std::vector<Action*>> actions;
-	std::vector<std::vector<LightAction*>> lightActions;
-	std::vector<Breakpoint> breakpoints;
+
 	unsigned repeat;
 
 	/**

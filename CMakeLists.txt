@@ -57,13 +57,15 @@ add_library(
 	src/mocap/registration.cpp
 	src/mocap/optitrack/ClientCore.cpp
 	src/mocap/optitrack/NatNetClient.cpp
+	src/jocs/routine.cpp
+	src/jocs/csv.cpp
 	src/jocs/jocsParser.cpp
 	src/jocs/action.cpp
 	src/jocs/jocsPlayer.cpp
 	src/trajectory/light.cpp
 	src/trajectory/strobe.cpp
 	src/control/lightcontrol.cpp
-	src/jocs/csv.cpp
+
 	src/control/admittance.cpp
 
 	# Simulation

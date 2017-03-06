@@ -192,7 +192,8 @@ void send_status_message() {
 json getBreakpoints(string jocsPath) {
 	json jsonBreakpoints = json::array();
 	try {
-		auto jocsData = parse_csv(jocsPath.c_str(), 1.0);
+		cout << "Load " << jocsPath << endl;
+		auto jocsData = Routine::Load(jocsPath, 1.0);
 		auto breakPoints = jocsData->breakpoints;
 
 		for (auto &breakPoint : breakPoints) {
@@ -220,7 +221,7 @@ void send_file_list() {
 	struct dirent *ent;
 	if ((dir = opendir(resolveWorkspacePath(dataDir).c_str())) != NULL) {
 		while ((ent = readdir(dir)) != NULL) {
-			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".csv") != std::string::npos)
+			if(ent->d_type == DT_REG && Routine::IsFile(std::string(ent->d_name)))
 				files.push_back(std::string(ent->d_name));
 		}
 		closedir (dir);

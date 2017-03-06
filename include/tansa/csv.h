@@ -6,13 +6,13 @@
 #include <vector>
 #include <map>
 #include <iterator>
-#include "tansa/action.h"
-#include "tansa/vehicle.h"
-#include "tansa/core.h"
-#include "tansa/trajectory.h"
-#include "tansa/action.h"
-#include "tansa/breakpoint.h"
-namespace  tansa {
+#include "action.h"
+#include "vehicle.h"
+#include "core.h"
+#include "trajectory.h"
+#include "routine.h"
+
+namespace tansa {
 
 const double FEET_TO_METERS = 0.3048;
 const double DEGREES_TO_RADIANS = M_PI/180.0;
@@ -35,8 +35,9 @@ enum csv_positions : uint32_t {
  * Holds all the information necessary to run a choreography.
  * Cleans up all resources when freed.
  */
-struct Choreography {
-	~Choreography() {
+class Choreography : public Routine {
+public:
+	virtual ~Choreography() {
 		for(const auto& d: actions){
 			for(const auto& a: d){
 				delete a;
@@ -48,12 +49,6 @@ struct Choreography {
 			}
 		}
 	}
-	std::vector<std::vector<Action*>> actions;
-	std::vector<Breakpoint> breakpoints;
-	std::vector<Point> homes;
-	std::vector<std::vector<LightAction*>> lightActions;
-	bool needConvertToMeters = false;
-	bool needConvertToRadians = false;
 };
 /**
  *

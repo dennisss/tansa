@@ -81,14 +81,14 @@ void JocsPlayer::reset() {
 
 void JocsPlayer::loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start){
 	cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
-	Choreography *choreography = parse_csv(jocsPath.c_str(), scale);
+	Routine *choreography = Routine::Load(jocsPath, scale);
 	this->loadChoreography(choreography, jocsActiveIds, start);
 }
 
 /**
 * Load JOCS data from a specified path
 */
-void JocsPlayer::loadChoreography(Choreography *chor, const std::vector<unsigned> &jocsActiveIds, int start) {
+void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jocsActiveIds, int start) {
 		if (!this->canLoad()) {
 			return;
 		}
@@ -457,7 +457,7 @@ void JocsPlayer::loadChoreography(Choreography *chor, const std::vector<unsigned
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 0; i < breakpointsLength; i++) {
 			unsigned ret = breakpoints[i].GetNumber();
 			if (ret == breakpointNumber) {
 				return breakpoints[i].GetStartTime();

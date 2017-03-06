@@ -44,6 +44,7 @@ static bool stopMode = false;
 static bool playMode = false;
 static bool prepareMode = false;
 static bool loadMode = false;
+static bool landMode = false;
 static float scale = 1.0;
 static JocsPlayer* player = nullptr;
 static GazeboConnector *gazebo = nullptr;
@@ -112,14 +113,38 @@ void send_status_message() {
 	jsonStatus["type"] = "status";
 	jsonStatus["time"] = player->currentTime();
 
+
+	std::vector<PlayerVehicleState> states = player->getStates();
 	json jsonVehicles = json::array();
 	for(int i = 0; i < vehicles.size(); i++) {
 		json jsonVehicle;
 		jsonVehicle["id"] = vconfigs[i].net_id;
-		jsonVehicle["role"] = (jocsActiveIds.size() > 0 && i <= jocsActiveIds.size() - 1) ? jocsActiveIds[i] : -1;
+		jsonVehicle["role"] = jocsActiveIds.size() > i ? jocsActiveIds[i] : -1;
 		jsonVehicle["connected"] = vehicles[i]->connected;
 		jsonVehicle["armed"] = vehicles[i]->armed;
 		jsonVehicle["tracking"] = vehicles[i]->tracking;
+
+		if(states.size() > i) {
+			string s = "unknown";
+			switch(states[i]) {
+				case StateInit:
+					s = "init"; break;
+				case StateArming:
+					s = "arming"; break;
+				case StateReady:
+					s = "ready"; break;
+				case StateTakeoff:
+					s = "takeoff"; break;
+				case StateHolding:
+					s = "holding"; break;
+				case StateFlying:
+					s = "flying"; break;
+				case StateLanding:
+					s = "landing"; break;
+			}
+
+			jsonVehicle["state"] = s;
+		}
 
 		json jsonPosition = json::array();
 		jsonPosition.push_back(vehicles[i]->state.position.x());
@@ -475,6 +500,9 @@ void socket_on_message(const json &data) {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
 		killmode = enabled;
+	} else if (type == "land") {
+		printf("Landing...\n");
+		landMode = true;
 	} else {
 		// TODO: Send an error message back to the browser
 		printf("Unexpected message type recieved!\n");
@@ -697,6 +725,9 @@ int main(int argc, char *argv[]) {
 		} else if (prepareMode) {
 			prepareMode = false;
 			player->prepare();
+		} else if (landMode) {
+			landMode = false;
+			player->land();
 		} else if (playMode) {
 			playMode = false;
 			player->play();

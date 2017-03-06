@@ -93,6 +93,10 @@ public:
 	 * Cleanup any resources laying around. Only call after done flying and during shutdown process.
 	 */
 	void cleanup();
+
+
+	inline std::vector<PlayerVehicleState> getStates() { return this->states; }
+
 private:
 	std::vector<Vehicle *> vehicles;
 	std::vector<vehicle_config> vehicleConfigs;

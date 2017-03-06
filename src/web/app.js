@@ -96,6 +96,7 @@ var App = React.createClass({
 	},
 
 	prepare: function() { this.send({ type: 'prepare' }); },
+	land: function() { this.send({ type: 'land' }); },
 	play: function() { this.send({ type: 'play' }); },
 	pause: function() { this.send({ type: 'pause' }); },
 	stop: function() { this.send({ type: 'stop' }); },

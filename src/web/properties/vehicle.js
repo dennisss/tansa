@@ -30,19 +30,23 @@ var VehicleRow = React.createClass({
 				<table style={{width: '100%'}}>
 					<tbody>
 						<tr>
-							<td style={{width: '25%'}}>
-								<input type="checkbox" style={{marginRight: 5}} />
+							<td>
+								<input type="checkbox" checked style={{marginRight: 5}} />
 								<span style={{fontWeight: 'bold', paddingRight: 10}}>
 									{data.role > 1000? 'NaN' : data.role}:
 								</span>
 							</td>
-							<td style={{width: '25%'}}>
+							<td>
 								ID: {data.id}
 							</td>
-							<td style={{width: '25%'}}>
+							<td>
+								{data.state}
+							</td>
+							<td>
+
 								<BatteryMonitor data={data.battery} />
 							</td>
-							<td style={{width: '25%', textAlign: 'right'}}>
+							<td style={{textAlign: 'right'}}>
 								<OverlayTrigger placement="right" overlay={statusOverlay}>
 									<span>
 										<StatusSign pending={data.connected && data.tracking} good={data.armed && data.tracking} />

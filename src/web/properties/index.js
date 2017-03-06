@@ -24,18 +24,9 @@ var PropertiesPane = React.createClass({
 
 		var p = this.props.parent;
 
-		var initialState = false, playing = false;
-
-
 		var cues = [];
 		if(p.state.filenameI < p.state.availableFiles.length) {
 			cues = p.state.availableFiles[p.state.filenameI].breakpoints;
-		}
-
-		var someArmed = false;
-		if(p.state.stats && p.state.stats.vehicles.length >= 1) {
-			if(p.state.stats.vehicles[0].armed)
-				someArmed = true;
 		}
 
 		return (
@@ -66,6 +57,7 @@ var PropertiesPane = React.createClass({
 							<div className="form-group">
 								<span>Breakpoint</span>
 								<select className="form-control" value={p.state.cue} onChange={(e) => p.setState({cue: e.target.value})}>
+									<option value={-1}>- None -</option>
 									{cues.map((c, i) => <option key={i} value={c.number}>{c.name}</option>)}
 								</select>
 							</div>
@@ -81,28 +73,102 @@ var PropertiesPane = React.createClass({
 
 				</div>
 
-				<div className="ta-pane-header">
-					Controls
-				</div>
-				<div className="ta-pane-body" style={{padding: 5}}>
-					<div className="btn-group btn-group-sm" style={{width: '100%'}}>
-						{someArmed? (
-							<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.play}><i className="fa fa-play" style={{paddingRight: 5}} /> Play</button>
-						) : (
-							<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.prepare}>Takeoff</button>
-						)}
-						<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.pause}><i className="fa fa-pause" style={{paddingRight: 5}} /> Pause</button>
-						<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.stop}><i className="fa fa-stop" style={{paddingRight: 5}} /> Stop</button>
-					</div>
-
-					<button className="btn btn-sm btn-danger" onClick={p.kill} style={{width: '100%', marginTop: 5}}>Kill</button>
-				</div>
+				<Controls parent={p} />
 
 				{p.state.stats? <StatsSection parent={p} /> : null}
 
 			</div>
 		);
 	}
+
+});
+
+
+var Controls = React.createClass({
+
+	render: function() {
+
+		var p = this.props.parent;
+
+
+		var state = '';
+		var playing = false;
+		var allConnected = false;
+		if(p.state.stats && p.state.stats.vehicles.length >= 1) {
+			state = p.state.stats.vehicles[0].state;
+			playing = p.state.stats.global.playing;
+
+
+			var vs = p.state.stats.vehicles;
+			allConnected = true;
+			for(var i = 0; i < vs.length; i++) {
+				if(!vs[i].connected || !vs[i].tracking) {
+					allConnected = false;
+					break;
+				}
+			}
+
+		}
+
+
+		var btns = [];
+
+		var msg = null;
+		if(state == 'init') {
+			if(!allConnected) {
+				msg = "Some vehicles not synced"
+			}
+			else {
+				btns.push(
+					<button className="btn btn-sm btn-default" style={{width: '33%'}} onClick={p.prepare}>
+						<i className="fa fa-arrow-up" style={{paddingRight: 5}} />
+						Takeoff
+					</button>
+				);
+			}
+		}
+		else if(state == 'holding') {
+			btns.push(
+				<button className="btn btn-sm btn-default" onClick={p.land}>
+					<i className="fa fa-arrow-down" style={{paddingRight: 5}} />
+					Land
+				</button>
+			);
+			btns.push(
+				<button className="btn btn-sm btn-default" onClick={p.play}><i className="fa fa-play" style={{paddingRight: 5}} /> Play</button>
+			);
+		}
+		else if(playing) {
+			btns.push(
+				<button className="btn btn-sm btn-default" onClick={p.pause}><i className="fa fa-pause" style={{paddingRight: 5}} /> Pause</button>
+			);
+			btns.push(
+				<button className="btn btn-sm btn-default" onClick={p.stop}><i className="fa fa-stop" style={{paddingRight: 5}} /> Stop</button>
+			)
+		}
+
+		return (
+			<div>
+				<div className="ta-pane-header">
+					Controls
+				</div>
+				<div className="ta-pane-body" style={{padding: 5}}>
+					<div className="btn-group btn-group-sm" style={{width: '100%'}}>
+						{btns.map((b, i) => React.cloneElement(b, {key: i, style: {width: (100 / btns.length) + '%'}}))}
+						{btns.length == 0? (
+							<div style={{textAlign: 'center', color: '#ddd', width: '100%'}}>
+								{msg || 'Pending...'}
+							</div>
+						) : null}
+					</div>
+
+					<button className="btn btn-sm btn-danger" onClick={p.kill} style={{width: '100%', marginTop: 5}}>Kill</button>
+				</div>
+			</div>
+		)
+
+	}
+
 
 });
 

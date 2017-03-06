@@ -365,7 +365,7 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 		p.z()			= std::atof(sub_line[z_loc].c_str());
 		p 				= p * length_conversion;
 		times.push_back(time);
-		points.push_back(ConstrainedPoint::Stationary(p));
+		points.push_back({p});
 	};
 	while (to_process > 0) {
 		process(std::vector<std::string>(line.begin() + processed, line.begin() + processed + NUM_PER_SEGMENT));
@@ -404,7 +404,7 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 			start,
 			end,
 			droneid,
-			std::vector<std::string>(split_line.begin()+ traj_loc + 1,split_line.end()),
+			std::vector<std::string>(split_line.begin()+ traj_loc,split_line.end()),
 			length_conversion,
 			angle_conversion))->GetPath();
 

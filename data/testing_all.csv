@@ -10,4 +10,6 @@ breakpointName,30.00,35.00,ellipse,(AAA),radiusX,2,radiusY,1,theta1,0,theta2,360
 ,35,40,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
 ,40.00,50.00,spiral,(AAA),radius,3,x,2,y,2,z,2,starAngle,0,endAngle,360,,,,,,,,,,,,,,
 ,50.00,55.00,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
-,55.00,90.00,trajectory,(AAA),angleX,30,angleY,30,angleZ,30,offsetX,2,offsetY,2,offsetZ,2,line,(AAA),startX,2,startY,2,startZ,2,endX,5,endY,5,endZ,5
+,55,65,arc,(AAA),time1,0,x,2,y,2,z ,2,time2,5.0,x,4,y,4,z,4,,,,,,,,,,
+,65,70,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
+,70.00,90.00,trajectory,(AAA),angleX,30,angleY,30,angleZ,30,offsetX,2,offsetY,2,offsetZ,2,line,(AAA),startX,2,startY,2,startZ,2,endX,5,endY,5,endZ,5

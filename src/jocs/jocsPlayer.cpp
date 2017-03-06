@@ -457,7 +457,7 @@ void JocsPlayer::loadChoreography(Choreography *chor, const std::vector<unsigned
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (unsigned i = 0; i < breakpointsLength; i++) {
+		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
 			unsigned ret = breakpoints[i].GetNumber();
 			if (ret == breakpointNumber) {
 				return breakpoints[i].GetStartTime();
@@ -470,7 +470,7 @@ void JocsPlayer::loadChoreography(Choreography *chor, const std::vector<unsigned
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 0; i < breakpointsLength; i++) {
 			std::string name = breakpoints[i].GetName();
 			if (name.compare(breakpointName) == 0) {
 				return breakpoints[i].GetStartTime();

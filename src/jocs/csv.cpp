@@ -100,7 +100,6 @@ Choreography* parse_csv(const char* filepath, double scale){
 				break;
 		}
 
-		//TODO: Parse homes
 		while (getline(csv, line)) { //Iterate line by line
 			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
 
@@ -348,7 +347,7 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 	line.erase(std::remove_if(line.begin(), line.end(), [](const std::string& i) { return i.empty() || i == "\r";}), line.end());
 	assert((line.size() % NUM_PER_SEGMENT) == 0);
 
-	unsigned to_process = (unsigned)split_line.size() / NUM_PER_SEGMENT;
+	unsigned to_process = (unsigned)line.size() / NUM_PER_SEGMENT;
 	unsigned processed 	= 0;
 	auto process 		= [&](const std::vector<std::string> &sub_line) {
 		enum indices : unsigned {
@@ -365,7 +364,11 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 		p.z()			= std::atof(sub_line[z_loc].c_str());
 		p 				= p * length_conversion;
 		times.push_back(time);
-		points.push_back({p});
+		if(to_process == 1 || processed == 0) { //If it is the first or last point it must be stationary
+			points.push_back(ConstrainedPoint::Stationary(p));
+		} else {
+			points.push_back({p});
+		}
 	};
 	while (to_process > 0) {
 		process(std::vector<std::string>(line.begin() + processed, line.begin() + processed + NUM_PER_SEGMENT));

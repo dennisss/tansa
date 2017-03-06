@@ -44,7 +44,10 @@ ActionTypes parse_action_type(const std::string& data){
 		return ActionTypes::Arc;
 	else if (data == "trajectory")
 		return ActionTypes::TransformedTraj;
-	return ActionTypes::None;
+	else{
+		std::cout << "Unknown action type: " << data << std::endl;
+		return ActionTypes::None;
+	}
 }
 
 bool is_light_action(ActionTypes type){
@@ -201,10 +204,9 @@ Action* parse_motion_action(ActionTypes type, double start, double end, unsigned
 			ret = parse_trajectory_action(start, end, droneid, split_line, length_conversion, angle_conversion);
 			break;
 		case ActionTypes::None:
-			break;
+			ret = nullptr;
 		default:
 			ret = nullptr;
-			break;
 	}
 	return ret;
 }
@@ -317,11 +319,11 @@ Action* parse_ellipse_action(double start, double end, unsigned long droneid, co
 Action* parse_spiral_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion){
 	enum indices : unsigned {
 		radius_loc 		= 1,
-		theta1_loc 	 	= 3,
-		theta2_loc	 	= 5,
-		x_loc 		 	= 7,
-		y_loc			= 9,
-		z_loc 			= 11
+		x_loc 		 	= 3,
+		y_loc			= 5,
+		z_loc 			= 7,
+		theta1_loc 	 	= 9,
+		theta2_loc	 	= 11
 	};
 	Point origin;
 	double radius	 	= std::atof(split_line[radius_loc].c_str()) * length_conversion;
@@ -343,12 +345,12 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 	std::vector<double> times;
 	std::vector<string> line = split_line;
 	//Remove all empty cells
-	std::remove_if(line.begin(), line.end(), [](const std::string& i) { return i.empty();});
-	assert((split_line.size() % NUM_PER_SEGMENT) == 0);
+	line.erase(std::remove_if(line.begin(), line.end(), [](const std::string& i) { return i.empty() || i == "\r";}), line.end());
+	assert((line.size() % NUM_PER_SEGMENT) == 0);
 
 	unsigned to_process = (unsigned)split_line.size() / NUM_PER_SEGMENT;
 	unsigned processed 	= 0;
-	auto process 		= [&](const std::vector<std::string> &line) {
+	auto process 		= [&](const std::vector<std::string> &sub_line) {
 		enum indices : unsigned {
 			time_loc 	= 1,
 			x_loc 		= 3,
@@ -357,13 +359,13 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 		};
 
 		Point p;
-		unsigned time 	= (unsigned)std::atof(line[time_loc].c_str()); //TODO: warn about non integer times
-		p.x() 			= std::atof(line[x_loc].c_str());
-		p.y()			= std::atof(line[y_loc].c_str());
-		p.z()			= std::atof(line[z_loc].c_str());
+		unsigned time 	= (unsigned)std::atof(sub_line[time_loc].c_str()); //TODO: warn about non integer times
+		p.x() 			= std::atof(sub_line[x_loc].c_str());
+		p.y()			= std::atof(sub_line[y_loc].c_str());
+		p.z()			= std::atof(sub_line[z_loc].c_str());
 		p 				= p * length_conversion;
 		times.push_back(time);
-		points.push_back({p});
+		points.push_back(ConstrainedPoint::Stationary(p));
 	};
 	while (to_process > 0) {
 		process(std::vector<std::string>(line.begin() + processed, line.begin() + processed + NUM_PER_SEGMENT));
@@ -387,7 +389,42 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 }
 
 Action* parse_trajectory_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion){
-	return nullptr;
+	enum indices : unsigned {
+		angle_x_loc 	= 1,
+		angle_y_loc 	= 3,
+		angle_z_loc 	= 5,
+		offset_x_loc 	= 7,
+		offset_y_loc 	= 9,
+		offset_z_loc 	= 11,
+		traj_loc		= 12,
+	};
+
+	Trajectory::Ptr ptr = dynamic_cast<MotionAction*>(parse_motion_action(
+			parse_action_type(split_line[traj_loc]),
+			start,
+			end,
+			droneid,
+			std::vector<std::string>(split_line.begin()+ traj_loc + 1,split_line.end()),
+			length_conversion,
+			angle_conversion))->GetPath();
+
+	double angle_x 			= std::atof(split_line[angle_x_loc].c_str()) * angle_conversion;
+	double angle_y 			= std::atof(split_line[angle_y_loc].c_str()) * angle_conversion;
+	double angle_z 			= std::atof(split_line[angle_z_loc].c_str()) * angle_conversion;
+	double trans_x 			= std::atof(split_line[offset_x_loc].c_str()) * length_conversion;
+	double trans_y 			= std::atof(split_line[offset_y_loc].c_str()) * length_conversion;
+	double trans_z 			= std::atof(split_line[offset_z_loc].c_str()) * length_conversion;
+	Vector3d translation 	= {trans_x, trans_y, trans_z};
+	AngleAxisd x_rotation 	= AngleAxisd(angle_x, Vector3d::UnitX());
+	AngleAxisd y_rotation 	= AngleAxisd(angle_y, Vector3d::UnitY());
+	AngleAxisd z_rotation 	= AngleAxisd(angle_z, Vector3d::UnitZ());
+	Quaterniond quat 		= x_rotation * y_rotation * z_rotation;
+
+	return new MotionAction(
+			(unsigned) droneid,
+			make_shared<TransformedTrajectory>( ptr, quat.matrix(), translation, start, end),
+			ActionTypes::TransformedTraj
+	);
 }
 
 LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){

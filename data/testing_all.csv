@@ -1,0 +1,13 @@
+Breakpoint,Start Time,End Time,Action type,Drone,Params,Feet,Degrees,Drone Keys,AAA,,,,,,,,,,,,,,,,,,,,,
+home,0,0,home,(AAA),(0;0;2),,,,,,,,,,,,,,,,,,,,,,,,,
+break1,0.00,5.00,hover,(AAA),x,0,y,0,z,2,,,,,,,,,,,,,,,,,,,,
+,5,10,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
+,10.00,15.00,line,(AAA),startX,0,startY,0,startZ,2,endX,2,endY,2,endZ,2,,,,,,,,,,,,,,
+,15,20,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
+,20.00,25.00,circle,(AAA),radius,1,theta1,0,theta2,360,x,2,y,2,z,2,,,,,,,,,,,,,,
+,25,30,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
+breakpointName,30.00,35.00,ellipse,(AAA),radiusX,2,radiusY,1,theta1,0,theta2,360,x,2,y,2,z,2,,,,,,,,,,,,
+,35,40,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
+,40.00,50.00,spiral,(AAA),radius,3,x,2,y,2,z,2,starAngle,0,endAngle,360,,,,,,,,,,,,,,
+,50.00,55.00,transition,(AAA),,,,,,,,,,,,,,,,,,,,,,,,,,
+,55.00,60.00,trajectory,(AAA),angleX,30,angleY,30,angleZ,30,offsetX,2,offsetY,2,offsetZ,2,line,(AAA),startX,2,startY,2,startZ,2,endX,5,endY,5,endZ,5

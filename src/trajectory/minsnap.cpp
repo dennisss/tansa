@@ -8,6 +8,7 @@
 #include <CGAL/QP_models.h>
 #include <CGAL/QP_functions.h>
 // choose exact integral type
+#undef CGAL_USE_GMP
 #ifdef CGAL_USE_GMP
 #include <CGAL/Gmpz.h>
 typedef CGAL::Gmpz ET;

@@ -347,36 +347,31 @@ class WorldRenderer {
 
 	setPaths(paths) {
 
-		while(this._paths.length > paths.length) {
-			var l = this._paths.pop();
-			this.scene.remove(l);
+		// Delete old
+		for(var i = 0; i < this._paths.length; i++) {
+			this.scene.remove(this._paths[i]);
 		}
-		while(this._paths.length < paths.length) {
-			// Make a line
+		this._paths = [];
+
+
+		// Create new
+		for(var i = 0; i < paths.length; i++) {
+
 			var lineMaterial = new THREE.LineBasicMaterial({
-				color: vehicleColors[this._paths.length]
+				color: vehicleColors[i]
 			});
 			var lineGeometry = new THREE.Geometry();
 
-			var line = new THREE.Line(lineGeometry, lineMaterial);
-			this.scene.add(line);
-			this._paths.push(line);
-		}
-
-		for(var i = 0; i < paths.length; i++) {
-			var p = this._paths[i];
-
-			// Resize vertices
-			while(p.geometry.vertices.length > paths[i].length) p.geometry.vertices.pop();
-			while(p.geometry.vertices.length < paths[i].length) p.geometry.vertices.push(null);
+			var p = new THREE.Line(lineGeometry, lineMaterial);
+			this.scene.add(p);
+			this._paths.push(p);
 
 			for(var j = 0; j < paths[i].length; j++) {
 				var vec = new THREE.Vector3(paths[i][j][0], paths[i][j][1], paths[i][j][2]);
-				p.geometry.vertices[j] = vec;
+				p.geometry.vertices.push(vec);
 			}
 
 			p.geometry.verticesNeedUpdate = true;
-
 		}
 	}
 

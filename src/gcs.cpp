@@ -194,6 +194,19 @@ json getBreakpoints(string jocsPath) {
 	try {
 		cout << "Load " << jocsPath << endl;
 		auto jocsData = Routine::Load(jocsPath, 1.0);
+
+		if(jocsData == NULL) {
+			json arr = json::array();
+
+			json inv;
+			inv["name"] = "Invalid";
+			inv["number"] = -1;
+			inv["startTime"] = 0;
+			arr.push_back(inv);
+
+			return arr;
+		}
+
 		auto breakPoints = jocsData->breakpoints;
 
 		for (auto &breakPoint : breakPoints) {
@@ -430,7 +443,14 @@ void loadJocsFile(const json &rawJsonArg) {
 
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
-	player->loadChoreography(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
+
+	if(jocsPath == "custom") {
+		player->loadChoreography(custom_jocs(), jocsActiveIds, startPoint);
+	}
+	else {
+		player->loadChoreography(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
+	}
+
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, jocsActiveIds);
 	constructLoadResponse();

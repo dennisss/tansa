@@ -82,6 +82,12 @@ void JocsPlayer::reset() {
 void JocsPlayer::loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start){
 	cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
 	Routine *choreography = Routine::Load(jocsPath, scale);
+
+	if(!choreography) {
+		cout << "Invalid file!" << endl;
+		return;
+	}
+
 	this->loadChoreography(choreography, jocsActiveIds, start);
 }
 

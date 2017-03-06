@@ -40,12 +40,22 @@ var UploadModal = React.createClass({
 
 	getInitialState: function() {
 		return {
-			loading: false
+			loading: false,
+			text: ''
 		};
 	},
 
 	submit: function() {
 		var p = this.props.parent;
+
+
+		// CHeck if we should upload from the text area
+		if(this.state.text.trim().length > 0) {
+			p.upload('newfile.csv', this.state.text);
+			this.props.onHide();
+			this.setState({loading: false, text: ''});
+			return;
+		}
 
 		var el = this.refs.file;
 
@@ -64,7 +74,7 @@ var UploadModal = React.createClass({
 		reader.onload = function(e) {
 			p.upload(f.name, e.target.result);
 			self.props.onHide();
-			self.setState({loading: false});
+			self.setState({loading: false, text: ''});
 		}
 
 		reader.readAsText(f);
@@ -79,6 +89,9 @@ var UploadModal = React.createClass({
 				</Modal.Header>
 				<Modal.Body>
 					<input type="file" ref="file" />
+					<br />
+					Or, paste it in here:
+					<textarea style={{height: 150, width: '100%'}} className="form-control" value={this.state.text} onChange={(e) => this.setState({text: e.target.value.replace(/\t/g, ',')})}></textarea>
 				</Modal.Body>
 				<Modal.Footer>
 					<button disabled={this.state.loading} className="btn btn-primary" onClick={this.submit} >

@@ -332,23 +332,14 @@ class WorldRenderer {
 			this.removeVehicle(last);
 		}
 
-		var allArmed = true;
-
 		// Update states of all vehicles
 		for(var i = 0; i < data.vehicles.length; i++) {
 			this._vehicles[i].update(data.vehicles[i]);
 
-			if(data.vehicles[i].armed && this._homes.length > i) {
-				this._homes[i].visible = false;
+			// Only show home positions if not armed
+			if(this._homes.length > i) {
+				this._homes[i].visible = !data.vehicles[i].armed;
 			}
-			if(!data.vehicles[i].armed) {
-				allArmed = false;
-			}
-
-		}
-
-		if(allArmed && this._homes.length > 0) {
-			this.setHomes([]);
 		}
 
 		this._dirty = true;

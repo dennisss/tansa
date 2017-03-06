@@ -1,14 +1,13 @@
 #include <tansa/action.h>
 #include <tansa/control.h>
 #include <tansa/core.h>
-#include <tansa/jocsParser.h>
 #include <tansa/config.h>
 #include <tansa/jocsPlayer.h>
 #include <tansa/mocap.h>
 #include <tansa/gazebo.h>
 #include <tansa/simulate.h>
 #include <tansa/osc.h>
-
+#include <tansa/csv.h>
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
@@ -193,8 +192,8 @@ void send_status_message() {
 json getBreakpoints(string jocsPath) {
 	json jsonBreakpoints = json::array();
 	try {
-		auto jocsData = Jocs::Parse(jocsPath, 1.0);
-		auto breakPoints = jocsData->GetBreakpoints();
+		auto jocsData = parse_csv(jocsPath.c_str(), 1.0);
+		auto breakPoints = jocsData->breakpoints;
 
 		for (auto &breakPoint : breakPoints) {
 			json jsonBreakpoint;
@@ -221,7 +220,7 @@ void send_file_list() {
 	struct dirent *ent;
 	if ((dir = opendir(resolveWorkspacePath(dataDir).c_str())) != NULL) {
 		while ((ent = readdir(dir)) != NULL) {
-			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".jocs") != std::string::npos)
+			if(ent->d_type == DT_REG && std::string(ent->d_name).find(".csv") != std::string::npos)
 				files.push_back(std::string(ent->d_name));
 		}
 		closedir (dir);
@@ -430,21 +429,9 @@ void loadJocsFile(const json &rawJsonArg) {
 
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
-
-	if(jocsPath == "custom") {
-		player->loadJocs(custom_jocs(), jocsActiveIds, startPoint);
-	}
-	else {
-		player->loadJocs(searchWorkspacePath(jocsPath).c_str(), scale, jocsActiveIds, startPoint);
-	}
+	player->loadChoreography(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, jocsActiveIds);
-
-	// int cue = data["cue"];
-	// TODO: Prepare the jocs file to start at this cue.
-	// TODO: Need to make sure this gets deleted. Will have to delete inside the JocsPlayer class when we load a new file.
-	// In other words, we transfer ownership of the jocs object to the player here.
-
 	constructLoadResponse();
 
 	initialized = true;
@@ -633,7 +620,6 @@ void console_start() {
 
 
 int main(int argc, char *argv[]) {
-
 	// Configure data and configuration folders
 	char *wpath = getenv("TANSA_PATH");
 	if(wpath != NULL)

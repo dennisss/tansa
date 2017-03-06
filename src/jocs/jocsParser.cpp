@@ -214,7 +214,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 
 		double duration = actionsArrayElement[DURATION_KEY];
 
-		unsigned type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
+		ActionTypes type = convertToActionType(actionsArrayElement[ACTION_TYPE_KEY]);
 		assert(actionsArrayElement[DRONE_ARRAY_KEY].is_array());
 
 		auto drones = actionsArrayElement[DRONE_ARRAY_KEY];

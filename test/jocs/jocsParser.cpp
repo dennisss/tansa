@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 
+#include <tansa/jocsParser.h>
 #include <tansa/jocsPlayer.h>
 
 using namespace tansa;

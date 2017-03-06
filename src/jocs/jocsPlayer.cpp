@@ -79,18 +79,16 @@ void JocsPlayer::reset() {
 		return true;
 	}
 
-/**
- * Load JOCS data from a specified path
- */
-void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start) {
+void JocsPlayer::loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start){
 	cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
-	Jocs *jocsFile = Jocs::Parse(jocsPath, scale);
-	this->loadJocs(jocsFile, jocsActiveIds, start);
+	Choreography *choreography = parse_csv(jocsPath.c_str(), scale);
+	this->loadChoreography(choreography, jocsActiveIds, start);
 }
 
-
-	void JocsPlayer::loadJocs(Jocs *jocsFile, const std::vector<unsigned> &jocsActiveIds, int start) {
-
+/**
+* Load JOCS data from a specified path
+*/
+void JocsPlayer::loadChoreography(Choreography *chor, const std::vector<unsigned> &jocsActiveIds, int start) {
 		if (!this->canLoad()) {
 			return;
 		}
@@ -99,11 +97,11 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 		this->jocsActiveIds = jocsActiveIds;
 		landed = false;
 
-		currentJocs = jocsFile;
-		homes = currentJocs->GetHomes();
-		actions = currentJocs->GetActions();
-		lightActions = currentJocs->GetLightActions();
-		breakpoints = currentJocs->GetBreakpoints();
+		currentJocs = chor;
+		homes = currentJocs->homes;
+		actions = currentJocs->actions;
+		lightActions = currentJocs->lightActions;
+		breakpoints = currentJocs->breakpoints;
 
 		if(homes.size() < jocsActiveIds.size()) {
 			this->jocsActiveIds.resize(homes.size());
@@ -263,7 +261,7 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 					}
 				}
 
-				if(motionAction->GetActionType() == Hover) {
+				if(motionAction->GetActionType() == ActionTypes::Hover) {
 					hovers[i]->setPoint(motion->evaluate(t).position); // TODO: This line will be a constant for this type of action
 					hovers[i]->control(t);
 				}
@@ -459,7 +457,7 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (unsigned i = 0; i < breakpointsLength; i++) {
+		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
 			unsigned ret = breakpoints[i].GetNumber();
 			if (ret == breakpointNumber) {
 				return breakpoints[i].GetStartTime();
@@ -472,7 +470,7 @@ void JocsPlayer::loadJocs(const char *jocsPath, float scale, const std::vector<u
 		unsigned breakpointsLength = breakpoints.size();
 
 		// Cycles all breakpoints
-		for (unsigned i = 1; i < breakpointsLength - 1; i++) {
+		for (unsigned i = 0; i < breakpointsLength; i++) {
 			std::string name = breakpoints[i].GetName();
 			if (name.compare(breakpointName) == 0) {
 				return breakpoints[i].GetStartTime();

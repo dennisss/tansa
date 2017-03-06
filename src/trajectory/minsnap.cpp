@@ -8,6 +8,7 @@
 #include <CGAL/QP_models.h>
 #include <CGAL/QP_functions.h>
 // choose exact integral type
+#undef CGAL_USE_GMP
 #ifdef CGAL_USE_GMP
 #include <CGAL/Gmpz.h>
 typedef CGAL::Gmpz ET;
@@ -356,7 +357,7 @@ bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vec
 
 	// Copying values into program
 	for(int i = 0; i < Q.rows(); i++) {
-		for(int j = 0; j < Q.cols(); j++) {
+		for(int j = 0; j <= i; j++) {
 			qp.set_d(i, j, Q(i, j));
 		}
 	}

@@ -20,6 +20,8 @@ public:
 	void disconnect();
 	void track(Vehicle *v, int id);
 
+	void clear();
+
 	/**
 	 * Places drone models into the simulation environment at the given positions
 	 */

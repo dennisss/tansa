@@ -56,6 +56,30 @@ var SettingsModal = React.createClass({
 						</tbody>
 					</table>
 
+
+					<h3>File Settings</h3>
+					<span>These should be comma separated values</span>
+					<table style={{width: '100%'}}>
+						<tbody>
+							<tr>
+								<td>Network IDs</td>
+								<td>
+									<input value={s.file.ids} onChange={(e) => this.set('file.ids', e.target.value)}  className="form-control" type="text"/>
+								</td>
+							</tr>
+
+							<tr>
+								<td>Tracks</td>
+								<td>
+									<input value={s.file.roles} onChange={(e) => this.set('file.roles', e.target.value)}  className="form-control" type="text"/>
+								</td>
+							</tr>
+
+						</tbody>
+					</table>
+
+
+
 					{/*
 					<h3>Trajectories</h3>
 					<div>

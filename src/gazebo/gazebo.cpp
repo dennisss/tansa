@@ -130,6 +130,10 @@ void GazeboConnector::disconnect() {
 	spawn_pub = gazebo::transport::PublisherPtr();
 }
 
+void GazeboConnector::clear() {
+	tracked.clear();
+}
+
 void GazeboConnector::track(Vehicle *v, int id) {
 	tracked[id] = v;
 }

@@ -106,6 +106,10 @@ void generateError(json &response, string message) {
 
 /* For sending a system state update to the gui */
 void send_status_message() {
+
+	if(player == NULL)
+		return;
+
 	json jsonStatus;
 
 	jsonStatus["type"] = "status";
@@ -117,6 +121,10 @@ void send_status_message() {
 
 	json jsonVehicles = json::array();
 	for(int i = 0; i < vehicles.size(); i++) {
+		if(vehicles[i] == NULL) {
+			continue;
+		}
+
 		json jsonVehicle;
 		jsonVehicle["id"] = vconfigs[i].net_id;
 		jsonVehicle["role"] = roles.size() > i ? roles[i] : -1;
@@ -288,14 +296,18 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> ac
 		return;
 	}
 
+#ifdef USE_GAZEBO
+	gazebo->clear();
+#endif
+
 	// Stop all vehicles
 	for (int vi = 0; vi < vehicles.size(); vi++) {
-		Vehicle *v = vehicles[vi];
+		Vehicle *v = vehicles[vi]; vehicles[vi] = NULL;
 		v->disconnect();
 		delete v;
 	}
 
-	vehicles.resize(n);
+	vehicles.resize(n, NULL);
 
 	for (int i = 0; i < n; i++) {
 		const vehicle_config &v = vconfigs[i];

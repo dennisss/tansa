@@ -3,9 +3,19 @@ var React = require('react'),
 	WorldView = require('./world'),
 	Timeline = require('./timeline'),
 	PropertiesPane = require('./properties'),
-	Socket = require('./socket');
+	Socket = require('./socket'),
+	Settings = require('./settings');
 
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
+
+
+Settings.setup({}, {
+	file: {
+		roles: '0,1,2,3,4,5',
+		ids: '0,1,2,3,4,5'
+	}
+
+})
 
 
 var App = React.createClass({
@@ -108,6 +118,15 @@ var App = React.createClass({
 			jocsPath: 'data/' + this.state.availableFiles[this.state.filenameI].fileName,
 			theaterScale: this.state.scale
 		};
+
+		var s = Settings.get('file');
+
+		message.activeRoles = s.roles.split(',').map((n) => n*1);
+
+		//if(this.state.stats.global.mode == 'real') {
+			message.vehicles = s.ids.split(',').map((n) => ({ net_id: n*1 }));
+		//}
+
 		this.send(message);
 	},
 

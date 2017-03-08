@@ -522,6 +522,9 @@ void socket_on_message(const json &data) {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
 		killmode = enabled;
+
+		exit(1);
+
 	} else if (type == "land") {
 		printf("Landing...\n");
 		landMode = true;

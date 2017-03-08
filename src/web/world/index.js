@@ -1,6 +1,16 @@
 var React = require('react'),
 	ReactDOM = require('react-dom'),
-	Renderer = require('./renderer');
+	Renderer = require('./renderer'),
+	Settings = require('../settings');
+
+
+var options = Settings.setup({ version: 1 }, {
+	grid: {
+		units: 'meters',
+		size: [6, 3],
+		step: 0.5
+	}
+});
 
 /*
 	The 3d world and object viewer / editor built on Three.js
@@ -8,9 +18,15 @@ var React = require('react'),
 var WorldView = React.createClass({
 
 	componentDidMount: function(){
-		this.renderer = new Renderer(ReactDOM.findDOMNode(this));
+		this.renderer = new Renderer(ReactDOM.findDOMNode(this), options);
 
 		window.addEventListener('resize', this._windowResize);
+
+		Settings.on('change', (s) => {
+			if(s.changed('grid')) {
+				this.renderer.updateGrid(options.grid);
+			}
+		})
 
 		if(this.props.onRendererReady)
 			this.props.onRendererReady(this.renderer);

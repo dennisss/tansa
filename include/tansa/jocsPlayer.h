@@ -90,6 +90,12 @@ public:
 	 * @return The breakpoints of the currently loaded jocs file.
 	 */
 	std::vector<Breakpoint> getBreakpoints();
+
+	/**
+	 * @return list of track/role numbers which will be used
+	 */
+	inline std::vector<unsigned> getActiveTracks() { return jocsActiveIds; }
+
 	/**
 	 * Cleanup any resources laying around. Only call after done flying and during shutdown process.
 	 */

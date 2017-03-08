@@ -33,7 +33,7 @@ var VehicleRow = React.createClass({
 							<td>
 								<input type="checkbox" checked style={{marginRight: 5}} />
 								<span style={{fontWeight: 'bold', paddingRight: 10}}>
-									{data.role > 1000? 'NaN' : data.role}:
+									Track {data.role > 1000? 'NaN' : data.role}:
 								</span>
 							</td>
 							<td>

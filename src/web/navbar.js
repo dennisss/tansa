@@ -1,19 +1,19 @@
 var React = require('react'),
-	StatusSign = require('./statusSign');
+	StatusSign = require('./statusSign'),
+	SettingsModal = require('./settingsModal'),
+	LogButton = require('./log');
 
 import Toggle from 'material-ui/Toggle';
 
 
 var Navbar = React.createClass({
 
-	getInitialState: function(){
-		return {
-			mode: 'simulate'
-		}
-
-	},
 
 	render: function(){
+
+		var p = this.props.parent;
+
+
 		return (
 			<nav className="navbar navbar-inverse navbar-fixed-top">
 				<div className="container-fluid">
@@ -40,7 +40,9 @@ var Navbar = React.createClass({
 								</ul>
 							</li>
 
-							<li><a href="#">Settings</a></li>
+							<SettingsButton />
+
+							<LogButton />
 
 							<li className="dropdown">
 								<a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
@@ -72,39 +74,62 @@ var Navbar = React.createClass({
 
 							<li><a href="#"></a></li>
 						</ul>
-						<ul className="nav navbar-nav navbar-right">
-							{/*
-							<li><a href="#">Link</a></li>
-							<li className="dropdown">
-								<a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span className="caret" /></a>
-								<ul className="dropdown-menu">
-									<li><a href="#">Action</a></li>
-									<li><a href="#">Another action</a></li>
-									<li><a href="#">Something else here</a></li>
-									<li role="separator" className="divider" />
-									<li><a href="#">Separated link</a></li>
-								</ul>
-							</li>
-							*/}
-							<li>
-								<a>
-									{this.state.mode == 'simulate'? 'Simulating' : 'Live'}
-								</a>
-							</li>
-							<li>
-								<div style={{display: 'inline-block', verticalAlign: 'middle', padding: 13, paddingLeft: 0}}>
-									<Toggle toggled={this.state.mode == 'live'} onToggle={(e,v) => this.setState({mode: v?'live' : 'simulate'})} />
-								</div>
-								{/* TODO: Add kill switch here */}
-							</li>
+						{p.state.connected? (
+							<ul className="nav navbar-nav navbar-right">
+								<li>
+									<a>
+										{p.state.stats.global.mode == 'real'? 'Live' : 'Simulating'}
+									</a>
+								</li>
+								<li>
+									<div style={{display: 'inline-block', verticalAlign: 'middle', padding: 13, paddingLeft: 0}}>
+										<Toggle toggled={p.state.stats.global.mode == 'real'} onToggle={(e,v) => false} />
+									</div>
+									{/* TODO: Add kill switch here */}
+								</li>
 
-						</ul>
+							</ul>
+						) : (
+							<ul className="nav navbar-nav navbar-right">
+								<li><a>Server Timeout</a></li>
+							</ul>
+						)}
 					</div>
 				</div>
 			</nav>
 		);
 	}
 
+
+});
+
+
+var SettingsButton = React.createClass({
+
+	getInitialState: function() {
+		return {
+			open: false
+		};
+	},
+
+	open: function() {
+		this.setState({open: true});
+	},
+
+	close: function() {
+		this.setState({open: false});
+	},
+
+	render: function() {
+
+		return (
+			<li>
+				<a href="#" onClick={this.open}>Settings</a>
+
+				<SettingsModal show={this.state.open} onHide={this.close} />
+			</li>
+		);
+	}
 
 });
 

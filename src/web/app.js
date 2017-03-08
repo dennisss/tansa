@@ -31,9 +31,29 @@ var App = React.createClass({
 			cue: 0,
 			scale: 1,
 
-			stats: null // The full object from the 'status' message
+			stats: null, // The full object from the 'status' message
+			time: 0,
+			connected: false
 		}
 
+	},
+
+
+	componentWillMount: function() {
+		// Periodically check if we are connected
+		this._interval = setInterval(() => {
+			var t = new Date();
+			var connected = (t - this.state.time) / 1000 < 3;
+
+			if(this.state.connected != connected) {
+				this.setState({connected: connected});
+			}
+		}, 250);
+
+	},
+
+	componentWillUnmount: function() {
+		clearInterval(this._interval);
 	},
 
 
@@ -46,7 +66,7 @@ var App = React.createClass({
 
 			if(data.type == 'status') {
 				if((it++) % 10 == 0) {
-					this.setState({stats: data});
+					this.setState({ stats: data, time: (new Date()) });
 				}
 				renderer.update({vehicles: data.vehicles});
 			}
@@ -150,7 +170,7 @@ var App = React.createClass({
 
 		return (
 			<div className="ts-app">
-				<Navbar />
+				<Navbar parent={this} />
 
 				<table style={{width: '100%', height: '100%', backgroundColor: '#444', color: '#fff'}}>
 					<tbody>
@@ -170,7 +190,7 @@ var App = React.createClass({
 												<PropertiesPane parent={this} />
 											</td>
 											<td style={{position: 'relative'}}>
-												<div style={{position: 'absolute', top: 10, right: 10}}>
+												<div style={{position: 'absolute', top: 10, right: 10, backgroundColor: '#fff', padding: 8, border: '1px solid #ccc', borderRadius: 4}}>
 													<div className="btn-group">
 														<button onClick={() => this.changeView('top')} className="btn btn-default">Top</button>
 														<button onClick={() => this.changeView('front')} className="btn btn-default">Front</button>
@@ -178,7 +198,7 @@ var App = React.createClass({
 													</div>
 
 
-													<div style={{color: '#444'}}>
+													<div style={{color: '#444', marginTop: 5}}>
 														<div>
 															<input type="checkbox" checked={this.renderer? this.renderer.options.showTrajectories : false} onChange={(e) => { this.renderer.options.showTrajectories = e.target.checked; this.forceUpdate() } } /> Show Trajectory Line
 														</div>

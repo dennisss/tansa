@@ -51,7 +51,6 @@ static Mocap *mocap = nullptr;
 static Simulation *sim = nullptr;
 static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
-static vector<unsigned> jocsActiveIds;
 static string worldMode;
 static bool inRealLife;
 
@@ -114,11 +113,13 @@ void send_status_message() {
 
 
 	std::vector<PlayerVehicleState> states = player->getStates();
+	std::vector<unsigned> roles = player->getActiveTracks();
+
 	json jsonVehicles = json::array();
 	for(int i = 0; i < vehicles.size(); i++) {
 		json jsonVehicle;
 		jsonVehicle["id"] = vconfigs[i].net_id;
-		jsonVehicle["role"] = jocsActiveIds.size() > i ? jocsActiveIds[i] : -1;
+		jsonVehicle["role"] = roles.size() > i ? roles[i] : -1;
 		jsonVehicle["connected"] = vehicles[i]->connected;
 		jsonVehicle["armed"] = vehicles[i]->armed;
 		jsonVehicle["tracking"] = vehicles[i]->tracking;
@@ -174,6 +175,7 @@ void send_status_message() {
 	jsonStatus["vehicles"] = jsonVehicles;
 
 	json globalStatus;
+	globalStatus["mode"] = worldMode;
 	globalStatus["playing"] = player->isPlaying();
 	globalStatus["ready"] = player->isReady();
 	globalStatus["paused"] = player->isPaused();
@@ -257,9 +259,9 @@ void send_file_list() {
  * Disconnect and delete any existing vehicles, and initialize those specified via JSON
  * @param rawJson 			The JSON object containing the vehicle configuration information (net_id's)
  * @param homes 			Homes for the new vehicles, specified by the current Jocs file
- * @param jocsActiveIds 	The ids of the drones to be used in this configuration
+ * @param activeRoles 	The track numbers of the drones to be used in this configuration
  */
-void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jocsActiveIds) {
+void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> activeRoles) {
 	vconfigs.resize(rawJson["vehicles"].size());
 
 	for (unsigned i = 0; i < rawJson["vehicles"].size(); i++) {
@@ -276,10 +278,9 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 	}
 
 	// Number of drones used (limited by active ids and number of available slots in choreography)
-	int n = jocsActiveIds.size();
+	int n = activeRoles.size();
 	if(homes.size() < n) {
 		n = homes.size();
-		jocsActiveIds.resize(n);
 	}
 
 	if (n > vconfigs.size()) {
@@ -327,9 +328,9 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> jo
 		// Only pay attention to homes of active drones
 		vector<Point> spawns;
 		for (int i = 0; i < n; i++) {
-			int chosenId = jocsActiveIds[i];
+			int chosenRole = activeRoles[i];
 			// We assume the user only configured for valid IDs..
-			spawns.push_back(homes[chosenId]);
+			spawns.push_back(homes[chosenRole]);
 			spawns[i].z() = 0;
 		}
 		gazebo->spawn(spawns);
@@ -430,14 +431,15 @@ void loadJocsFile(const json &rawJsonArg) {
 		rawJson["vehicles"] = defaultRawJson["vehicles"];
 	}
 
-	if(rawJson.count("jocsActiveIds") == 0) {
-		rawJson["jocsActiveIds"] = defaultRawJson["jocsActiveIds"];
+	// Use default roles if none provided
+	if(rawJson.count("activeRoles") == 0) {
+		rawJson["activeRoles"] = defaultRawJson["activeRoles"];
 	}
 
 
 	initialized = false;
 	string jocsPath = rawJson["jocsPath"];
-	vector<unsigned> jocsActiveIds = rawJson["jocsActiveIds"];
+	vector<unsigned> activeRoles = rawJson["activeRoles"];
 	scale = rawJson["theaterScale"];
 
 
@@ -445,14 +447,14 @@ void loadJocsFile(const json &rawJsonArg) {
 	player->cleanup();
 
 	if(jocsPath == "custom") {
-		player->loadChoreography(custom_jocs(), jocsActiveIds, startPoint);
+		player->loadChoreography(custom_jocs(), activeRoles, startPoint);
 	}
 	else {
-		player->loadChoreography(searchWorkspacePath(jocsPath), scale, jocsActiveIds, startPoint);
+		player->loadChoreography(searchWorkspacePath(jocsPath), scale, activeRoles, startPoint);
 	}
 
 	vector<Point> homes = player->getHomes();
-	spawnVehicles(rawJson, homes, jocsActiveIds);
+	spawnVehicles(rawJson, homes, activeRoles);
 	constructLoadResponse();
 
 	initialized = true;

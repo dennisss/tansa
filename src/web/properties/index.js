@@ -65,7 +65,7 @@ var PropertiesPane = React.createClass({
 						<div className="col-sm-6">
 							<div className="form-group">
 								<span>Scale</span>
-								<input className="form-control" type="number" step="0.1" min="0" max="4" value={p.state.scale} onChange={(e) => p.setState({scale: e.target.value})} />
+								<input className="form-control" type="number" step="0.1" min="0" max="4" value={p.state.scale*1} onChange={(e) => p.setState({scale: e.target.value*1})} />
 							</div>
 						</div>
 					</div>

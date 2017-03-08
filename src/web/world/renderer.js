@@ -5,7 +5,8 @@ global.THREE = THREE;
 
 var async = require('async');
 
-var Vehicle = require('./vehicle');
+var Vehicle = require('./vehicle'),
+	GridHelper2D = require('./grid');
 
 require('./DragControls');
 require('./OrbitControls');
@@ -18,7 +19,7 @@ import { MeshText2D, textAlign } from 'three-text2d'
 var pointI = 1;
 
 // Colors to use to identify unique vehicle ids
-var vehicleColors = [0x0000ff, 0xff0000, 0x00ff00, 0x00ffff, 0xff00ff, 0xffff00];
+var trackColors = [0x0000ff, 0xff0000, 0x00ff00, 0x00ffff, 0xff00ff, 0xffff00];
 
 
 /**
@@ -42,13 +43,15 @@ var vehicleColors = [0x0000ff, 0xff0000, 0x00ff00, 0x00ffff, 0xff00ff, 0xffff00]
 class WorldRenderer {
 
 
-	constructor(el) {
+	constructor(el, options) {
 		this.el = el;
 
 		var width = $(el).width(), height = $(el).height();
 
 
 		var scene = new THREE.Scene();
+		this.scene = scene;
+
 		var camera = new THREE.PerspectiveCamera( 70, width / height, 0.1, 20 );
 		camera.position.y = -6;
 		camera.position.x = -2;
@@ -88,26 +91,7 @@ class WorldRenderer {
 		scene.add(mshFloor);
 
 
-		// Make a 6 x 9 meter grid
-		var helper = new THREE.GridHelper( 3, 6, 0x888888, 0x888888 );
-		var helper2 = new THREE.GridHelper( 3, 6, 0x888888, 0x888888 );
-		helper.rotateX(Math.PI / 2);
-		helper.position.x = 1.5
-		scene.add(helper);
-		helper2.rotateX(Math.PI / 2);
-		helper2.position.x = -1.5
-		scene.add(helper2);
-
-
-		var text = new MeshText2D("FRONT", { align: textAlign.center, font: '30px Arial', fillStyle: '#888888', antialias: false });
-		text.scale.x = 0.01
-		text.scale.y = 0.01;
-		text.position.y = -1.75
-		scene.add(text)
-
-		var axis = new THREE.AxisHelper(1);
-		axis.position.set(0, 0, 0);
-		scene.add(axis);
+		this.updateGrid(options.grid);
 
 
 
@@ -198,7 +182,7 @@ class WorldRenderer {
 
 		*/
 
-		this.scene = scene;
+
 		this.camera = camera;
 		this.renderer = renderer;
 
@@ -241,17 +225,51 @@ class WorldRenderer {
 		this.renderer.setSize(w, h);
 	}
 
-	createGround() {
+	updateGrid(options) {
+
+		if(this._grid) {
+			this.scene.remove(this._grid);
+		}
+
+		var g = new THREE.Group();
+
+		var size = options.size.slice(),
+			step = options.step;
+
+		if(options.units == 'feet') {
+			size[0] *= 0.3048;
+			size[1] *= 0.3048;
+			step *= 0.3048;
+		}
 
 
+		// Make a 6 x 9 meter grid
+		var helper = new GridHelper2D(size, [size[0] / step, size[1] / step], 0x888888, 0x888888);
+		helper.rotateX(Math.PI / 2);
+		g.add(helper);
 
+
+		var text = new MeshText2D("FRONT", { align: textAlign.center, font: '30px Arial', fillStyle: '#888888', antialias: false });
+		text.scale.x = 0.01
+		text.scale.y = 0.01;
+		text.position.y = -(size[1] / 2) - 0.25;
+		g.add(text)
+
+		var axis = new THREE.AxisHelper(1);
+		axis.position.set(0, 0, 0);
+		g.add(axis);
+
+		this.scene.add(g);
+		this._grid = g;
+		this._dirty = true;
 	}
 
-	addVehicle() {
+	addVehicle(v) {
 
 		var positions = [new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0)];
 
-		var material = new THREE.MeshLambertMaterial({ color: vehicleColors[this._vehicles.length ] /*0xBBBBBB*/, specular: 0x111111, shininess: 200 });
+		// TODO: Change this to use the color of the v.role instead of the current index
+		var material = new THREE.MeshLambertMaterial({ color: 0, specular: 0x111111, shininess: 200 });
 		var mesh = new THREE.Mesh(this._bodyGeometry, material);
 
 		var vehicle = new Vehicle(this._bodyGeometry, this._propGeometry, material);
@@ -324,7 +342,7 @@ class WorldRenderer {
 
 		// Add vehicles
 		while(data.vehicles.length > this._vehicles.length) {
-			this.addVehicle();
+			this.addVehicle(); // TODO: THis needs to account for a changing role
 		}
 		// Remove vehicles
 		while(data.vehicles.length < this._vehicles.length) {
@@ -336,7 +354,10 @@ class WorldRenderer {
 		for(var i = 0; i < data.vehicles.length; i++) {
 			this._vehicles[i].update(data.vehicles[i]);
 
+			this._vehicles[i]._body.material.color.setHex(trackColors[data.vehicles[i].role]);
+
 			// Only show home positions if not armed
+			// TODO: Do this based on role
 			if(this._homes.length > i) {
 				this._homes[i].visible = !data.vehicles[i].armed;
 			}
@@ -358,7 +379,7 @@ class WorldRenderer {
 		for(var i = 0; i < paths.length; i++) {
 
 			var lineMaterial = new THREE.LineBasicMaterial({
-				color: vehicleColors[i]
+				color: trackColors[i]
 			});
 			var lineGeometry = new THREE.Geometry();
 
@@ -389,10 +410,9 @@ class WorldRenderer {
 			var radius = 0.2; // TODO: Base this on the vehicle size
 			var height = 0.4;
 			var geometry = new THREE.CylinderGeometry(radius, radius, height, 32, 1, true);
-			var material = new THREE.MeshBasicMaterial({ color: vehicleColors[i], opacity: 0.2, transparent: true, side: THREE.DoubleSide });
+			var material = new THREE.MeshBasicMaterial({ color: trackColors[i], opacity: 0.2, transparent: true, side: THREE.DoubleSide });
 
 			var obj = new THREE.Mesh(geometry, material);
-			console.log(homes[i])
 			obj.rotation.x = Math.PI / 2;
 			obj.position.set(homes[i][0], homes[i][1], /* homes[i][2] + */ (height / 2));
 			this._homes.push(obj);
@@ -409,6 +429,7 @@ class WorldRenderer {
 		}
 
 		for(var i = 0; i < this._paths.length; i++) {
+			// TODO: Also only show if a vehicle with that role is present
 			this._paths[i].visible = this.options.showTrajectories;
 		}
 

@@ -338,28 +338,35 @@ private:
 
 };
 
+
 /**
  * Smoothly increases or decreases list intensity between two intensities
  */
 class LightTrajectory {
 public:
-
-	inline LightTrajectory(double si, double st, double ei, double et) :
-			startIntensity(si), startTime(st), endIntensity(ei), endTime(et) {}
+	static int WHITE;
+	inline LightTrajectory(double si, double st, double ei, double et, bool white, int sc = LightTrajectory::WHITE, int ec = LightTrajectory::WHITE) :
+			startIntensity(si), startTime(st), endIntensity(ei), endTime(et), isWhiteOnly(white), endColor(ec), startColor(sc) {}
 	virtual ~LightTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times
 	virtual double evaluate(double t);
 
+
+	int getColorAtTime(double t);
 	inline double getStartIntensity() { return this->startIntensity; }
+	inline int 	  getStartColor() { return startColor;}
 	inline double getStartTime() { return this->startTime; }
 	inline double getEndIntensity() { return this->endIntensity; }
+	inline int    getEndColor() {return endColor;}
 	inline double getEndTime() { return this->endTime; }
+	bool isWhiteOnly = true;
 
 
 protected:
-
+	double getPercentDone(double time);
 	double startIntensity, startTime, endIntensity, endTime;
+	int startColor, endColor;
 };
 
 /**
@@ -369,7 +376,7 @@ class StrobeTrajectory : public LightTrajectory {
 public:
 
 	inline StrobeTrajectory(double si, double st, double ei, double et, double bps) :
-			LightTrajectory(si,st,ei,et), beatsPerSecond(bps) {}
+			LightTrajectory(si,st,ei,et, true), beatsPerSecond(bps) {}
 	virtual ~StrobeTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times

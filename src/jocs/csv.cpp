@@ -214,10 +214,10 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 	LightAction* ret = nullptr;
 	switch (type){
 		case ActionTypes::Light:
-			ret = parse_simple_light_action(start, end, droneid, split_line);
+			ret = parse_white_light_action(start, end, droneid, split_line);
 			break;
 		case ActionTypes::Strobe:
-			ret = parse_strobe_action(start, end, droneid, split_line);
+			ret = parse_white_strobe_action(start, end, droneid, split_line);
 			break;
 		default:
 			ret = nullptr;
@@ -430,11 +430,13 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 	);
 }
 
-LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+LightAction* parse_white_light_action(double start, double end, unsigned long droneid,
+									  const std::vector<std::string> &split_line){
 	return nullptr;
 }
 
-LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+LightAction* parse_white_strobe_action(double start, double end, unsigned long droneid,
+									   const std::vector<std::string> &split_line){
 	return nullptr;
 }
 

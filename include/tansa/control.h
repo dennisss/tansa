@@ -101,8 +101,7 @@ public:
 	/**
 	 * Specifies which trajectory should do followed
 	 */
-	void track(LightTrajectory *trajTop, LightTrajectory *trajBot);
-
+	virtual void track(LightTrajectory *trajectory);
 
 	/**
 	 * This should be called 100 times a second to track the path
@@ -110,13 +109,13 @@ public:
 	virtual void control(double t);
 
 private:
+	int calcFromIntensity(double intensity);
 	double EPSILON = 0.01;
 
 	Vehicle *vehicle;
-	LightTrajectory *trajectoryTop;
-	LightTrajectory *trajectoryBot;
-	double currentIntensityTop = 0.0;
-	double currentIntensityBot = 0.0;
+	LightTrajectory *trajectory;
+	double currentIntensity = 0.0; //For emulating white lights
+	int color = 0;
 };
 
 }

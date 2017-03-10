@@ -280,7 +280,7 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					LightTrajectory *light = static_cast<LightAction *>(lightActions[chorI][lightCounters[i]])->GetPath();
 
 					if (t >= lightActions[chorI][lightCounters[i]]->GetStartTime()) {
-						lightctls[i]->track(light, light); //TODO: not just copy same light trajectory for both lights
+						lightctls[i]->track(light); //TODO: not just copy same light trajectory for both lights
 						lightctls[i]->control(t);
 						if (t >= lightActions[chorI][lightCounters[i]]->GetEndTime()) {
 							lightCounters[i]++;

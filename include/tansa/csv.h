@@ -205,7 +205,8 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
  * @param split_line Split CSV line from parse_csv_line
  * @return The parsed LightAction for the given drone.
  */
-LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+LightAction* parse_white_light_action(double start, double end, unsigned long droneid,
+									  const std::vector<std::string> &split_line);
 /**
  *
  * @param type Type of action
@@ -215,7 +216,20 @@ LightAction* parse_simple_light_action(double start, double end, unsigned long d
  * @param split_line Split CSV line from parse_csv_line
  * @return The parsed StrobeAction for the given drone.
  */
-LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+LightAction* parse_white_strobe_action(double start, double end, unsigned long droneid,
+									   const std::vector<std::string> &split_line);
+/**
+ *
+ * @param type Type of action
+ * @param start Start time in seconds
+ * @param end End time in seconds
+ * @param droneid Numeric id of the drone.
+ * @param split_line Split CSV line from parse_csv_line
+ * @return The parsed rgb light action for the given drone.
+ */
+LightAction* parse_rgb_light_action(double start, double end, unsigned long droneid,
+									   const std::vector<std::string> &split_line);
+
 /**
  * NOTE: This also sorts each sub array of actions by start time.
  * @param actions 2D array of action pointers

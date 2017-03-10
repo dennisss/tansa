@@ -244,7 +244,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 								si,
 								lastTime + startTime,
 								ei,
-								lastTime + startTime + duration)
+								lastTime + startTime + duration, true)
 				));
 			} else if (type == ActionTypes::Strobe) {
 

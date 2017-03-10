@@ -32,9 +32,9 @@ ActionTypes parse_action_type(const std::string& data){
 		return ActionTypes::Circle;
 	else if (data == "hover")
 		return ActionTypes::Hover;
-	else if (data == "light")
+	else if (data == "white_light")
 		return ActionTypes::Light;
-	else if (data == "strobe")
+	else if (data == "strobe_white")
 		return ActionTypes::Strobe;
 	else if (data == "ellipse")
 		return ActionTypes::Ellipse;
@@ -432,12 +432,28 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 
 LightAction* parse_white_light_action(double start, double end, unsigned long droneid,
 									  const std::vector<std::string> &split_line){
-	return nullptr;
+	enum indices : unsigned {
+		start_intensity 	= 1,
+		end_intensity 		= 3
+	};
+	double startIntensity = std::atof(split_line[start_intensity].c_str());
+	double endIntensity =  std::atof(split_line[end_intensity].c_str());
+	LightTrajectory* ptr = new LightTrajectory(startIntensity, start, endIntensity, end, true);
+	return new LightAction(droneid, ptr);
 }
 
 LightAction* parse_white_strobe_action(double start, double end, unsigned long droneid,
 									   const std::vector<std::string> &split_line){
-	return nullptr;
+	enum indices : unsigned {
+		start_intensity 	= 1,
+		end_intensity 		= 3,
+		beats_per_minute	= 5
+	};
+	double startIntensity = std::atof(split_line[start_intensity].c_str());
+	double endIntensity =  std::atof(split_line[end_intensity].c_str());
+	int beatsPerMinute = std::atof(split_line[beats_per_minute].c_str());
+	StrobeTrajectory* ptr = new StrobeTrajectory(startIntensity, start, endIntensity, end, beatsPerMinute);
+	return new LightAction(droneid, ptr);
 }
 
 bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes){

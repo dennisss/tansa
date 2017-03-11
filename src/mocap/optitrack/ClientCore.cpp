@@ -86,7 +86,7 @@ void ClientCore::start(const char *clientAddr, const char *serverAddr, int cmdPo
 
 	this->cmd_socket = create_socket();
 
-	if(type == ConnectionType_Multicast) {
+	if(type == ConnectionType_Multicast || server_addr.length() == 0) {
 		// Enable broadcasting
 		optval = 1;
 		if(setsockopt(this->cmd_socket, SOL_SOCKET, SO_BROADCAST, (void *)&optval, sizeof(optval)) == -1) {
@@ -249,6 +249,13 @@ void *cmd_server(void *arg){
         if((r == 0) || (r < 0))
             continue;
 
+		// Register the address of the server if none was originally specified
+		if(cc->server_addr.length() == 0) {
+			char buf[32];
+			inet_ntop(AF_INET, &sa.sin_addr, buf, sizeof(buf));
+			cc->server_addr = buf;
+		}
+
 		// debug - print message
 		//sprintf(str, "[Client] Received command from %d.%d.%d.%d: Command=%d, nDataBytes=%d",
 		//		TheirAddress.sin_addr.S_un.S_un_b.s_b1, TheirAddress.sin_addr.S_un.S_un_b.s_b2,
@@ -313,8 +320,12 @@ void ClientCore::sendPacket(sPacket *packet){
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(cmd_port);
 
-	inet_pton(AF_INET, server_addr.c_str(), &sa.sin_addr);
-//	sa.sin_addr.s_addr = INADDR_BROADCAST; // TODO: This should be the address of the server
+	if(server_addr.length() == 0) { // If server address not specified, broadcast
+		sa.sin_addr.s_addr = INADDR_BROADCAST;
+	}
+	else {
+		inet_pton(AF_INET, server_addr.c_str(), &sa.sin_addr);
+	}
 
 	int res = sendto(this->cmd_socket, packet, 4 + packet->nDataBytes, 0, (struct sockaddr *)&sa, sizeof(struct sockaddr_in));
 
@@ -344,8 +355,7 @@ void ClientCore::ping(){
 
 void ClientCore::unpack(char* pData){
 
-	int major = NatNetVersion[0];
-	int minor = NatNetVersion[1];
+	int major = NatNetVersion[0], minor = NatNetVersion[1];
 
 	char *ptr = pData;
 
@@ -375,7 +385,7 @@ void ClientCore::unpack(char* pData){
 
 void ClientCore::unpackFrame(char *ptr){
 
-	int major = 2, minor = 9;
+	int major = NatNetVersion[0], minor = NatNetVersion[1];
 
 
 	Memory *mem = new Memory();
@@ -577,7 +587,7 @@ void ClientCore::unpackFrame(char *ptr){
 				if( ((major == 2)&&(minor >= 6)) || (major > 2) || (major == 0) ){
 					// params
 					short params = 0; memcpy(&params, ptr, 2); ptr += 2;
-					bool bTrackingValid = params & 0x01; // 0x01 : rigid body was successfully tracked in this frame
+					//bool bTrackingValid = params & 0x01; // 0x01 : rigid body was successfully tracked in this frame
 				}
 
 			} // next rigid body
@@ -604,7 +614,7 @@ void ClientCore::unpackFrame(char *ptr){
 			// 2.6 and later
 			if(((major == 2)&&(minor >= 6)) || (major > 2) || (major == 0)){
 				// marker params
-				short params = 0; memcpy(&m.params, ptr, 2); ptr += 2;
+				memcpy(&m.params, ptr, 2); ptr += 2;
 				//bool bOccluded = params & 0x01;     // marker was not visible (occluded) in this frame
 				//bool bPCSolved = params & 0x02;     // position provided by point cloud solve
 				//bool bModelSolved = params & 0x04;  // position provided by model solve
@@ -703,7 +713,8 @@ void ClientCore::unpackFrame(char *ptr){
 
 void ClientCore::unpackDataDescs(char *ptr){
 
-	int major, minor;
+	int major = NatNetVersion[0], minor = NatNetVersion[1];
+
 
 	// number of datasets
 	int nDatasets = 0; memcpy(&nDatasets, ptr, 4); ptr += 4;

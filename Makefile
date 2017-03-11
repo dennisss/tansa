@@ -1,7 +1,7 @@
 
 CONFIG_PATH="config/config.json"
 
-.PHONY: build build_firmware build_socketio_cpp
+.PHONY: build build_firmware build_socketio_cpp doc
 
 build: build_socketio_cpp
 	git submodule update --init --recursive
@@ -19,6 +19,10 @@ runGcs:
 
 test: build
 	./build/test_tansa
+
+
+doc:
+	cd doc; doxygen
 
 clean:
 	rm -rf build

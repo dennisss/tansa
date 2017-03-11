@@ -66,7 +66,7 @@ protected:
 	bool isCalculated = false;
 };
 /**
- * @class Represents an action to be replaced by another action (usually for transitions)
+ * Represents an action to be replaced by another action (usually for transitions)
  */
 class EmptyAction : public Action {
 public:
@@ -87,7 +87,7 @@ private:
     double endTime;
 };
 /**
- * @class Represents an action with a trajectory. Trajectories can be of different types and result in different
+ * Represents an action with a trajectory. Trajectories can be of different types and result in different
  * types of motion actions
  */
 class MotionAction : public Action {
@@ -133,7 +133,7 @@ private:
 };
 
 /**
- * @class Represents a light action (turning light on or off, patterns, etc)
+ * Represents a light action (turning light on or off, patterns, etc)
  */
 class LightAction : public Action {
 public:

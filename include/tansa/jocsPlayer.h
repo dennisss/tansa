@@ -13,7 +13,7 @@
 
 namespace tansa {
 /**
- * @class A controller class for executing a choreography.
+ * A controller class for executing a choreography.
  */
 class JocsPlayer {
 public:

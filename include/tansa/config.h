@@ -5,7 +5,7 @@
 #define VEHICLE_DESCENT_MS 0.3
 
 /**
- * @struct Contains client and server address for drone netcode.
+ * Contains client and server address for drone netcode.
  */
 struct hardware_config {
 	string clientAddress;
@@ -13,7 +13,7 @@ struct hardware_config {
 };
 
 /**
- * @struct Contains config info for drone
+ * Contains config info for drone
  */
 struct vehicle_config {
 	unsigned net_id; // The number printed on the physical
@@ -23,7 +23,7 @@ struct vehicle_config {
 };
 
 /**
- * @enum State assigned to a vehicle controlled by a player
+ * State assigned to a vehicle controlled by a player
  */
 enum PlayerVehicleState {
 	/**

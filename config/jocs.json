@@ -1,7 +1,7 @@
 {
 	"jocsPath": "data/singleDrone.jocs",
-	"startPoint": 1,
-	"jocsActiveIds": [0,1,2,3,4,5],
+	"startPoint": -1,
+	"activeRoles": [0,1,2],
 	"theaterScale": 1.0,
 	"vehicles": [
 		{"net_id": 1},

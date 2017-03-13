@@ -64,6 +64,12 @@ ActionTypes parse_action_type(const std::string& data);
 bool is_light_action(ActionTypes type);
 /**
  *
+ * @param line
+ * @return Is the line empty?
+ */
+bool is_empty_csv_line(std::string line);
+/**
+ *
  * @param line A line in a csv file
  * @return A vector of strings representing each cell of passed in line
  */

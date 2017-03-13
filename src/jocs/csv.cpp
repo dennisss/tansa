@@ -56,6 +56,19 @@ bool is_light_action(ActionTypes type){
 	return type == ActionTypes::Strobe || type == ActionTypes::Light;
 }
 
+bool is_empty_csv_line(std::string line){
+	boost::erase_all(line, "\"");
+	boost::erase_all(line, " ");
+	boost::erase_all(line, "\r");
+	boost::erase_all(line, "\t");
+	auto split_line = split(line, ',');
+	for(const auto& i : split_line) {
+		if(!i.empty())
+			return false;
+	}
+	return true;
+}
+
 std::vector<string> read_csv_line(std::string& line){
 	auto ret = split(line, ',');
 	return std::move(ret);
@@ -95,10 +108,10 @@ Choreography* parse_csv(const char* filepath, double scale){
 		ret->actions.resize(num_drones);
 		ret->lightActions.resize(num_drones);
 		ret->homes.resize(num_drones);
-		
+
 		while (getline(csv, line)) { //Iterate line by line
 			boost::erase_all(line, "\r");
-			if(line.empty())
+			if(line.empty() || is_empty_csv_line(line))
 				continue;
 			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
 

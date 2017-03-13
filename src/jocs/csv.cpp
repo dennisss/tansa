@@ -95,14 +95,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 		ret->actions.resize(num_drones);
 		ret->lightActions.resize(num_drones);
 		ret->homes.resize(num_drones);
-		//getline(csv, line); //contains homes
-		/*auto home_split = split(line, ',');
-		for (size_t i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
-			ret->homes.push_back(parse_point(home_split[i])*conversion_factor);
-			if (ret->homes.size() == num_drones)
-				break;
-		}*/
-
+		
 		while (getline(csv, line)) { //Iterate line by line
 			boost::erase_all(line, "\r");
 			if(line.empty())

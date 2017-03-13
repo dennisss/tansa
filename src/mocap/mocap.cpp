@@ -4,8 +4,8 @@
 
 #include <iostream>
 
-#include "optitrack/NatNetClient.h"
-#include "optitrack/NatNetTypes.h"
+#include "optitrack/natnet_client.h"
+
 
 namespace tansa {
 
@@ -18,20 +18,25 @@ static int frameI = 0;
 static Vector3d velocity(0,0,0);
 
 Mocap::Mocap() {
+	client = nullptr;
+}
 
-
+Mocap::~Mocap() {
+	if(client != nullptr) {
+		delete client;
+	}
 }
 
 
 int Mocap::connect(string iface_addr, string server_addr) {
-	client = new NatNetClient(ConnectionType_Unicast);
+	client = new optitrack::NatNetClient();
 
-	if(client->Initialize((char *)iface_addr.c_str(), server_addr.c_str()) != 0){
+	if(client->connect((char *)iface_addr.c_str(), server_addr.c_str(), optitrack::NatNetUnicast) != 0){
 		delete client;
 		return 1;
 	}
 
-	client->SetDataCallback(mocap_callback, (void *) this);
+	client->subscribe(&Mocap::onNatNetFrame, this);
 
 	return 0;
 }
@@ -41,33 +46,51 @@ int Mocap::disconnect() {
 	return 0;
 }
 
-void Mocap::track(Vehicle *v, int id) {
+void Mocap::track(Vehicle *v, int id, const vector<Vector3d> &markers) {
 	this->tracked[id] = v;
 }
 
-void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
+inline Vector3d opti_pos_to_enu(double x, double y, double z) {
 
-	Mocap *inst = (Mocap *) pUserData;
+}
+
+inline Vector3d opti_orient_to_enu(double x, double y, double z) {
+
+}
+
+
+void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
+
 
 	tansa::Time t = Time::now(); // TODO: Replace with the mocap timestamp
 
-	for(int i = 0; i < pFrameOfData->nRigidBodies; i++){
+//	cout << frame->labeledMarkers.size() << " " << frame->otherMarkers.size() << endl;
 
-		sRigidBodyData *rb = &pFrameOfData->RigidBodies[i];
+	for(int i = 0; i < frame->labeledMarkers.size(); i++) {
+		cout << frame->labeledMarkers[i].isOccluded() << " ";
+	}
+	cout << endl;
 
-		int id = rb->ID;
+
+	for(int i = 0; i < frame->rigidBodies.size(); i++){
+
+		const optitrack::NatNetRigidBody *rb = &frame->rigidBodies[i];
+
+	//	cout << rb->markerPositions.size() << endl;
+
+		int id = rb->id;
 
 		// TODO: If there is an unidentified body, use active IR beacon to find correspondences (do this in another thread?)
 		// Only continue if a key exists for this rigid body
-		if(inst->tracked.count(id) == 0){
+		if(this->tracked.count(id) == 0){
 			continue;
 		}
 
 
 		// Don't send it if it wasn't tracked correctly
 		// TODO: We may want to trigger some failsafe in this case (also, after some time of tracking lose, the id->vehicle mapping should be discarded as the tracking may have picked up a different drone by that point)
-		bool bTrackingValid = rb->params & 0x01;
-		if(!bTrackingValid)
+
+		if(!rb->isTrackingValid())
 			continue;
 
 
@@ -86,26 +109,22 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 			rb->qy
 		);
 
-		inst->tracked[id]->mocap_update(pos, quat, t);
-
-//		cout << pos.transpose() << endl;
+		this->tracked[id]->mocap_update(pos, quat, t);
 
 	}
 
 
-
 	// Grab other markers that were triangulated but not attached to rigid bodies
 	vector<Vector3d> markers;
-	markers.resize(pFrameOfData->nOtherMarkers);
+	markers.resize(frame->otherMarkers.size());
 	for(int i = 0; i < markers.size(); i++) {
 		markers[i] = Vector3d(
-			-pFrameOfData->OtherMarkers[i][0],
-			pFrameOfData->OtherMarkers[i][2],
-			pFrameOfData->OtherMarkers[i][1]
+			-frame->otherMarkers[i].x,
+			frame->otherMarkers[i].z,
+			frame->otherMarkers[i].y
 		);
 
 		//cout << markers[i].transpose() << endl;
-
 	}
 
 	// Markers is now the full
@@ -199,6 +218,14 @@ void mocap_callback(sFrameOfMocapData* pFrameOfData, void* pUserData){
 		beaconOn = false;
 	}
 	*/
+}
+
+
+void Mocap::start_recording() {
+	client->send_message("StartRecording");
+}
+void Mocap::stop_recording() {
+	client->send_message("StopRecording");
 }
 
 }

@@ -6,12 +6,13 @@
 #include <map>
 #include <vector>
 
-class NatNetClient;
-struct sFrameOfMocapData;
-
 namespace tansa {
 
-void mocap_callback(struct sFrameOfMocapData* pFrameOfData, void* pUserData);
+namespace optitrack {
+class NatNetClient;
+struct NatNetFrame;
+}
+
 
 /**
  * Used to interface pose feedback from motion capture systems with the vehicles
@@ -19,6 +20,7 @@ void mocap_callback(struct sFrameOfMocapData* pFrameOfData, void* pUserData);
 class Mocap {
 public:
 	Mocap();
+	~Mocap();
 
 	/**
 	 * Connect to the motion capture software
@@ -35,15 +37,20 @@ public:
 	 *
 	 * @param v the vehicle being tracked
 	 * @param id the id number of the body in Motive
+	 * @param markers optional list of reference marker positions on the vehicle. these will be used to correct the position and orientation to the reference center-of-mass frame
 	 */
-	void track(Vehicle *v, int id);
+	void track(Vehicle *v, int id, const vector<Vector3d> &markers = {});
+
+
+	void start_recording();
+	void stop_recording();
 
 private:
 
-	friend void mocap_callback(struct sFrameOfMocapData * pFrameOfData, void* pUserData);
+	void onNatNetFrame(const optitrack::NatNetFrame *frame);
 
 	map<int, Vehicle *> tracked;
-	NatNetClient* client;
+	optitrack::NatNetClient *client;
 
 };
 

@@ -55,8 +55,8 @@ add_library(
 	#src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
 	src/mocap/registration.cpp
-	src/mocap/optitrack/ClientCore.cpp
-	src/mocap/optitrack/NatNetClient.cpp
+	src/mocap/optitrack/natnet.cpp
+	src/mocap/optitrack/natnet_client.cpp
 	src/jocs/routine.cpp
 	src/jocs/csv.cpp
 	src/jocs/jocsParser.cpp

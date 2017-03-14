@@ -8,6 +8,8 @@
 #include <tansa/simulate.h>
 #include <tansa/osc.h>
 #include <tansa/csv.h>
+#include "manager/preview.h"
+
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
@@ -53,6 +55,9 @@ static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static string worldMode;
 static bool inRealLife;
+
+static bool previewMode = false;
+static PreviewPlayer *previewPlayer;
 
 void signal_sigint(int s) {
 	// TODO: Prevent
@@ -104,8 +109,72 @@ void generateError(json &response, string message) {
 	}
 }
 
+void send_preview_status_message() {
+
+	json jsonStatus;
+
+	jsonStatus["type"] = "status";
+	jsonStatus["time"] = previewPlayer->get_time();
+
+
+	std::vector<ModelState> states = previewPlayer->get_states();
+
+	json jsonVehicles = json::array();
+	for(int i = 0; i < states.size(); i++) {
+
+		json jsonVehicle;
+		jsonVehicle["id"] = i;
+		jsonVehicle["role"] = i;
+		jsonVehicle["connected"] = false;
+		jsonVehicle["armed"] = true;
+		jsonVehicle["tracking"] = false;
+
+		jsonVehicle["state"] = "flying";
+
+		json jsonPosition = json::array();
+		jsonPosition.push_back(states[i].position.x());
+		jsonPosition.push_back(states[i].position.y());
+		jsonPosition.push_back(states[i].position.z());
+		jsonVehicle["position"] = jsonPosition;
+
+		json jsonOrientation = json::array();
+		jsonOrientation.push_back(states[i].orientation.w());
+		jsonOrientation.push_back(states[i].orientation.x());
+		jsonOrientation.push_back(states[i].orientation.y());
+		jsonOrientation.push_back(states[i].orientation.z());
+		jsonVehicle["orientation"] = jsonOrientation;
+
+		jsonVehicle["lights"] = json::array();
+
+		json jsonBatteryStats = {
+			{"voltage", 8.4},
+			{"percent", 1}
+		};
+		jsonVehicle["battery"] = jsonBatteryStats;
+
+		jsonVehicles.push_back(jsonVehicle);
+	}
+	jsonStatus["vehicles"] = jsonVehicles;
+
+	json globalStatus;
+	globalStatus["mode"] = "preview";
+	globalStatus["playing"] = true;
+	globalStatus["ready"] = false;
+	globalStatus["paused"] = false;
+	globalStatus["landed"] = false;
+	jsonStatus["global"] = globalStatus;
+
+	tansa::send_message(jsonStatus);
+}
+
+
 /* For sending a system state update to the gui */
 void send_status_message() {
+
+	if(previewMode) {
+		send_preview_status_message();
+		return;
+	}
 
 	if(player == NULL)
 		return;
@@ -192,7 +261,6 @@ void send_status_message() {
 
 	tansa::send_message(jsonStatus);
 }
-
 
 /**
  * Return breakpoint information for a given jocsFile
@@ -375,7 +443,7 @@ void constructLoadResponse() {
 	}
 	j["cues"] = nums;
 	j["target_positions"] = positions;
-
+	j["duration"] = player->getCurrentFile()->duration();
 
 	json paths = json::array();
 
@@ -412,12 +480,11 @@ void constructLoadResponse() {
 	tansa::send_message(j);
 }
 
-// TODO: This is a bad name as it actually uses the config file as the rawJson
 /**
- * Load a Jocs file with the configuration parameters specified via either the REPL or the GUI
+ * Load the player from a full configuration object
  * @param rawJson 	JSON containing configuration information to initialize (or reconfigure) the JocsPlayer
  */
-void loadJocsFile(const json &rawJsonArg) {
+void loadConfiguration(const json &rawJsonArg) {
 	json rawJson = rawJsonArg;
 
 	loadMode = true;
@@ -454,9 +521,9 @@ void loadJocsFile(const json &rawJsonArg) {
 	vector<unsigned> activeRoles = rawJson["activeRoles"];
 	scale = rawJson["theaterScale"];
 
-
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
+
 
 	if(jocsPath == "custom") {
 		player->loadChoreography(custom_jocs(), activeRoles, startPoint);
@@ -467,11 +534,18 @@ void loadJocsFile(const json &rawJsonArg) {
 
 	vector<Point> homes = player->getHomes();
 	spawnVehicles(rawJson, homes, activeRoles);
+
+	if(rawJson.count("preview") == 1 && rawJson["preview"].get<bool>() == true) {
+		previewPlayer = new PreviewPlayer(player->getCurrentFile());
+		previewPlayer->play();
+		previewMode = true;
+	}
+
 	constructLoadResponse();
 
 	initialized = true;
 	loadMode = false;
-	printf("Finished loadJocsFile\n");
+	printf("Finished loadConfiguration\n");
 }
 
 /**
@@ -491,8 +565,13 @@ void loadFromConfigFile(string configPath) {
 	/// Parse the config file
 	std::string configData((std::istreambuf_iterator<char>(configStream)), std::istreambuf_iterator<char>());
 	nlohmann::json rawJson = nlohmann::json::parse(configData);
-	loadJocsFile(rawJson);
+	loadConfiguration(rawJson);
 }
+
+void handle_preview_command(json data) {
+
+}
+
 
 void socket_on_message(const json &data) {
 
@@ -507,6 +586,10 @@ void socket_on_message(const json &data) {
 	} else if (type == "pause") {
 		printf("Pausing...\n");
 		pauseMode = true;
+	} else if (type == "seek") {
+		if(previewMode) {
+			previewPlayer->set_time(data["time"]);
+		}
 	} else if (type == "stop") {
 		printf("Stopping...\n");
 		stopMode = true;
@@ -517,7 +600,7 @@ void socket_on_message(const json &data) {
 		send_file_list();
 	} else if (type == "load"){
 		printf("Loading jocs file...\n");
-		loadJocsFile(data);
+		loadConfiguration(data);
 	} else if (type == "kill") {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
@@ -645,11 +728,19 @@ void *console_thread(void *arg) {
 			cout << "Loading..." << endl;
 			loadFromConfigFile(args[1]);
 		}
+		else if(args[0] == "recon"){
+			mocap->start_recording();
+		}
+		else if(args[0] == "recoff") {
+			mocap->stop_recording();
+		}
 		else if(args[0] == "calibrate") {
 			do_calibrate();
 		}
 
 	}
+
+	return NULL;
 }
 
 void console_start() {
@@ -754,13 +845,35 @@ int main(int argc, char *argv[]) {
 			player->land();
 		} else if (playMode) {
 			playMode = false;
-			player->play();
+
+			if(previewMode) {
+				previewPlayer->play();
+			}
+			else {
+				player->play();
+			}
 		} else if (pauseMode) {
 			pauseMode = false;
 			player->pause();
 		} else if (stopMode) {
 			stopMode = false;
-			player->stop();
+
+			if(previewMode) {
+				previewMode = false;
+				delete previewPlayer;
+			}
+			else {
+				player->stop();
+			}
+		// TODO: Always do a step if possible
+		} else if(previewMode) {
+			previewPlayer->step();
+
+			if(previewPlayer->ended()) {
+				previewMode = false;
+				delete previewPlayer;
+			}
+
 		} else {
 			player->step();
 		}

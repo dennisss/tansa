@@ -2,6 +2,8 @@ var React = require('react'),
 	StatsSection = require('./stats'),
 	UploadButton = require('./upload');
 
+import { OverlayTrigger, Tooltip } from 'react-bootstrap'
+
 require('./style.css')
 
 var PropertiesPane = React.createClass({
@@ -44,7 +46,7 @@ var PropertiesPane = React.createClass({
 					<div className="form-group">
 						<span>File</span>
 						<div className="input-group">
-							<select className="form-control" value={p.state.filenameI} onChange={this.onFileChanged}>
+							<select className="form-control" style={{'WebkitAppearance': 'none'}} value={p.state.filenameI} onChange={this.onFileChanged}>
 								{p.state.availableFiles.map((f, i) => <option key={i} value={i}>{f.fileName}</option> )}
 							</select>
 							<span className="input-group-btn">
@@ -69,7 +71,22 @@ var PropertiesPane = React.createClass({
 							</div>
 						</div>
 					</div>
-					<button className="btn btn-sm btn-primary" style={{width: '100%'}} onClick={p.load}>Load File</button>
+
+					<div className="input-group" style={{width: '100%'}}>
+
+						<span className="input-group-btn" style={{width: 'initial'}}>
+							<button className="btn btn-sm btn-primary" style={{width: '100%'}} onClick={p.load}>Load File</button>
+						</span>
+
+						{/* TODO: Hide this if the regular mode has already started */}
+						<span className="input-group-btn" style={{width: 1}}>
+							<OverlayTrigger overlay={<Tooltip id="preview">Preview</Tooltip>} placement="right">
+								<button onClick={p.preview} className="btn btn-sm btn-primary">
+									<i className="fa fa-eye" />
+								</button>
+							</OverlayTrigger>
+						</span>
+					</div>
 
 				</div>
 
@@ -95,6 +112,7 @@ var Controls = React.createClass({
 		var playing = false;
 		var allConnected = false;
 		if(p.state.stats && p.state.stats.vehicles.length >= 1) {
+			// TODO: Consider the state of all drones
 			state = p.state.stats.vehicles[0].state;
 			playing = p.state.stats.global.playing;
 

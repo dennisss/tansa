@@ -42,6 +42,7 @@ var App = React.createClass({
 			scale: 1,
 
 			stats: null, // The full object from the 'status' message
+			duration: null,
 			time: 0,
 			connected: false
 		}
@@ -57,6 +58,10 @@ var App = React.createClass({
 
 			if(this.state.connected != connected) {
 				this.setState({connected: connected});
+
+				if(connected) {
+					this.load_filelist();
+				}
 			}
 		}, 250);
 
@@ -83,6 +88,7 @@ var App = React.createClass({
 			else if(data.type == 'load_reply') {
 				renderer.setPaths(data.paths);
 				renderer.setHomes(data.target_positions);
+				this.setState({ duration: data.duration });
 			}
 			else if(data.type == 'list_reply') {
 				this.setState({availableFiles: data.files});
@@ -110,10 +116,10 @@ var App = React.createClass({
 		Socket.emit('msg', JSON.stringify(msg));
 	},
 
-
-	load: function(filename, cue) {
+	load: function(e, previewing) {
 		var message = {
 			type: 'load',
+			preview: previewing? true : false,
 			startPoint: this.state.cue*1,
 			jocsPath: 'data/' + this.state.availableFiles[this.state.filenameI].fileName,
 			theaterScale: this.state.scale
@@ -123,15 +129,25 @@ var App = React.createClass({
 
 		message.activeRoles = s.roles.split(',').map((n) => n*1);
 
-		//if(this.state.stats.global.mode == 'real') {
+		if(this.state.stats.global.mode == 'real') {
 			message.vehicles = s.ids.split(',').map((n) => ({ net_id: n*1 }));
-		//}
+		}
 
 		this.send(message);
 	},
 
+	// TODO: This should mimic load
+	preview: function() {
+		this.load(null, true);
+	},
+
+	seek: function(t) {
+		this.send({ type: 'seek', time: t });
+	},
+
+	// TODO: Do this automaticaly when we detect the server is connected
 	load_filelist: function() {
-		Socket.emit('msg', JSON.stringify({ type: 'list' }));
+		this.send({ type: 'list' });
 	},
 
 	prepare: function() { this.send({ type: 'prepare' }); },
@@ -252,9 +268,9 @@ var App = React.createClass({
 						</tr>
 
 
-						{/*
 						<tr>
-							<td style={{height: 200, borderTop: '2px solid #222'}}>
+							{/* TODO: This is originally 200px high */}
+							<td style={{height: 36, borderTop: '2px solid #222'}}>
 								{/*
 									Playback controls and timeline here
 
@@ -267,12 +283,11 @@ var App = React.createClass({
 									- Each sequential tab will be
 
 								*/}
-						{/*
 								<Timeline parent={this} />
 
 							</td>
 						</tr>
-						*/}
+
 					</tbody>
 
 				</table>

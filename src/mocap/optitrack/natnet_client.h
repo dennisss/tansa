@@ -15,12 +15,25 @@
 namespace tansa {
 namespace optitrack {
 
+/**
+ * For communicating with applications such as OptiTrack Motive via the NatNet protocol
+ */
 class NatNetClient : public Channel {
 public:
 
 	NatNetClient();
 	~NatNetClient();
 
+	/**
+	 * Starts listening for connections
+	 *
+	 * @param client_addr the local interface address
+	 * @param server_addr the ip address of the remote application computer. when in multicast mode, this will be used as the multicast address (a default is available if this is null). if in unicast mode and not specified, this will default to the broadcast address of the interface until the server is found
+	 * @param type
+	 * @param cmd_port
+	 * @param data_port
+	 * @return 0 if successfully started (this does not necessarily mean that we are connected)
+	 */
 	int connect(const char *client_addr, const char *server_addr, NatNetConnectionType type = NatNetMulticast, int cmd_port = DEFAULT_COMMAND_PORT, int data_port = DEFAULT_DATA_PORT);
 
 	void disconnect();

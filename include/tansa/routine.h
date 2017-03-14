@@ -30,6 +30,7 @@ public:
 	static bool IsFile(std::string path);
 
 
+	double duration();
 
 	std::vector<std::vector<Action*>> actions;
 	std::vector<Breakpoint> breakpoints;

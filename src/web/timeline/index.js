@@ -5,8 +5,6 @@ var React = require('react'),
 require('./style.css');
 
 
-var currentTime = 0;
-
 /*
 	Used to visualize a 'concurrent' track type
 	- typically made up of tracks which each are a linear sequences of actions
@@ -96,9 +94,10 @@ var Timeline = React.createClass({
 
 		var x = e.clientX - $el.offset().left; // TODO: Also account for timeline scroll
 
-		currentTime = (this.span / $el.width()) * x;
+		var t = (this.span / $el.width()) * x;
 
-		this.forceUpdate();
+		this.props.parent.seek(t);
+
 	},
 
 	onPlanClick: function(e, p){
@@ -108,20 +107,29 @@ var Timeline = React.createClass({
 	},
 
 
-	renderTimebar: function(){
+	renderTimebar: function(t){
 		return (
-			<div style={{left: (currentTime*this.percentPerSecond) + '%', borderRight: '1px solid red', top: 0, bottom: 0, position: 'absolute'}}></div>
+			<div style={{left: (t*this.percentPerSecond) + '%', borderRight: '1px solid red', top: 0, bottom: 0, position: 'absolute'}}></div>
 		);
 	},
 
 	render: function(){
-		this.span = 5*60;
+
+		var p = this.props.parent;
+		var t = 0;
+
+		if(p.state.stats) {
+			t = p.state.stats.time;
+		}
+
+		this.span = p.state.duration || 60;
 
 		this.percentPerSecond = 100 / this.span;
 
 
 		return (
 			<div style={{width: '100%', height: '100%', display: 'table'}}>
+				{/*
 				<div style={{width: 300, display: 'table-cell', verticalAlign: 'top', borderRight: '1px solid #888'}}>
 
 					<div className="ta-timeline-row" style={{borderBottom: '1px solid #888', backgroundColor: '#222'}}>
@@ -136,13 +144,14 @@ var Timeline = React.createClass({
 						);
 					})}
 				</div>
+				*/}
 				<div ref="line" style={{display: 'table-cell', verticalAlign: 'top', position: 'relative', cursor: 'text'}} onClick={this.onLineClick}>
 					<div className="ta-timeline-row" style={{borderBottom: '1px solid #888', backgroundColor: '#222'}}>
 						{this.renderTickMarkers()}
 					</div>
 
 
-					{this.tracks.map((t, i) => {
+					{/*this.tracks.map((t, i) => {
 						return (
 							<div key={i} className="ta-timeline-row">
 								{t.children.map((st, i) => {
@@ -158,9 +167,9 @@ var Timeline = React.createClass({
 								})}
 							</div>
 						);
-					})}
+					})*/}
 
-					{this.renderTimebar()}
+					{this.renderTimebar(t)}
 
 				</div>
 			</div>

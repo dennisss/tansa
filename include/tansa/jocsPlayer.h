@@ -104,6 +104,8 @@ public:
 
 	inline std::vector<PlayerVehicleState> getStates() { return this->states; }
 
+	Routine *getCurrentFile() { return currentJocs; }
+
 private:
 	std::vector<Vehicle *> vehicles;
 	std::vector<vehicle_config> vehicleConfigs;

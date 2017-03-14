@@ -34,6 +34,20 @@ Routine *Routine::Load(string path, double scale) {
 
 }
 
+double Routine::duration() {
+
+	double maxTime = 0;
+	for(int i = 0; i < actions.size(); i++) {
+		if(actions[i].size() > 0) {
+			double t = actions[i][actions[i].size() - 1]->GetEndTime();
+			if(t > maxTime)
+				maxTime = t;
+		}
+	}
+
+	return maxTime;
+}
+
 
 
 }

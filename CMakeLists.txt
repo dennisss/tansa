@@ -68,6 +68,8 @@ add_library(
 
 	src/control/admittance.cpp
 
+	src/manager/preview.cpp
+
 	# Simulation
 	src/simulate/simulation.cpp
 	src/simulate/motor.cpp

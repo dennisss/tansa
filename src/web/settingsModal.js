@@ -80,15 +80,27 @@ var SettingsModal = React.createClass({
 
 
 
-					{/*
+
 					<h3>Trajectories</h3>
-					<div>
-						Back Time
-					</div>
-					<div>
-						Forward Time
-					</div>
-					*/}
+
+					<table style={{width: '100%'}}>
+						<tbody>
+							<tr>
+								<td>Back Time</td>
+								<td>
+									<input value={s.trajectory.backward} onChange={(e) => this.set('trajectory.backward', e.target.value*1)}  className="form-control" type="number" min="-1" max="60" step="1"/>
+								</td>
+							</tr>
+
+							<tr>
+								<td>Forward Time</td>
+								<td>
+									<input value={s.trajectory.forward} onChange={(e) => this.set('trajectory.forward', e.target.value*1)}  className="form-control" type="text" min="-1" max="60" step="1"/>
+								</td>
+							</tr>
+
+						</tbody>
+					</table>
 
 					{/*
 					<h3>Network IDs</h3>

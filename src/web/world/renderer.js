@@ -6,7 +6,8 @@ global.THREE = THREE;
 var async = require('async');
 
 var Vehicle = require('./vehicle'),
-	GridHelper2D = require('./grid');
+	GridHelper2D = require('./grid'),
+	Settings = require('../settings');
 
 require('./DragControls');
 require('./OrbitControls');
@@ -363,6 +364,8 @@ class WorldRenderer {
 			}
 		}
 
+		this.updatePaths(data.time);
+
 		this._dirty = true;
 	}
 
@@ -381,18 +384,57 @@ class WorldRenderer {
 			var lineMaterial = new THREE.LineBasicMaterial({
 				color: trackColors[i]
 			});
-			var lineGeometry = new THREE.Geometry();
+
+
+			// geometry
+			var lineGeometry = new THREE.BufferGeometry();
+			var positions = new Float32Array( paths[i].length * 3 ); // 3 vertices per point
+			lineGeometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
 
 			var p = new THREE.Line(lineGeometry, lineMaterial);
 			this.scene.add(p);
 			this._paths.push(p);
 
 			for(var j = 0; j < paths[i].length; j++) {
-				var vec = new THREE.Vector3(paths[i][j][0], paths[i][j][1], paths[i][j][2]);
-				p.geometry.vertices.push(vec);
+				positions[3*j + 0] = paths[i][j][0];
+				positions[3*j + 1] = paths[i][j][1];
+				positions[3*j + 2] = paths[i][j][2];
 			}
 
-			p.geometry.verticesNeedUpdate = true;
+			//p.geometry.verticesNeedUpdate = true;
+		}
+	}
+
+	updatePaths(time) {
+
+		// TODO: Cache these settings
+		var back = Settings.get('trajectory.backward'),
+			forward = Settings.get('trajectory.forward');
+
+		for(var i = 0; i < this._paths.length; i++) {
+			var p = this._paths[i];
+
+			var len = p.geometry.attributes.position.count;
+
+			var start = 0;
+			var end = len;
+
+			if(time > 0) {
+				var cur = Math.floor(time / 0.1);
+
+				if(back > 0)
+					start = cur - Math.floor(back / 0.1);
+				if(forward > 0)
+					end = cur + Math.floor(forward / 0.1);
+			}
+
+			if(start < 0)
+				start = 0;
+			if(end > len)
+				end = len;
+
+			p.geometry.setDrawRange(start, (end - start));
+
 		}
 	}
 

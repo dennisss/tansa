@@ -13,6 +13,10 @@ Settings.setup({}, {
 	file: {
 		roles: '0,1,2,3,4,5',
 		ids: '0,1,2,3,4,5'
+	},
+	trajectory: {
+		forward: 10,
+		backward: 10
 	}
 
 })
@@ -83,7 +87,7 @@ var App = React.createClass({
 				if((it++) % 10 == 0) {
 					this.setState({ stats: data, time: (new Date()) });
 				}
-				renderer.update({vehicles: data.vehicles});
+				renderer.update({vehicles: data.vehicles, time: data.time});
 			}
 			else if(data.type == 'load_reply') {
 				renderer.setPaths(data.paths);

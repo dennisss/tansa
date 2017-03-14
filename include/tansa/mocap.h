@@ -139,10 +139,10 @@ private:
  */
 void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c);
 
-/**
- * Rearranges the as set from correspondence_solve_ideal to match the ordering of the points in
- */
 // TODO: Reorganize to have inputs, then outputs
+/**
+ * Rearranges the 'as' set from correspondence_solve_ideal to match the ordering of the points in
+ */
 void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, vector<unsigned> &c);
 
 /**

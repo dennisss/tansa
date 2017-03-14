@@ -129,7 +129,7 @@ void send_preview_status_message() {
 		jsonVehicle["armed"] = true;
 		jsonVehicle["tracking"] = false;
 
-		jsonVehicle["state"] = "flying";
+		jsonVehicle["state"] = previewPlayer->is_playing()? "flying" : "holding";
 
 		json jsonPosition = json::array();
 		jsonPosition.push_back(states[i].position.x());
@@ -158,7 +158,7 @@ void send_preview_status_message() {
 
 	json globalStatus;
 	globalStatus["mode"] = "preview";
-	globalStatus["playing"] = true;
+	globalStatus["playing"] = previewPlayer->is_playing();
 	globalStatus["ready"] = false;
 	globalStatus["paused"] = false;
 	globalStatus["landed"] = false;
@@ -413,7 +413,10 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> ac
 			spawns.push_back(homes[chosenRole]);
 			spawns[i].z() = 0;
 		}
-		gazebo->spawn(spawns);
+
+		// Keeping preview mode fast by not spawning the processes
+		if(!previewMode)
+			gazebo->spawn(spawns);
 	}
 #endif
 
@@ -451,12 +454,13 @@ void constructLoadResponse() {
 	for(int i = 0; i < actions.size(); i++) {
 		json pts = json::array();
 
+		double t = 0;
 		for(int j = 0; j < actions[i].size(); j++) {
 
 			MotionAction *m = (MotionAction *) actions[i][j];
 
 			Trajectory::Ptr path = m->GetPath();
-			for(double t = m->GetStartTime(); t <= m->GetEndTime(); t += 0.1) {
+			for(; t <= m->GetEndTime(); t += 0.1) {
 
 				Vector3d pt = path->evaluate(t).position;
 				json jpt = json::array();
@@ -532,14 +536,14 @@ void loadConfiguration(const json &rawJsonArg) {
 		player->loadChoreography(searchWorkspacePath(jocsPath), scale, activeRoles, startPoint);
 	}
 
-	vector<Point> homes = player->getHomes();
-	spawnVehicles(rawJson, homes, activeRoles);
-
 	if(rawJson.count("preview") == 1 && rawJson["preview"].get<bool>() == true) {
 		previewPlayer = new PreviewPlayer(player->getCurrentFile());
 		previewPlayer->play();
 		previewMode = true;
 	}
+
+	vector<Point> homes = player->getHomes();
+	spawnVehicles(rawJson, homes, activeRoles);
 
 	constructLoadResponse();
 
@@ -854,7 +858,12 @@ int main(int argc, char *argv[]) {
 			}
 		} else if (pauseMode) {
 			pauseMode = false;
-			player->pause();
+			if(previewMode) {
+				previewPlayer->pause();
+			}
+			else {
+				player->pause();
+			}
 		} else if (stopMode) {
 			stopMode = false;
 

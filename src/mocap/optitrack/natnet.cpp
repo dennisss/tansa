@@ -1,4 +1,5 @@
 #include "natnet.h"
+#include <string.h>
 
 namespace tansa {
 namespace optitrack {
@@ -123,7 +124,9 @@ const char *NatNetFrame::Parse(const char *ptr, const NatNetVersion v, NatNetFra
 			// 2.6 and later
 			if(((major == 2) && (minor >= 6)) || (major > 2) || (major == 0)) {
 				// marker params
-				buffer_read(ptr, m.params);
+				uint16_t p;
+				buffer_read(ptr, p);
+				m.params = p;
 			}
 		}
 	}

@@ -176,19 +176,11 @@ var App = React.createClass({
 		var cam = this.renderer.camera;
 
 		if(name == 'top') {
-			cam.rotation.x = 0;
-			cam.rotation.y = 0;
-			cam.rotation.z = Math.Pi;
-
 			cam.position.y = 0;
 			cam.position.x = 0;
 			cam.position.z = 6;
 		}
 		else if(name == 'front') {
-			cam.rotation.x = 0;
-			cam.rotation.y = 0;
-			cam.rotation.z = 0;
-
 			cam.position.y = -6;
 			cam.position.x = 0;
 			cam.position.z = 0;
@@ -243,6 +235,9 @@ var App = React.createClass({
 														</div>
 														<div>
 															<input type="checkbox" checked={this.renderer? this.renderer.options.showVehicles : false} onChange={(e) => { this.renderer.options.showVehicles = e.target.checked; this.forceUpdate() } } /> Show Vehicles
+														</div>
+														<div>
+															<input type="checkbox" checked={this.renderer? this.renderer.options.cameraMode == 'perspective' : false} onChange={(e) => { this.renderer.setCamera(e.target.checked? 'perspective' : 'orthogonal'); this.forceUpdate() } } /> Perspective
 														</div>
 
 													</div>

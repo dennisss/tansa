@@ -53,12 +53,33 @@ class WorldRenderer {
 		var scene = new THREE.Scene();
 		this.scene = scene;
 
-		var camera = new THREE.PerspectiveCamera( 70, width / height, 0.1, 20 );
-		camera.position.y = -6;
-		camera.position.x = -2;
-		camera.position.z = 2;
-		camera.up.set(0, 0, 1);
-		scene.add( camera );
+		var pCamera = new THREE.PerspectiveCamera(70, width / height, 0.1, 20);
+		scene.add(pCamera);
+		this.pCamera = pCamera;
+
+		pCamera.up.set(0, 0, 1);
+		pCamera.position.y = -6;
+		pCamera.position.x = -2;
+		pCamera.position.z = 2;
+
+
+		var swidth = 30;
+		var sheight = (height / width) * swidth;
+		var oCamera = new THREE.OrthographicCamera(swidth / - 2, swidth / 2, sheight / 2, sheight / - 2, 0.1, 1000);
+		oCamera.visible = false;
+		scene.add(oCamera);
+		this.oCamera = oCamera;
+
+		oCamera.up.set(0, 0, 1);
+		oCamera.position.y = -6;
+		oCamera.position.x = -2;
+		oCamera.position.z = 2;
+
+		var camera = pCamera;
+
+		this.camera = camera;
+
+
 
 		scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
 		var light = new THREE.SpotLight( 0xffffff, 1.5 );
@@ -71,18 +92,6 @@ class WorldRenderer {
 		scene.add( light );
 
 
-		/*
-		var planeGeometry = new THREE.PlaneGeometry( 2000, 2000 );
-		planeGeometry.rotateX( - Math.PI / 2 );
-		var planeMaterial = new THREE.ShadowMaterial();
-		planeMaterial.opacity = 0.2;
-
-		var plane = new THREE.Mesh( planeGeometry, planeMaterial );
-		plane.position.y = -200;
-		plane.receiveShadow = true;
-		scene.add( plane );
-		*/
-
 		var matFloor = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 1 });
 		var geoFloor = new THREE.BoxGeometry( 16, 9, 0.001 );
 		var mshFloor = new THREE.Mesh( geoFloor, matFloor );
@@ -90,7 +99,6 @@ class WorldRenderer {
 		mshFloor.receiveShadow = true;
 
 		scene.add(mshFloor);
-
 
 		this.updateGrid(options.grid);
 
@@ -102,15 +110,14 @@ class WorldRenderer {
 		renderer.setSize(width, height);
 		renderer.shadowMap.enabled = true;
 		el.appendChild(renderer.domElement);
-
-
+		this.renderer = renderer;
 
 
 		// Controls
-		var controls = new THREE.OrbitControls(camera, renderer.domElement);
+		var controls = new THREE.OrbitControls(pCamera, renderer.domElement);
 		controls.damping = 0.2;
-		// TODO: Ensure that this doesn't update too fast
 		controls.addEventListener('change', () => this._dirty = true);
+		this.controls = controls;
 
 		/*
 		var transformControl = new THREE.TransformControls(camera, renderer.domElement);
@@ -184,10 +191,6 @@ class WorldRenderer {
 		*/
 
 
-		this.camera = camera;
-		this.renderer = renderer;
-
-		this.controls = controls;
 		//this.transformControl = transformControl;
 		//this.dragControls = dragControls;
 
@@ -209,7 +212,8 @@ class WorldRenderer {
 
 		this.options = {
 			showTrajectories: true,
-			showVehicles: true
+			showVehicles: true,
+			cameraMode: "perspective"
 		}
 	}
 
@@ -220,8 +224,10 @@ class WorldRenderer {
 		var w = $(this.el).width(), h = $(this.el).height();
 
 		// Need to adjust camera aspect ratio and adjust scene size
-		this.camera.aspect = w / h;
-		this.camera.updateProjectionMatrix();
+		this.pCamera.aspect = w / h;
+		this.pCamera.updateProjectionMatrix();
+
+		// TODO: Also adjust the orthogonal camera
 
 		this.renderer.setSize(w, h);
 	}
@@ -263,6 +269,31 @@ class WorldRenderer {
 		this.scene.add(g);
 		this._grid = g;
 		this._dirty = true;
+	}
+
+	setCamera(mode) {
+		if(mode == this.options.cameraMode) {
+			return;
+		}
+
+		if(mode == "orthogonal") {
+			this.pCamera.visible = false;
+			this.oCamera.visible = true;
+			this.camera = this.oCamera;
+		}
+		else if(mode == "perspective") {
+			this.pCamera.visible = true;
+			this.oCamera.visible = false;
+			this.camera = this.pCamera;
+		}
+		else {
+			return;
+		}
+
+		this.options.cameraMode = mode;
+		this.controls.object = this.camera;
+		this._dirty = true;
+
 	}
 
 	addVehicle(v) {

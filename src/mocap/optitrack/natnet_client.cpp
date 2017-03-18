@@ -10,6 +10,8 @@
 #include <poll.h>
 
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+
 
 
 #include <iostream>
@@ -48,14 +50,73 @@ int create_socket(){
 	return sock;
 }
 
+struct interface {
+	struct sockaddr_in addr;
+	struct sockaddr_in broadcast;
+};
+
+// Given some ip address on an interface's subnet, finds that interface. Returns wether or not it could be found
+bool find_iface(struct sockaddr_in *addr, interface *out) {
+
+    struct ifaddrs *ifap, *ifa;
+    struct sockaddr_in *sa;
+
+	bool found = false;
+
+    getifaddrs(&ifap);
+    for(ifa = ifap; ifa; ifa = ifa->ifa_next) {
+        if(ifa->ifa_addr->sa_family == AF_INET) {
+            sa = (struct sockaddr_in *) ifa->ifa_addr;
+            //addr = strdup(inet_ntoa(sa->sin_addr));
+			//sab = (struct sockaddr_in *) ifa->ifa_broadaddr;
+			//baddr = inet_ntoa(sab->sin_addr);
+            //printf("Interface: %s\tAddress: %s\t Broadcast: %s\n", ifa->ifa_name, addr, baddr);
+
+			uint32_t mask = ((sockaddr_in *) &ifa->ifa_netmask)->sin_addr.s_addr;
+
+			if((sa->sin_addr.s_addr & mask) == (addr->sin_addr.s_addr & mask)) {
+				memcpy(&out->addr, sa, sizeof(struct sockaddr_in));
+				memcpy(&out->broadcast, ifa->ifa_broadaddr, sizeof(struct sockaddr_in));
+				found = true;
+				break;
+			}
+        }
+    }
+
+    freeifaddrs(ifap);
+    return found;
+}
+
+
+
 // TODO: Return errors from here
 int NatNetClient::connect(const char *clientAddr, const char *serverAddr, NatNetConnectionType type, int cmdPort, int dataPort) {
 
 	this->type = type;
 	this->cmd_port = cmdPort;
 	this->data_port = dataPort;
-	this->server_addr = serverAddr;
-	this->client_addr = clientAddr;
+
+
+	memset(&this->client_addr, 0, sizeof(this->client_addr));
+	inet_pton(AF_INET, clientAddr, &client_addr.sin_addr);
+
+	// Get interface and normalize client address (in case interface address changed)
+	interface iface;
+	if(find_iface(&client_addr, &iface)) {
+		client_addr.sin_addr = iface.addr.sin_addr;
+	}
+	else {
+		printf("NatNetClient: client address not on a recognized interface\n");
+	}
+
+
+	memset(&this->server_addr, 0, sizeof(this->server_addr));
+	server_addr.sin_port = htons(cmd_port);
+	server_addr.sin_family = AF_INET;
+	if(serverAddr != NULL && strlen(serverAddr) > 0) {
+		inet_pton(AF_INET, serverAddr, &server_addr.sin_addr);
+	}
+
 
 	int optval;
 
@@ -65,7 +126,7 @@ int NatNetClient::connect(const char *clientAddr, const char *serverAddr, NatNet
 
 	this->cmd_socket = create_socket();
 
-	if(type == NatNetMulticast || server_addr.length() == 0) {
+	if(type == NatNetMulticast || server_addr.sin_addr.s_addr == 0) {
 		// Enable broadcasting
 		optval = 1;
 		if(setsockopt(this->cmd_socket, SOL_SOCKET, SO_BROADCAST, (void *)&optval, sizeof(optval)) == -1) {
@@ -84,9 +145,6 @@ int NatNetClient::connect(const char *clientAddr, const char *serverAddr, NatNet
 	}
 
 
-
-
-
 	this->data_socket = create_socket();
 
 	// Bind to data address
@@ -97,14 +155,23 @@ int NatNetClient::connect(const char *clientAddr, const char *serverAddr, NatNet
 		printf("NatNetClient: failed to bind data socket\n");
 	}
 
+
+
 	if(type == NatNetMulticast) {
 		// Join multicast group
 		ip_mreq mreq;
 
-		inet_pton(AF_INET, multicast_addr.c_str(),  &mreq.imr_multiaddr); //&this->multi_addr.sin_addr);
-		//mreq.imr_multiaddr = this->multi_addr.sin_addr;
+		if(server_addr.sin_addr.s_addr != 0) {
+			mreq.imr_multiaddr = server_addr.sin_addr;
+		}
+		else {
+			inet_pton(AF_INET, DEFAULT_MULTICAST_ADDRESS,  &mreq.imr_multiaddr);
+		}
+
 
 		int r;
+
+		mreq.imr_interface = client_addr.sin_addr;
 
 		inet_pton(AF_INET, clientAddr, &mreq.imr_interface.s_addr);
 		//mreq.imr_interface.s_addr = htonl(INADDR_ANY);
@@ -112,6 +179,12 @@ int NatNetClient::connect(const char *clientAddr, const char *serverAddr, NatNet
 
 		if(r < 0){
 			printf("Failed to join multicast group!\n");
+		}
+	}
+	else { // Unicast
+		// If the server address is not set, set it to the broadcast address of the local interface
+		if(server_addr.sin_addr.s_addr == 0) {
+			server_addr.sin_addr = iface.broadcast.sin_addr;
 		}
 	}
 
@@ -164,30 +237,12 @@ void NatNetClient::disconnect(){
 
 void NatNetClient::send_packet(const NatNetPacket &packet) {
 
-	struct sockaddr_in sa;
-	memset(&sa, 0, sizeof(sa));
-
-	sa.sin_family = AF_INET;
-	sa.sin_port = htons(cmd_port);
-
-
-	if(server_addr.length() == 0) { // If server address not specified, broadcast
-		//sa.sin_addr.s_addr = INADDR_BROADCAST;
-		inet_pton(AF_INET, "192.168.1.255", &sa.sin_addr);
-	}
-	else {
-		printf("Regular send %s\n", server_addr.c_str());
-		inet_pton(AF_INET, server_addr.c_str(), &sa.sin_addr);
-	}
-
-	int res = sendto(this->cmd_socket, &packet, 4 + packet.size, 0, (struct sockaddr *)&sa, sizeof(struct sockaddr_in));
-
+	int res = sendto(this->cmd_socket, &packet, 4 + packet.size, 0, (struct sockaddr *) &this->server_addr, sizeof(struct sockaddr_in));
 
 	if(res == -1) {
 		printf("Sending error\n");
 		// Error
 	}
-
 }
 
 
@@ -299,8 +354,9 @@ void *natnet_cmd_server(void *arg) {
         if((r == 0) || (r < 0))
             continue;
 
-
-		// TODO: Block messages received from ourselves (via broadcast)
+		// Block messages received from ourselves (via broadcast)
+		if(sa.sin_addr.s_addr == c->client_addr.sin_addr.s_addr)
+			continue;
 
         // handle command
 		switch(pkt.type) {
@@ -311,17 +367,17 @@ void *natnet_cmd_server(void *arg) {
 		case NatNetPacket::PingResponse: {
 			NatNetSender *s = (NatNetSender *) pkt.payload;
 
-			// Register the address of the server if none was originally specified
-			if(c->server_addr.length() == 0) {
-				char buf[32];
-				inet_ntop(AF_INET, &sa.sin_addr, buf, sizeof(buf));
-				c->server_addr = buf;
-			}
+			// Register the address of the server
+			c->server_addr.sin_addr = sa.sin_addr;
 
 			for(int i = 0; i < 4; i++) {
 				c->natNetVersion[i] = s->protocolVersion[i];
 				c->serverVersion[i] = s->appVersion[i];
 			}
+
+			// Compute latency from round trip time
+			Time t = Time::now();
+			c->connection_latency = Time( t.since(c->lastping).seconds() / 2 );
 
 			break;
 		}
@@ -336,7 +392,7 @@ void *natnet_cmd_server(void *arg) {
 			printf("NatNet received message: %s\n", pkt.payload);
 			break;
 		case NatNetPacket::Ping:
-			printf("Pinged...\n");
+			//printf("Pinged...\n");
 			break;
 		default:
 			printf("Got %d\n", pkt.type);

@@ -5,6 +5,7 @@
 #include "estimation.h"
 #include "trajectory.h"
 #include "channel.h"
+#include "data.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -161,6 +162,11 @@ public:
 	// Should do something like waiting for a response
 	void ping();
 
+	/**
+	 * Request the value of an onboard parameter by name
+	 */
+	void param_read(const char *name);
+
 
 	/**
 	 * For sending simulated sensor data to the vehicle
@@ -191,6 +197,13 @@ public:
 	BatteryStatus battery;
 
 	VehicleParameters params;
+
+	/**
+	 * Parameters retrieved from the firmware running remotely
+	 */
+	DataObject onboardParams;
+
+
 
 private:
 

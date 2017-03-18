@@ -7,6 +7,7 @@
 #include <tansa/channel.h>
 
 #include <pthread.h>
+#include <netinet/ip.h>
 
 #include <vector>
 #include <string>
@@ -48,6 +49,8 @@ public:
 
 	void send_message_waiting(const char *msg);
 
+	double get_connection_latency() { return connection_latency.seconds(); }
+
 
 	friend void *natnet_data_server(void *arg);
 	friend void *natnet_cmd_server(void *arg);
@@ -71,12 +74,13 @@ private:
 	//struct sockaddr_in client_addr;
 	int cmd_port;
 	int data_port;
-	std::string client_addr;
-	std::string server_addr;
 
-	std::string multicast_addr;
+	struct sockaddr_in client_addr;
+	struct sockaddr_in server_addr;
 
 	tansa::Time lastping;
+
+	tansa::Time connection_latency;
 
 
 	/**

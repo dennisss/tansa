@@ -22,6 +22,10 @@ public:
 	static DataObject LoadFile(std::string filename);
 
 
+	DataObject() {
+		this->data = json::object();
+	}
+
 	DataObject(const json &j) {
 		this->data = j;
 	}

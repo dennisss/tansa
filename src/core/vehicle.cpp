@@ -390,6 +390,20 @@ void Vehicle::setpoint_zero() {
 	this->setpoint_accel(Vector3d(0,0, -GRAVITY_MS));
 }
 
+void Vehicle::param_read(const char *name) {
+	mavlink_message_t msg;
+	mavlink_msg_param_request_read_pack_chan(
+		255, 0, channel,
+		&msg,
+		1, 1,
+		name,
+		-1
+	);
+
+	send_message(&msg);
+}
+
+
 void Vehicle::set_lighting(float top, float bottom) {
 	mavlink_message_t msg;
 	mavlink_msg_command_long_pack_chan(
@@ -648,7 +662,66 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			handle_message_timesync(msg);
 			break;
 
+		case MAVLINK_MSG_ID_PARAM_VALUE: {
+			mavlink_param_value_t val;
+			mavlink_msg_param_value_decode(msg, &val);
 
+			nlohmann::json j = this->onboardParams;
+
+			char *k = val.param_id;
+
+			void *raw_val = &val.param_value;
+
+			double dbl_val;
+			int int_val;
+
+			switch(val.param_type) {
+			case MAV_PARAM_TYPE_UINT8:
+				int_val = *((uint8_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_INT8:
+				int_val = *((int8_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_UINT16:
+				int_val = *((uint16_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_INT16:
+				int_val = *((int16_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_UINT32:
+				int_val = *((uint32_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_INT32:
+				int_val = *((int32_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_UINT64:
+				int_val = *((uint64_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_INT64:
+				int_val = *((int64_t *) raw_val);
+				j[k] = int_val;
+				break;
+			case MAV_PARAM_TYPE_REAL32:
+				dbl_val = *((float *) raw_val);
+				j[k] = dbl_val;
+				break;
+			case MAV_PARAM_TYPE_REAL64:
+				dbl_val = *((double *) raw_val);
+				j[k] = dbl_val;
+				break;
+			}
+
+			this->onboardParams = j;
+
+			break;
+		}
 		case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
 			mavlink_hil_actuator_controls_t ac;
 			mavlink_msg_hil_actuator_controls_decode(msg, &ac);
@@ -759,6 +832,13 @@ void *vehicle_thread(void *arg) {
 		if(v->connected && now.since(v->lastHeartbeatReceived).seconds() >= 2) {
 			v->connected = false;
 			printf("[Vehicle] Timed out!\n");
+		}
+
+
+		if(v->connected && now.since(v->lastHeartbeatSent).seconds() >= 1) {
+			json j = v->onboardParams;
+			if(j.count("SYS_AUTOSTART") == 0)
+				v->param_read("SYS_AUTOSTART");
 		}
 
 		if(now.since(v->lastHeartbeatSent).seconds() >= 1) {

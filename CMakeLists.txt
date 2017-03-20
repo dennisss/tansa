@@ -57,6 +57,7 @@ add_library(
 	src/mocap/registration.cpp
 	src/mocap/optitrack/natnet.cpp
 	src/mocap/optitrack/natnet_client.cpp
+	src/mocap/rigid_body_tracker.cpp
 	src/jocs/routine.cpp
 	src/jocs/csv.cpp
 	src/jocs/jocsParser.cpp

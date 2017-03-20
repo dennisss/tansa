@@ -24,6 +24,7 @@ namespace optitrack {
 
 NatNetClient::NatNetClient() : lastping(0,0) {
 	running = false;
+	connection_latency = Time(0, 0);
 }
 
 

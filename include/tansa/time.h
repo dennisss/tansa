@@ -40,6 +40,7 @@ public:
 
 
 	friend Time operator+(Time lhs, const Time &rhs);
+	friend Time operator-(Time lhs, const Time &rhs);
 
 
 	/**
@@ -80,7 +81,7 @@ private:
 };
 
 Time operator+(Time lhs, const Time &rhs);
-
+Time operator-(Time lhs, const Time &rhs);
 
 /**
  * For operating a loop at a certain frequency

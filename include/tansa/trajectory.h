@@ -324,6 +324,18 @@ public:
 		: EllipseTrajectory(origin, radius, radius, theta1, t1, theta2, t2) {}
 };
 
+
+inline Trajectory::Ptr HelixHelper(double radius,
+	const Point &origin1, double theta1, double time1,
+	const Point &origin2, double theta2, double time2) {
+
+	auto line = make_shared<LinearTrajectory>(origin1, time1, origin2, time2);
+	auto circle = make_shared<CircleTrajectory>(Vector3d(0,0,0), radius, theta1, time1, theta2, time2);
+
+	return make_shared<CompoundTrajectory>(line, circle, 5, 30);
+}
+
+
 /**
  * Stays at one point. Mainly just for testing.
  */

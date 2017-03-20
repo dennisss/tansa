@@ -133,6 +133,12 @@ Time operator+(Time lhs, const Time &rhs) {
 	return sum;
 }
 
+Time operator-(Time lhs, const Time &rhs) {
+	Time diff;
+	timespec_subtract(&diff.val, &rhs.val, &lhs.val);
+	return diff;
+}
+
 uint64_t Time::nanos() const {
 	return (uint64_t) val.tv_nsec + ((uint64_t) val.tv_sec * 1000000000);
 }

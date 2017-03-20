@@ -13,13 +13,20 @@ class NatNetClient;
 struct NatNetFrame;
 }
 
+class RigidBodyTracker;
+
+enum MocapMode {
+	MocapPassthrough,
+	MocapRigidBodyFromCloud
+};
+
 
 /**
  * Used to interface pose feedback from motion capture systems with the vehicles
  */
 class Mocap {
 public:
-	Mocap();
+	Mocap(MocapMode m = MocapPassthrough);
 	~Mocap();
 
 	/**
@@ -52,15 +59,11 @@ private:
 	map<int, Vehicle *> tracked;
 	optitrack::NatNetClient *client;
 
-};
+	RigidBodyTracker *tracker;
 
 
-struct RigidBody {
-	int id;
-	Vector3d position;
-	Quaterniond orientation;
-	vector<Vector3d> markers;
 };
+
 
 /*
 	States:
@@ -86,7 +89,7 @@ struct RigidBody {
 struct MocapRegistration {
 
 	Vehicle *vehicle;
-	int id;
+	unsigned id; /**< The id of a rigid body or other entity */
 
 	bool fixed; // Whether or not the id should be allowed to change
 
@@ -94,6 +97,7 @@ struct MocapRegistration {
 
 struct MocapTrackedMarker {
 	Vector3d position;
+	Vector3d velocity;
 	Time firstSeen; // TODO: Require multiple frames of visibility to officially consider it tracked
 	Time lastSeen; // TODO:
 
@@ -148,7 +152,7 @@ void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, v
 /**
  * Pretty standard SVD based recovery of labeled point set rigid transformation recovery
  */
-void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t);
+void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t, const vector<double> &w = {});
 
 }
 

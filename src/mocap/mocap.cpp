@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "optitrack/natnet_client.h"
-
+#include "rigid_body_tracker.h"
 
 namespace tansa {
 
@@ -17,8 +17,14 @@ static int frameI = 0;
 
 static Vector3d velocity(0,0,0);
 
-Mocap::Mocap() {
+
+Mocap::Mocap(MocapMode m) {
 	client = nullptr;
+
+	if(m == MocapRigidBodyFromCloud)
+		tracker = new RigidBodyTracker();
+	else
+		tracker = NULL;
 }
 
 Mocap::~Mocap() {
@@ -48,6 +54,10 @@ int Mocap::disconnect() {
 
 void Mocap::track(Vehicle *v, int id, const vector<Vector3d> &markers) {
 	this->tracked[id] = v;
+
+	if(this->tracker != NULL) {
+		this->tracker->track(v);
+	}
 }
 
 inline Vector3d opti_pos_to_enu(double x, double y, double z) {
@@ -59,17 +69,12 @@ inline Vector3d opti_orient_to_enu(double x, double y, double z) {
 }
 
 
+
+
 void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 
-
-	tansa::Time t = Time::now(); // TODO: Replace with the mocap timestamp
-
-//	cout << frame->labeledMarkers.size() << " " << frame->otherMarkers.size() << endl;
-
-	for(int i = 0; i < frame->labeledMarkers.size(); i++) {
-		cout << frame->labeledMarkers[i].isOccluded() << " ";
-	}
-	cout << endl;
+	// Time at which the frame was acquired
+	tansa::Time t = Time::now() - Time((frame->latency / 1000.0) + client->get_connection_latency());
 
 
 	for(int i = 0; i < frame->rigidBodies.size(); i++){
@@ -125,6 +130,10 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 		);
 
 		//cout << markers[i].transpose() << endl;
+	}
+
+	if(tracker != NULL) {
+		tracker->update(markers, t);
 	}
 
 	// Markers is now the full

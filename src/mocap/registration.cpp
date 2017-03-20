@@ -25,15 +25,20 @@ inline Vector3d centroid(const vector<Vector3d> &ps) {
 }
 
 
-void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t) {
+void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t, const vector<double> &w) {
 
 	/* Compute set centers */
 	Vector3d cA = centroid(as), cB = centroid(bs);
 
 	MatrixXd Ac(as.size(), 3), Bc(bs.size(), 3);
-	for(unsigned i = 0; i < as.size(); i++){
-		Ac.block<1,3>(i, 0) = as[i] - cA;
-		Bc.block<1,3>(i, 0) = bs[i] - cB;
+	for(unsigned i = 0; i < as.size(); i++) {
+		double wi = 1;
+		if(i < w.size()) {
+			wi = w[i];
+		}
+
+		Ac.block<1,3>(i, 0) = (as[i] - cA) * wi;
+		Bc.block<1,3>(i, 0) = (bs[i] - cB) * wi;
 	}
 
 

@@ -1,5 +1,29 @@
 var G = 9.81;
 
+var diameter = 0.260;
+var armlength = diameter / 2;
+var dotheight = 0.04; // Height of motor markers above center of mass
+var markerPlacement = [1, 3, 4]; // The PX4 style 1-indexed motor numbers
+
+var motorAngles = [ -45, 135, 45, -135 ];
+
+var markersArr = [
+	{
+		type: 'active',
+		position: [-0.03, 0, 0.028] // top marker is located 28mm height above center and 30mm behind x-y center
+	}
+
+];
+
+for(var i = 0; i < markerPlacement.length; i++) {
+	var t = motorAngles[ markerPlacement[i] - 1 ] * Math.PI / 180;
+	markersArr.push({
+		type: 'passive',
+		position: [ (armlength * Math.cos(t)), (armlength * Math.sin(t)), dotheight ]
+	});
+}
+
+
 module.exports = {
 	type: "multirotor",
 	geometry: "x4",
@@ -16,6 +40,7 @@ module.exports = {
 		[-2.715e-6, 1.084e-3, 8.841e-7],
 		[0, 8.841e-7, 2.039e-3]
 	],
+	markers: markersArr,
 
 	motor: {
 		thrust_coefficient: 0.28*G, // newtons of thrust at maximum power (we assume linear throttle curve for now)

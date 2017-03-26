@@ -29,6 +29,13 @@ public:
 	static Time realNow();
 
 	/**
+	 * Sets the current time to be some other time.
+	 * Optionally 'factor' specifies the time scale compared to real time. i.e. 0.5 means that 2 seconds go by for every 1 second of real time.
+	 */
+	static void setTime(const Time &t, double factor = 0);
+
+
+	/**
 	 * Get how much time has elapsed since the other point
 	 */
 	Time since(const Time &other) const;
@@ -38,9 +45,6 @@ public:
 	 */
 	Time sinceStart();
 
-
-	friend Time operator+(Time lhs, const Time &rhs);
-	friend Time operator-(Time lhs, const Time &rhs);
 
 
 	/**
@@ -69,19 +73,23 @@ public:
 	 */
 	std::string dateString() const;
 
-	/**
-	 * Sets the current time to be some other time.
-	 * Optionally 'factor' specifies the time scale compared to real time. i.e. 0.5 means that 2 seconds go by for every 1 second of real time.
-	 */
-	static void setTime(const Time &t, double factor = 0);
+
+	Time add(const Time &rhs);
+	Time subtract(const Time &rhs);
+
+	template<typename T>
+	inline Time scale(T rhs) {
+		uint64_t n = this->nanos();
+		n *= rhs;
+		return Time(n / 1000000000, n % 1000000000);
+	}
+
 
 private:
 
 	struct timespec val;
 };
 
-Time operator+(Time lhs, const Time &rhs);
-Time operator-(Time lhs, const Time &rhs);
 
 /**
  * For operating a loop at a certain frequency
@@ -96,7 +104,8 @@ public:
 	Rate(unsigned int hz);
 
 	/**
-	 * Call this at the end of each loop cycle to proceed to the next
+	 * Call this at the end of each loop cycle to wait for the wait cycle
+	 * If the last cycle was too slow, this will return immediately
 	 */
 	void sleep();
 

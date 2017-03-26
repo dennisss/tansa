@@ -56,12 +56,6 @@ void timespec_subtract(struct timespec *result, const struct timespec *start, co
 	}
 }
 
-// TODO: THis shouldn't change the original timespec data
-void timespec_scale(struct timespec *ts, double factor) {
-	ts->tv_nsec *= factor;
-	ts->tv_sec *= factor;
-}
-
 void time_init() {
 
 	simTimeValid = false;
@@ -81,8 +75,11 @@ Time::Time(int secs, int nsecs) {
 }
 
 Time::Time(double seconds) {
-	this->val.tv_sec = seconds;
-	this->val.tv_nsec = seconds * 1000000000;
+	double intpart;
+	double frac = modf(seconds, &intpart);
+
+	this->val.tv_sec = intpart;
+	this->val.tv_nsec = frac * 1000000000;
 }
 
 
@@ -91,7 +88,7 @@ Time Time::now() {
 
 	if(simTimeValid) {
 		Time dt = t.since(simRefTime);
-		timespec_scale(&dt.val, simFactor);
+		dt = dt.scale( simFactor );
 
 		Time stime;
 		timespec_add(&stime.val, &dt.val, &simTime.val);
@@ -127,15 +124,15 @@ Time Time::sinceStart() {
 	return since(starttime);
 }
 
-Time operator+(Time lhs, const Time &rhs) {
+Time Time::add(const Time &rhs) {
 	Time sum;
-	timespec_add(&sum.val, &lhs.val, &rhs.val);
+	timespec_add(&sum.val, &this->val, &rhs.val);
 	return sum;
 }
 
-Time operator-(Time lhs, const Time &rhs) {
+Time Time::subtract(const Time &rhs) {
 	Time diff;
-	timespec_subtract(&diff.val, &rhs.val, &lhs.val);
+	timespec_subtract(&diff.val, &rhs.val, &this->val);
 	return diff;
 }
 
@@ -182,9 +179,20 @@ void Rate::sleep() {
 
 	uint64_t done = Time::now().since(lasttime).micros();
 
-	usleep(MIN(uperiod, uperiod - done));
+	// Number of cycles completed since last time
+	unsigned cycles = done / uperiod;
 
-	lasttime = Time::now();
+	// Sleep if we are still undertime
+	if(cycles == 0) {
+		usleep(uperiod - done);
+		cycles++;
+	}
+	else {
+		//cerr << "Loop too slow" << endl;
+	}
+
+	Time dt = Time(0, 1000*uperiod).scale(cycles);
+	lasttime = lasttime.add( dt );
 }
 
 }

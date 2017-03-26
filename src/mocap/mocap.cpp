@@ -74,7 +74,7 @@ inline Vector3d opti_orient_to_enu(double x, double y, double z) {
 void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 
 	// Time at which the frame was acquired
-	tansa::Time t = Time::now() - Time((frame->latency / 1000.0) + client->get_connection_latency());
+	tansa::Time t = Time::now().subtract( Time((frame->latency / 1000.0) + client->get_connection_latency()) );
 
 
 	for(int i = 0; i < frame->rigidBodies.size(); i++){

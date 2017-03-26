@@ -38,12 +38,12 @@ TEST(MocapRegistrationTest, CorrespondenceSolving) {
 	// TODO: Assert
 
 	// Unshuffle according to order
-	vector<Vector3d> as_out;
-	correspondence_arrange(as, as_out, order_out);
+	vector<Vector3d> bs_out;
+	correspondence_arrange(bs, order_out, &bs_out);
 
 	// Find the transform
 	Matrix3d R_out; Vector3d t_out;
-	rigid_transform_solve(as_out, bs, R_out, t_out);
+	rigid_transform_solve(as, bs_out, R_out, t_out);
 
 	ASSERT_TRUE(R_out.isApprox(R, 0.04));
 	ASSERT_TRUE(t_out.isApprox(t, 0.04));

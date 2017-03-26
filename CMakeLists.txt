@@ -131,6 +131,7 @@ add_executable(
 	test/core/time.cpp
 	test/jocs/jocsParser.cpp
 	test/mocap/registration.cpp
+	test/mocap/rigid_body_tracker.cpp
 )
 set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
 target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)

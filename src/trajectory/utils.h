@@ -2,9 +2,11 @@
 #define TANSA_TRAJECTORY_UTILS_H_
 
 
-// Computes a derivative based on the 0th order evaluation
-// So given [t^0, t^1, t^2, t^3, t^4 ...]
-// Computes [0, 1*t^0, 2*t^1, 3*t^2, ...   ] for n = 1
+/**
+ * Computes a derivative based on the 0th order evaluation
+ * So given [t^0, t^1, t^2, t^3, t^4 ...]
+ * Computes [0, 1*t^0, 2*t^1, 3*t^2, ...   ] for n = 1
+ */
 inline VectorXd diffvec(const VectorXd t, int n) {
 
 	VectorXd dt = VectorXd::Zero(t.size());
@@ -21,7 +23,9 @@ inline VectorXd diffvec(const VectorXd t, int n) {
 	return dt;
 }
 
-// Given t, computes [t^0, t^1, t^2, ...t^(n-1)]
+/**
+ * Given t, computes [t^0, t^1, t^2, ...t^(n-1)]
+ */
 inline VectorXd powvec(double t, int n) {
 	VectorXd v(n);
 	v(0) = 1;

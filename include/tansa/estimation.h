@@ -1,5 +1,5 @@
-#ifndef TANSA_ESTIMATION_H
-#define TANSA_ESTIMATION_H
+#ifndef TANSA_ESTIMATION_H_
+#define TANSA_ESTIMATION_H_
 
 #include "time.h"
 #include "model.h"

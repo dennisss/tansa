@@ -58,10 +58,10 @@ void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &b
 	t = -R*cA + cB;
 }
 
-void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, vector<unsigned> &c) {
-	out.resize(as.size());
+void correspondence_arrange(const vector<Vector3d> &bs, const vector<unsigned> &c, vector<Vector3d> *out) {
+	out->resize(c.size());
 	for(unsigned i = 0; i < c.size(); i++) {
-		out[i] = as[c[i]];
+		(*out)[i] = bs[c[i]];
 	}
 }
 

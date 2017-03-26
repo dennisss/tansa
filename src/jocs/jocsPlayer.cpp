@@ -592,6 +592,7 @@ void JocsPlayer::log() {
 	}
 
 	logfile << endl;
+	logfile.flush();
 
 }
 

@@ -33,11 +33,11 @@ void Model::update(State::Ptr _s, const Time &t) {
 	Vector3d a = Vector3d(0,0, -this->mass*GRAVITY_MS) + R * f;
 	a /= this->mass;
 
-	// Euler equation to get angular acceleration
+	// Euler equation to get body angular acceleration
 	Vector3d dw = this->mInertia.inverse() * (tau - w.cross(this->mInertia * w));
 
 	// Quaternion derivative
-	Quaterniond dq( 0.5 * (Quaterniond(0, w.x(), w.y(), w.z()) * s->orientation).coeffs() );
+	Quaterniond dq = s->orientation * Quaterniond(0, 0.5*w.x(), 0.5*w.y(), 0.5*w.z());
 
 
 	// Perform the integration
@@ -56,7 +56,7 @@ void Model::update(State::Ptr _s, const Time &t) {
 
 	s->angularAcceleration = dw;
 	s->angularVelocity = w + dw*dt;
-	s->orientation = Quaterniond( s->orientation.coeffs() + dq.coeffs()*dt );  //dq*s.orientation;
+	s->orientation = Quaterniond( s->orientation.coeffs() + dq.coeffs()*dt );
 	s->orientation.normalize();
 
 	s->time = t;

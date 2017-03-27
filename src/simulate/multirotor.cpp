@@ -19,22 +19,22 @@ MultirotorModel::MultirotorModel(const DataObject &desc) : Model(desc) {
 	json motorDesc = desc["motor"];
 
 	// Motor 1
-	motorDesc["position"] = { l, l, 0 };
+	motorDesc["position"] = { l, -l, 0 };
 	motorDesc["spin"] = COUNTERCLOCKWISE;
 	motors.push_back(new Motor(DataObject(motorDesc)));
 
 	// Motor 2
-	motorDesc["position"] = { -l, -l, 0 };
+	motorDesc["position"] = { -l, l, 0 };
 	motorDesc["spin"] = COUNTERCLOCKWISE;
 	motors.push_back(new Motor(DataObject(motorDesc)));
 
 	// Motor 3
-	motorDesc["position"] = { -l, l, 0 };
+	motorDesc["position"] = { l, l, 0 };
 	motorDesc["spin"] = CLOCKWISE;
 	motors.push_back(new Motor(DataObject(motorDesc)));
 
 	// Motor 4
-	motorDesc["position"] = { l, -l, 0 };
+	motorDesc["position"] = { -l, -l, 0 };
 	motorDesc["spin"] = CLOCKWISE;
 	motors.push_back(new Motor(DataObject(motorDesc)));
 

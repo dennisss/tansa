@@ -27,6 +27,8 @@ void LinearComplementaryEstimator::correct(ModelState &s, const Vector3d &x, con
 
 	s.position = cP*x + (1.0 - cP)*s.position;
 	s.velocity = cV*v + (1.0 - cV)*s.velocity;
+
+	s.time = t;
 }
 
 }

@@ -44,7 +44,6 @@ void GPS::observe(GPSState &s, const ModelState &ms) {
 
 	double dt = s.time.since(s.lastReading).seconds();
 
-	// TODO: Have separate rates for independent sensors
 	if(dt < 1.0 / rate) {
 		return;
 	}

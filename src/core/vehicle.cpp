@@ -343,7 +343,7 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 		0,
 		1, 1, // target
 		MAV_FRAME_LOCAL_NED,
-		0b0000110000111111, //
+		0b0000100000111111, // Consider yaw, accelerations (not as forces)
 		0,0,0,
 		0,0,0,
 		accel_ned.x(),
@@ -465,13 +465,13 @@ void Vehicle::hil_sensor(const Vector3d *accel, const Vector3d *gyro, const Vect
 
 	Vector3d accel_ned, gyro_ned, mag_ned;
 	if(accel != NULL) {
-		accel_ned = enuToFromNed() * (*accel);
+		accel_ned = baseToFromAirFrame() * (*accel);
 	}
 	if(gyro != NULL) {
-		gyro_ned = enuToFromNed() * (*gyro);
+		gyro_ned = baseToFromAirFrame() * (*gyro);
 	}
 	if(mag != NULL) {
-		mag_ned = enuToFromNed() * (*mag);
+		mag_ned = baseToFromAirFrame() * (*mag);
 	}
 
 

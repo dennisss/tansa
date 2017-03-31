@@ -16,7 +16,7 @@ Simulation *Simulation::Make() {
 	World w;
 	WorldState ws;
 
-	DataObject desc = DataObject::LoadFile("config/models/x260.js");
+	DataObject desc = DataObject::LoadFile("config/models/x340.js");
 
 	int n = 1;
 
@@ -40,7 +40,8 @@ Simulation::Simulation(World &world, WorldState &state) {
 }
 
 
-
+/*
+// TODO: Integrate this into gcs.cpp
 void send_status_message(const WorldState &ws) {
 	json jsonStatus;
 
@@ -81,31 +82,62 @@ void send_status_message(const WorldState &ws) {
 
 	tansa::send_message(jsonStatus);
 }
+*/
+
+extern Vector3d noiseVector(std::normal_distribution<> &dist, std::default_random_engine &gen);
+
+
+Quaterniond noiseQuaternion(std::normal_distribution<> &dist, std::default_random_engine &gen) {
+	Vector3d e = Vector3d( dist(gen), dist(gen), dist(gen) );
+	return Quaterniond(AngleAxisd(e[0], Vector3d::UnitZ()) * AngleAxisd(e[1], Vector3d::UnitX()) * AngleAxisd(e[2], Vector3d::UnitZ()));
+}
 
 void *simulation_thread(void *arg) {
 	printf("Simulation running in background");
 
 	Simulation *s = (Simulation *) arg;
 
+
+	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	std::default_random_engine gen = std::default_random_engine(seed);
+	std::normal_distribution<> posNoise(0, 0.001);
+	std::normal_distribution<> orientNoise(0, 0.0001);
+
+	Time t = Time::realNow();
+
 	unsigned i = 0;
 	Rate r(10000);
 	while(s->running) {
+
+		Time tn = Time::realNow();
+
+
 		s->world.firmwares[0]->update(s->state.models[0]);
-		s->step();
+		s->step(tn.since(t));
 
 		i++;
-		if(i % 100 == 0) { // 20Hz
-			send_status_message(s->state);
+		/*
+		if(i % 500 == 0) { // 20Hz
+			Time tn = Time::realNow();
+
+			//cout << tn.since(t).seconds() << ": " << tn.since(t).seconds() - s->state.time.seconds() << endl;
+
+			//cout << tn.since(t).seconds() << endl;
+			//t = tn;
+			//send_status_message(s->state);
 			//cout << "T: " << sim.state.time.seconds() << endl;
 		}
+		*/
 
-		if(i % 100 == 0) {
-			Time::setTime(s->state.time, 1.0);
+		if(i % 500 == 0) {
+			//Time::setTime(s->state.time, 1.0);
 			if(s->tracked) {
+
 				std::shared_ptr<MultirotorModelState> ms = std::static_pointer_cast<MultirotorModelState>(s->state.models[0]);
 
-				// TODO: Is this the right time to use?
-				s->tracked->mocap_update(ms->position, ms->orientation, s->state.time);
+
+				// TODO: Is this the right time to use? <- it should be the state time ( once we do all the setTime stuff properly)
+				s->tracked->mocap_update(ms->position + noiseVector(posNoise, gen), noiseQuaternion(orientNoise, gen) * ms->orientation, tn);
 
 			}
 		}
@@ -156,12 +188,12 @@ void Simulation::setMotors(Vector4d m){
 */
 
 
-void Simulation::step() {
+void Simulation::step(const Time &t) {
+/*
+	Time eps(0.0005); // Update at 2kHz
 
-	Time eps(0.0001); // Update at 10kHz
-
-	Time t = this->state.time + eps;
-
+	Time t = this->state.time.add(eps);
+*/
 
 	// Update states
 	for(int i = 0; i < this->world.models.size(); i++) {

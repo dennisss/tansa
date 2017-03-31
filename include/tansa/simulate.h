@@ -55,7 +55,7 @@ public:
 	//void connect(Vehicle *v, unsigned i);
 
 
-	void step();
+	void step(const Time &t);
 
 	void start();
 	void stop();
@@ -122,6 +122,7 @@ private:
 
 	void onImuData(const IMUSensorData *data);
 	void onGpsData(const GPSData *data);
+	void onMocapData(const MocapSensorData *data);
 	void onActuatorOutputs(const ActuatorOutputs *actuators);
 };
 

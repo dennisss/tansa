@@ -10,8 +10,22 @@
 #include <mach/mach.h>
 #endif
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
+#include <iostream>
+
+using namespace std;
+
+
+
 namespace tansa {
 
+
+#ifdef WIN32
+static LARGE_INTEGER clock_frequency; // On windows, this is the number of clock ticks per second
+#endif
 // Real time at which the
 static Time starttime(0,0);
 
@@ -22,20 +36,32 @@ static Time simRefTime(0,0); // The wall time
 static float simFactor;
 
 
+/*
+	Gets the current time
+	- if since_epoch is set to true, then the current calendar time/time since epoch will be used. this time is less precise
+	- otherwise, the best monotonic clock source will be used
 
-/* Credit to https://gist.github.com/jbenet/1087739 for this function */
-void current_utc_time(struct timespec *ts) {
+	Credit to https://gist.github.com/jbenet/1087739 for some of this function
+*/
+void current_time(struct timespec *ts, bool since_epoch = false) {
 
 #ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
 	clock_serv_t cclock;
 	mach_timespec_t mts;
-	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+	host_get_clock_service(mach_host_self(), since_epoch? CALENDAR_CLOCK : SYSTEM_CLOCK, &cclock);
 	clock_get_time(cclock, &mts);
 	mach_port_deallocate(mach_task_self(), cclock);
 	ts->tv_sec = mts.tv_sec;
 	ts->tv_nsec = mts.tv_nsec;
+#elif WIN32
+	LARGE_INTEGER ticks;
+	QueryPerformanceCounter(&ticks);
+
+	uint64_t nsecs = ticks.QuadPart / (clock_frequency.QuadPart * 1000000000);
+	ts->tv_sec = nsecs / 1000000000;
+	ts->tv_nsec = nsecs % 1000000000;
 #else
-	clock_gettime(CLOCK_REALTIME, ts);
+	clock_gettime(since_epoch? CLOCK_REALTIME : CLOCK_MONOTONIC, ts);
 #endif
 
 }
@@ -58,9 +84,14 @@ void timespec_subtract(struct timespec *result, const struct timespec *start, co
 
 void time_init() {
 
+#ifdef WIN32
+	QueryPerformanceFrequency(&clock_frequency);
+#endif
+
 	simTimeValid = false;
 	// This should force the usage of the wall clock
 	starttime = Time::realNow();
+
 }
 
 /*
@@ -88,7 +119,7 @@ Time Time::now() {
 
 	if(simTimeValid) {
 		Time dt = t.since(simRefTime);
-		dt = dt.scale( simFactor );
+		dt = dt.scale(simFactor);
 
 		Time stime;
 		timespec_add(&stime.val, &dt.val, &simTime.val);
@@ -100,7 +131,7 @@ Time Time::now() {
 
 Time Time::realNow() {
 	struct timespec t;
-	current_utc_time(&t);
+	current_time(&t, true);
 
 	Time ot;
 	ot.val = t;
@@ -161,7 +192,7 @@ std::string Time::dateString() const {
 	if(localtime_r(&(val.tv_sec), &t) == NULL)
 		return "Unknown-" + std::to_string(val.tv_sec);
 
-	strftime(buf, sizeof(buf), "%F_%T", &t);
+	strftime(buf, sizeof(buf), "%Y%m%d-%H_%M_%S", &t);
 
 	return std::string(buf);
 }

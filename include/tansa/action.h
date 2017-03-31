@@ -23,6 +23,7 @@ enum class ActionTypes : unsigned{
 	Arc 			= 9,
 	TransformedTraj = 10,
 	GradualCircle 	= 11,
+	Helix           = 12
 };
 
 typedef unsigned DroneId;

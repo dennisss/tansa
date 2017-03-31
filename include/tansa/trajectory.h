@@ -332,7 +332,7 @@ inline Trajectory::Ptr HelixHelper(double radius,
 	auto line = make_shared<LinearTrajectory>(origin1, time1, origin2, time2);
 	auto circle = make_shared<CircleTrajectory>(Vector3d(0,0,0), radius, theta1, time1, theta2, time2);
 
-	return make_shared<CompoundTrajectory>(line, circle, 5, 30);
+	return make_shared<CompoundTrajectory>(line, circle, time1, time2);
 }
 
 

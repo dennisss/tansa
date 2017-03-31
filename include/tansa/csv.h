@@ -161,6 +161,10 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
  * @return The parsed EllispseAction for the given drone.
  */
 Action* parse_ellipse_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion);
+
+Action* parse_helix_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion);
+
+
 /**
  *
  * @param type Type of action

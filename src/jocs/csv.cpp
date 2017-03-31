@@ -40,6 +40,8 @@ ActionTypes parse_action_type(const std::string& data){
 		return ActionTypes::Ellipse;
 	else if (data == "spiral")
 		return ActionTypes::Spiral;
+	else if (data == "helix")
+		return ActionTypes::Helix;
 	else if (data == "arc")
 		return ActionTypes::Arc;
 	else if (data == "trajectory")
@@ -61,6 +63,7 @@ std::vector<string> read_csv_line(std::string& line){
 }
 Choreography* parse_csv(const char* filepath, double scale){
 	Choreography* ret = nullptr;
+	int currentLine = 1; // Lines indexed at 1
 	try {
 		auto csv = ifstream(filepath);
 		ret = new Choreography();
@@ -92,6 +95,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		ret->actions.resize(num_drones);
 		ret->lightActions.resize(num_drones);
+		currentLine++;
+
 		getline(csv, line); //contains homes
 		auto home_split = split(line, ',');
 		for (size_t i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
@@ -99,6 +104,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 			if (ret->homes.size() == num_drones)
 				break;
 		}
+		currentLine++;
 
 		while (getline(csv, line)) { //Iterate line by line
 			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
@@ -139,9 +145,13 @@ Choreography* parse_csv(const char* filepath, double scale){
 							conversion_factor,
 							angle_conversion
 					);
+					if(motion_action != nullptr)
+						motion_action->line = currentLine;
 					ret->actions[drones[j]].push_back(motion_action);
 				}
 			}
+
+			currentLine++;
 		}
 		insert_transitions(ret->actions, ret->homes);
 		if(has_no_discontinuity(ret->actions, ret->homes)){
@@ -152,7 +162,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 	} catch (const std::exception& e) {
 		delete ret;
-		std::cout << e.what() << std::endl;
+		std::cout << "Line " << currentLine << ": " << e.what() << std::endl;
 		return nullptr;
 	}
 }
@@ -201,6 +211,9 @@ Action* parse_motion_action(ActionTypes type, double start, double end, unsigned
 			break;
 		case ActionTypes::TransformedTraj:
 			ret = parse_trajectory_action(start, end, droneid, split_line, length_conversion, angle_conversion);
+			break;
+		case ActionTypes::Helix:
+			ret = parse_helix_action(start, end, droneid, split_line, length_conversion, angle_conversion);
 			break;
 		case ActionTypes::None:
 			ret = nullptr;
@@ -315,6 +328,37 @@ Action* parse_ellipse_action(double start, double end, unsigned long droneid, co
 			ActionTypes::Ellipse);
 }
 
+Action* parse_helix_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion) {
+	enum indices : unsigned {
+		radius_loc 	= 1,
+		theta1_loc 	 	= 3,
+		theta2_loc	 	= 5,
+		x_loc 		 	= 7,
+		y_loc			= 9,
+		z_loc 			= 11,
+		x2_loc 		 	= 13,
+		y2_loc			= 15,
+		z2_loc 			= 17,
+	};
+	Point origin, origin2;
+	double radius 	= std::atof(split_line[radius_loc].c_str()) * length_conversion;
+	double theta1 		= std::atof(split_line[theta1_loc].c_str()) * angle_conversion;
+	double theta2 		= std::atof(split_line[theta2_loc].c_str()) * angle_conversion;
+	origin.x() 			= std::atof(split_line[x_loc].c_str());
+	origin.y() 			= std::atof(split_line[y_loc].c_str());
+	origin.z() 			= std::atof(split_line[z_loc].c_str());
+	origin 				= origin * length_conversion;
+
+	origin2.x() 			= std::atof(split_line[x2_loc].c_str());
+	origin2.y() 			= std::atof(split_line[y2_loc].c_str());
+	origin2.z() 			= std::atof(split_line[z2_loc].c_str());
+	origin2 				= origin2 * length_conversion;
+	return new MotionAction(
+			(unsigned) droneid,
+			HelixHelper(radius, origin, theta1, start, origin2, theta2, end),
+			ActionTypes::Helix);
+}
+
 Action* parse_spiral_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion, double angle_conversion){
 	enum indices : unsigned {
 		radius_loc 		= 1,
@@ -384,10 +428,10 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 		);
 	} else {
 		//TODO: Return null here and handle above instead of just throwing an exception.
-		throw new std::runtime_error("Failed to compute Arc trajectory for drone id"
-									 + std::to_string(droneid)
-									 + "at start time: "
-									 + std::to_string(start));
+		throw std::runtime_error("Failed to compute Arc trajectory for drone id"
+								 + std::to_string(droneid)
+								 + "at start time: "
+								 + std::to_string(start));
 	}
 }
 
@@ -456,7 +500,7 @@ bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std:
 			if (!is_light_action(a->GetActionType())) {
 				if (!floatComp(sTime, startTime)) {
 					errors.push_back(
-							"Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
+							"Line " + std::to_string(a->line) + ": Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
 							std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
 				}
 				startTime = eTime;
@@ -467,7 +511,7 @@ bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std:
 				auto actionStart = ma->GetStartPoint();
 				if (!pointComp(actionStart, startPoint)) {
 					errors.push_back(
-							"Spatial Discontinuity for Drone: " + std::to_string(j) + ". Jumping from point: " +
+							"Line " + std::to_string(ma->line) + ": Spatial Discontinuity for Drone: " + std::to_string(j) + ". Jumping from point: " +
 							"[" + std::to_string(startPoint.x()) + " " + std::to_string(startPoint.y()) + " " +
 							std::to_string(startPoint.z()) + "]" +
 							" to point: " "[" + std::to_string(actionStart.x()) + " " +
@@ -534,12 +578,18 @@ void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::v
 }
 
 Point parse_point(std::string point) {
-	boost::erase_all(point, "(");
-	boost::erase_all(point, ")");
-	boost::erase_all(point, "\"");
-	boost::erase_all(point, " ");
+	std::string point_clean = point;
+	boost::erase_all(point_clean, "(");
+	boost::erase_all(point_clean, ")");
+	boost::erase_all(point_clean, "\"");
+	boost::erase_all(point_clean, " ");
 	Point ret;
-	auto split_point 	= split(point, ';');
+	auto split_point 	= split(point_clean, ';');
+
+	if(split_point.size() != 3) {
+		throw std::runtime_error("Invalid Point: " + point);
+	}
+
 	ret.x() 			= std::atof(split_point[0].c_str());
 	ret.y() 			= std::atof(split_point[1].c_str());
 	ret.z() 			= std::atof(split_point[2].c_str());

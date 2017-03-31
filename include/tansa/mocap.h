@@ -154,6 +154,14 @@ void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, v
  */
 void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t, const vector<double> &w = {});
 
+/**
+ *
+ *
+ * @return whether or not it suceeded reasonably
+ */
+bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3d> &pts, Matrix3d *R, Vector3d *t, vector<int> *indices);
+
+
 }
 
 #endif

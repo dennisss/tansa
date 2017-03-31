@@ -41,6 +41,8 @@ struct ModelState : State {
 	Vector3d acceleration = Vector3d(0,0,0);
 
 	Quaterniond orientation = Quaterniond(1, 0, 0, 0);
+
+	// Note: these are body-fixed quantites
 	Vector3d angularVelocity = Vector3d(0,0,0);
 	Vector3d angularAcceleration = Vector3d(0,0,0);
 };
@@ -187,9 +189,24 @@ private:
 };
 
 
-struct GPSState : State {
-	Vector3d gyroBias = Vector3d(0, 0, 0);
+struct BarometerState : State {
+	Time lastReading;
+};
 
+struct BarometerData {
+	static const int ID = 1;
+
+	Time time;
+	double altitude; /**< Altitude in meters above sea level as calculated by the  */
+};
+
+class Barometer : public Channel {
+
+
+};
+
+
+struct GPSState : State {
 	Time lastReading;
 };
 
@@ -221,6 +238,40 @@ private:
 
 
 
+
+struct MocapSensorState : State {
+	Time lastReading;
+};
+
+struct MocapSensorData {
+	static const int ID = 1;
+
+	Time time;
+	Vector3d position;
+	Quaterniond orientation;
+};
+
+class MocapSensor : public Channel {
+public:
+
+	MocapSensor(const DataObject &desc);
+
+
+	void update(MocapSensorState &s, const Time &t);
+
+	void observe(MocapSensorState &s, const ModelState &ms);
+
+private:
+	std::default_random_engine gen;
+
+	double rate;
+	std::normal_distribution<> posNoise;
+	std::normal_distribution<> orientNoise;
+
+};
+
+
+
 struct MultirotorModelState : ModelState {
 	// Multirotor specific stuff
 	BatteryState battery;
@@ -228,6 +279,7 @@ struct MultirotorModelState : ModelState {
 
 	IMUState imu;
 	GPSState gps;
+	MocapSensorState mocap;
 };
 
 /**
@@ -261,6 +313,7 @@ public:
 	std::vector<Motor *> motors;
 	IMU *imu;
 	GPS *gps;
+	MocapSensor *mocap;
 	Battery *battery;
 
 };

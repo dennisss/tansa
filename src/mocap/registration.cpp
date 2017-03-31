@@ -65,11 +65,18 @@ void correspondence_arrange(const vector<Vector3d> &bs, const vector<unsigned> &
 	}
 }
 
-void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c) {
 
-	if(as.size() != bs.size()) {
+void hungarian_algorithm(const MatrixXd &w, vector<int> *c) {
+
+
+}
+
+
+bool correspondence_solve_general(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c, bool ideal = false) {
+
+	if(as.size() != bs.size() && ideal) {
 		printf("Both sets must be complete!\n");
-		return;
+		return false;
 	}
 
 
@@ -78,10 +85,9 @@ void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3
 
 	MatrixXd Ac(as.size(), 3), Bc(bs.size(), 3);
 	for(unsigned i = 0; i < as.size(); i++){
-		Ac.block<1,3>(i, 0) = as[i] - cA;
+		Ac.block<1,3>(i, 0) = as[i] - cA; // TODO: Don't these need to be tranposed
 		Bc.block<1,3>(i, 0) = bs[i] - cB;
 	}
-
 
 	// Gets the eigenvalues/vectors in increasing order
 	SelfAdjointEigenSolver<MatrixXd> eigA(Ac * Ac.transpose()),
@@ -90,6 +96,11 @@ void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3
 	MatrixXd vecsA = eigA.eigenvectors(),
 			 vecsB = eigB.eigenvectors();
 
+	VectorXd valsA = eigA.eigenvalues(),
+			 valsB = eigB.eigenvalues();
+
+
+	// TODO: Ensure that this only takes the non-zero eigenvalue ones
 	MatrixXd Qa(as.size(), 3), Qb(bs.size(), 3);
 	for(int i = 0; i < 3; i++) {
 		// For now we take the absolute value of each eigenvector to deal with sign inconsistency
@@ -98,47 +109,83 @@ void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3
 	}
 
 
-	// MatrixXd P = Qa * Qb.transpose(); // eigA.eigenvectors() * eigB.eigenvectors().transpose();
-
-	// 'Feature vector' are the columns of these
-	//cout << Qa.transpose() << endl << endl;
-	//cout << Qb.transpose() << endl << endl;
-
 	c->resize(as.size());
 
-	// Determine column permutation matrix based on best matches
-	//MatrixXd P = MatrixXd::Zero(as.size(), bs.size());
-	for(unsigned i = 0; i < as.size(); i++) {
 
-		double bestE = DBL_MAX;
-		int bestJ = 0;
+	if(ideal) {
 
-		for(unsigned j = 0; j < bs.size(); j++) {
-			double e = (Qa.block<1,3>(i, 0) - Qb.block<1,3>(j, 0)).squaredNorm();
+		// MatrixXd P = Qa * Qb.transpose(); // eigA.eigenvectors() * eigB.eigenvectors().transpose();
 
-			if(e < bestE) {
-				bestE = e;
-				bestJ = j;
+		// 'Feature vector' are the columns of these
+		//cout << Qa.transpose() << endl << endl;
+		//cout << Qb.transpose() << endl << endl;
+
+		// Determine column permutation matrix based on best matches
+		//MatrixXd P = MatrixXd::Zero(as.size(), bs.size());
+		// TODO: What if two i indices have the same best
+		for(unsigned i = 0; i < as.size(); i++) {
+
+			double bestE = DBL_MAX;
+			int bestJ = 0;
+
+			for(unsigned j = 0; j < bs.size(); j++) {
+				double e = (Qa.block<1,3>(i, 0) - Qb.block<1,3>(j, 0)).squaredNorm();
+
+				if(e < bestE) {
+					bestE = e;
+					bestJ = j;
+				}
+			}
+
+			(*c)[i] = bestJ;
+
+			//P(bestJ, i) = 1;
+		}
+
+		//if(P.rank() != as.size()) {
+		//	// the matches were probably not sufficiently distinct
+		//	// TODO: Ratio test?
+		//
+		//		cout << "failed" << endl;
+		//	}
+
+	}
+	else {
+		MatrixXd h(as.size(), bs.size()); // Affinity matrix
+
+		for(int i = 0; i < as.size(); i++) {
+			for(int j = 0; j < bs.size(); j++) {
+
+				double s = 0;
+				for(int k = 0; k < 3; k++) {
+					// Eigenvalues corresponding to the vectors
+					double dAk = valsA(valsA.size() - k - 1),
+						   dBk = valsB(valsA.size() - k - 1);
+
+					double pik = Qa(i, k),
+						   qjk = Qa(j, k);
+
+					s += dAk * dBk * pow(abs(pik - qjk), 2);
+				}
+
+				// TODO: We do not need the negative sign if the hungarian algorithm is minimizing
+				h(i, j) = -s;
 			}
 		}
 
-		(*c)[i] = bestJ;
+//		hungarian_algorithm(h, c);
 
-		//P(bestJ, i) = 1;
 	}
-
-
-	//if(P.rank() != as.size()) {
-	//	// the matches were probably not sufficiently distinct
-	//	// TODO: Ratio test?
-//
-//		cout << "failed" << endl;
-//	}
 
 
 	//cout << P << endl;
 
 }
+
+bool correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c) {
+	return correspondence_solve_general(as, bs, c, true);
+}
+
 
 
 }

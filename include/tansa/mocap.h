@@ -135,22 +135,22 @@ private:
  * So: b_j = M * a_i
  *
  * Based on approach in 'Determining Correspondences and Rigid Motion of 3-D Point Sets with Missing Data' by Wang et al.
- * This ideal version assumes that there are no missing or incorrect points
+ * This ideal version assumes that there are no missing or outlier points
  *
  * @param as first set of points
  * @param bs second set of points
- * @param c the correspondences. such that as[c[i]] = bs[i]
+ * @param c the correspondences. such that bs[c[i]] = as[i]
  */
 void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c);
 
-// TODO: Reorganize to have inputs, then outputs
 /**
- * Rearranges the 'as' set from correspondence_solve_ideal to match the ordering of the points in
+ * Rearranges the 'bs' set from correspondence_solve_ideal to match the ordering of the points in 'as'
  */
-void correspondence_arrange(const vector<Vector3d> &as, vector<Vector3d> &out, vector<unsigned> &c);
+void correspondence_arrange(const vector<Vector3d> &bs, const vector<unsigned> &c, vector<Vector3d> *out);
 
 /**
  * Pretty standard SVD based recovery of labeled point set rigid transformation recovery
+ * Computes bs[i] = R as[i] + t
  */
 void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t, const vector<double> &w = {});
 

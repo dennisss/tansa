@@ -34,6 +34,20 @@ struct RigidBody {
 	vector<Vector3d> markers; /**< List of one or more markers defined in the body frame */
 };
 
+
+/**
+ *
+ */
+struct RigidBodyDescription {
+
+	vector<Vector3d> referenceMarkers;
+
+
+	double boundingRadius; /**< Precomputed radius of a sphere that could contain all points */
+
+
+};
+
 // For storing data
 struct RegistrationProcessData {
 	int phase = PHASE_IDLE;
@@ -81,8 +95,11 @@ private:
 
 	Time time;
 
-	// Map of rigid body ids to vehicle indices
+	// Map of vehicle indices to rigid body ids
 	map<unsigned, unsigned> registrations;
+
+	//
+	map<unsigned, unsigned> registrationInv;
 
 	RegistrationProcessData data;
 

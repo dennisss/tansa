@@ -8,6 +8,10 @@ var StatusSign = React.createClass({
 		good: React.PropTypes.bool
 	},
 
+	shouldComponentUpdate: function(nextProps) {
+		return this.props.pending != nextProps.pending || this.props.good != nextProps.good;
+	},
+
 	render: function() {
 
 		var color = this.props.good? '#0f0' : (this.props.pending? '#ff0' : '#f00');

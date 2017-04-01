@@ -84,7 +84,7 @@ var App = React.createClass({
 			data = JSON.parse(data);
 
 			if(data.type == 'status') {
-				if((it++) % 10 == 0) {
+				if((it++) % 20 == 0) {
 					this.setState({ stats: data, time: (new Date()) });
 				}
 				renderer.update({vehicles: data.vehicles, time: data.time});

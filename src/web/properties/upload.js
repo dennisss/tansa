@@ -10,6 +10,10 @@ var UploadButton = React.createClass({
 		};
 	},
 
+	shouldComponentUpdate: function(nextProps, nextState) {
+		return this.state._open != nextState._open;
+	},
+
 	close: function() {
 		this.setState({ _open: false });
 	},

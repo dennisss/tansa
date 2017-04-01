@@ -12,7 +12,7 @@ PolynomialTrajectory::PolynomialTrajectory(const VectorXd c[], double t1, double
 
 TrajectoryState PolynomialTrajectory::evaluate(double t) {
 
-	VectorXd tv = powvec(t, coeffs[0].size());
+	VectorXd tv = powvec(t - this->t1, coeffs[0].size());
 
 	// Time vectors for velocity and acceleration
 	VectorXd tv1 = diffvec(tv, 1), tv2 = diffvec(tv, 2);
@@ -33,7 +33,7 @@ PolynomialTrajectory::Ptr PolynomialTrajectory::compute(const vector<Point> &c1,
 	int n = 6; // number of coefficients to use
 
 	// Vectorize the time powers
-	VectorXd tvec1 = powvec(t1, n), tvec2 = powvec(t2, n);
+	VectorXd tvec1 = powvec(0, n), tvec2 = powvec(t2 - t1, n);
 
 	// Compute derivatives of time
 	vector<VectorXd> dts1(n / 2), dts2(n / 2);

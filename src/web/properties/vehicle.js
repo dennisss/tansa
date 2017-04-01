@@ -6,6 +6,10 @@ import { OverlayTrigger, Popover } from 'react-bootstrap'
 
 var VehicleRow = React.createClass({
 
+	shouldComponentUpdate: function(nextProps) {
+		return JSON.stringify(nextProps.data) != JSON.stringify(this.props.data);
+	},
+
 	render: function() {
 
 		var data = this.props.data;
@@ -65,6 +69,10 @@ var VehicleRow = React.createClass({
 module.exports = VehicleRow;
 
 var BatteryMonitor = React.createClass({
+
+	shouldComponentUpdate: function(nextProps) {
+		return JSON.stringify(nextProps.data) != JSON.stringify(this.props.data);
+	},
 
 	render: function() {
 

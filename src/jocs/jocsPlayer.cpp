@@ -585,8 +585,16 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 
 void JocsPlayer::log() {
 
-	logfile << Time::now().since(start).seconds() << " ";
-	for(Vehicle *v : vehicles) {
+	double t = Time::now().since(start).seconds();
+
+	logfile << t << ",";
+	for(int i = 0; i < vehicles.size(); i++) {
+		Vehicle *v = vehicles[i];
+
+		Vector3d target = posctls[i]->getTargetState(t).position;
+		logfile << target.x() << "," << target.y() << "," << target.z() << ",";
+
+
 		Vector3d pos = v->state.position;
 		logfile << pos.x() << "," << pos.y() << "," << pos.z() << ",";
 	}

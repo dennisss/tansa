@@ -14,7 +14,7 @@ using namespace tansa;
 #define PI 3.14149
 
 
-#define CUSTOM_VERT_ELLIPSE
+#define CUSTOM_ARC1
 
 namespace tansa {
 
@@ -39,23 +39,29 @@ Jocs *custom_jocs() {
 
 #ifdef CUSTOM_ARC1
 	j->homes.resize(1);
-	j->homes[0] = Vector3d(-2, 0, 1);
+	j->homes[0] = Vector3d(-1.5, 0, 1);
 
 
 	Trajectory::Ptr tr;
 
 	compute_minsnap_mellinger11({
-		ConstrainedPoint::Stationary({-2, 0, 1}),
-		{ {0, 1, 1} },
-		{ {1, -2, 1} },
-		ConstrainedPoint::Stationary({2, -1, 1})
-	}, { 0, 2, 4, 6 }, {}, &tr, NULL);
+		ConstrainedPoint::Stationary({-1.5, 0, 1}),
+		{ {0, 1, 0.5} },
+		{ {1, -1.5, 1.5} },
+		ConstrainedPoint::Stationary({1.5, 0, 2})
+	}, { 0, 2, 3, 5 }, {}, &tr, NULL);
 
 
 	j->actions[0].resize(0);
 	j->actions[0].push_back(new MotionAction(
 		0,
 		tr,
+		ActionTypes::Line
+	));
+
+	j->actions[0].push_back(new MotionAction(
+		0,
+		make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), 5, Vector3d(-1.5, 0, 1), 10),
 		ActionTypes::Line
 	));
 #endif

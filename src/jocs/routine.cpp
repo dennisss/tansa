@@ -14,7 +14,7 @@ bool hasExtension(string path, const char *ext) {
 }
 
 bool Routine::IsFile(string path) {
-	return hasExtension(path, ".csv") || hasExtension(path, ".jocs");
+	return hasExtension(path, ".csv") || hasExtension(path, ".jocs") || hasExtension(path, ".js") || hasExtension(path, ".json");
 }
 
 Routine *Routine::Load(string path, double scale) {
@@ -24,7 +24,7 @@ Routine *Routine::Load(string path, double scale) {
 	if(hasExtension(path, ".csv")) {
 		p = parse_csv(path.c_str(), scale);
 	}
-	else if(hasExtension(path, ".jocs")) {
+	else if(hasExtension(path, ".jocs") || hasExtension(path, ".js") || hasExtension(path, ".json")) {
 		p = Jocs::Parse(path, scale);
 	}
 

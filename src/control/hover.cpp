@@ -14,11 +14,6 @@ HoverController::HoverController(Vehicle *v) : PositionController(v) {
 		v->params.gains.i,
 		v->params.gains.d
 	);
-
-	pid->setWindupOutputLimit(
-		Point(-2.0, -2.0, -2.0),
-		Point(2.0, 2.0, 2.0)
-	);
 }
 
 TrajectoryState HoverController::getTargetState(double t) {

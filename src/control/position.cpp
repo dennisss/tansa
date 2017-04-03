@@ -11,6 +11,11 @@ PositionController::PositionController(Vehicle *v, bool directAttitudeControl) {
 
 	pid = new PID<PointDims>();
 
+	pid->setWindupOutputLimit(
+		Point(-2.0, -2.0, -2.0),
+		Point(2.0, 2.0, 2.0)
+	);
+
 	pid->setGains(
 		v->params.gains.p,
 		Vector3d(0, 0, v->params.gains.i.z()),

@@ -218,7 +218,7 @@ public:
 
 		if(i >= trajs.size()) {
 			i = trajs.size() - 1;
-			t = this->endTime();
+			t = trajs[i]->endTime();
 		}
 
 		return trajs[i]->evaluate(t - ts);
@@ -231,9 +231,19 @@ private:
 
 };
 
+/**
+ * A trajectory represented by evaluating a polynomial over time
+ */
 class PolynomialTrajectory : public Trajectory {
 public:
 
+	/**
+	 * Creates a new trajectory given its coefficients
+	 *
+	 * @param c array of coefficients for each axis of a Point. These should be in the order 'c0 + c1*t^1 + c2*t^2' (this is the opposite of numpy). These trajectories are also internally offset such that the polynomial will always be first evaluated at zero time
+	 * @param t1 start time (t = 0 in polynomial time)
+	 * @param t2 end time (t = t2 - t1 in polynomial time)
+	 */
 	PolynomialTrajectory(const VectorXd c[], double t1, double t2);
 	virtual ~PolynomialTrajectory() {}
 

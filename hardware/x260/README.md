@@ -1,6 +1,11 @@
 260mm X Quadcopter Design
 =========================
 
+![](wireframe.png)
+
+
+
+
 Parts List
 ----------
 

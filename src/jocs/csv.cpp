@@ -154,12 +154,9 @@ Choreography* parse_csv(const char* filepath, double scale){
 			currentLine++;
 		}
 		insert_transitions(ret->actions, ret->homes);
-		if(has_no_discontinuity(ret->actions, ret->homes)){
-			return ret;
-		} else {
-			delete ret;
-			return nullptr;
-		}
+
+		return ret;
+
 	} catch (const std::exception& e) {
 		delete ret;
 		std::cout << "Line " << currentLine << ": " << e.what() << std::endl;
@@ -480,53 +477,6 @@ LightAction* parse_simple_light_action(double start, double end, unsigned long d
 
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	return nullptr;
-}
-
-bool has_no_discontinuity(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes){
-	std::vector<std::string> errors;
-	auto floatComp = [](double a, double b) -> bool { return fabs(a-b) < 0.1; };
-	auto pointComp = [](Point a, Point b) -> bool { return fabs((a-b).norm()) < 0.1; };
-	for (unsigned j = 0; j < actions.size(); j++) {
-		auto startPoint = homes[j];
-		double startTime = 0.0;
-		//Sort actions for each drone based on start time
-		std::sort(actions[j].begin(), actions[j].end(),
-				  [](Action *const &lhs, Action *const &rhs) { return lhs->GetStartTime() < rhs->GetStartTime(); });
-		for (unsigned i = 0; i < actions[j].size(); i++) {
-			Action *a = actions[j][i];
-			double sTime = a->GetStartTime();
-			double eTime = a->GetEndTime();
-			//Check temporal continuity
-			if (!is_light_action(a->GetActionType())) {
-				if (!floatComp(sTime, startTime)) {
-					errors.push_back(
-							"Line " + std::to_string(a->line) + ": Time Discontinuity for Drone: " + std::to_string(j) + " with start time: " +
-							std::to_string(sTime) + ". Last command ended at : " + std::to_string(startTime));
-				}
-				startTime = eTime;
-			}
-			//Check spatial continuity
-			if (!is_light_action(a->GetActionType())) {
-				auto ma = dynamic_cast<MotionAction *>(a);
-				auto actionStart = ma->GetStartPoint();
-				if (!pointComp(actionStart, startPoint)) {
-					errors.push_back(
-							"Line " + std::to_string(ma->line) + ": Spatial Discontinuity for Drone: " + std::to_string(j) + ". Jumping from point: " +
-							"[" + std::to_string(startPoint.x()) + " " + std::to_string(startPoint.y()) + " " +
-							std::to_string(startPoint.z()) + "]" +
-							" to point: " "[" + std::to_string(actionStart.x()) + " " +
-							std::to_string(actionStart.y()) + " " + std::to_string(actionStart.z()) + "]" + "\n"
-							+ "at start time: " + std::to_string(sTime)
-					);
-				}
-				startPoint = ma->GetEndPoint();
-			}
-		}
-	}
-	for(const auto& s : errors){
-		std::cout << s << std::endl;
-	}
-	return (errors.size() == 0);
 }
 
 void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes ){

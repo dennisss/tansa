@@ -66,7 +66,7 @@ add_library(
 	src/trajectory/light.cpp
 	src/trajectory/strobe.cpp
 	src/control/lightcontrol.cpp
-
+	src/model/feasibility.cpp
 	src/control/admittance.cpp
 
 	src/manager/preview.cpp

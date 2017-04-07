@@ -28,6 +28,12 @@ Routine *Routine::Load(string path, double scale) {
 		p = Jocs::Parse(path, scale);
 	}
 
+	FeasibilityChecker fc;
+	if(p != NULL && !fc.check(*p)) {
+		delete p;
+		return NULL;
+	}
+
 
 	// Otherwise throw exception?
 	return p;

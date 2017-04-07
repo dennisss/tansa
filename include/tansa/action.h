@@ -62,6 +62,11 @@ public:
 	 */
 	inline ActionTypes GetActionType() { return type; }
 
+	inline bool is_light_action() {
+		return type == ActionTypes::Strobe || type == ActionTypes::Light;
+	}
+
+
 	/**
 	 * Line number, if applicable, (or -1) from the original file.
 	 * This is used to annotate the routines messages

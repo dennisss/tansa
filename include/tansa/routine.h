@@ -42,6 +42,24 @@ public:
 
 };
 
+/**
+ * Used to verify the correctness of a Routine by determining if it is physically possible
+ */
+class FeasibilityChecker {
+public:
+	FeasibilityChecker() {};
+
+
+	bool check(Routine &r);
+	bool check(Trajectory::Ptr traj);
+
+	void reset() { errors.resize(0); }
+
+	std::vector<std::string> errors;
+
+
+};
+
 
 }
 

@@ -193,6 +193,7 @@ public:
 	double pingLatency;
 
 	// State as observed by the onboard processor
+	Time onboardPositionTime = Time(0, 0);
 	ModelState onboardState;
 	vector<double> lightState;
 
@@ -206,6 +207,7 @@ public:
 	DataObject onboardParams;
 
 
+	Time lastRCTime = Time(0,0);
 
 private:
 

@@ -385,7 +385,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> ac
 		vehicles[i] = new Vehicle();
 
 		// Load default parameters
-		vehicles[i]->read_params(searchWorkspacePath(paramsDir, "default.json"));
+		vehicles[i]->read_params(searchWorkspacePath(paramsDir, "260.json"));
 		string calibId = inRealLife? to_string(v.net_id) : "sim";
 
 		if(!vehicles[i]->read_params(searchWorkspacePath(paramsDir, calibId + ".calib.json"))) {
@@ -851,6 +851,10 @@ int main(int argc, char *argv[]) {
 			player->land();
 		} else if (playMode) {
 			playMode = false;
+
+			if(mocap != NULL) {
+				mocap->start_recording();
+			}
 
 			if(previewMode) {
 				previewPlayer->play();

@@ -68,6 +68,12 @@ bool find_iface(struct sockaddr_in *addr, interface *out) {
     for(ifa = ifap; ifa; ifa = ifa->ifa_next) {
         if(ifa->ifa_addr->sa_family == AF_INET) {
             sa = (struct sockaddr_in *) ifa->ifa_addr;
+
+			if(sa->sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+				continue;
+			}
+
+
             //addr = strdup(inet_ntoa(sa->sin_addr));
 			//sab = (struct sockaddr_in *) ifa->ifa_broadaddr;
 			//baddr = inet_ntoa(sab->sin_addr);

@@ -632,6 +632,8 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
 
+			onboardPositionTime = Time::now();
+
 			mavlink_local_position_ned_t lp;
 			mavlink_msg_local_position_ned_decode(msg, &lp);
 
@@ -664,6 +666,11 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			break;
 
 		}
+
+		case MAVLINK_MSG_ID_RC_CHANNELS:
+			lastRCTime = Time::now();
+			break;
+
 		case MAVLINK_MSG_ID_STATUSTEXT:
 
 			// TODO: Also incorporate the severity
@@ -862,7 +869,7 @@ void *vehicle_thread(void *arg) {
 		Time now = Time::now();
 
 
-		if(v->connected && now.since(v->lastHeartbeatReceived).seconds() >= 2) {
+		if(v->connected && now.since(v->lastHeartbeatReceived).seconds() >= 3) {
 			v->connected = false;
 			printf("[Vehicle] Timed out!\n");
 		}
@@ -886,7 +893,7 @@ void *vehicle_thread(void *arg) {
 			v->send_timesync(0, now.nanos());
 			v->lastTimesyncSent = now;
 		}
-		if(now.since(v->lastTrackTime).seconds() > 1) {
+		if(now.since(v->lastTrackTime).seconds() > 0.15) {
 			v->tracking = false;
 			v->ntracks = 0;
 		}

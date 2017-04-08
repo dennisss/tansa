@@ -188,7 +188,8 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					// Flip out to the user!
 					cout << "UNCONTROLLABLE: VEHICLE NOT CONNECTED: THIS IS BAD!!" << endl;
 				}
-				else if(!v.tracking) {
+				else if(!v.tracking && s != StateFailsafe) {
+					cout << "Not tracking, entering failsafe mode" << endl;
 					s = StateFailsafe;
 				}
 			}
@@ -324,8 +325,9 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 
 				// TODO: If still tracking, try a nice controlled landing
 				// TODO: Geofence based on covariance to auto-hardkill
-
-				v.set_mode("landing");
+				while(v.mode == "offboard") {
+					v.set_mode("landing");
+				}
 			}
 		}
 
@@ -358,16 +360,25 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 			Time now = Time::now();
 
 			if(now.since(v->onboardState.time).seconds() > 4) {
-				printf("Stale onboard state feedback\n");
+				printf("Stale onboard orientation feedback\n");
+				return;
+			}
+
+			if(now.since(v->onboardPositionTime).seconds() > 4) {
+				printf("Stale onboard position data\n");
+				return;
+			}
+
+			if(now.since(v->lastRCTime).seconds() > 4) {
+				printf("Some drones don't have RC\n");
 				return;
 			}
 
 			// Compare our state estimate with the onboard state estimate
 			// If these deviate by too much, then we probably have a
-			Vector3d ea = (v->onboardState.orientation * v->state.orientation.inverse()).toRotationMatrix().eulerAngles(2, 1, 0);
+			Quaterniond d = v->onboardState.orientation * v->state.orientation.inverse();
 
-			double maxAngleDiff = ea.rowwise().maxCoeff()[0];
-			if(maxAngleDiff > 20.0 * M_PI / 180.0) {
+			if(1.0 - fabs(d.w()) > 0.05) {
 				printf("Onboard Pose Not Synced: Too large of a angular deviation\n");
 				return;
 			}

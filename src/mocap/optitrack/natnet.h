@@ -209,10 +209,10 @@ struct NatNetFrame {
 	int32_t number;
 
 	std::vector<NatNetMarkerSet> markerSets;
-	std::vector<NatNetPlainMarker> otherMarkers;
+	std::vector<NatNetPlainMarker> otherMarkers; /**< All markers not in a rigid body or an explicit marker set */
 	std::vector<NatNetRigidBody> rigidBodies;
 	std::vector<NatNetSkeleton> skeletons;
-	std::vector<NatNetMarker> labeledMarkers;
+	std::vector<NatNetMarker> labeledMarkers; /**< All markers except those in a marker set (these include ones that are in a rigid body) */
 	std::vector<NatNetForcePlate> forcePlates;
 
 	float latency;

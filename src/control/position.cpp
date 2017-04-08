@@ -52,7 +52,7 @@ void PositionController::control(double t) {
 		vehicle->setpoint_attitude(att, a.norm());
 	}
 	else {
-		vehicle->setpoint_accel(a);
+		vehicle->setpoint_accel(a, 0);
 	}
 }
 

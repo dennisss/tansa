@@ -182,6 +182,17 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 
 			int chorI = jocsActiveIds[i];
 
+			// Failsafe, land on motion capture lose
+			if(s != StateInit) {
+				if(!v.connected) {
+					// Flip out to the user!
+					cout << "UNCONTROLLABLE: VEHICLE NOT CONNECTED: THIS IS BAD!!" << endl;
+				}
+				else if(!v.tracking) {
+					s = StateFailsafe;
+				}
+			}
+
 
 			if (s == StateArming) {
 				// Lower frequency state management
@@ -309,6 +320,13 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 				}
 
 			}
+			else if(s == StateFailsafe) {
+
+				// TODO: If still tracking, try a nice controlled landing
+				// TODO: Geofence based on covariance to auto-hardkill
+
+				v.set_mode("landing");
+			}
 		}
 
 		stepTick++;
@@ -322,6 +340,40 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 				return;
 			}
 		}
+
+		for(const auto &v : vehicles) {
+
+			// TODO: Also check standard deviation of the position and orientation via mocap data
+
+			Vector3d vec = v->state.orientation.toRotationMatrix() * Vector3d(0, 0, 1);
+			if(vec.z() < 0) {
+				printf("At least one drone upside down\n");
+				return;
+			}
+			else if(vec.z() < 0.5) {
+				printf("At least one drone tilted >45 degrees\n");
+				return;
+			}
+
+			Time now = Time::now();
+
+			if(now.since(v->onboardState.time).seconds() > 4) {
+				printf("Stale onboard state feedback\n");
+				return;
+			}
+
+			// Compare our state estimate with the onboard state estimate
+			// If these deviate by too much, then we probably have a
+			Vector3d ea = (v->onboardState.orientation * v->state.orientation.inverse()).toRotationMatrix().eulerAngles(2, 1, 0);
+
+			double maxAngleDiff = ea.rowwise().maxCoeff()[0];
+			if(maxAngleDiff > 20.0 * M_PI / 180.0) {
+				printf("Onboard Pose Not Synced: Too large of a angular deviation\n");
+				return;
+			}
+
+		}
+
 		for(auto s : states) {
 			if(s != StateInit) {
 				printf("Cannot prepare: Some drones not in initial state\n");

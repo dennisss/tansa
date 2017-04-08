@@ -153,7 +153,7 @@ public:
 	// By default, this will preserve the yaw
 	void setpoint_pos(const Vector3d &p);
 
-	void setpoint_accel(const Vector3d &a);
+	void setpoint_accel(const Vector3d &a, double yaw);
 
 	void setpoint_attitude(const Quaterniond &att, double accel_z);
 
@@ -189,6 +189,8 @@ public:
 	ControlInput lastControlInput;
 	ControlInput lastRawControlInput;
 	Time lastControlTime;
+
+	double pingLatency;
 
 	// State as observed by the onboard processor
 	ModelState onboardState;
@@ -244,6 +246,7 @@ private:
 	Time lastSystimeSent;
 	Time lastStateSent;
 	Time lastTrackTime = Time(0,0); int ntracks = 0;
+	Time lastPingTime = Time(0,0); int pingSeq = 0;
 };
 
 /**

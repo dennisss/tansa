@@ -184,6 +184,10 @@ void Vehicle::set_mode(string mode) {
 		custom_mode.main_mode = PX4_CUSTOM_MAIN_MODE_STABILIZED;
 	else if(mode == "rattitude")
 		custom_mode.main_mode = PX4_CUSTOM_MAIN_MODE_RATTITUDE;
+	else if(mode == "landing") {
+		custom_mode.main_mode = PX4_CUSTOM_MAIN_MODE_AUTO;
+		custom_mode.sub_mode = PX4_CUSTOM_SUB_MODE_AUTO_LAND;
+	}
 
 
 	mavlink_message_t msg;
@@ -321,7 +325,7 @@ void Vehicle::setpoint_pos(const Vector3d &pos) {
 	send_message(&msg);
 }
 
-void Vehicle::setpoint_accel(const Vector3d &accel) {
+void Vehicle::setpoint_accel(const Vector3d &accel, double yaw) {
 
 	lastControlInput = accel;
 	// TODO: Once the state is forward predicted, use that time
@@ -336,6 +340,8 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 
 	Vector3d accel_ned = enuToFromNed() * accel_normal;
 
+	double yaw_ned = -yaw + M_PI / 2.0;
+
 	mavlink_message_t msg;
 	mavlink_msg_set_position_target_local_ned_pack_chan(
 		255, 0, channel, // origin
@@ -349,7 +355,7 @@ void Vehicle::setpoint_accel(const Vector3d &accel) {
 		accel_ned.x(),
 		accel_ned.y(),
 		accel_ned.z(),
-		0,0
+		yaw_ned,0
 	);
 
 	send_message(&msg);
@@ -387,7 +393,24 @@ void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
 }
 
 void Vehicle::setpoint_zero() {
-	this->setpoint_accel(Vector3d(0,0, -GRAVITY_MS));
+	this->setpoint_accel(Vector3d(0,0, -GRAVITY_MS), 0);
+}
+
+void Vehicle::ping() {
+	Time t = Time::now();
+
+	this->lastPingTime = t;
+
+	mavlink_message_t msg;
+	mavlink_msg_ping_pack_chan(
+		255, 0, channel,
+		&msg,
+		t.micros(),
+		++pingSeq,
+		0, 0
+	);
+
+	send_message(&msg);
 }
 
 void Vehicle::param_read(const char *name) {
@@ -722,6 +745,16 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			break;
 		}
+
+		case MAVLINK_MSG_ID_PING:
+			mavlink_ping_t p;
+			mavlink_msg_ping_decode(msg, &p);
+
+			if(p.target_system > 0 && p.seq == this->pingSeq) {
+				this->pingLatency = Time::now().since(this->lastPingTime).seconds();
+			}
+
+			break;
 		case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
 			mavlink_hil_actuator_controls_t ac;
 			mavlink_msg_hil_actuator_controls_decode(msg, &ac);
@@ -856,6 +889,9 @@ void *vehicle_thread(void *arg) {
 		if(now.since(v->lastTrackTime).seconds() > 1) {
 			v->tracking = false;
 			v->ntracks = 0;
+		}
+		if(now.since(v->lastPingTime).seconds() >= 2) {
+			v->ping();
 		}
 
 

@@ -81,7 +81,12 @@ enum PlayerVehicleState {
 	 *
 	 * Transitions to Init upon completion
 	 */
-	StateLanding
+	StateLanding,
+
+	/**
+	 * Vehicle responding to a failure condition
+	 */
+	StateFailsafe
 };
 
 

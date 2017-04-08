@@ -218,6 +218,8 @@ void send_status_message() {
 					s = "flying"; break;
 				case StateLanding:
 					s = "landing"; break;
+				case StateFailsafe:
+					s = "failsafe"; break;
 			}
 
 			jsonVehicle["state"] = s;

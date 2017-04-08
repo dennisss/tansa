@@ -27,6 +27,7 @@ tmp
 
 # I use this for holding my flight log dumps
 log
+ext
 
 config/params/*.calib.json
 

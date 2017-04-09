@@ -259,6 +259,14 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 
 				if (t >= actions[chorI][plans[i]]->GetEndTime()) {
 					if (plans[i] == actions[chorI].size()-1) {
+
+						// Looping code
+						this->reset();
+						states[i] = StateFlying;
+						start = Time::now();
+						return;
+
+
 						states[i] = StateLanding;
 
 						Point lastPoint = motion->evaluate(t).position;

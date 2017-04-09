@@ -37,22 +37,32 @@ Jocs *custom_jocs() {
 	));
 #endif
 
-#ifdef CUSTOM_ARC1
-	j->homes.resize(1);
-	j->homes[0] = Vector3d(-1.5, 0, 1);
+//#ifdef CUSTOM_ARC1
+	//j->homes.resize(1);
+	//j->homes[0] = Vector3d(-1.5, 0, 1);
+
+	auto line = make_shared<LinearTrajectory>(Vector3d(0, 0, 2), 42.5, Vector3d(-1.5, 0, 1), 47.5);
+	j->actions[0].push_back(new MotionAction(
+		0,
+		line,
+		ActionTypes::Line
+	));
+
 
 
 	Trajectory::Ptr tr;
 
+
+	double arcStart = 47.5;
 	compute_minsnap_mellinger11({
 		ConstrainedPoint::Stationary({-1.5, 0, 1}),
 		{ {0, 1, 0.5} },
 		{ {1, -1.5, 1.5} },
 		ConstrainedPoint::Stationary({1.5, 0, 2})
-	}, { 0, 2, 3, 5 }, {}, &tr, NULL);
+	}, { arcStart + 0, arcStart + 2, arcStart + 3, arcStart + 5 }, {}, &tr, NULL);
 
 
-	j->actions[0].resize(0);
+	//j->actions[0].resize(0);
 	j->actions[0].push_back(new MotionAction(
 		0,
 		tr,
@@ -64,7 +74,17 @@ Jocs *custom_jocs() {
 		make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), 5, Vector3d(-1.5, 0, 1), 10),
 		ActionTypes::Line
 	));
-#endif
+
+
+
+	auto line2 = make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), 52.5, Vector3d(0, 0, 2), 52.5 + 5);
+	j->actions[0].push_back(new MotionAction(
+		0,
+		line2,
+		ActionTypes::Line
+	));
+
+//#endif
 
 #ifdef CUSTOM_HELIX
 	j->homes.resize(2);

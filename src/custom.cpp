@@ -71,13 +71,13 @@ Jocs *custom_jocs() {
 
 	j->actions[0].push_back(new MotionAction(
 		0,
-		make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), 5, Vector3d(-1.5, 0, 1), 10),
+		make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), arcStart + 5, Vector3d(-1.5, 0, 1), arcStart + 10),
 		ActionTypes::Line
 	));
 
 
 
-	auto line2 = make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), 52.5, Vector3d(0, 0, 2), 52.5 + 5);
+	auto line2 = make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), 57.5, Vector3d(0, 0, 2), 57.5 + 5);
 	j->actions[0].push_back(new MotionAction(
 		0,
 		line2,

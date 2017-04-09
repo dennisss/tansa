@@ -69,20 +69,57 @@ Jocs *custom_jocs() {
 		ActionTypes::Line
 	));
 
-	j->actions[0].push_back(new MotionAction(
-		0,
-		make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), arcStart + 5, Vector3d(-1.5, 0, 1), arcStart + 10),
-		ActionTypes::Line
-	));
-
-
-
-	auto line2 = make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), 57.5, Vector3d(0, 0, 2), 57.5 + 5);
+	auto line2 = make_shared<LinearTrajectory>(Vector3d(1.5, 0, 2), arcStart + 5, Vector3d(0, 0, 2), arcStart + 10);
 	j->actions[0].push_back(new MotionAction(
 		0,
 		line2,
 		ActionTypes::Line
 	));
+
+	double cTime = arcStart + 10.0;
+
+
+
+	auto circle = make_shared<CircleTrajectory>(Vector3d(0,0,2), 1, 0, cTime + 2, 4*PI, cTime + 2 + 5);
+
+	auto cS = circle->evaluate(circle->startTime());
+	auto cE = circle->evaluate(circle->endTime());
+
+	auto cTran = PolynomialTrajectory::compute(
+		{{0, 0, 2}},
+		cTime,
+		{cS.position, cS.velocity, cS.acceleration},
+		cTime + 2
+	);
+
+	auto cTran2 = PolynomialTrajectory::compute(
+		{cE.position, cE.velocity, cE.acceleration},
+		cTime + 7,
+		{{0, 0, 2}},
+		cTime + 9
+	);
+
+
+	j->actions[0].push_back(new MotionAction(
+		0,
+		cTran,
+		ActionTypes::Transition
+	));
+
+	j->actions[0].push_back(new MotionAction(
+		0,
+		circle,
+		ActionTypes::Line
+	));
+
+	j->actions[0].push_back(new MotionAction(
+		0,
+		cTran2,
+		ActionTypes::Transition
+	));
+
+
+
 
 //#endif
 
@@ -207,6 +244,9 @@ Jocs *custom_jocs() {
 	auto t2 = new EllipseTrajectory(Vector3d(0,0,1), 4, 2, PI, 5, 4*PI, 30);
 
 	*/
+
+	FeasibilityChecker fc;
+	fc.check(*j);
 
 	return j;
 }

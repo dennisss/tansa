@@ -1,5 +1,5 @@
 
-CONFIG_PATH="config/config.json"
+CONFIG_PATH="config/settings.json"
 
 .PHONY: build build_firmware build_socketio_cpp doc
 

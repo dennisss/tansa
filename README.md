@@ -32,12 +32,15 @@ Unless otherwise specified, all current files and future contributions in this r
 Requirements
 ------------
 
-This platform was primary developed for UNIX based OSes (Linux / Mac OS X), but should be mostly compatible with Windows as well.
+This platform was primary developed for UNIX based OSes (Linux / Mac OS X), but should be mostly compatible with Windows as well (probably won't compile on windows in it's current state though).
+
+You can optionally skip most of this and try using one of your prebuilt Docker images (see `config/docker/` directory).
 
 For running/compiling the core code, the following libraries must be installed:
 
 - CMake
 - Eigen3
+- Boost
 - CGAL
 
 For running the simulations, all dependencies on the PX4 toolchain/gazebo SITL environment must be met:
@@ -60,7 +63,7 @@ Building
 
 2. Run `make build_firmware` to build the nested PX4 code and all code needed for Gazebo simulation
 
-3. Run `npm install`
+3. Run `npm install` to download packages needed for the GUI
 
 Alternatively, run `make sim` to start up a multidrone simulator
 
@@ -70,7 +73,7 @@ Run `make run` to build the core stuff and start up the controller. Make sure th
 Running
 -------
 
-Once everything is built, you can run `./start.sh` to quick start into a simulator with the UI running. See
+Once everything is built, you can run `./start.sh` to quick start into a simulator with the UI running.
 
 The script does three things
 

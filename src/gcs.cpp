@@ -33,8 +33,8 @@ static string workspaceDir;
 // All these are relative to the workspace dir
 static string paramsDir = "config/params/";
 static string dataDir = "data/";
-static string settingsPath = "config/config.json";
-static string jocsConfigPath = "config/jocs.json";
+static string settingsPath = "config/settings.json";
+static string routineConfigPath = "config/routine.json";
 
 
 static bool running = false;
@@ -266,14 +266,14 @@ void send_status_message() {
 
 /**
  * Return breakpoint information for a given jocsFile
- * @param jocsPath	Path to a jocs file.
+ * @param routinePath	Path to a routine file.
  * @return	json array of breakpoint objects
  */
-json getBreakpoints(string jocsPath) {
+json getBreakpoints(string routinePath) {
 	json jsonBreakpoints = json::array();
 	try {
-		cout << "Load " << jocsPath << endl;
-		auto jocsData = Routine::Load(jocsPath, 1.0);
+		cout << "Load " << routinePath << endl;
+		auto jocsData = Routine::Load(routinePath, 1.0);
 
 		if(jocsData == NULL) {
 			json arr = json::array();
@@ -297,7 +297,7 @@ json getBreakpoints(string jocsPath) {
 			jsonBreakpoints.push_back(jsonBreakpoint);
 		}
 	} catch (std::runtime_error e) {
-		cout << "Encountered an exception in getBreakpoints(" << jocsPath << "): ";
+		cout << "Encountered an exception in getBreakpoints(" << routinePath << "): ";
 		std::cerr << e.what() << std::endl;
 	}
 
@@ -507,7 +507,7 @@ void loadConfiguration(const json &rawJsonArg) {
 	}
 
 	// Load the default config file
-	ifstream defaultConfigStream(searchWorkspacePath(jocsConfigPath));
+	ifstream defaultConfigStream(searchWorkspacePath(routineConfigPath));
 	std::string defaultConfigData((std::istreambuf_iterator<char>(defaultConfigStream)), std::istreambuf_iterator<char>());
 	nlohmann::json defaultRawJson = nlohmann::json::parse(defaultConfigData);
 
@@ -523,7 +523,7 @@ void loadConfiguration(const json &rawJsonArg) {
 
 
 	initialized = false;
-	string jocsPath = rawJson["jocsPath"];
+	string routinePath = rawJson["routinePath"];
 	vector<unsigned> activeRoles = rawJson["activeRoles"];
 	scale = rawJson["theaterScale"];
 
@@ -531,11 +531,11 @@ void loadConfiguration(const json &rawJsonArg) {
 	player->cleanup();
 
 
-	if(jocsPath == "custom") {
+	if(routinePath == "custom") {
 		player->loadChoreography(custom_jocs(), activeRoles, startPoint);
 	}
 	else {
-		player->loadChoreography(searchWorkspacePath(jocsPath), scale, activeRoles, startPoint);
+		player->loadChoreography(searchWorkspacePath(routinePath), scale, activeRoles, startPoint);
 	}
 
 	if(rawJson.count("preview") == 1 && rawJson["preview"].get<bool>() == true) {
@@ -559,7 +559,7 @@ void loadConfiguration(const json &rawJsonArg) {
  * @param configPath The path to the (JSON) config file.
  */
 void loadFromConfigFile(string configPath) {
-	if (configPath == "default") configPath = searchWorkspacePath(jocsConfigPath);
+	if (configPath == "default") configPath = searchWorkspacePath(routineConfigPath);
 
 	ifstream configStream(configPath);
 
@@ -769,7 +769,10 @@ int main(int argc, char *argv[]) {
 
 	// TODO: REad configpath fro workspace?
 	ifstream configStream(configPath);
-	if (!configStream) throw "Unable to read config file!";
+	if (!configStream) {
+		cout << "Unable to read config file" << endl;
+		return 1;
+	}
 
 	/// Parse the config file
 	std::string configData((std::istreambuf_iterator<char>(configStream)), std::istreambuf_iterator<char>());

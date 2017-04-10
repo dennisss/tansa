@@ -1,5 +1,5 @@
 {
-	"jocsPath": "data/singleDrone.jocs",
+	"routinePath": "data/singleDrone.jocs",
 	"startPoint": -1,
 	"activeRoles": [0,1,2],
 	"theaterScale": 1.0,

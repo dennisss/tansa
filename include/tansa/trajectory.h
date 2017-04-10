@@ -220,8 +220,11 @@ public:
 			i = trajs.size() - 1;
 			t = trajs[i]->endTime();
 		}
+		else {
+			t = t - ts; // offset the time
+		}
 
-		return trajs[i]->evaluate(t - ts);
+		return trajs[i]->evaluate(t);
 	}
 
 

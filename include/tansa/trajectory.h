@@ -398,17 +398,38 @@ private:
 
 };
 
+struct Color {
+	/*
+	* t is from 0 to 1
+	*/
+	Color interpolate_from_this(Color to_this, double t) {
+		float t1 = (1.0f-t);
+		float r_right = t1 * r;
+		float b_right = t1 * g;
+		float g_right = t1 * b;
+		float r_left = t*to_this.r;
+		float g_left = t*to_this.g;
+		float b_left = t*to_this.b;
+		
+		return {r_right + r_left, g_right + g_left, b_right + b_left};
+	}
+	float r;
+	float g; 
+	float b;
+};
 /**
  * Smoothly increases or decreases list intensity between two intensities
  */
 class LightTrajectory {
 public:
 	typedef std::shared_ptr<LightTrajectory> Ptr;
-	inline LightTrajectory(double si, double st, double ei, double et) :
-			startIntensity(si), startTime(st), endIntensity(ei), endTime(et) {}
+	inline LightTrajectory(double si, Color sc, double st, double ei, Color ec, double et) :
+			startIntensity(si), startColor(sc),startTime(st),
+			endIntensity(ei), endColor(ec), endTime(et)
+	{}
 	virtual ~LightTrajectory() {}
 	// Helper method to convert rgbi to packed int
-	static int rgbiToInt(int r, int g, int b, float i);
+	static int rgbiToInt(Color in, float i);
 	// Gives the intensity at a given time between the start and end times
 	virtual int evaluate(double t);
 
@@ -416,11 +437,11 @@ public:
 	inline double getStartTime() { return this->startTime; }
 	inline double getEndIntensity() { return this->endIntensity; }
 	inline double getEndTime() { return this->endTime; }
-
-
+	inline Color getStartColor() {return this->startColor; }
+	inline Color getEndColor() { return this->endColor; }
 protected:
-
 	double startIntensity, startTime, endIntensity, endTime;
+	Color startColor, endColor;
 };
 
 /**
@@ -429,18 +450,18 @@ protected:
 class StrobeTrajectory : public LightTrajectory {
 public:
 
-	inline StrobeTrajectory(double si, double st, double ei, double et, double bps) :
-			LightTrajectory(si,st,ei,et), beatsPerSecond(bps) {}
+	inline StrobeTrajectory(double si, Color sc, double st, double ei, Color ec, double et, double bpss, double bpse) :
+			LightTrajectory(si,sc,st,ei,ec,et),startBeatsPerSecond(bpss), endBeatsPerSecond(bpse) {}
 	virtual ~StrobeTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times
 	virtual int evaluate(double t);
 
-	inline double getBeatsPerSecond() { return this->beatsPerSecond; }
 
 private:
 
-	double beatsPerSecond;
+	double startBeatsPerSecond;
+	double endBeatsPerSecond;
 };
 
 

@@ -2,7 +2,16 @@
 
 namespace tansa {
 
-double LightTrajectory::evaluate(double t) {
+int LightTrajectory::rgbiToInt(int r, int g, int b, float i){
+	int r_out = (int)(i*r);
+	int g_out = (int)(i*g);
+	int b_out = (int)(i*b);
+
+	return (r_out | g_out << 8 | b_out << 16);
+}
+
+
+int LightTrajectory::evaluate(double t) {
 
 	// Calculate percent intensities between start and end times
 	double totalTimeChange = endTime - startTime;

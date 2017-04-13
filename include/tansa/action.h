@@ -2,6 +2,7 @@
 #define TANSA_ACTION_H
 
 #include "trajectory.h"
+#include "control.h"
 #include <memory>
 
 namespace tansa {
@@ -155,14 +156,14 @@ public:
 	 * @param t The trajectory that the light should follow. In other words, how does the light change over time?
 	 * @return A LightAction instance that encapsulates the relevant trajectory and state.
 	 */
-	LightAction(DroneId did, LightTrajectory* t) :
+	LightAction(DroneId did, LightTrajectory::Ptr t) :
 			Action(did, ActionTypes::Light), path(t)
 			{ isCalculated = true; }
 	/**
 	 * Deletes its path on deletion. This object owns the trajectory.
 	 * TODO: Make this an owned pointer.
 	 */
-	virtual ~LightAction(){ delete path; }
+	virtual ~LightAction(){}
 
 	/**
 	 * Get intensity value of evaluating the path at a given time.
@@ -173,7 +174,7 @@ public:
 	/**
 	 * @return The lights trajectory, how it changes over time.
 	 */
-	inline LightTrajectory* GetPath() { return path; }
+	inline LightTrajectory::Ptr GetPath() { return path; }
 	/**
 	 * @return The start time for the trajectory
 	 */
@@ -193,10 +194,11 @@ public:
 	/**
 	 * @return Which light this action is referring to.
 	 */
-	//inline LightId GetLightId() { return lightId; }
+	inline LightController::LightIndices GetLightIndex() { return index; }
 
 private:
-	LightTrajectory* path;
+	LightController::LightIndices index;
+	LightTrajectory::Ptr path;
 	//LightId lightId;
 };
 

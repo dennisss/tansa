@@ -403,13 +403,14 @@ private:
  */
 class LightTrajectory {
 public:
-
+	typedef std::shared_ptr<LightTrajectory> Ptr;
 	inline LightTrajectory(double si, double st, double ei, double et) :
 			startIntensity(si), startTime(st), endIntensity(ei), endTime(et) {}
 	virtual ~LightTrajectory() {}
-
+	// Helper method to convert rgbi to packed int
+	static int rgbiToInt(int r, int g, int b, float i);
 	// Gives the intensity at a given time between the start and end times
-	virtual double evaluate(double t);
+	virtual int evaluate(double t);
 
 	inline double getStartIntensity() { return this->startIntensity; }
 	inline double getStartTime() { return this->startTime; }
@@ -433,7 +434,7 @@ public:
 	virtual ~StrobeTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times
-	virtual double evaluate(double t);
+	virtual int evaluate(double t);
 
 	inline double getBeatsPerSecond() { return this->beatsPerSecond; }
 

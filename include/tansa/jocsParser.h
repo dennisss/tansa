@@ -88,7 +88,7 @@ public:
 	/**
 	 * @return Returns a std::vector where each index of the vector contains the light actions for a drone of DroneId == index
 	 */
-	inline const std::vector<std::vector<LightAction*>>& GetLightActions() const { return lightActions; }
+	inline const std::vector<std::vector<std::vector<LightAction*>>>& GetLightActions() const { return lightActions; }
 	/**
 	 * @return Returns a std::vector of Breakpoints that are present in the choreography represented by this object.
 	 */

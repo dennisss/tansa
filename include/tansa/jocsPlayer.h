@@ -124,12 +124,12 @@ private:
 	std::vector<Breakpoint> breakpoints;
 	Routine *currentJocs = nullptr;
 	std::vector<std::vector<Action*>> actions;
-	std::vector<std::vector<LightAction*>> lightActions;
+	std::vector<std::vector<std::vector<LightAction*>>> lightActions;
 	std::vector<Point> homes;
 	std::vector<HoverController *> hovers;
 	std::vector<PositionController *> posctls;
 	std::vector<LightController *> lightctls;
-	std::vector<int> lightCounters;
+	std::vector<std::vector<int>> lightCounters;
 	std::vector<Point> holdpoints;
 	std::vector<PlayerVehicleState> states;
 	std::vector<int> plans;

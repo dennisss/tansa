@@ -2,7 +2,7 @@
 
 namespace tansa {
 
-double StrobeTrajectory::evaluate(double t) {
+int StrobeTrajectory::evaluate(double t) {
 	assert(t - startTime > 0); // TODO move to a constructor maybe
 
 	// Calculate how many full beats have passed

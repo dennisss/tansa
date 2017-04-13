@@ -53,8 +53,10 @@ void JocsPlayer::reset() {
 	}
 
 	lightCounters.resize(n);
-	for(auto &lc : lightCounters) {
-		lc = 0;
+	for(auto &light : lightCounters) {
+		for(auto& counter : light){
+			counter = 0;
+		}
 	}
 
 	pauseIndices.resize(n);
@@ -300,15 +302,19 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					posctls[i]->track(motion);
 					posctls[i]->control(t);
 				}
+				for(int j = 0; j < LightController::NUM_LIGHTS; j++){
+					int counter = lightCounters[j][i];
+					const std::vector<LightAction*> local_action_array = lightActions[j][chorI];
+					LightAction* local_action = local_action_array[counter];
+					if (counter < local_action_array.size()) {
+						auto traj = static_cast<LightAction*>(local_action)->GetPath();
 
-				if (lightCounters[i] < lightActions[chorI].size()) {
-					LightTrajectory *light = static_cast<LightAction *>(lightActions[chorI][lightCounters[i]])->GetPath();
-
-					if (t >= lightActions[chorI][lightCounters[i]]->GetStartTime()) {
-						lightctls[i]->track(light, light); //TODO: not just copy same light trajectory for both lights
-						lightctls[i]->control(t);
-						if (t >= lightActions[chorI][lightCounters[i]]->GetEndTime()) {
-							lightCounters[i]++;
+						if (t >= local_action->GetStartTime()) {
+							lightctls[i]->track(traj, (LightController::LightIndices)j);
+							lightctls[i]->control(t);
+							if (t >= local_action->GetEndTime()) {
+								lightCounters[j][i]++;
+							}
 						}
 					}
 				}

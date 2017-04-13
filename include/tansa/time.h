@@ -90,6 +90,21 @@ private:
 	struct timespec val;
 };
 
+/**
+ * Specifies how time should be counted
+ */
+class Clock {
+public:
+	bool simTimeValid; /**< Whether or not we are using a simulation timer */
+
+	Time simTime = Time(0,0);
+	Time simRefTime = Time(0,0); // The wall time
+	float simFactor;
+
+	// Real time at which the clock starts
+	Time starttime = Time(0,0);
+};
+
 
 /**
  * For operating a loop at a certain frequency

@@ -17,7 +17,7 @@ Simulation *Simulation::Make() {
 	World w;
 	WorldState ws;
 
-	DataObject desc = DataObject::LoadFile("config/models/x340.js");
+	DataObject desc = DataObject::LoadFile("config/models/x260/index.js");
 
 	int n = 1;
 
@@ -42,47 +42,12 @@ Simulation::Simulation(World &world, WorldState &state) {
 
 
 /*
-// TODO: Integrate this into gcs.cpp
-void send_status_message(const WorldState &ws) {
-	json jsonStatus;
-
-	jsonStatus["type"] = "status";
-	jsonStatus["time"] = ws.time.seconds();;
-
-	json jsonVehicles = json::array();
-	for(int i = 0; i < ws.models.size(); i++) {
-
-		std::shared_ptr<MultirotorModelState> s = std::static_pointer_cast<MultirotorModelState>(ws.models[0]);
-
-
-		json jsonVehicle;
-
-		json jsonPosition = json::array();
-		jsonPosition.push_back(s->position.x());
-		jsonPosition.push_back(s->position.y());
-		jsonPosition.push_back(s->position.z());
-		jsonVehicle["position"] = jsonPosition;
-
-		json jsonOrientation = json::array();
-		jsonOrientation.push_back(s->orientation.w());
-		jsonOrientation.push_back(s->orientation.x());
-		jsonOrientation.push_back(s->orientation.y());
-		jsonOrientation.push_back(s->orientation.z());
-		jsonVehicle["orientation"] = jsonOrientation;
-
 		json jsonMotors = json::array();
 		jsonMotors.push_back(s->motors[0].throttle);
 		jsonMotors.push_back(s->motors[1].throttle);
 		jsonMotors.push_back(s->motors[2].throttle);
 		jsonMotors.push_back(s->motors[3].throttle);
 		jsonVehicle["motors"] = jsonMotors;
-
-		jsonVehicles.push_back(jsonVehicle);
-	}
-	jsonStatus["vehicles"] = jsonVehicles;
-
-	tansa::send_message(jsonStatus);
-}
 */
 
 extern Vector3d noiseVector(std::normal_distribution<> &dist, std::default_random_engine &gen);

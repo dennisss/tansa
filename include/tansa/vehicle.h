@@ -129,15 +129,21 @@ public:
 	 * Sets the brightness of the LEDs on the drone
 	 *
 	 * The two parameters are floats representing brightness. They range from 0 (off) to 1.0 (full power)
+	 *
+	 * Note: This is deprecated
 	 */
 	void set_lighting(float top, float bottom);
+
+	/**
+	 * Sets the value of every lighting channel.
+	 * There are a max of 7, where all non-specified ones default to 0. On the current reference design, channel 0 is the left downward LED, 1 will be the right. 2 will be on internal center led (which only supports solid binary mixes of R, B, and G channels)
+	 */
+	void set_lighting(const vector<int> &channels);
 
 	/**
 	 * Toggles the state of the active IR beacon. Once it is on, the
 	 */
 	void set_beacon(bool on);
-
-	void set_rgb_lighting(int color);
 
 	/**
 	 * Fuses motion capture information into the current position estimate

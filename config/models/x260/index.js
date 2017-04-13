@@ -89,6 +89,6 @@ module.exports = {
 
 	firmware: {
 		id: 0,
-		rc: "config/gazebo/x340"
+		rc: "config/models/x260/rcS"
 	}
 }

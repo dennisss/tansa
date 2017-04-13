@@ -79,24 +79,24 @@ void JocsPlayer::reset() {
 		return true;
 	}
 
-void JocsPlayer::loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start){
+bool JocsPlayer::loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start){
 	cout << "loadJocs(" << jocsPath << ", " << scale << ", " << jocsActiveIds.size() << ", " << start << ")" << endl;
 	Routine *choreography = Routine::Load(jocsPath, scale);
 
 	if(!choreography) {
 		cout << "Invalid file!" << endl;
-		return;
+		return false;
 	}
 
-	this->loadChoreography(choreography, jocsActiveIds, start);
+	return this->loadChoreography(choreography, jocsActiveIds, start);
 }
 
 /**
 * Load JOCS data from a specified path
 */
-void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jocsActiveIds, int start) {
+bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jocsActiveIds, int start) {
 		if (!this->canLoad()) {
-			return;
+			return false;
 		}
 
 		delete currentJocs;
@@ -125,6 +125,8 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 		}
 
 		cout << "Finished loading jocs" << endl;
+
+		return true;
 	}
 
 
@@ -261,10 +263,13 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					if (plans[i] == actions[chorI].size()-1) {
 
 						// Looping code
-						this->reset();
-						states[i] = StateFlying;
-						start = Time::now();
-						return;
+						// TODO: This needs to effect every drone
+						if(looping) {
+							this->reset();
+							states[i] = StateFlying;
+							start = Time::now();
+							return;
+						}
 
 
 						states[i] = StateLanding;
@@ -423,6 +428,13 @@ void JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 			s = StateArming;
 		}
 	}
+
+
+void JocsPlayer::failsafe() {
+	for(auto &s : states) {
+		s = StateFailsafe;
+	}
+}
 
 	void JocsPlayer::play() {
 

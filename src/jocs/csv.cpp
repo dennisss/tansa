@@ -448,7 +448,7 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 			start,
 			end,
 			droneid,
-			std::vector<std::string>(split_line.begin()+ traj_loc,split_line.end()),
+			std::vector<std::string>(split_line.begin()+ traj_loc + 1, split_line.end()),
 			length_conversion,
 			angle_conversion))->GetPath();
 

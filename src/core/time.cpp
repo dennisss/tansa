@@ -26,15 +26,8 @@ namespace tansa {
 #ifdef WIN32
 static LARGE_INTEGER clock_frequency; // On windows, this is the number of clock ticks per second
 #endif
-// Real time at which the
-static Time starttime(0,0);
 
-// Whether or not we are using a simulation timer
-static bool simTimeValid;
-static Time simTime(0,0);
-static Time simRefTime(0,0); // The wall time
-static float simFactor;
-
+static Clock defaultClock;
 
 /*
 	Gets the current time
@@ -88,9 +81,9 @@ void time_init() {
 	QueryPerformanceFrequency(&clock_frequency);
 #endif
 
-	simTimeValid = false;
+	defaultClock.simTimeValid = false;
 	// This should force the usage of the wall clock
-	starttime = Time::realNow();
+	defaultClock.starttime = Time::realNow();
 
 }
 
@@ -117,12 +110,12 @@ Time::Time(double seconds) {
 Time Time::now() {
 	Time t = Time::realNow();
 
-	if(simTimeValid) {
-		Time dt = t.since(simRefTime);
-		dt = dt.scale(simFactor);
+	if(defaultClock.simTimeValid) {
+		Time dt = t.since(defaultClock.simRefTime);
+		dt = dt.scale(defaultClock.simFactor);
 
 		Time stime;
-		timespec_add(&stime.val, &dt.val, &simTime.val);
+		timespec_add(&stime.val, &dt.val, &defaultClock.simTime.val);
 		return stime;
 	}
 
@@ -139,10 +132,10 @@ Time Time::realNow() {
 }
 
 void Time::setTime(const Time &t, double factor) {
-	simTimeValid = true;
-	simTime = t;
-	simRefTime = Time::realNow();
-	simFactor = factor;
+	defaultClock.simTimeValid = true;
+	defaultClock.simTime = t;
+	defaultClock.simRefTime = Time::realNow();
+	defaultClock.simFactor = factor;
 }
 
 Time Time::since(const Time &other) const {
@@ -152,7 +145,7 @@ Time Time::since(const Time &other) const {
 }
 
 Time Time::sinceStart() {
-	return since(starttime);
+	return since(defaultClock.starttime);
 }
 
 Time Time::add(const Time &rhs) {

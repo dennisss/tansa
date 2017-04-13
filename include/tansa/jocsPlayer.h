@@ -47,15 +47,22 @@ public:
 	 * Proceed one time step in the choreography.
 	 */
 	void step();
+
+	/**
+	 * Causes all vehicles to enter a failsafe landing mode
+	 */
+	void failsafe();
+
 	/**
 	 * Should be called to load a jocs file.
 	 * @param jocsPath The path to the jocs file.
 	 * @param scale Default should be 1.0f Applies a uniform scaling to all lengths in the choreography.
 	 * @param jocsActiveIds Which drones are actually being used? Non active drones don't fly.
 	 * @param start Which breakpoint should we start at? Defaults to -1 which means start from the beginning.
+	 * @return whether or not the load operation suceeded
 	 */
-	void loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
-	void loadChoreography(Routine *chor, const std::vector<unsigned> &jocsActiveIds, int start = -1);
+	bool loadChoreography(string jocsPath, float scale, const std::vector<unsigned> &jocsActiveIds, int start = -1);
+	bool loadChoreography(Routine *chor, const std::vector<unsigned> &jocsActiveIds, int start = -1);
 	// TODO: Instead we should use isRunning which checks if any states are not StateInit
 	bool canLoad();
 	/**
@@ -139,6 +146,7 @@ private:
 	std::vector<int> startIndices;
 	std::vector<int> endIndices;
 	double startOffset = 0.0;
+	bool looping = false;
 
 	ofstream logfile;
 

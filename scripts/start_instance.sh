@@ -5,7 +5,7 @@
 # Call as './scripts/start_firmware.sh id rcs_script_file'
 
 id=$1
-rc_script=$2 # Should be something like "config/gazebo/x340"
+rc_script=$2
 
 #### Base port settings ####
 port_step=10 # Port interval between ids

@@ -463,7 +463,10 @@ void Vehicle::set_beacon(bool on) {
 	send_message(&msg);
 }
 
-void Vehicle::set_rgb_lighting(int color) {
+void Vehicle::set_lighting(const vector<int> &channels) {
+
+	vector<int> channels_full = channels;
+	channels_full.resize(7, 0);
 
 	mavlink_message_t msg;
 	mavlink_msg_command_long_pack_chan(
@@ -472,10 +475,13 @@ void Vehicle::set_rgb_lighting(int color) {
 		1, 1,
 		MAV_CMD_RGBLED,
 		0,
-		color,
-		0, 0, 0, 0, 0, 0
+		channels_full[0], channels_full[1], channels_full[2],
+		channels_full[3], channels_full[4], channels_full[5],
+		channels_full[6]
 	);
 
+	// TODO: Instead, save all channels once UI is able to view all of them
+	int color = channels[0];
 	lightState.resize(3);
 	lightState[0] = ((color >> 16) & 0xff) / 0xff;
 	lightState[1] = ((color >> 8) & 0xff) / 0xff;

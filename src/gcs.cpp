@@ -273,9 +273,9 @@ json getBreakpoints(string routinePath) {
 	json jsonBreakpoints = json::array();
 	try {
 		cout << "Load " << routinePath << endl;
-		auto jocsData = Routine::Load(routinePath, 1.0);
+		auto r = Routine::Load(routinePath, 1.0);
 
-		if(jocsData == NULL) {
+		if(r == nullptr) {
 			json arr = json::array();
 
 			json inv;
@@ -287,7 +287,7 @@ json getBreakpoints(string routinePath) {
 			return arr;
 		}
 
-		auto breakPoints = jocsData->breakpoints;
+		auto breakPoints = r->breakpoints;
 
 		for (auto &breakPoint : breakPoints) {
 			json jsonBreakpoint;
@@ -530,12 +530,18 @@ void loadConfiguration(const json &rawJsonArg) {
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
 
-
+	bool res = false;
 	if(routinePath == "custom") {
-		player->loadChoreography(custom_jocs(), activeRoles, startPoint);
+		res = player->loadChoreography(custom_jocs(), activeRoles, startPoint);
 	}
 	else {
-		player->loadChoreography(searchWorkspacePath(routinePath), scale, activeRoles, startPoint);
+		res = player->loadChoreography(searchWorkspacePath(routinePath), scale, activeRoles, startPoint);
+	}
+
+	if(!res) {
+		cout << "Failed to load choreography" << endl;
+		loadMode = false;
+		return;
 	}
 
 	if(rawJson.count("preview") == 1 && rawJson["preview"].get<bool>() == true) {
@@ -611,9 +617,6 @@ void socket_on_message(const json &data) {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
 		killmode = enabled;
-
-		exit(1);
-
 	} else if (type == "land") {
 		printf("Landing...\n");
 		landMode = true;
@@ -840,8 +843,12 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (killmode) {
+			player->failsafe();
+
+			/*
 			for(Vehicle *v : vehicles)
 				v->terminate();
+			*/
 		} else if (loadMode) {
 			printf("Still loading...\n");
 		} else if (player == nullptr || !initialized) {

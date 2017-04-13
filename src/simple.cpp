@@ -74,7 +74,15 @@ int main(int argc, char *argv[]) {
 		}
 
 
-		veh.set_rgb_lighting(b | (g << 8) | (r << 16));
+		/*
+		if(dir > 0) {
+			veh.set_beacon(false);
+		}
+		else {
+			veh.set_beacon(true);
+		}
+		*/
+		veh.set_lighting({ b | (g << 8) | (r << 16) });
 
 		i = i + dir * 0.01;
 

@@ -125,8 +125,8 @@ var App = React.createClass({
 			type: 'load',
 			preview: previewing? true : false,
 			startPoint: this.state.cue*1,
-			jocsPath: 'data/' + this.state.availableFiles[this.state.filenameI].fileName,
-			theaterScale: this.state.scale
+			routinePath: 'data/' + this.state.availableFiles[this.state.filenameI].fileName,
+			theaterScale: this.state.scale // TODO: Rename this just a regular scale
 		};
 
 		var s = Settings.get('file');

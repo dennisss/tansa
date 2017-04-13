@@ -320,6 +320,12 @@ public:
 
 
 
+
+/**
+ * RK4 for integrating an ODE given initial conditions and a function that generates the derivative
+ */
+VectorXd runge_kutta_4(VectorXd (*f)(double, VectorXd), VectorXd y0, double t0, double tn);
+
 }
 
 

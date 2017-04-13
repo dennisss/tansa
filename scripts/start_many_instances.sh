@@ -4,7 +4,7 @@
 
 # Number of vehicles to spawn
 num=$1
-rc_script="config/gazebo/x340"
+rc_script="config/models/x340/rcS"
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 

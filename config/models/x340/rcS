@@ -44,6 +44,13 @@ param set MPC_Z_VEL_I 0.15
 param set EKF2_GBIAS_INIT 0.01
 param set EKF2_ANGERR_INIT 0.01
 
+param set EKF2_AID_MASK 24
+
+param set EKF2_HGT_MODE 3
+
+param set EKF2_EVP_NOISE 0.001
+
+
 param set ATT_EXT_HDG_M 2
 
 replay tryapplyparams
@@ -64,9 +71,10 @@ sensors start
 commander start
 land_detector start multicopter
 navigator start
-attitude_estimator_q start
-position_estimator_inav start
+#attitude_estimator_q start
+#position_estimator_inav start
 #local_position_estimator start
+ekf2 start
 mc_pos_control start
 mc_att_control start
 mixer load /dev/pwm_output0 ROMFS/px4fmu_common/mixers/quad_x.main.mix
@@ -76,7 +84,7 @@ mavlink start -u _MAINPORT_ -r 4000000 -o _MAINPORTO_ -m magic
 mavlink stream -r 50 -s LOCAL_POSITION_NED -u _MAINPORT_
 
 # For debugging individual ones
-#mavlink start -u _DBGPORT_ -r 4000000 -m onboard -o _DBGPORTO_
+mavlink start -u _DBGPORT_ -r 4000000 -m onboard -o _DBGPORTO_
 
 
 sdlog2 start -r 100 -e -t -a

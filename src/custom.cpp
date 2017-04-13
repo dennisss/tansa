@@ -37,7 +37,7 @@ Jocs *custom_jocs() {
 	));
 #endif
 
-//#ifdef CUSTOM_ARC1
+#ifdef CUSTOM_ARC1
 	//j->homes.resize(1);
 	//j->homes[0] = Vector3d(-1.5, 0, 1);
 
@@ -121,7 +121,7 @@ Jocs *custom_jocs() {
 
 
 
-//#endif
+#endif
 
 #ifdef CUSTOM_HELIX
 	j->homes.resize(2);

@@ -108,7 +108,7 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 	// Iterate over each axis
 	for(unsigned d = 0; d < PointDims; d++) {
 
-		// For holding the constrains (it is easier to vectorize them them put them in a matrix right away)
+		// For holding the constrains (it is easier to vectorize them and put them in a matrix later as we don't know how many constraints there will be)
 		vector<MatrixXd> Arows;
 		vector<double> brows;
 		vector<CGAL::Comparison_result> rels; // relation between A and b

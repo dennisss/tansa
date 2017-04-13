@@ -310,6 +310,41 @@ private:
 };
 
 /**
+ *
+ * Inspired by the formulations in 'Dancing Quadrocopters: Trajectory Generation, Feasibility, and User Interface' by Federico Augugliaro, Angela Schoellig
+ *
+ */
+class FourierTrajectory : public Trajectory {
+public:
+
+	/**
+	 *
+	 * @param A a 3xN matrix
+	 * @param B a 3xN matrix
+	 * @param freq
+	 * @param phase
+	 * @param center
+	 * @param ts
+	 * @param te
+	 */
+	FourierTrajectory(const MatrixXd &A, const MatrixXd &B, double freq, double phase, Point center, double ts, double te);
+	virtual ~FourierTrajectory() {}
+
+	virtual TrajectoryState evaluate(double t);
+
+
+private:
+
+	MatrixXd A;
+	MatrixXd B;
+	double freq;
+	double phase;
+	Point center;
+
+
+};
+
+/**
  * A 2d ellipse with radii along the two major XY axes.
  */
 class EllipseTrajectory : public Trajectory {

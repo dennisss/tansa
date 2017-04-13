@@ -17,7 +17,6 @@ var Timeline = React.createClass({
 		};
 	},
 
-
 	componentWillMount: function(){
 
 		this.tracks = [
@@ -51,42 +50,6 @@ var Timeline = React.createClass({
 	},
 
 
-	renderTickMarkers: function(){
-		// 100% is 5min
-		var marks = [];
-
-
-		for(var i = 1; i <= this.span; i++){
-			var left = (this.percentPerSecond*i);
-			var show = false, height = 0;
-
-
-			if(i % 60 == 0){
-				show = true;
-				height = 100;
-				marks.push(<div key={i + '-lbl'} style={{right: (100-left) + '%', top: 4, fontSize: 8, color: '#888', position: 'absolute', paddingRight: 4, top: 2}}>{i/60}m</div>)
-			}
-			else if(i % 30 == 0){
-				show = true;
-				height = 50;
-			}
-			else if(i % 15 == 0){
-				show = true;
-				height = 25;
-			}
-
-			if(show){
-				marks.push(<div key={i} style={{height: (height + '%'), position: 'absolute', bottom: 0, left: left + '%', borderRight: '1px solid #888'}}></div>)
-			}
-
-
-		}
-
-		return marks;
-
-	},
-
-
 	onLineClick: function(e){
 		// When clicking in a random spot, it should take you to that spot in the timeline
 
@@ -94,7 +57,7 @@ var Timeline = React.createClass({
 
 		var x = e.clientX - $el.offset().left; // TODO: Also account for timeline scroll
 
-		var t = (this.span / $el.width()) * x;
+		var t = (this.duration / $el.width()) * x;
 
 		this.props.parent.seek(t);
 
@@ -122,9 +85,8 @@ var Timeline = React.createClass({
 			t = p.state.stats.time;
 		}
 
-		this.span = p.state.duration || 60;
-
-		this.percentPerSecond = 100 / this.span;
+		this.duration = p.state.duration || 60;
+		this.percentPerSecond = 100 / this.duration;
 
 
 		return (
@@ -146,10 +108,7 @@ var Timeline = React.createClass({
 				</div>
 				*/}
 				<div ref="line" style={{display: 'table-cell', verticalAlign: 'top', position: 'relative', cursor: 'text'}} onClick={this.onLineClick}>
-					<div className="ta-timeline-row" style={{borderBottom: '1px solid #888', backgroundColor: '#222'}}>
-						{this.renderTickMarkers()}
-					</div>
-
+					<TimelineTicks duration={this.duration} />
 
 					{/*this.tracks.map((t, i) => {
 						return (
@@ -179,5 +138,63 @@ var Timeline = React.createClass({
 	}
 
 });
+
+
+var TimelineTicks = React.createClass({
+
+	propTypes: {
+		duration: React.PropTypes.number
+	},
+
+	shouldComponentUpdate: function(nextProps) {
+		return this.props.duration != nextProps.duration;
+	},
+
+	render: function() {
+
+		// TODO: This calculation is redundant with
+		var percentPerSecond = 100 / this.props.duration;
+
+		// 100% is 5min
+		var marks = [];
+
+
+		for(var i = 1; i <= this.props.duration; i++){
+			var left = percentPerSecond*i;
+			var show = false, height = 0;
+
+
+			if(i % 60 == 0){
+				show = true;
+				height = 100;
+				marks.push(<div key={i + '-lbl'} style={{right: (100-left) + '%', top: 4, fontSize: 8, color: '#888', position: 'absolute', paddingRight: 4, top: 2}}>{i/60}m</div>)
+			}
+			else if(i % 30 == 0){
+				show = true;
+				height = 50;
+			}
+			else if(i % 15 == 0){
+				show = true;
+				height = 25;
+			}
+
+			if(show){
+				marks.push(<div key={i} style={{height: (height + '%'), position: 'absolute', bottom: 0, left: left + '%', borderRight: '1px solid #888'}}></div>)
+			}
+
+
+		}
+
+		return (
+			<div className="ta-timeline-row" style={{borderBottom: '1px solid #888', backgroundColor: '#222'}}>
+				{marks}
+			</div>
+		);
+
+	}
+
+
+});
+
 
 module.exports = Timeline;

@@ -180,20 +180,3 @@ target_link_libraries(
 )
 
 set_target_properties(simple PROPERTIES COMPILE_FLAGS "-std=c++1y")
-
-
-###### Simulation Test ######
-add_executable(
-	sim
-
-	src/simulate.cpp
-)
-
-target_link_libraries(
-	sim
-
-	pthread
-	tansa
-)
-
-set_target_properties(sim PROPERTIES COMPILE_FLAGS "-std=c++1y")

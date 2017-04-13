@@ -33,7 +33,7 @@ Quickstart
 Advanced
 --------
 
-These are the commands I use to
+These are the commands I use to put things on Docker Hub (mainly for my own use, but may be useful for someone)
 
 - `docker build -t dennisss/tansa-prebuilt .`
 	- `docker tag 7d9495d03763 dennisss/tansa-prebuilt:latest` (optionally if tagged with something else using the tag id from `docker images`)

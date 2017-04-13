@@ -23,6 +23,9 @@ for(var i = 0; i < markerPlacement.length; i++) {
 	});
 }
 
+var k1 = 0.5;
+
+var k2 = 0.6
 
 module.exports = {
 	type: "multirotor",
@@ -31,20 +34,23 @@ module.exports = {
 	// TODO: Also define bounding box and offset and rotation of mesh w.r.t center of mass
 	mesh: "hardware/x260/body.stl",
 
-	mass: 0.32,
+	mass: 0.30,
 
 	diameter: 0.260, // length in meters between two motors across from each other
 
+	// Inertia from model
 	moments: [ // kg m^2
-		[1.079e-3, -2.715e-6, 0],
-		[-2.715e-6, 1.084e-3, 8.841e-7],
-		[0, 8.841e-7, 2.039e-3]
+		[1.079e-3, 0, 0],
+		[0, 1.084e-3, 0],
+		[0, 0, 2.039e-3]
 	],
+
+
 	markers: markersArr,
 
 	motor: {
-		thrust_coefficient: 0.28*G, // newtons of thrust at maximum power (we assume linear throttle curve for now)
-		torque_coefficient: 0.1,
+		thrust_coefficient: 0.21*G, // newtons of thrust at maximum power (we assume linear throttle curve for now)
+		torque_coefficient: 0.017, // Newton meters?
 
 		time_constant_up: 0.0125,
 		time_constant_down: 0.025,

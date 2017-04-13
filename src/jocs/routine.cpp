@@ -8,9 +8,9 @@ using namespace std;
 
 namespace tansa {
 
-
 bool hasExtension(string path, const char *ext) {
-	return path.find(ext) != std::string::npos;
+	std::string::size_type idx = path.find(ext);
+	return idx != std::string::npos && idx == (path.size() - strlen(ext));
 }
 
 bool Routine::IsFile(string path) {

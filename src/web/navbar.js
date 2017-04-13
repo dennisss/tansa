@@ -8,7 +8,6 @@ import Toggle from 'material-ui/Toggle';
 
 var Navbar = React.createClass({
 
-
 	render: function(){
 
 		var p = this.props.parent;
@@ -31,6 +30,7 @@ var Navbar = React.createClass({
 					<div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 						<ul className="nav navbar-nav">
 
+							{/*
 							<li className="dropdown">
 								<a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">File <span className="caret" /></a>
 								<ul className="dropdown-menu">
@@ -39,6 +39,7 @@ var Navbar = React.createClass({
 									<li><a href="#">Save</a></li>
 								</ul>
 							</li>
+							*/}
 
 							<SettingsButton />
 

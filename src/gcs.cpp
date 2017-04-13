@@ -385,7 +385,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> ac
 		vehicles[i] = new Vehicle();
 
 		// Load default parameters
-		vehicles[i]->read_params(searchWorkspacePath(paramsDir, "260.json"));
+		vehicles[i]->read_params(searchWorkspacePath(paramsDir, inRealLife? "x260.json" : "default.json"));
 		string calibId = inRealLife? to_string(v.net_id) : "sim";
 
 		if(!vehicles[i]->read_params(searchWorkspacePath(paramsDir, calibId + ".calib.json"))) {

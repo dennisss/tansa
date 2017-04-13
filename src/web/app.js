@@ -12,7 +12,9 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 Settings.setup({}, {
 	file: {
 		roles: '0,1,2,3,4,5',
-		ids: '0,1,2,3,4,5'
+		ids: '0,1,2,3,4,5',
+		name: null,
+		cue: null
 	},
 	trajectory: {
 		forward: 10,
@@ -97,11 +99,25 @@ var App = React.createClass({
 			else if(data.type == 'list_reply') {
 				this.setState({availableFiles: data.files});
 
+				var activeName = this._uploadedName || Settings.get('file.name');
 				// Right after an upload, set the new file as the default selected
-				if(this._uploadedName) {
+				if(activeName) {
 					for(var i = 0; i < data.files.length; i++) {
-						if(data.files[i].fileName == this._uploadedName) {
+						if(data.files[i].fileName == activeName) {
 							this.setState({filenameI: i});
+
+							var activeCue = Settings.get('file.cue');
+							if(activeCue) {
+								var cues = data.files[i].breakpoints;
+								for(var j = 0; j < cues.length; j++) {
+									if(cues[j].number == activeCue) {
+										this.setState({cue: activeCue});
+										break;
+									}
+								}
+							}
+
+
 							break;
 						}
 					}

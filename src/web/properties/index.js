@@ -1,6 +1,7 @@
 var React = require('react'),
 	StatsSection = require('./stats'),
-	UploadButton = require('./upload');
+	UploadButton = require('./upload'),
+	Settings = require('../settings');
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
@@ -18,8 +19,17 @@ var PropertiesPane = React.createClass({
 			cue = 0;
 		}
 
-		p.setState({filenameI: e.target.value, cue: cue});
+		Settings.set('file.name', p.state.availableFiles[i].fileName);
+		p.setState({filenameI: i, cue: cue});
 
+	},
+
+	onCueChange: function(e) {
+		var p = this.props.parent;
+
+		var c = e.target.value;
+		Settings.set('file.cue', c);
+		p.setState({cue: c});
 	},
 
 	render: function() {
@@ -55,16 +65,16 @@ var PropertiesPane = React.createClass({
 						</div>
 					</div>
 					<div className="row">
-						<div className="col-sm-6">
+						<div className="col-sm-8" style={{paddingRight: 0}}>
 							<div className="form-group">
 								<span>Breakpoint</span>
-								<select className="form-control" value={p.state.cue} onChange={(e) => p.setState({cue: e.target.value})}>
+								<select className="form-control" value={p.state.cue} onChange={this.onCueChange}>
 									<option value={-1}>- None -</option>
 									{cues.map((c, i) => <option key={i} value={c.number}>{c.name}</option>)}
 								</select>
 							</div>
 						</div>
-						<div className="col-sm-6">
+						<div className="col-sm-4">
 							<div className="form-group">
 								<span>Scale</span>
 								<input className="form-control" type="number" step="0.1" min="0" max="4" value={p.state.scale*1} onChange={(e) => p.setState({scale: e.target.value*1})} />

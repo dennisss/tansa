@@ -819,7 +819,7 @@ int main(int argc, char *argv[]) {
 		osc->set_listener(osc_on_message);
 	}
 
-	player = new JocsPlayer();
+	player = new JocsPlayer(inRealLife);
 
 	int i = 0;
 

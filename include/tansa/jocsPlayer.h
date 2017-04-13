@@ -17,6 +17,9 @@ namespace tansa {
  */
 class JocsPlayer {
 public:
+	JocsPlayer(bool inRealLife) { this->inRealLife = inRealLife; }
+
+
 	/**
 	 * Initialize all vehicles, required for flying
 	 * @param vehicles The list of vehicles in the choreography that should be initialized.
@@ -147,6 +150,7 @@ private:
 	std::vector<int> endIndices;
 	double startOffset = 0.0;
 	bool looping = false;
+	bool inRealLife;
 
 	ofstream logfile;
 

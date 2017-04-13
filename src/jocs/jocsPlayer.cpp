@@ -382,7 +382,8 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 				return;
 			}
 
-			if(now.since(v->lastRCTime).seconds() > 4) {
+			// Simulation doesn't have RC input usally
+			if(inRealLife && now.since(v->lastRCTime).seconds() > 4) {
 				printf("Some drones don't have RC\n");
 				return;
 			}

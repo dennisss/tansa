@@ -242,6 +242,11 @@ Action* parse_hover_action(double start, double end, unsigned long droneid, cons
 		start_y_loc 	= 3,
 		start_z_loc 	= 5,
 	};
+
+	if(split_line.size() < start_z_loc + 1) {
+		throw std::runtime_error("Not enough fields in hover action");
+	}
+
 	Point hover;
 	hover.x() 			= std::atof(split_line[start_x_loc].c_str());
 	hover.y() 			= std::atof(split_line[start_y_loc].c_str());
@@ -262,6 +267,12 @@ Action* parse_line_action(double start, double end, unsigned long droneid, const
 		end_y_loc 		= 9,
 		end_z_loc 		= 11
 	};
+
+	if(split_line.size() < end_z_loc + 1) {
+		throw std::runtime_error("Not enough fields in line action");
+	}
+
+
 	Point start_point, end_point;
 	start_point.x() 	= std::atof(split_line[start_x_loc].c_str());
 	start_point.y() 	= std::atof(split_line[start_y_loc].c_str());
@@ -286,6 +297,11 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
 		y_loc 			= 9,
 		z_loc 			= 11
 	};
+
+	if(split_line.size() < z_loc + 1) {
+		throw std::runtime_error("Not enough fields in circle action");
+	}
+
 	Point origin;
 	double radius 		= std::atof(split_line[radius_loc].c_str()) * length_conversion;
 	double theta1 		= std::atof(split_line[theta1_loc].c_str()) * angle_conversion;
@@ -337,6 +353,11 @@ Action* parse_helix_action(double start, double end, unsigned long droneid, cons
 		y2_loc			= 15,
 		z2_loc 			= 17,
 	};
+
+	if(split_line.size() < z2_loc + 1) {
+		throw std::runtime_error("Not enough fields in hover action");
+	}
+
 	Point origin, origin2;
 	double radius 	= std::atof(split_line[radius_loc].c_str()) * length_conversion;
 	double theta1 		= std::atof(split_line[theta1_loc].c_str()) * angle_conversion;
@@ -365,6 +386,11 @@ Action* parse_spiral_action(double start, double end, unsigned long droneid, con
 		theta1_loc 	 	= 9,
 		theta2_loc	 	= 11
 	};
+
+	if(split_line.size() < theta2_loc + 1) {
+		throw std::runtime_error("Not enough fields in hover action");
+	}
+
 	Point origin;
 	double radius	 	= std::atof(split_line[radius_loc].c_str()) * length_conversion;
 	double theta1 		= std::atof(split_line[theta1_loc].c_str()) * angle_conversion;
@@ -442,6 +468,10 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 		offset_z_loc 	= 11,
 		traj_loc		= 12,
 	};
+
+	if(split_line.size() < traj_loc + 1) {
+		throw std::runtime_error("Not enough fields in transform action");
+	}
 
 	Trajectory::Ptr ptr = dynamic_cast<MotionAction*>(parse_motion_action(
 			parse_action_type(split_line[traj_loc]),

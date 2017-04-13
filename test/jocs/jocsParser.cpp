@@ -12,6 +12,6 @@ TEST(Jocs, Parse) {
 	std::vector<Point> pts = j->GetHomes();
 
 	ASSERT_EQ(pts.size(), 1);
-	ASSERT_TRUE(pts[0].isApprox(Vector3d(0, 0, 1), 0.001));
+	ASSERT_TRUE(pts[0].isApprox(Vector3d(0, 0, 2), 0.001));
 
 }

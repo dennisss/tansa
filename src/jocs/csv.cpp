@@ -132,7 +132,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 							std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos,
 													 split_line.end()));
 					auto light_index = light_action->GetLightIndex();
-					ret->lightActions[light_index][drones[j]].push_back(light_action);
+					ret->lightActions[drones[j]][light_index].push_back(light_action);
 				}
 			} else {
 				for (int j = 0; j < 1; j++) {

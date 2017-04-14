@@ -43,9 +43,9 @@ public:
 				delete a;
 			}
 		}
-		for(const auto& light: lightActions){
-			for(const auto& drone: light){
-				for(const auto& action : drone){
+		for(const auto& drones: lightActions){
+			for(const auto& lights: drones){
+				for(const auto& action : lights){
 					delete action;
 				}
 			}

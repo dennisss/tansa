@@ -303,8 +303,8 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					posctls[i]->control(t);
 				}
 				for(int j = 0; j < LightController::NUM_LIGHTS; j++){
-					int counter = lightCounters[j][i];
-					const std::vector<LightAction*> local_action_array = lightActions[j][chorI];
+					int counter = lightCounters[i][j];
+					const std::vector<LightAction*> local_action_array = lightActions[chorI][j];
 					LightAction* local_action = local_action_array[counter];
 					if (counter < local_action_array.size()) {
 						auto traj = static_cast<LightAction*>(local_action)->GetPath();
@@ -313,7 +313,7 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 							lightctls[i]->track(traj, (LightController::LightIndices)j);
 							lightctls[i]->control(t);
 							if (t >= local_action->GetEndTime()) {
-								lightCounters[j][i]++;
+								lightCounters[i][j]++;
 							}
 						}
 					}

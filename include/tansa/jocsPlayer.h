@@ -124,6 +124,9 @@ private:
 	std::vector<Breakpoint> breakpoints;
 	Routine *currentJocs = nullptr;
 	std::vector<std::vector<Action*>> actions;
+	//3d vector. 1 track for each drone, then each drone has LightController::NUM_LIGHTS
+	//tracks for actions. Actions applied per light per drone so they can be controlled
+	//separately
 	std::vector<std::vector<std::vector<LightAction*>>> lightActions;
 	std::vector<Point> homes;
 	std::vector<HoverController *> hovers;

@@ -156,8 +156,8 @@ public:
 	 * @param t The trajectory that the light should follow. In other words, how does the light change over time?
 	 * @return A LightAction instance that encapsulates the relevant trajectory and state.
 	 */
-	LightAction(DroneId did, LightTrajectory::Ptr t) :
-			Action(did, ActionTypes::Light), path(t)
+	LightAction(DroneId did, LightTrajectory::Ptr t, LightController::LightIndices light_index) :
+			Action(did, ActionTypes::Light), path(t), index(light_index)
 			{ isCalculated = true; }
 	/**
 	 * Deletes its path on deletion. This object owns the trajectory.

@@ -507,7 +507,7 @@ LightAction* parse_light_action(double start, double end, unsigned long droneid,
 		R_loc 	= 4,
 		G_loc 	= 5,
 		B_loc 	= 6,
-		i_loc 	= 7,
+		i_loc 	= 7
 	};
 
 	if(split_line.size() < traj_loc + 1) {
@@ -517,7 +517,7 @@ LightAction* parse_light_action(double start, double end, unsigned long droneid,
 	unsigned int r = std::atof(split_line[R_loc].c_str());
 	unsigned int g = std::atof(split_line[G_loc].c_str());
 	unsigned int b = std::atof(split_line[B_loc].c_str());
-	unsigned int i = std::atof(split_line[i_loc].c_str());
+	float i = std::atof(split_line[i_loc].c_str());
 
 	Color col = Color(r,g,b);
 
@@ -527,7 +527,37 @@ LightAction* parse_light_action(double start, double end, unsigned long droneid,
 }
 
 LightAction* parse_fade_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
-	return nullptr;
+	enum indices : unsigned {
+		sR_loc 	= 4,
+		sG_loc 	= 5,
+		sB_loc 	= 6,
+		si_loc 	= 7,
+		eR_loc 	= 12,
+		eG_loc 	= 13,
+		eB_loc 	= 14,
+		ei_loc 	= 15
+	};
+
+	if(split_line.size() < traj_loc + 1) {
+		throw std::runtime_error("Not enough fields in the fade action");
+	}
+
+	unsigned int sr = std::atof(split_line[sR_loc].c_str());
+	unsigned int sg = std::atof(split_line[sG_loc].c_str());
+	unsigned int sb = std::atof(split_line[sB_loc].c_str());
+	float si = std::atof(split_line[si_loc].c_str());
+
+	unsigned int er = std::atof(split_line[eR_loc].c_str());
+	unsigned int eg = std::atof(split_line[eG_loc].c_str());
+	unsigned int eb = std::atof(split_line[eB_loc].c_str());
+	float ei = std::atof(split_line[ei_loc].c_str());
+
+	Color sCol = Color(sr,sg,sb);
+	Color eCol = Color(er,eg,eb);
+
+	LightTrajectory::Ptr p = make_shared<LightTrajectory>(si, sCol, start, ei, eCol, end);
+	
+	return new LightAction(droneid, p);
 }
 
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){

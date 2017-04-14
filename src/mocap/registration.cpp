@@ -1,3 +1,5 @@
+#include <tansa/mocap.h>
+
 #include <vector>
 #include <iostream>
 #include <cfloat>
@@ -63,12 +65,6 @@ void correspondence_arrange(const vector<Vector3d> &bs, const vector<unsigned> &
 	for(unsigned i = 0; i < c.size(); i++) {
 		(*out)[i] = bs[c[i]];
 	}
-}
-
-
-void hungarian_algorithm(const MatrixXd &w, vector<int> *c) {
-
-
 }
 
 
@@ -173,8 +169,8 @@ bool correspondence_solve_general(const vector<Vector3d> &as, const vector<Vecto
 			}
 		}
 
-//		hungarian_algorithm(h, c);
-
+		//AssignmentSolver as;
+		//as.solve(h, c);
 	}
 
 

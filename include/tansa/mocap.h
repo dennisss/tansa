@@ -141,7 +141,7 @@ private:
  * @param bs second set of points
  * @param c the correspondences. such that bs[c[i]] = as[i]
  */
-void correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c);
+bool correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c);
 
 /**
  * Rearranges the 'bs' set from correspondence_solve_ideal to match the ordering of the points in 'as'

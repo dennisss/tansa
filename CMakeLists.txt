@@ -68,6 +68,8 @@ add_library(
 	src/control/lightcontrol.cpp
 	src/model/feasibility.cpp
 	src/control/admittance.cpp
+	src/algorithm/assignment_solver.cpp
+
 
 	src/manager/preview.cpp
 
@@ -132,6 +134,7 @@ add_executable(
 	test/jocs/jocsParser.cpp
 	test/mocap/registration.cpp
 	test/mocap/rigid_body_tracker.cpp
+	test/algorithm/assignment_solver.cpp
 )
 set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
 target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)

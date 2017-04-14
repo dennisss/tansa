@@ -502,11 +502,39 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 	);
 }
 
-LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+	enum indices : unsigned {
+		R_loc 	= 4,
+		G_loc 	= 5,
+		B_loc 	= 6,
+		i_loc 	= 7,
+	};
+
+	if(split_line.size() < traj_loc + 1) {
+		throw std::runtime_error("Not enough fields in the light action");
+	}
+
+	unsigned int r = std::atof(split_line[R_loc].c_str());
+	unsigned int g = std::atof(split_line[G_loc].c_str());
+	unsigned int b = std::atof(split_line[B_loc].c_str());
+	unsigned int i = std::atof(split_line[i_loc].c_str());
+
+	Color col = Color(r,g,b);
+
+	LightTrajectory::Ptr p = make_shared<LightTrajectory>(i, col, start, i, col, end);
+
+	return new LightAction(droneid, p);
+}
+
+LightAction* parse_fade_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	return nullptr;
 }
 
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+	return nullptr;
+}
+
+LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	return nullptr;
 }
 

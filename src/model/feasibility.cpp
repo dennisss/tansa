@@ -31,7 +31,7 @@ bool FeasibilityChecker::check(Routine &r) {
 		for (unsigned i = 0; i < actions[j].size(); i++) {
 			Action *a = actions[j][i];
 
-			if(a->is_light_action()) {
+			if(a->IsLightAction()) {
 				continue;
 			}
 

@@ -19,7 +19,7 @@ int LightTrajectory::evaluate(double t) {
 
 	// Calculate the intensity percent from start time to passed in time
 	double percentTotalChange = requestedTimeChange / totalTimeChange;
-	double intensity = percentTotalChange * startIntensity + (1.0f - percentTotalChange)*endIntensity;
+	double intensity = percentTotalChange * endIntensity + (1.0f - percentTotalChange)*startIntensity;
 	Color out = startColor.interpolate_from_this(endColor, percentTotalChange);
 
 	// Return the whole intensity at this time

@@ -483,9 +483,9 @@ void Vehicle::set_lighting(const vector<int> &channels) {
 	// TODO: Instead, save all channels once UI is able to view all of them
 	int color = channels[0];
 	lightState.resize(3);
-	lightState[0] = ((color >> 16) & 0xff) / 0xff;
-	lightState[1] = ((color >> 8) & 0xff) / 0xff;
-	lightState[2] = ((color >> 0) & 0xff) / 0xff;
+	lightState[0] = ((color >> 16) & 0xff) / (float)0xff;
+	lightState[1] = ((color >> 8) & 0xff) / (float)0xff;
+	lightState[2] = ((color >> 0) & 0xff) / (float)0xff;
 
 	send_message(&msg);
 }

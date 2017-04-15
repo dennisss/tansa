@@ -65,10 +65,7 @@ public:
 	 */
 	inline ActionTypes GetActionType() { return type; }
 
-	inline bool is_light_action() {
-		return type == ActionTypes::Strobe || type == ActionTypes::Light;
-	}
-
+	inline bool IsLightAction() { return isLightAction; }
 
 	/**
 	 * Line number, if applicable, (or -1) from the original file.
@@ -79,6 +76,7 @@ protected:
 	DroneId droneId;
 	ActionTypes type;
 	bool isCalculated = false;
+	bool isLightAction = false;
 };
 /**
  * Represents an action to be replaced by another action (usually for transitions)
@@ -142,6 +140,7 @@ public:
 	 * @return The end point of the trajectory obtained by evaluating the trajectory at its end time.
 	 */
 	inline Point GetEndPoint() const { return path->evaluate(path->endTime()).position; }
+	virtual bool IsLightAction() { return false; }
 
 private:
 	Trajectory::Ptr path;
@@ -159,8 +158,10 @@ public:
 	 * @return A LightAction instance that encapsulates the relevant trajectory and state.
 	 */
 	LightAction(DroneId did, LightTrajectory::Ptr t, LightController::LightIndices light_index) :
-			Action(did, ActionTypes::Light), path(t), index(light_index)
-			{ isCalculated = true; }
+			Action(did, ActionTypes::Light), path(t), index(light_index) {
+		isCalculated = true;
+		isLightAction = true;
+	}
 	/**
 	 * Deletes its path on deletion. This object owns the trajectory.
 	 * TODO: Make this an owned pointer.
@@ -197,6 +198,7 @@ public:
 	 * @return Which light this action is referring to.
 	 */
 	inline LightController::LightIndices GetLightIndex() { return index; }
+	virtual bool IsLightAction() { return true; }
 
 private:
 	LightController::LightIndices index;

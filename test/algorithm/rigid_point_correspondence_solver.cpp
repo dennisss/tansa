@@ -2,11 +2,12 @@
 
 #define RANDFLOAT ((2.0 * static_cast<double>(rand()) / static_cast <double>(RAND_MAX)) - 1.0)
 
-#include <tansa/mocap.h>
+#include <tansa/algorithm.h>
 
 using namespace tansa;
+using namespace std;
 
-TEST(MocapRegistrationTest, CorrespondenceSolving) {
+TEST(Algorithms, RigidPointCorrespondenceSolverIdeal) {
 
 	vector<Vector3d> as;
 	for(int i = 0; i < 5; i++) {
@@ -32,14 +33,16 @@ TEST(MocapRegistrationTest, CorrespondenceSolving) {
 	}
 
 
+	RigidPointCorrespondenceSolver s;
+
 	// Determine correspondence
-	vector<unsigned> order_out;
-	correspondence_solve_ideal(as, bs, &order_out);
+	vector<int> order_out;
+	s.solve(as, bs, &order_out, true);
 	// TODO: Assert
 
 	// Unshuffle according to order
 	vector<Vector3d> bs_out;
-	correspondence_arrange(bs, order_out, &bs_out);
+	s.arrange(bs, order_out, &bs_out);
 
 	// Find the transform
 	Matrix3d R_out; Vector3d t_out;

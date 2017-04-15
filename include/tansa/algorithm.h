@@ -8,12 +8,38 @@
 
 namespace tansa {
 
+/**
+ * Computes the center point of a set of points
+ */
+inline Vector3d centroid(const std::vector<Vector3d> &ps) {
+	Vector3d c = Vector3d::Zero();
+	for(unsigned i = 0; i < ps.size(); i++) {
+		c = c + ps[i];
+	}
+
+	return c / ps.size();
+}
+
+
+/**
+ * Pretty standard SVD based recovery of labeled point set rigid transformation recovery
+ * Computes bs[i] = R as[i] + t
+ */
+void rigid_transform_solve(const std::vector<Vector3d> &as, const std::vector<Vector3d> &bs, Matrix3d &R, Vector3d &t, const std::vector<double> &w = {});
+
 
 /**
  * Solves the optimal assignment problem. Internally this uses the Munkres (aka Hungarian) Algorithm
  */
 class AssignmentSolver {
 public:
+
+	/**
+	 * Create a new solver instance
+	 *
+	 * @param epsilon the largest floating point value that should be considered zero
+	 */
+	AssignmentSolver(double epsilon = 1e-5) { this->epsilon = epsilon; }
 
 	/**
 	 * Does the solving
@@ -42,6 +68,7 @@ private:
 	void reset_cover();
 	void reset_primes();
 
+	double epsilon;
 
 	unsigned step;
 	MatrixXd W; /**< The square working matrix */
@@ -53,6 +80,45 @@ private:
 
 
 };
+
+
+/**
+ * Solves the correspondence problem for sets of points subject to rigid motion (not scaling or skewing)
+ */
+class RigidPointCorrespondenceSolver {
+public:
+
+	/**
+	 * Given two sets of unlabeled points, this will compute the transform that best matches them,
+	 * So: b_j = M * a_i
+	 *
+	 * Based on approach in 'Determining Correspondences and Rigid Motion of 3-D Point Sets with Missing Data' by Wang et al.
+	 * This ideal version assumes that there are no missing or outlier points
+	 *
+	 * @param as first set of points
+	 * @param bs second set of points
+	 * @param c the correspondences. such that bs[c[i]] = as[i]. In these version, all the indices should be >= 0
+	 * @param ideal whether or not to use ideal mode
+	 */
+	bool solve(const std::vector<Vector3d> &as, const std::vector<Vector3d> &bs, std::vector<int> *c, bool ideal = false);
+
+	/**
+	 * Rearranges the 'bs' set from correspondence_solve_ideal to match the ordering of the points in 'as'
+	 */
+	void arrange(const std::vector<Vector3d> &bs, const std::vector<int> &c, std::vector<Vector3d> *out);
+
+
+
+private:
+
+	void decompose_eigenstructure(const MatrixXd &M, Vector3d *d, MatrixXd *Q);
+
+	// These solve a single iteration of the algorithm given feature matrices and return the cost of the found correspondes
+	double solve_ideal(const MatrixXd &Qa, const MatrixXd &Qb, std::vector<int> *c);
+	double solve_general(const Vector3d &dA, const MatrixXd &Qa, const Vector3d &dB, const MatrixXd &Qb, std::vector<int> *c);
+
+};
+
 
 
 }

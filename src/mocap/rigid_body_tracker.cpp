@@ -1,4 +1,5 @@
-#include "tansa/mocap.h"
+#include <tansa/mocap.h>
+#include <tansa/algorithm.h>
 #include "rigid_body_tracker.h"
 
 #include <iostream>
@@ -478,8 +479,10 @@ void RigidBodyTracker::update_registration(const Time &t) {
 		}
 
 
-		vector<unsigned> c;
-		correspondence_solve_ideal(model, pts, &c); // TODO: Use outlier rejecting form to only select some points from the cloud
+		RigidPointCorrespondenceSolver solver;
+
+		vector<int> c;
+		solver.solve(model, pts, &c, false); // TODO: Use outlier rejecting form to only select some points from the cloud
 		if(c[0] != 0) {
 			cout << "Mismatch with active beacon" << endl;
 			// In this case fail
@@ -487,7 +490,7 @@ void RigidBodyTracker::update_registration(const Time &t) {
 
 		// Rearrange points
 		vector<Vector3d> corresponding;
-		correspondence_arrange(pts, c, &corresponding);
+		solver.arrange(pts, c, &corresponding);
 
 		// Find initial pose
 		Matrix3d R; Vector3d trans;

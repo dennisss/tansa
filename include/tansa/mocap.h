@@ -131,31 +131,7 @@ private:
 
 
 /**
- * Given two sets of unlabeled points, this will compute the transform that best matches them,
- * So: b_j = M * a_i
- *
- * Based on approach in 'Determining Correspondences and Rigid Motion of 3-D Point Sets with Missing Data' by Wang et al.
- * This ideal version assumes that there are no missing or outlier points
- *
- * @param as first set of points
- * @param bs second set of points
- * @param c the correspondences. such that bs[c[i]] = as[i]
- */
-bool correspondence_solve_ideal(const vector<Vector3d> &as, const vector<Vector3d> &bs, vector<unsigned> *c);
-
-/**
- * Rearranges the 'bs' set from correspondence_solve_ideal to match the ordering of the points in 'as'
- */
-void correspondence_arrange(const vector<Vector3d> &bs, const vector<unsigned> &c, vector<Vector3d> *out);
-
-/**
- * Pretty standard SVD based recovery of labeled point set rigid transformation recovery
- * Computes bs[i] = R as[i] + t
- */
-void rigid_transform_solve(const vector<Vector3d> &as, const vector<Vector3d> &bs, Matrix3d &R, Vector3d &t, const vector<double> &w = {});
-
-/**
- *
+ * An exact formulation of ICP for matching rigid body points forward. This does not use any ANN library as this will usually be using only a few points per body
  *
  * @return whether or not it suceeded reasonably
  */

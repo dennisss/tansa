@@ -42,6 +42,9 @@ add_library(
 	src/core/vehicle_params.cpp
 	src/core/time.cpp
 	src/core/messaging.cpp
+	src/algorithm/assignment_solver.cpp
+	src/algorithm/rigid_transform.cpp
+	src/algorithm/rigid_point_correspondence_solver.cpp
 	src/server/osc.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
@@ -54,7 +57,6 @@ add_library(
 	src/trajectory/spiral.cpp
 	#src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
-	src/mocap/registration.cpp
 	src/mocap/optitrack/natnet.cpp
 	src/mocap/optitrack/natnet_client.cpp
 	src/mocap/rigid_body_tracker.cpp
@@ -68,8 +70,6 @@ add_library(
 	src/control/lightcontrol.cpp
 	src/model/feasibility.cpp
 	src/control/admittance.cpp
-	src/algorithm/assignment_solver.cpp
-
 
 	src/manager/preview.cpp
 
@@ -131,10 +131,10 @@ add_executable(
 
 	test/main.cpp
 	test/core/time.cpp
-	test/jocs/jocsParser.cpp
-	test/mocap/registration.cpp
-	test/mocap/rigid_body_tracker.cpp
 	test/algorithm/assignment_solver.cpp
+	test/algorithm/rigid_point_correspondence_solver.cpp
+	test/jocs/jocsParser.cpp
+	test/mocap/rigid_body_tracker.cpp
 )
 set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
 target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)

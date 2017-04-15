@@ -14,8 +14,9 @@ using namespace std;
 namespace tansa {
 
 
-#define IS_ZERO(i, j) (fabs(W(i, j)) < 1e-5)
+#define IS_ZERO(i, j) (fabs(W(i, j)) < epsilon)
 #define COVERED(i, j) (rowLines[i] || colLines[j])
+#define MAX(a, b) ((a) > (b)? (a) : (b))
 
 #define STAR 1
 #define PRIME 2
@@ -23,7 +24,10 @@ namespace tansa {
 
 double AssignmentSolver::solve(const MatrixXd &w, std::vector<int> *c) {
 
-	W = w;
+	// Padding with zeros to be a square matrix with the same optimal assignments
+	unsigned N = MAX(w.rows(), w.cols());
+	W = MatrixXd::Zero(N, N);
+	W.block(0, 0, w.rows(), w.cols()) = w;
 
 	M = MatrixXi::Zero(W.rows(), W.cols());
 

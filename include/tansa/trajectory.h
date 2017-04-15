@@ -405,8 +405,8 @@ struct Color {
 	Color interpolate_from_this(Color to_this, double t) {
 		float t1 = (1.0f-t);
 		float r_right = t1 * r;
-		float b_right = t1 * g;
-		float g_right = t1 * b;
+		float g_right = t1 * g;
+		float b_right = t1 * b;
 		float r_left = t*to_this.r;
 		float g_left = t*to_this.g;
 		float b_left = t*to_this.b;

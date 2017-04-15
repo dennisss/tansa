@@ -254,5 +254,7 @@ void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::v
  * @return The tansa::point representation parse from a string.
  */
 Point parse_point(std::string point);
+
+LightController::LightIndices parse_light_index(const std::string& in);
 }
 #endif

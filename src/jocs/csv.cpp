@@ -520,16 +520,18 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 
 LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	enum indices : unsigned {
-		R_loc 	= 1,
-		G_loc 	= 3,
-		B_loc 	= 5,
-		i_loc 	= 7
+		index_loc = 1,
+		R_loc 	= 3,
+		G_loc 	= 5,
+		B_loc 	= 7,
+		i_loc 	= 9
 	};
 
 	if(split_line.size() < i_loc + 1) {
 		throw std::runtime_error("Not enough fields in the light action");
 	}
 
+	auto index = parse_light_index(split_line[index_loc]);
 	int r = std::atoi(split_line[R_loc].c_str());
 	int g = std::atoi(split_line[G_loc].c_str());
 	int b = std::atoi(split_line[B_loc].c_str());
@@ -539,25 +541,26 @@ LightAction* parse_light_action(double start, double end, unsigned long droneid,
 
 	LightTrajectory::Ptr p = make_shared<LightTrajectory>(i, col, start, i, col, end);
 
-	return new LightAction(droneid, p, LightController::LightIndices::LEFT);
+	return new LightAction(droneid, p, index);
 }
 
 LightAction* parse_fade_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	enum indices : unsigned {
-		sR_loc 	= 1,
-		sG_loc 	= 3,
-		sB_loc 	= 5,
-		si_loc 	= 7,
-		eR_loc 	= 9,
-		eG_loc 	= 11,
-		eB_loc 	= 13,
-		ei_loc 	= 15
+		index_loc = 1,
+		sR_loc 	= 3,
+		sG_loc 	= 5,
+		sB_loc 	= 7,
+		si_loc 	= 9,
+		eR_loc 	= 11,
+		eG_loc 	= 13,
+		eB_loc 	= 15,
+		ei_loc 	= 17
 	};
 
 	if(split_line.size() < ei_loc + 1) {
 		throw std::runtime_error("Not enough fields in the fade action");
 	}
-
+	auto index = parse_light_index(split_line[index_loc]);
 	int sr = std::atoi(split_line[sR_loc].c_str());
 	int sg = std::atoi(split_line[sG_loc].c_str());
 	int sb = std::atoi(split_line[sB_loc].c_str());
@@ -573,26 +576,27 @@ LightAction* parse_fade_action(double start, double end, unsigned long droneid, 
 
 	LightTrajectory::Ptr p = make_shared<LightTrajectory>(si, sCol, start, ei, eCol, end);
 	
-	return new LightAction(droneid, p, LightController::LightIndices::LEFT);
+	return new LightAction(droneid, p, index);
 }
 
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	enum indices : unsigned {
-		sR_loc 	= 1,
-		sG_loc 	= 3,
-		sB_loc 	= 5,
-		si_loc 	= 7,
-		eR_loc 	= 9,
-		eG_loc 	= 11,
-		eB_loc 	= 13,
-		ei_loc 	= 15,
-		cps_loc = 17,
+		index_loc = 1,
+		sR_loc 	= 3,
+		sG_loc 	= 5,
+		sB_loc 	= 7,
+		si_loc 	= 9,
+		eR_loc 	= 11,
+		eG_loc 	= 13,
+		eB_loc 	= 15,
+		ei_loc 	= 17,
+		cps_loc = 19,
 	};
 
 	if(split_line.size() < cps_loc + 1) {
 		throw std::runtime_error("Not enough fields in the fade action");
 	}
-
+	auto index = parse_light_index(split_line[index_loc]);
 	int sr = std::atoi(split_line[sR_loc].c_str());
 	int sg = std::atoi(split_line[sG_loc].c_str());
 	int sb = std::atoi(split_line[sB_loc].c_str());
@@ -609,27 +613,28 @@ LightAction* parse_strobe_action(double start, double end, unsigned long droneid
 
 	LightTrajectory::Ptr p = make_shared<StrobeTrajectory>(si, sCol, start, ei, eCol, end, cps, cps);
 
-	return new LightAction(droneid, p, LightController::LightIndices::LEFT);
+	return new LightAction(droneid, p, index);
 }
 
 LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	enum indices : unsigned {
-		sR_loc 	= 1,
-		sG_loc 	= 3,
-		sB_loc 	= 5,
-		si_loc 	= 7,
-		cpss_loc = 9,
-		eR_loc 	= 11,
-		eG_loc 	= 13,
-		eB_loc 	= 15,
-		ei_loc 	= 17,
-		cpse_loc = 19,
+		index_loc = 1,
+		sR_loc 	= 3,
+		sG_loc 	= 5,
+		sB_loc 	= 7,
+		si_loc 	= 9,
+		cpss_loc = 11,
+		eR_loc 	= 13,
+		eG_loc 	= 15,
+		eB_loc 	= 17,
+		ei_loc 	= 19,
+		cpse_loc = 21,
 	};
 
 	if(split_line.size() < cpse_loc + 1) {
 		throw std::runtime_error("Not enough fields in the fade action");
 	}
-
+	auto index = parse_light_index(split_line[index_loc]);
 	int sr = std::atoi(split_line[sR_loc].c_str());
 	int sg = std::atoi(split_line[sG_loc].c_str());
 	int sb = std::atoi(split_line[sB_loc].c_str());
@@ -647,7 +652,7 @@ LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long
 
 	LightTrajectory::Ptr p = make_shared<StrobeTrajectory>(si, sCol, start, ei, eCol, end, cpss, cpse);
 
-	return new LightAction(droneid, p, LightController::LightIndices::LEFT);
+	return new LightAction(droneid, p, index);
 }
 
 void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes ){
@@ -715,6 +720,16 @@ Point parse_point(std::string point) {
 	ret.y() 			= std::atof(split_point[1].c_str());
 	ret.z() 			= std::atof(split_point[2].c_str());
 	return ret;
+}
+
+LightController::LightIndices parse_light_index(const std::string& in){
+	if(in == "Left")
+		return LightController::LightIndices::LEFT;
+	if(in == "Right")
+		return LightController::LightIndices::RIGHT;
+	if(in == "Internal")
+		return LightController::LightIndices::INTERNAL;
+	throw std::runtime_error("Failed to parse light index: " + in);
 }
 
 }

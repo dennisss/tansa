@@ -618,11 +618,11 @@ LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long
 		sG_loc 	= 3,
 		sB_loc 	= 5,
 		si_loc 	= 7,
-		eR_loc 	= 9,
-		eG_loc 	= 11,
-		eB_loc 	= 13,
-		ei_loc 	= 15,
-		cpss_loc = 17,
+		cpss_loc = 9,
+		eR_loc 	= 11,
+		eG_loc 	= 13,
+		eB_loc 	= 15,
+		ei_loc 	= 17,
 		cpse_loc = 19,
 	};
 

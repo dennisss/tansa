@@ -413,6 +413,28 @@ struct Color {
 		
 		return {r_right + r_left, g_right + g_left, b_right + b_left};
 	}
+	static Color from_8bit_colors(int ri, int gi, int bi){
+		float r = ri/255.0f;
+		float g = gi/255.0f;
+		float b = bi/255.0f;
+		bool invalid_color = false;
+		if(r > 1.0){
+			r = 1.0;
+			invalid_color = true;
+		}
+		if(g > 1.0){
+			g = 1.0;
+			invalid_color = true;
+		}
+		if(b > 1.0){
+			b = 1.0;
+			invalid_color = true;
+		}
+		if(invalid_color){
+			printf("Check color values, Color channel greater than 255 detected\n");
+		}
+		return {r,g,b};
+	}
 	float r;
 	float g; 
 	float b;

@@ -31,6 +31,11 @@ namespace tansa {
 			posctls[i] = new PositionController(vehicles[i]);
 		}
 
+		lightCounters.resize(n);
+		for(auto &light : lightCounters) {
+			light.resize(LightController::NUM_LIGHTS, 0);
+		}
+
 		lightctls.resize(n);
 		for(int i = 0; i < n; i++) {
 			lightctls[i] = new LightController(vehicles[i]);
@@ -54,9 +59,7 @@ void JocsPlayer::reset() {
 
 	lightCounters.resize(n);
 	for(auto &light : lightCounters) {
-		for(auto& counter : light){
-			counter = 0;
-		}
+		light.resize(LightController::NUM_LIGHTS, 0);
 	}
 
 	pauseIndices.resize(n);
@@ -303,12 +306,15 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					posctls[i]->control(t);
 				}
 				for(int j = 0; j < LightController::NUM_LIGHTS; j++){
+					//Very important. Must handle the case where you don't specify anything for some of the lights
+					//Otherwise it WILL CRASH with an index out of bounds here.
+					if(j >= lightActions[chorI].size())
+						break;
 					int counter = lightCounters[i][j];
 					const std::vector<LightAction*> local_action_array = lightActions[chorI][j];
 					LightAction* local_action = local_action_array[counter];
 					if (counter < local_action_array.size()) {
-						auto traj = static_cast<LightAction*>(local_action)->GetPath();
-
+						auto traj = local_action->GetPath();
 						if (t >= local_action->GetStartTime()) {
 							lightctls[i]->track(traj, (LightController::LightIndices)j);
 							lightctls[i]->control(t);

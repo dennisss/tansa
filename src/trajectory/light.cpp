@@ -3,11 +3,11 @@
 namespace tansa {
 
 int LightTrajectory::rgbiToInt(Color in, float i){
-	int r_out = (int)(i*in.r);
-	int g_out = (int)(i*in.g);
-	int b_out = (int)(i*in.b);
+	int r_out = (int)(i*in.r*255);
+	int g_out = (int)(i*in.g*255);
+	int b_out = (int)(i*in.b*255);
 
-	return (r_out | g_out << 8 | b_out << 16);
+	return ((b_out )| (g_out << 8) | (r_out << 16));
 }
 
 
@@ -23,7 +23,8 @@ int LightTrajectory::evaluate(double t) {
 	Color out = startColor.interpolate_from_this(endColor, percentTotalChange);
 
 	// Return the whole intensity at this time
-	return rgbiToInt(out, intensity);
+	int ret = rgbiToInt(out, intensity);
+	return ret;
 }
 
 }

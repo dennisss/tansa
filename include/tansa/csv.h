@@ -211,7 +211,17 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
  * @param split_line Split CSV line from parse_csv_line
  * @return The parsed LightAction for the given drone.
  */
-LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+/**
+ *
+ * @param type Type of action
+ * @param start Start time in seconds
+ * @param end End time in seconds
+ * @param droneid Numeric id of the drone.
+ * @param split_line Split CSV line from parse_csv_line
+ * @return The parsed StrobeAction for the given drone.
+ */
+LightAction* parse_fade_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
 /**
  *
  * @param type Type of action
@@ -222,6 +232,16 @@ LightAction* parse_simple_light_action(double start, double end, unsigned long d
  * @return The parsed StrobeAction for the given drone.
  */
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
+/**
+ *
+ * @param type Type of action
+ * @param start Start time in seconds
+ * @param end End time in seconds
+ * @param droneid Numeric id of the drone.
+ * @param split_line Split CSV line from parse_csv_line
+ * @return The parsed StrobeAction for the given drone.
+ */
+LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line);
 
 /**
  * Replaces all empty actions with transitions

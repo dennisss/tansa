@@ -7,6 +7,7 @@
 #include <boost/algorithm/string.hpp>
 namespace tansa {
 
+
 template<typename Out>
 void split(const std::string &s, char delim, Out result) {
 	std::stringstream ss;
@@ -95,6 +96,9 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		ret->actions.resize(num_drones);
 		ret->lightActions.resize(num_drones);
+		for(int i = 0; i < num_drones; i++) {
+			ret->lightActions[i].reserve(LightController::NUM_LIGHTS);
+		}
 		currentLine++;
 
 		getline(csv, line); //contains homes
@@ -108,7 +112,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 
 		while (getline(csv, line)) { //Iterate line by line
 			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
-
+			for(int i = 0; i < split_line.size(); i++)
+				boost::erase_all(split_line[i], "\r");
 			//Parse breakpoints
 			if (!split_line[csv_positions::BreakpointPos].empty()) {
 				ret->breakpoints.push_back(
@@ -132,6 +137,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 							std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos,
 													 split_line.end()));
 					auto light_index = light_action->GetLightIndex();
+					ret->lightActions[drones[j]].resize(1);
 					ret->lightActions[drones[j]][light_index].push_back(light_action);
 				}
 			} else {
@@ -225,10 +231,16 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 	LightAction* ret = nullptr;
 	switch (type){
 		case ActionTypes::Light:
-			ret = parse_simple_light_action(start, end, droneid, split_line);
+			ret = parse_light_action(start, end, droneid, split_line);
 			break;
 		case ActionTypes::Strobe:
 			ret = parse_strobe_action(start, end, droneid, split_line);
+			break;
+		case ActionTypes::DynamicStrobe:
+			ret = parse_dynamic_strobe_action(start, end, droneid, split_line);
+			break;
+		case ActionTypes::Fade:
+			ret = parse_fade_action(start, end, droneid, split_line);
 			break;
 		default:
 			ret = nullptr;
@@ -504,26 +516,26 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 
 LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
 	enum indices : unsigned {
-		R_loc 	= 4,
-		G_loc 	= 5,
-		B_loc 	= 6,
+		R_loc 	= 1,
+		G_loc 	= 3,
+		B_loc 	= 5,
 		i_loc 	= 7
 	};
 
-	if(split_line.size() < traj_loc + 1) {
+	if(split_line.size() < i_loc + 1) {
 		throw std::runtime_error("Not enough fields in the light action");
 	}
 
-	unsigned int r = std::atof(split_line[R_loc].c_str());
-	unsigned int g = std::atof(split_line[G_loc].c_str());
-	unsigned int b = std::atof(split_line[B_loc].c_str());
-	float i = std::atof(split_line[i_loc].c_str());
+	int r = std::atoi(split_line[R_loc].c_str());
+	int g = std::atoi(split_line[G_loc].c_str());
+	int b = std::atoi(split_line[B_loc].c_str());
+	double i = std::atof(split_line[i_loc].c_str());
 
-	Color col = Color(r,g,b);
+	Color col = Color::from_8bit_colors(r,g,b);
 
 	LightTrajectory::Ptr p = make_shared<LightTrajectory>(i, col, start, i, col, end);
 
-	return new LightAction(droneid, p);
+	return new LightAction(droneid, p, LightController::LightIndices::LEFT);
 }
 
 LightAction* parse_fade_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
@@ -538,7 +550,7 @@ LightAction* parse_fade_action(double start, double end, unsigned long droneid, 
 		ei_loc 	= 15
 	};
 
-	if(split_line.size() < traj_loc + 1) {
+	if(split_line.size() < ei_loc + 1) {
 		throw std::runtime_error("Not enough fields in the fade action");
 	}
 
@@ -552,12 +564,12 @@ LightAction* parse_fade_action(double start, double end, unsigned long droneid, 
 	unsigned int eb = std::atof(split_line[eB_loc].c_str());
 	float ei = std::atof(split_line[ei_loc].c_str());
 
-	Color sCol = Color(sr,sg,sb);
-	Color eCol = Color(er,eg,eb);
+	Color sCol = Color::from_8bit_colors(sr,sg,sb);
+	Color eCol = Color::from_8bit_colors(er,eg,eb);
 
 	LightTrajectory::Ptr p = make_shared<LightTrajectory>(si, sCol, start, ei, eCol, end);
 	
-	return new LightAction(droneid, p);
+	return new LightAction(droneid, p, LightController::LightIndices::LEFT);
 }
 
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){

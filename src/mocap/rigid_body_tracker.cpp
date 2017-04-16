@@ -14,7 +14,8 @@ using namespace std;
 namespace tansa {
 
 #define MAX_DEVIATION 0.02 // By default cap deviation at 20mm
-#define TIMEOUT 0.2
+#define ICP_MAX_ERROR 0.02
+#define TIMEOUT 0.2 // Time in seconds after which to abandon a tracked entity
 
 // TODO: If tracking is lost for half a second, enter landing mode
 // If we see that two rigid bodies have collided, kill
@@ -62,6 +63,7 @@ int closest_point(const vector<Vector3d> &pts, Vector3d query, double *dist = NU
 	return mini;
 }
 
+// This should work by exactly grabbing points around a velocity weighted gaussian centroid around the current estimate. Although, due to the fact that we forward estimate the points based on the current estiamte, this is less important
 // TODO: Use an NN library / kD trees
 // TODO: Do not immediately modidy the output varaibles
 bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3d> &pts, Matrix3d *R, Vector3d *t, vector<int> *indices) {
@@ -100,6 +102,7 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 		map<int, int> matches;
 		matches.clear();
 
+		// TODO: Use the assignment problem solver
 		int it2;
 		for(it2 = 0; it2 < query.size(); it2++) {
 
@@ -116,6 +119,10 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 				// Find a match for this point
 				for(int j = 0; j < pts.size(); j++) {
 					double d = (pts[j] - query_tf[i]).norm();
+
+					// Reject right away any points very far away from the
+					if(d > 0.4)
+						continue;
 
 					// Reject if not better than our current option
 					if(!(bestJ == -1 || d < bestDist)) {
@@ -152,7 +159,8 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 		}
 
 		if(it2 == query.size()) {
-			cout << "Terminated early" << endl;
+			cout << "ICP: Terminated early" << endl;
+			return false;
 		}
 
 
@@ -166,6 +174,7 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 			// Outlier rejection
 			// TODO: Use an adaptive threshold
 			if(idx == -1 || (pts[idx] - query_tf[i]).norm() > 0.4) {
+				cout << "ICP: Reject point!" << endl;
 				pts_w[i] = 0;
 			}
 			else {
@@ -177,8 +186,8 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 		}
 
 		if(n < 3) {
-			cout << "Not enough ICP correspondences " << pts.size() << endl;
-
+			cout << "ICP: Not enough correspondences. Only have: " << n << endl;
+			/*
 			for(int i = 0; i < indices->size(); i++) {
 				cout << (*indices)[i] << endl;
 
@@ -196,7 +205,7 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 			cout << "init" << endl;
 			cout << Rinit << endl;
 			cout << tini << endl;
-
+			*/
 			return false;
 		}
 
@@ -222,9 +231,8 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 	// This error value can be even smaller as we can assume that they are rigidly attached
 	// (use some value based on the standard deviation of individual marker deviations)
 		// we should be able to compute the likelihood of the two sets to be matching
-	if(e > 0.1) {
-		cout << "E: " << e << endl;
-
+	if(e > ICP_MAX_ERROR) {
+		cout << "ICP: Error too big: " << e << endl;
 
 		for(int i = 0; i < indices->size(); i++) {
 			cout << (*indices)[i] << endl;
@@ -251,9 +259,9 @@ bool iterative_closest_point(const vector<Vector3d> &query, const vector<Vector3
 }
 
 
-RigidBodyTracker::RigidBodyTracker() {
+RigidBodyTracker::RigidBodyTracker(const RigidBodyTrackerSettings &s) {
 
-	json j = DataObject::LoadFile("config/models/x260.js");
+	json j = DataObject::LoadFile("config/models/x260/index.js");
 
 	model.resize(0);
 	for(int i = 0; i < j["markers"].size(); i++) {
@@ -269,6 +277,7 @@ void RigidBodyTracker::track(Vehicle *v) {
 
 // TODO: Compute the standard deviation somewhere to know the whole system error
 
+// This will internally propagate forward the
 void RigidBodyTracker::update(const vector<Vector3d> &cloud, const Time &t) {
 
 	vector<Vector3d> pts = cloud;
@@ -296,7 +305,6 @@ void RigidBodyTracker::update(const vector<Vector3d> &cloud, const Time &t) {
 			i--;
 			continue;
 		}
-
 
 		Vector3d p_next = b.position + dt * b.velocity;
 		Quaterniond o_next = b.orientation; // TODO: Integrate this too
@@ -334,7 +342,7 @@ void RigidBodyTracker::update(const vector<Vector3d> &cloud, const Time &t) {
 						pts.erase(pts.begin() + indices[j]);
 				}
 
-				cout << "Rigid Body Track: " << p_next.transpose() << " : " << b.nframes << endl;
+				//cout << "Rigid Body Track: " << p_next.transpose() << " : " << b.nframes << endl;
 
 				seen = true;
 
@@ -343,9 +351,12 @@ void RigidBodyTracker::update(const vector<Vector3d> &cloud, const Time &t) {
 		}
 
 
-		b.velocity = (p_next - b.position) / dt;
+		Vector3d v_next = (p_next - b.position) / dt;
+		double alpha = 0.8;
+		b.velocity = alpha*b.velocity + (1.0 - alpha)*v_next;
 		b.position = p_next;
 		b.orientation = o_next;
+		b.visible = seen;
 
 		if(seen) {
 			b.lastSeen = t;
@@ -372,17 +383,27 @@ void RigidBodyTracker::update(const vector<Vector3d> &cloud, const Time &t) {
 		b.markers.push_back(Vector3d(0, 0, 0));
 		b.firstSeen = t;
 		b.lastSeen = t;
+		b.visible = true;
 		bodies.push_back(b);
 	}
 
 
-	this->update_registration(t);
+	this->update_active_registration(t);
 
 	this->time = t;
 }
 
 
-void RigidBodyTracker::update_registration(const Time &t) {
+
+// This handles the active-ir based registration of new rigid bodies
+// There should also be a separate routine for performing passive detection of the rigid bodies
+// - The passive routine would:
+//    - Apply mean clustering around point sets
+//    - Grab all points in a single region
+//    - Try to do an exact correspondence match, otherwise go to the next mean
+
+// TODO: This should under no condition be allowed to fail
+void RigidBodyTracker::update_active_registration(const Time &t) {
 
 	int &phase = data.phase;
 
@@ -413,22 +434,40 @@ void RigidBodyTracker::update_registration(const Time &t) {
 
 	Vehicle *v = vehicles[data.activeVehicle];
 
+	// Essentially, we need to oscillate the value of the beacon to ensure that we definately choose the correct beacon
+	// Ideally I'd like to not use an FFT based method and instead just count the pulse width with a highpass filter and perform a few sequences of that
 	// Transitions
-	if(phase == PHASE_MASK && elapsed >= 0.4) { // Allowed time per phase <- This must be smaller than the time it times for a track to be abandoned
+
+	// Wait for the beacon to turn off and then mask all existing markers
+	if(phase == PHASE_MASK && elapsed >= 0.2) { // Allowed time per phase <- This must be smaller than the time it takes for a track to be abandoned
 		data.maskId = lastId;
 		phase = PHASE_SEARCH;
 		v->set_beacon(true);
-		data.beaconOn = t;
+		data.beaconToggle = t;
+		data.iteration = 0;
 	}
-	else if(phase == PHASE_SEARCH && elapsed >= 0.1) {
+	else if(phase == PHASE_SEARCH && elapsed >= 0.1) { // We should also
+
+		// TODO: Also verify the pulse width of the dot, we should maintain a record and
 
 		data.candidates.resize(0);
+		cout << bodies.size() << endl;
 		for(int i = 0; i < bodies.size(); i++) {
-			if(bodies[i].id > data.maskId) {
-				data.candidates.push_back(bodies[i].id);
+			if(bodies[i].id > data.maskId) { // TODO: Also verify that it is currently visible
+				double lat = bodies[i].firstSeen.since(data.beaconToggle).seconds() * 1000;
+
+				if(lat > 70) {
+					cout << "Reject Latency: " << lat << endl;
+					continue;
+				}
 
 				// TODO: USe real times
-				cout << "Beacon Latency: " << (bodies[i].firstSeen.since(data.beaconOn).seconds() * 1000) << "ms" << endl;
+				cout << "Beacon Latency: " << lat << "ms" << endl;
+
+				cout << bodies[i].position.transpose() << endl;
+
+				data.candidates.push_back(bodies[i].id);
+
 
 				// TODO: If greater than 50ms, then probably not the beacon
 
@@ -439,18 +478,100 @@ void RigidBodyTracker::update_registration(const Time &t) {
 
 		cout << "Found " << data.candidates.size() << endl;
 
+		/*
 		if(data.candidates.size() == 1) {
 			phase = PHASE_FINALIZE;
 		}
+		else {
+		*/
 
-		// TODO: Only need to go into excluding mode if we have more than one candidate
 		phase = PHASE_EXCLUDE;
-		//vehicles[activeVehicle]->set_beacon(false);
+		v->set_beacon(false);
+		data.beaconToggle = t;
+
+		/*
+		}
+		*/
 	}
-	else if(phase == PHASE_EXCLUDE) {
-		phase = PHASE_FINALIZE;
+	else if(phase == PHASE_INCLUDE && elapsed >= 0.1) { // After a period of having the beacon on
+		if(data.iteration >= 4) {
+			data.phase = PHASE_FINALIZE;
+			return;
+		}
+
+		bool good = false;
+		for(int ci = 0; ci < data.candidates.size(); ci++) {
+			unsigned c = data.candidates[ci];
+
+			// Verify that the point
+			for(int i = 0; i < bodies.size(); i++) {
+				if(bodies[i].id == c) {
+					double lat = bodies[i].firstSeen.since(data.beaconToggle).seconds() * 1000;
+
+					if(lat > 70) {
+						cout << "Reject Latency: " << lat << endl;
+						break;
+					}
+
+					good = true;
+					break;
+				}
+			}
+
+			if(!good) {
+				data.candidates.erase(data.candidates.begin() + ci);
+				ci--;
+			}
+		}
+
+		data.phase = PHASE_EXCLUDE;
+		data.beaconToggle = t;
+		v->set_beacon(false);
+
+	}
+	else if(phase == PHASE_EXCLUDE && elapsed >= 0.1) { // After a period of having the beacon off
+
+		// TODO: This is essentially the same thing as the INCLUDE phase except firstSeen is switched to lastSeen
+
+		bool good = false;
+		for(int ci = 0; ci < data.candidates.size(); ci++) {
+			unsigned c = data.candidates[ci];
+
+			// Verify that the point
+			for(int i = 0; i < bodies.size(); i++) {
+				if(bodies[i].id == c) {
+					double lat = bodies[i].lastSeen.since(data.beaconToggle).seconds() * 1000;
+
+					if(lat > 70) {
+						cout << "Reject Latency: " << lat << endl;
+						break;
+					}
+
+					good = true;
+					break;
+				}
+			}
+
+			if(!good) {
+				data.candidates.erase(data.candidates.begin() + ci);
+				ci--;
+			}
+		}
+
+
+		data.phase = PHASE_INCLUDE;
+		data.beaconToggle = t;
+		v->set_beacon(true);
+		data.iteration++;
 	}
 	else if(phase == PHASE_FINALIZE) {
+
+		// TODO: Try all candidates and see accept if only one is good
+		if(data.candidates.size() != 1) {
+			cout << "Don't have exactly one candidate: Instead have " << data.candidates.size() << endl;
+			data.phase = PHASE_IDLE;
+			return;
+		}
 
 		vector<Vector3d> pts;
 		for(int i = 0; i < bodies.size(); i++) {
@@ -459,6 +580,12 @@ void RigidBodyTracker::update_registration(const Time &t) {
 				bodies.erase(bodies.begin() + i);
 				break;
 			}
+		}
+
+		if(pts.size() == 0) {
+			cout << "Lost the candidate" << endl;
+			data.phase = PHASE_IDLE;
+			return;
 		}
 
 		// Get all local points
@@ -474,20 +601,30 @@ void RigidBodyTracker::update_registration(const Time &t) {
 
 		cout << "Have: " << pts.size() << endl;
 
-		if(pts.size() != model.size()) {
-			cout << "Too many or too little markers visible" << endl;
+		if(pts.size() < model.size()) {
+			cout << "Too few markers visible" << endl;
+			data.phase = PHASE_IDLE;
+			return;
 		}
 
+
+		// After this the rigid body estimator will require that:
+		// - There are at least 4 correspondes
+		// - Check strength of eigenvalues of scatter matrix to figure out if the shape is symmetric
+		//    - All three eigenvalues should be roughly the same but not the same?
+		// - Enforce maximum distance between a single correspondence
+		// - Enforce overall norm-2 error max threshold
 
 		RigidPointCorrespondenceSolver solver;
 
 		vector<int> c;
-		solver.solve(model, pts, &c, false); // TODO: Use outlier rejecting form to only select some points from the cloud
+		solver.solve(model, pts, &c); // TODO: Use outlier rejecting form to only select some points from the cloud
 		if(c[0] != 0) {
 			cout << "Mismatch with active beacon" << endl;
 			// In this case fail
 		}
 
+		// TODO: Deal with any cases in which the points couldn't be matched
 		// Rearrange points
 		vector<Vector3d> corresponding;
 		solver.arrange(pts, c, &corresponding);
@@ -510,8 +647,10 @@ void RigidBodyTracker::update_registration(const Time &t) {
 		e = sqrt(e);
 
 		// TODO: Base this threshold on rigid body segment distances
-		if(e > 0.05) {
+		if(e > 0.02) {
 			cout << "failed" << endl;
+			data.phase = PHASE_IDLE;
+			return;
 		}
 
 
@@ -524,13 +663,14 @@ void RigidBodyTracker::update_registration(const Time &t) {
 		b.firstSeen = t;
 		b.lastSeen = t;
 		b.nframes = 1;
+		b.visible = true;
 
 		bodies.push_back(b);
 
 		registrations[data.activeVehicle] = b.id;
 		registrationInv[b.id] = data.activeVehicle;
 
-		phase = PHASE_IDLE;
+		data.phase = PHASE_IDLE;
 	}
 	else { // Didn't transition
 		return;

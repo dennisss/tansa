@@ -49,7 +49,8 @@ void PositionController::control(double t) {
 		a += Vector3d(0, 0, GRAVITY_MS);
 
 		Quaterniond att = Quaterniond::FromTwoVectors(Vector3d(0,0,1), a.normalized());
-		vehicle->setpoint_attitude(att, a.norm());
+		Quaterniond yaw( AngleAxisd(DEFAULT_YAW_ANGLE, Vector3d::UnitZ()) );
+		vehicle->setpoint_attitude(att*yaw, a.norm());
 	}
 	else {
 		vehicle->setpoint_accel(a, 0);

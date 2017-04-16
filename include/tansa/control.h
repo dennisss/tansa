@@ -23,6 +23,9 @@ public:
 
 template<unsigned int N> class PID;
 
+// By default face in the -y direction (in ENU)
+#define DEFAULT_YAW_ANGLE (-M_PI / 2)
+
 /**
  * Controller for following Trajectory's
  */

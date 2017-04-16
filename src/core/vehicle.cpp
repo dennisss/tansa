@@ -340,7 +340,7 @@ void Vehicle::setpoint_accel(const Vector3d &accel, double yaw) {
 
 	Vector3d accel_ned = enuToFromNed() * accel_normal;
 
-	double yaw_ned = -yaw + M_PI / 2.0;
+	double yaw_ned = -yaw + (M_PI / 2.0);
 
 	mavlink_message_t msg;
 	mavlink_msg_set_position_target_local_ned_pack_chan(

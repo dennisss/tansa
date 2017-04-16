@@ -7,8 +7,9 @@
 #define PHASE_IDLE 0
 #define PHASE_MASK 1
 #define PHASE_SEARCH 2
-#define PHASE_EXCLUDE 3
-#define PHASE_FINALIZE 4
+#define PHASE_INCLUDE 3
+#define PHASE_EXCLUDE 4
+#define PHASE_FINALIZE 5
 
 
 namespace tansa {
@@ -27,7 +28,7 @@ struct RigidBody {
 	Time firstSeen, lastSeen;
 
 	// TODO: Include data as to whether or not it was just seen
-
+	bool visible;
 
 	int nframes;
 
@@ -56,12 +57,22 @@ struct RegistrationProcessData {
 
 	Time start; /**< When the process started */
 
-	Time beaconOn; /**< When the beacon was turned on */
+	Time beaconToggle; /**< When the beacon was turned on */
+
+	unsigned iteration; /** How many on-off cycles of the beacon have occured */
 
 	unsigned maskId; /**< Marker must have an id greater than this  */
 
-	vector<unsigned> candidates;
+	vector<unsigned> candidates; /**< Ids of the markers we currently think may be beacons */
 
+
+};
+
+/**
+ *
+ */
+struct RigidBodyTrackerSettings {
+	double timeout = 0;
 };
 
 /**
@@ -70,19 +81,20 @@ struct RegistrationProcessData {
 class RigidBodyTracker {
 public:
 
-	RigidBodyTracker();
+	RigidBodyTracker(const RigidBodyTrackerSettings &settings = RigidBodyTrackerSettings());
 
 
 	void track(Vehicle *v);
 
 
+	// TODO: Currently we assume that this is called at least 100 times a second regardless of network connectivity
 	// TODO: Derive timestamp from OurTime -  Motive reported latency - NatNet ping time
 	/**
 	*
 	*/
 	void update(const vector<Vector3d> &cloud, const Time &t);
 
-	void update_registration(const Time &t);
+	void update_active_registration(const Time &t);
 
 private:
 

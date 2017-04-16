@@ -120,16 +120,19 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 
 
 	// Grab other markers that were triangulated but not attached to rigid bodies
+	// TODO: If we want to exclude rigid bodies, we should switch this to use otherMarkers
 	vector<Vector3d> markers;
-	markers.resize(frame->otherMarkers.size());
-	for(int i = 0; i < markers.size(); i++) {
-		markers[i] = Vector3d(
-			-frame->otherMarkers[i].x,
-			frame->otherMarkers[i].z,
-			frame->otherMarkers[i].y
-		);
+	for(int i = 0; i < frame->labeledMarkers.size(); i++) {
 
-		//cout << markers[i].transpose() << endl;
+		if(frame->labeledMarkers[i].isOccluded()) {
+			continue;
+		}
+
+		markers.push_back(Vector3d(
+			-frame->labeledMarkers[i].x,
+			frame->labeledMarkers[i].z,
+			frame->labeledMarkers[i].y
+		));
 	}
 
 	if(tracker != NULL) {

@@ -371,7 +371,7 @@ void *natnet_cmd_server(void *arg) {
 		case NatNetPacket::Frame:
 			c->handle_packet(&pkt);
 			break;
-		case NatNetPacket::PingResponse: {
+		case NatNetPacket::PingResponse: { // TODO: For some reason, we never get a response (or the ping sent out?) when in lldb debuggin
 			NatNetSender *s = (NatNetSender *) pkt.payload;
 
 			// Register the address of the server

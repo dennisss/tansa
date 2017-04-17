@@ -101,7 +101,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 		ret->actions.resize(num_drones);
 		ret->lightActions.resize(num_drones);
 		for(int i = 0; i < num_drones; i++) {
-			ret->lightActions[i].reserve(LightController::NUM_LIGHTS);
+			ret->lightActions[i].resize(LightController::NUM_LIGHTS);
 		}
 		currentLine++;
 
@@ -141,7 +141,6 @@ Choreography* parse_csv(const char* filepath, double scale){
 							std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos,
 													 split_line.end()));
 					auto light_index = light_action->GetLightIndex();
-					ret->lightActions[drones[j]].resize(1);
 					ret->lightActions[drones[j]][light_index].push_back(light_action);
 				}
 			} else {
@@ -165,7 +164,11 @@ Choreography* parse_csv(const char* filepath, double scale){
 			currentLine++;
 		}
 		insert_transitions(ret->actions, ret->homes);
+		fill_light_gaps(ret->lightActions,(*(ret->actions[0].end()-1))->GetEndTime());
+		for (const auto& a : ret->lightActions[0][0]){
 
+			printf("%f %f \n", a->GetStartTime(), a->GetEndTime() );
+		}
 		return ret;
 
 	} catch (const std::exception& e) {
@@ -732,4 +735,39 @@ LightController::LightIndices parse_light_index(const std::string& in){
 	throw std::runtime_error("Failed to parse light index: " + in);
 }
 
+void fill_light_gaps(std::vector<std::vector<std::vector<LightAction*>>>& actions, double end_time){
+	//For each drone
+	for (auto i = 0; i < actions.size(); i++){
+		//For each light on each drone
+		for(auto j = 0; j < actions[i].size(); j++){
+			if(actions[i][j].size() == 0){
+				//TODO Fix drone ID I think i might not be correct. But it might not matter for light actions at this point.
+				// Maybe matters in future though?
+				actions[i][j].push_back(new LightAction(i, make_shared<EmptyLightTrajectory>(0.0, end_time),(LightController::LightIndices)j));
+			} else {
+				double et = actions[i][j][0]->GetEndTime();
+				//For each action for this light for this drone
+				for (auto k = 1; k < actions[i][j].size(); k++) {
+					double st = actions[i][j][k]->GetStartTime();
+					double temp = fabs(st - et);
+					if ( temp > 0.01) {
+						auto it = actions[i][j].begin() + k;
+ 						unsigned droneid = actions[i][j][k]->GetDrone();
+						double new_et = 0;
+						if (k < actions[i][j].size()) {
+							new_et = actions[i][j][k]->GetStartTime();
+						} else {
+							new_et = end_time;
+						}
+						actions[i][j].insert(it, new LightAction(droneid, make_shared<EmptyLightTrajectory>(et, new_et),
+																 (LightController::LightIndices) j));
+						et = new_et;
+					} else {
+						et = actions[i][j][k]->GetEndTime();
+					}
+				}
+			}
+		}
+	}
+}
 }

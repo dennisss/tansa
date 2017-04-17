@@ -256,5 +256,6 @@ void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::v
 Point parse_point(std::string point);
 
 LightController::LightIndices parse_light_index(const std::string& in);
+void fill_light_gaps(std::vector<std::vector<std::vector<LightAction*>>>& actions, double end_time);
 }
 #endif

@@ -467,7 +467,7 @@ protected:
 };
 
 /**
- * Smoothly increases or decreases list intensity between two intensities
+ * Blinkin lights
  */
 class StrobeTrajectory : public LightTrajectory {
 public:
@@ -484,6 +484,17 @@ private:
 
 	double startBeatsPerSecond;
 	double endBeatsPerSecond;
+};
+/**
+ * Fills space in timeline. Does nothing.
+ */
+class EmptyLightTrajectory : public LightTrajectory {
+public:
+	EmptyLightTrajectory(double start_time, double end_time) :
+			LightTrajectory(0,{0,0,0}, start_time, 0, {0,0,0}, end_time){}
+	virtual int evaluate(double t) {
+		return 0;
+	}
 };
 
 

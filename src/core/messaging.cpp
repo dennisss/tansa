@@ -28,6 +28,10 @@ void messaging_init() {
 }
 
 
+void messaging_end() {
+	h.close();
+}
+
 void send_message(const json &msg) {
 
 	sio::message::ptr obj = sio::string_message::create(msg.dump());

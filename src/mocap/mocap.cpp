@@ -48,7 +48,7 @@ int Mocap::connect(string iface_addr, string server_addr) {
 }
 
 int Mocap::disconnect() {
-
+	client->disconnect();
 	return 0;
 }
 
@@ -139,74 +139,6 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 		tracker->update(markers, t);
 	}
 
-	// Markers is now the full
-
-	/*
-
-	Vehicle *v = inst->tracked[1];
-
-
-	Vector3d mainMarker;
-	int mainMarkerI = -1;
-	double minError = 9999.0;
-
-	// Find primary marker
-	for(int i = 0; i < markers.size(); i++) {
-
-		Vector3d m = markers[i];
-
-		// Initial scan
-		if(!found) {
-			if(m.norm() < 0.5) { // Look for something close to the origin
-				lastPosition = m;
-				startOrient = v->onboardState.orientation;
-				found = true;
-
-				cout << "Found marker at: " << m.transpose() << endl;
-				break;
-			}
-		}
-		// Track
-		else {
-			double e = (m - lastPosition).norm();
-			if( e < minError) { // e < 0.035 &&
-				minError = e;
-				mainMarkerI = i;
-				mainMarker = m;
-
-				lastPosition = mainMarker;
-			}
-		}
-	}
-
-
-
-	// Look for alignment beacon
-	if(beaconOn) {
-		for(int i = 0; i < markers.size(); i++) {
-			if(mainMarkerI == i) {
-				continue;
-			}
-
-
-
-
-		}
-
-	}
-
-
-
-	frameI++;
-
-	if(found) {
-		Vector3d pos = startOrient * lastPosition;
-		pos.z() = lastPosition.z();
-//		v->mocap_update(pos, Quaterniond(1,0,0,0), t);
-
-
-	}
-	*/
 
 	/*
 		If we have 2 markers, then we can determine auto-gyro bias estimation

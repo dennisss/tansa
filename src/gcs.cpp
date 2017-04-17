@@ -13,6 +13,7 @@
 #ifdef  __linux__
 #include <sys/signal.h>
 #endif
+#include <signal.h>
 //TODO check if these work on OSX
 #include <dirent.h>
 #include <sys/types.h>
@@ -90,6 +91,38 @@ string searchWorkspacePath(string a, string b = "", string c = "") {
 	}
 
 	return cur;
+}
+
+
+const char *pid_filename = "tmp/tansa.pid";
+
+// For ensuring that there is
+void lock_pidfile() {
+
+	ifstream fin(pid_filename);
+    if(fin.good()) {
+		int oldpid = 0;
+		fin >> oldpid;
+
+		if(0 == kill(oldpid, 0)) {
+			cout << "Tansa already running. Please close it first." << endl;
+			exit(1);
+		}
+		else {
+			cout << "Warning: PID file exists but no process running" << endl;
+		}
+
+		fin.close();
+	}
+
+	ofstream fout(pid_filename, ofstream::out | ofstream::trunc);
+	fout << getpid() << endl;
+	fout.flush();
+	fout.close();
+}
+
+void unlock_pidfile() {
+	unlink(pid_filename);
 }
 
 
@@ -792,6 +825,8 @@ int main(int argc, char *argv[]) {
 		config.serverAddress = hardwareConfig["serverAddress"];
 	}
 
+	lock_pidfile();
+
 	tansa::init(enableMessaging);
 
 	if (enableMessaging) {
@@ -929,6 +964,10 @@ int main(int argc, char *argv[]) {
 	}
 
 	player->cleanup();
+
+	tansa::end();
+
+	unlock_pidfile();
 
 	printf("Done!\n");
 }

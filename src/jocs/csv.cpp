@@ -744,6 +744,8 @@ void fill_light_gaps(std::vector<std::vector<std::vector<LightAction*>>>& action
 				//TODO Fix drone ID I think i might not be correct. But it might not matter for light actions at this point.
 				// Maybe matters in future though?
 				actions[i][j].push_back(new LightAction(i, make_shared<EmptyLightTrajectory>(0.0, end_time),(LightController::LightIndices)j));
+			} else if(fabs((*(actions[i][j].end()-1))->GetEndTime() - end_time) > 0.01) {
+				actions[i][j].push_back(new LightAction(i, make_shared<EmptyLightTrajectory>((*(actions[i][j].end() - 1))->GetEndTime(), end_time), (LightController::LightIndices)j));
 			} else {
 				double et = actions[i][j][0]->GetEndTime();
 				//For each action for this light for this drone

@@ -325,6 +325,9 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					}
 				}
 			} else if (s == StateLanding) {
+				std::vector<int> light_states;
+				light_states.resize(LightController::MAX_LIGHTS, 0);
+				v.set_lighting(light_states);
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// Special behavior near the ground. Stop trying to descend if we are hitting ground effects

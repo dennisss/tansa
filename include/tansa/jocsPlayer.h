@@ -56,6 +56,12 @@ public:
 	 */
 	void failsafe();
 
+
+	/**
+	 * Reorder the drones to their closest tracks 
+	 */
+	void rearrange();
+
 	/**
 	 * Should be called to load a jocs file.
 	 * @param jocsPath The path to the jocs file.

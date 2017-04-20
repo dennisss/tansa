@@ -18,10 +18,11 @@ static int frameI = 0;
 static Vector3d velocity(0,0,0);
 
 
-Mocap::Mocap(MocapMode m) {
+Mocap::Mocap(const MocapOptions &options) {
 	client = nullptr;
+	this->options = options;
 
-	if(m == MocapRigidBodyFromCloud)
+	if(options.mode == MocapRigidBodyFromCloud || options.useActiveBeacon)
 		tracker = new RigidBodyTracker();
 	else
 		tracker = NULL;
@@ -55,7 +56,9 @@ int Mocap::disconnect() {
 void Mocap::track(Vehicle *v, int id, const vector<Vector3d> &markers) {
 	this->tracked[id] = v;
 
-	if(this->tracker != NULL) {
+	// TODO: The tracker ones are never reset
+	// We should clear them
+	if(this->tracker != NULL && options.mode == MocapRigidBodyFromCloud) {
 		this->tracker->track(v);
 	}
 }
@@ -119,6 +122,19 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 	}
 
 
+
+	// Maintain the beacon floating high for most of the time by constantly pinging it
+	if(t.since(lastBeaconPing).seconds() > 3) {
+		for(auto entry : this->tracked) {
+			entry.second->set_beacon(true);
+		}
+
+		lastBeaconPing = t;
+	}
+
+
+
+
 	// Grab other markers that were triangulated but not attached to rigid bodies
 	// TODO: If we want to exclude rigid bodies, we should switch this to use otherMarkers
 	vector<Vector3d> markers;
@@ -134,6 +150,9 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 			frame->labeledMarkers[i].y
 		));
 	}
+
+
+	return;
 
 	if(tracker != NULL) {
 		tracker->update(markers, t);
@@ -162,6 +181,11 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 		beaconOn = false;
 	}
 	*/
+}
+
+void Mocap::resync() {
+
+	
 }
 
 

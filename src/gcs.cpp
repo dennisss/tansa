@@ -9,6 +9,7 @@
 #include <tansa/osc.h>
 #include <tansa/csv.h>
 #include "manager/preview.h"
+#include "manager/calibration.h"
 
 #ifdef  __linux__
 #include <sys/signal.h>
@@ -59,6 +60,9 @@ static bool inRealLife;
 
 static bool previewMode = false;
 static PreviewPlayer *previewPlayer;
+
+static bool calibrationMode = false;
+static CalibrationHelper *calibrationHelper;
 
 void signal_sigint(int s) {
 	// TODO: Prevent
@@ -519,6 +523,15 @@ void constructLoadResponse() {
 	tansa::send_message(j);
 }
 
+
+void sendCalibrationResponse(bool failed) {
+	json j;
+	j["type"] = "calibrate_reply";
+	j["success"] = !failed;
+
+	tansa::send_message(j);
+}
+
 /**
  * Load the player from a full configuration object
  * @param rawJson 	JSON containing configuration information to initialize (or reconfigure) the JocsPlayer
@@ -618,6 +631,8 @@ void handle_preview_command(json data) {
 }
 
 
+void do_calibrate();
+
 void socket_on_message(const json &data) {
 
 	string type = data["type"];
@@ -653,6 +668,14 @@ void socket_on_message(const json &data) {
 	} else if (type == "land") {
 		printf("Landing...\n");
 		landMode = true;
+	} else if (type == "calibrate") {
+		do_calibrate();
+	} else if (type == "resync") {
+		if(mocap != NULL) {
+			mocap->resync();
+		}
+	} else if (type == "rearrange") {
+		player->rearrange();
 	} else {
 		// TODO: Send an error message back to the browser
 		printf("Unexpected message type recieved!\n");
@@ -697,17 +720,16 @@ void osc_on_message(OSCMessage &msg) {
 	TODO: Provide some distance measure during holding phase to determine if the drone is stable enough to calibrate
 */
 void do_calibrate() {
+
+	calibrationHelper = new CalibrationHelper(vehicles);
+	calibrationMode = true;
+	return;
+
+
 	if(vehicles.size() != 1) {
 		cout << "Can only calibrate one vehicle at a time" << endl;
 		return;
 	}
-
-	for(int i = 0; i < vehicles.size(); i++) {
-		vehicles[i]->calibrate_gyro();
-	}
-
-	return;
-
 
 	if(!player->isReady()) {
 		cout << "Must be holding to start calibration" << endl;
@@ -826,8 +848,10 @@ int main(int argc, char *argv[]) {
 	bool enableMessaging = rawJson["enableMessaging"];
 	bool enableOSC = rawJson["enableOSC"];
 
+	MocapOptions mocap_opts;
 	if (inRealLife) {
 		nlohmann::json hardwareConfig = rawJson["mocap"];
+		mocap_opts.useActiveBeacon = hardwareConfig["useActiveBeacon"];
 		config.clientAddress = hardwareConfig["clientAddress"];
 		config.serverAddress = hardwareConfig["serverAddress"];
 	}
@@ -843,7 +867,7 @@ int main(int argc, char *argv[]) {
 	// Only pay attention to homes of active drones
 	// TODO: Have a better check for mocap initialization/health
 	if (inRealLife) {
-		mocap = new Mocap();
+		mocap = new Mocap(mocap_opts);
 		mocap->connect(config.clientAddress, config.serverAddress);
 #ifdef USE_GAZEBO
 	} else if(worldMode == "gazebo") {
@@ -939,6 +963,17 @@ int main(int argc, char *argv[]) {
 			if(previewPlayer->ended()) {
 				previewMode = false;
 				delete previewPlayer;
+			}
+
+		} else if(calibrationMode) {
+			calibrationHelper->step();
+
+			if(calibrationHelper->done()) {
+				// Send message to GUI
+				sendCalibrationResponse(calibrationHelper->failed());
+				calibrationMode = false;
+				delete calibrationHelper;
+				cout << "Calibration Done!" << endl;
 			}
 
 		} else {

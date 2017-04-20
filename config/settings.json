@@ -4,6 +4,7 @@
 	"enableOSC": true,
 	"mocap": {
 		"clientAddress": "192.168.1.1",
-		"serverAddress": ""
+		"serverAddress": "",
+		"useActiveBeacon": true
 	}
 }

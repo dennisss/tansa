@@ -21,12 +21,17 @@ enum MocapMode {
 };
 
 
+struct MocapOptions {
+	bool useActiveBeacon = false;
+	MocapMode mode = MocapPassthrough;
+};
+
 /**
  * Used to interface pose feedback from motion capture systems with the vehicles
  */
 class Mocap {
 public:
-	Mocap(MocapMode m = MocapPassthrough);
+	Mocap(const MocapOptions &opts);
 	~Mocap();
 
 	/**
@@ -51,6 +56,7 @@ public:
 
 	void start_recording();
 	void stop_recording();
+	void resync();
 
 private:
 
@@ -61,6 +67,9 @@ private:
 
 	RigidBodyTracker *tracker;
 
+	MocapOptions options;
+
+	Time lastBeaconPing; /**< If we are using the beacon for tracking, this is the last time we tried to turn it on */
 
 };
 
@@ -95,12 +104,18 @@ struct MocapRegistration {
 
 };
 
+// TODO: Have a different object distinguish the rigid bodies which would internally reference many inner markers each with visibility data
+/**
+ *
+ */
 struct MocapTrackedMarker {
 	Vector3d position;
 	Vector3d velocity;
-	Time firstSeen; // TODO: Require multiple frames of visibility to officially consider it tracked
-	Time lastSeen; // TODO:
+	Time firstSeen;
+	Time lastSeen;
+	bool visible; /**< Whether or not it will visible in the most recent frame */
 
+	// TODO: This is not currently being used
 	int count; // Number of times seen/lost
 };
 

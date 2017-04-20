@@ -50,7 +50,9 @@ var App = React.createClass({
 			stats: null, // The full object from the 'status' message
 			duration: null,
 			time: 0,
-			connected: false
+			connected: false,
+
+			calibrating: false
 		}
 
 	},
@@ -123,6 +125,9 @@ var App = React.createClass({
 					}
 				}
 			}
+			else if(data.type == 'calibrate_reply') {
+				this.setState({calibrating: false});
+			}
 
 		}.bind(this));
 
@@ -178,6 +183,14 @@ var App = React.createClass({
 	kill: function() {
 		this.send({ type: 'kill', enabled: true });
 	},
+
+	calibrate: function() {
+		this.send({ type: 'calibrate' });
+		this.setState({calibrating: true});
+	},
+
+	resync: function() { this.send({ type: 'resync' }); },
+	rearrange: function() { this.send({ type: 'rearrange' }); },
 
 	upload: function(name, text) {
 		Socket.emit('upload', { name: name, data: text });

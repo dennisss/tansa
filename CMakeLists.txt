@@ -72,6 +72,7 @@ add_library(
 	src/control/admittance.cpp
 
 	src/manager/preview.cpp
+	src/manager/calibration.cpp
 
 	# Simulation
 	src/simulate/simulation.cpp

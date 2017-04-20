@@ -16,6 +16,7 @@
 #include <Eigen/Dense>
 #include <string>
 #include <memory>
+#include <mutex>
 
 using namespace Eigen;
 using namespace std;
@@ -40,6 +41,12 @@ struct ActuatorOutputs {
 	vector<float> outputs;
 };
 
+struct TextMessage {
+	static const int ID = 3;
+
+	uint8_t severity;
+	string text;
+};
 
 
 struct VehicleParameters {
@@ -219,6 +226,20 @@ public:
 
 	Time lastRCTime = Time(0,0);
 
+
+	bool get_message(TextMessage *m) {
+		bool found = false;
+		messagesLock.lock();
+		if(messages.size() > 0) {
+			*m = messages[0];
+			messages.erase(messages.begin());
+			found = true;
+		}
+
+		messagesLock.unlock();
+		return found;
+	}
+
 private:
 
 	friend void *vehicle_thread(void *arg);
@@ -242,6 +263,8 @@ private:
 
 	vector<VehicleForwarder> forwarders;
 
+	vector<TextMessage> messages;
+	mutex messagesLock;
 
 	Time lastHeartbeatReceived;
 

@@ -175,6 +175,28 @@ var Controls = React.createClass({
 			)
 		}
 
+
+		var preButtons = null;
+		if(state == 'init' && p.state.stats.vehicles.length >= 1) {
+			preButtons = (
+				<div className="btn-group btn-group-sm" style={{width: '100%', marginTop: 5}}>
+					<button className="btn btn-sm btn-default" onClick={p.calibrate} style={{width: '33%'}}>
+						{p.state.calibrating? <i className="fa fa-cog fa-spin" /> : 'Calibrate'}
+					</button>
+					{/*
+					<button className="btn btn-sm btn-default" onClick={p.resync} style={{width: '33%'}}>
+						Resync
+					</button>
+					<button className="btn btn-sm btn-default" onClick={p.rearrange} style={{width: '33%'}}>
+						Rearrange
+					</button>
+					*/}
+				</div>
+			);
+		}
+
+
+
 		return (
 			<div>
 				<div className="ta-pane-header">
@@ -190,7 +212,9 @@ var Controls = React.createClass({
 						) : null}
 					</div>
 
-					<button className="btn btn-sm btn-danger" onClick={p.kill} style={{width: '100%', marginTop: 5}}>Kill</button>
+					{preButtons}
+
+					<button className="btn btn-sm btn-danger" onClick={p.kill} style={{width: '100%', marginTop: 10}}>Kill</button>
 				</div>
 			</div>
 		)

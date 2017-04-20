@@ -1,4 +1,5 @@
 #include "tansa/jocsPlayer.h"
+#include <tansa/algorithm.h>
 
 #include <unistd.h>
 
@@ -434,6 +435,41 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 void JocsPlayer::failsafe() {
 	for(auto &s : states) {
 		s = StateFailsafe;
+	}
+}
+
+
+void JocsPlayer::rearrange() {
+	for(auto s : states) {
+		if(s != StateInit) {
+			printf("Cannot prepare: Some drones not in initial state\n");
+			return;
+		}
+	}
+
+
+	// Distance between each vehicle and each home
+	MatrixXd D(vehicles.size(), homes.size());
+	for(int i = 0; i < vehicles.size(); i++) {
+		Vector3d vp = vehicles[i]->state.position;
+		vp.z() = 0;
+
+		for(int j = 0; j < homes.size(); j++) {
+			Vector3d hp = homes[j];
+			hp.z() = 0;
+
+			D(i, j) = (vp - hp).norm();
+		}
+	}
+
+	vector<int> c;
+
+
+	AssignmentSolver s;
+	s.solve(D, &c);
+
+	for(int i = 0; i < c.size(); i++) {
+		jocsActiveIds[i] = c[i];
 	}
 }
 

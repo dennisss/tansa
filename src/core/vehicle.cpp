@@ -606,7 +606,7 @@ void Vehicle::send_heartbeat() {
 void Vehicle::handle_message(mavlink_message_t *msg) {
 
 	switch(msg->msgid) {
-		case MAVLINK_MSG_ID_HEARTBEAT:
+		case MAVLINK_MSG_ID_HEARTBEAT: {
 
 			mavlink_heartbeat_t hb;
 			mavlink_msg_heartbeat_decode(msg, &hb);
@@ -635,8 +635,9 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			}
 
 			break;
+		}
 
-		case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
+		case MAVLINK_MSG_ID_LOCAL_POSITION_NED: {
 
 			onboardPositionTime = Time::now();
 
@@ -647,8 +648,9 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			onboardState.velocity = enuToFromNed() * Vector3d(lp.vx, lp.vy, lp.vz);
 
 			break;
+		}
 
-		case MAVLINK_MSG_ID_SYS_STATUS:
+		case MAVLINK_MSG_ID_SYS_STATUS: {
 			// We mainly need to know the battery level
 			mavlink_sys_status_t ss;
 			mavlink_msg_sys_status_decode(msg, &ss);
@@ -656,6 +658,7 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			battery.percent = ss.battery_remaining / 100.0;
 
 			break;
+		}
 
 		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION: {
 
@@ -677,13 +680,28 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			lastRCTime = Time::now();
 			break;
 
-		case MAVLINK_MSG_ID_STATUSTEXT:
+		case MAVLINK_MSG_ID_STATUSTEXT: {
 
 			// TODO: Also incorporate the severity
 			mavlink_statustext_t st;
 			mavlink_msg_statustext_decode(msg, &st);
+
+			// TODO: We need to be able to specify a single listener for multiple vehicles which means that we need to be able to supply arguments to it
+			TextMessage m;
+			m.severity = st.severity;
+			m.text = string(st.text);
+
+			messagesLock.lock();
+			messages.push_back(m);
+			if(messages.size() > 10) {
+				messages.erase(messages.begin());
+			}
+
+			messagesLock.unlock();
+
 			printf("%s\n", st.text);
 			break;
+		}
 
 		case MAVLINK_MSG_ID_SYSTEM_TIME: {
 			mavlink_system_time_t st;
@@ -759,7 +777,7 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			break;
 		}
 
-		case MAVLINK_MSG_ID_PING:
+		case MAVLINK_MSG_ID_PING: {
 			mavlink_ping_t p;
 			mavlink_msg_ping_decode(msg, &p);
 
@@ -768,7 +786,9 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			}
 
 			break;
-		case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS:
+		}
+
+		case MAVLINK_MSG_ID_HIL_ACTUATOR_CONTROLS: {
 			mavlink_hil_actuator_controls_t ac;
 			mavlink_msg_hil_actuator_controls_decode(msg, &ac);
 
@@ -781,6 +801,20 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			this->publish(ao);
 			break;
+		}
+
+		case MAVLINK_MSG_ID_COMMAND_ACK: {
+
+			mavlink_command_ack_t ack;
+			mavlink_msg_command_ack_decode(msg, &ack);
+
+			//ack.result == MAV_RESULT_ACCEPTED
+
+			break;
+		}
+	}
+
+}
 	}
 
 }

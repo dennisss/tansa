@@ -815,7 +815,46 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 	}
 
 }
+
+
+void Vehicle::cycle() {
+
+	// Send all broadcasts: heartbeat every 1 second, system_time every 2 seconds and time sync every 2 seconds
+	Time now = Time::now();
+
+
+	if(connected && now.since(lastHeartbeatReceived).seconds() >= 3) {
+		connected = false;
+		printf("[Vehicle] Timed out!\n");
 	}
+
+
+	if(connected && now.since(lastHeartbeatSent).seconds() >= 1) {
+		json j = onboardParams;
+		if(j.count("SYS_AUTOSTART") == 0)
+			param_read("SYS_AUTOSTART");
+	}
+
+	if(now.since(lastHeartbeatSent).seconds() >= 1) {
+		send_heartbeat();
+		lastHeartbeatSent = now;
+	}
+	if(now.since(lastSystimeSent).seconds() >= 2) {
+		send_systime();
+		lastSystimeSent = now;
+	}
+	if(now.since(lastTimesyncSent).seconds() >= 2) {
+		send_timesync(0, now.nanos());
+		lastTimesyncSent = now;
+	}
+	if(now.since(lastTrackTime).seconds() > 0.15) {
+		tracking = false;
+		ntracks = 0;
+	}
+	if(now.since(lastPingTime).seconds() >= 2) {
+		ping();
+	}
+
 
 }
 
@@ -869,9 +908,7 @@ void *vehicle_thread(void *arg) {
 					// TODO: Pick comm channel based on the ip/port from which the data was received
 
 					if(mavlink_parse_char(v->channel, buf[i], &msg, &status)) {
-
 						v->handle_message(&msg);
-
 					}
 				}
 
@@ -904,44 +941,7 @@ void *vehicle_thread(void *arg) {
 
 		}
 
-
-		// Send all broadcasts: heartbeat every 1 second, system_time every 2 seconds and time sync every 2 seconds
-		Time now = Time::now();
-
-
-		if(v->connected && now.since(v->lastHeartbeatReceived).seconds() >= 3) {
-			v->connected = false;
-			printf("[Vehicle] Timed out!\n");
-		}
-
-
-		if(v->connected && now.since(v->lastHeartbeatSent).seconds() >= 1) {
-			json j = v->onboardParams;
-			if(j.count("SYS_AUTOSTART") == 0)
-				v->param_read("SYS_AUTOSTART");
-		}
-
-		if(now.since(v->lastHeartbeatSent).seconds() >= 1) {
-			v->send_heartbeat();
-			v->lastHeartbeatSent = now;
-		}
-		if(now.since(v->lastSystimeSent).seconds() >= 2) {
-			v->send_systime();
-			v->lastSystimeSent = now;
-		}
-		if(now.since(v->lastTimesyncSent).seconds() >= 2) {
-			v->send_timesync(0, now.nanos());
-			v->lastTimesyncSent = now;
-		}
-		if(now.since(v->lastTrackTime).seconds() > 0.15) {
-			v->tracking = false;
-			v->ntracks = 0;
-		}
-		if(now.since(v->lastPingTime).seconds() >= 2) {
-			v->ping();
-		}
-
-
+		v->cycle();
 	}
 
 	free(buf);

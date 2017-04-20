@@ -246,6 +246,7 @@ private:
 
 	void handle_message(mavlink_message_t *msg);
 	void handle_message_timesync(mavlink_message_t *msg);
+	void cycle(); /**< Frequently called by the connection handler to check for time variant events  */
 
 	void send_message(mavlink_message_t *msg);
 

@@ -209,6 +209,8 @@ public:
 
 	double pingLatency;
 
+	bool overactuated = false;
+
 	// State as observed by the onboard processor
 	Time onboardPositionTime = Time(0, 0);
 	ModelState onboardState;

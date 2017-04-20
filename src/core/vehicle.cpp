@@ -368,8 +368,14 @@ void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
 	// TODO: This is redundant with setpoint_accel
 	const double hover = params.hoverPoint;
 	double thrust = accel_z * (hover / GRAVITY_MS);
-	if(thrust < 0.01)
-		thrust = 0.01;
+	if(thrust < 0.001) // TODO: Verify if we can make this zero
+		thrust = 0.001;
+
+	if(thrust > 0.8) {
+		printf("Extremely large thrust, blocking!");
+		overactuated = true;
+		return;
+	}
 
 	float att_arr[4];
 	att_arr[0] = (float) att_ned.w();

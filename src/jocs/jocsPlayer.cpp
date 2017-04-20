@@ -195,6 +195,9 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					cout << "Not tracking, entering failsafe mode" << endl;
 					s = StateFailsafe;
 				}
+				else if(v.overactuated) {
+					s = StateFailsafe;
+				}
 			}
 
 

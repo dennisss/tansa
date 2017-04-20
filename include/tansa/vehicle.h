@@ -173,6 +173,10 @@ public:
 	 */
 	void param_read(const char *name);
 
+	/**
+	 * Starts gyro calibration onboard
+	 */
+	void calibrate_gyro();
 
 	/**
 	 * For sending simulated sensor data to the vehicle

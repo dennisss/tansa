@@ -393,7 +393,8 @@ void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
 }
 
 void Vehicle::setpoint_zero() {
-	this->setpoint_accel(Vector3d(0,0, -GRAVITY_MS), 0);
+	// The orientation doesn't matter as there is 0 thrust
+	this->setpoint_attitude(Quaterniond(1, 0, 0, 0), 0);
 }
 
 void Vehicle::ping() {
@@ -557,10 +558,10 @@ void Vehicle::hil_gps(const Vector3d &latLongAlt, const Vector3d &vel, const Tim
 
 }
 
-/*
+
 // TODO: This should wait for a COMMAND_ACK message (should give a RESULT_ACCEPTED upon start of calibration)
-// These src/modules/commander/calibration_messages.h are
-void Vehicle::calibrate() {
+// These lib/Firmware/src/modules/commander/calibration_messages.h are transmitted during calibration
+void Vehicle::calibrate_gyro() {
 	bool gyro = true;
 
 	mavlink_message_t msg;
@@ -576,7 +577,6 @@ void Vehicle::calibrate() {
 
 	send_message(&msg);
 }
-*/
 
 
 void Vehicle::send_message(mavlink_message_t *msg) {

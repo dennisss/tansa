@@ -45,15 +45,17 @@ void PositionController::control(double t) {
 
 	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + s.acceleration;
 
+	double yaw_angle = DEFAULT_YAW_ANGLE;
+
 	if(directAttitudeControl) {
 		a += Vector3d(0, 0, GRAVITY_MS);
 
 		Quaterniond att = Quaterniond::FromTwoVectors(Vector3d(0,0,1), a.normalized());
-		Quaterniond yaw( AngleAxisd(DEFAULT_YAW_ANGLE, Vector3d::UnitZ()) );
+		Quaterniond yaw( AngleAxisd(yaw_angle, Vector3d::UnitZ()) );
 		vehicle->setpoint_attitude(att*yaw, a.norm());
 	}
 	else {
-		vehicle->setpoint_accel(a, 0);
+		vehicle->setpoint_accel(a, yaw_angle);
 	}
 }
 

@@ -702,6 +702,13 @@ void do_calibrate() {
 		return;
 	}
 
+	for(int i = 0; i < vehicles.size(); i++) {
+		vehicles[i]->calibrate_gyro();
+	}
+
+	return;
+
+
 	if(!player->isReady()) {
 		cout << "Must be holding to start calibration" << endl;
 		return;
@@ -820,7 +827,7 @@ int main(int argc, char *argv[]) {
 	bool enableOSC = rawJson["enableOSC"];
 
 	if (inRealLife) {
-		nlohmann::json hardwareConfig = rawJson["hardwareConfig"];
+		nlohmann::json hardwareConfig = rawJson["mocap"];
 		config.clientAddress = hardwareConfig["clientAddress"];
 		config.serverAddress = hardwareConfig["serverAddress"];
 	}

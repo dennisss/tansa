@@ -398,48 +398,103 @@ private:
 
 };
 
+struct Color {
+	/*
+	* t is from 0 to 1
+	*/
+	Color interpolate_from_this(Color to_this, double t) {
+		float t1 = (1.0f-t);
+		float r_right = t1 * r;
+		float g_right = t1 * g;
+		float b_right = t1 * b;
+		float r_left = t*to_this.r;
+		float g_left = t*to_this.g;
+		float b_left = t*to_this.b;
+		
+		return {r_right + r_left, g_right + g_left, b_right + b_left};
+	}
+	static Color from_8bit_colors(int ri, int gi, int bi){
+		float r = ri/255.0f;
+		float g = gi/255.0f;
+		float b = bi/255.0f;
+		bool invalid_color = false;
+		if(r > 1.0){
+			r = 1.0;
+			invalid_color = true;
+		}
+		if(g > 1.0){
+			g = 1.0;
+			invalid_color = true;
+		}
+		if(b > 1.0){
+			b = 1.0;
+			invalid_color = true;
+		}
+		if(invalid_color){
+			printf("Check color values, Color channel greater than 255 detected\n");
+		}
+		return {r,g,b};
+	}
+	float r;
+	float g; 
+	float b;
+};
 /**
  * Smoothly increases or decreases list intensity between two intensities
  */
 class LightTrajectory {
 public:
-
-	inline LightTrajectory(double si, double st, double ei, double et) :
-			startIntensity(si), startTime(st), endIntensity(ei), endTime(et) {}
+	typedef std::shared_ptr<LightTrajectory> Ptr;
+	inline LightTrajectory(double si, Color sc, double st, double ei, Color ec, double et) :
+			startIntensity(si), startColor(sc),startTime(st),
+			endIntensity(ei), endColor(ec), endTime(et)
+	{}
 	virtual ~LightTrajectory() {}
-
+	// Helper method to convert rgbi to packed int
+	static int rgbiToInt(Color in, float i);
 	// Gives the intensity at a given time between the start and end times
-	virtual double evaluate(double t);
+	virtual int evaluate(double t);
 
 	inline double getStartIntensity() { return this->startIntensity; }
 	inline double getStartTime() { return this->startTime; }
 	inline double getEndIntensity() { return this->endIntensity; }
 	inline double getEndTime() { return this->endTime; }
-
-
+	inline Color getStartColor() {return this->startColor; }
+	inline Color getEndColor() { return this->endColor; }
 protected:
-
 	double startIntensity, startTime, endIntensity, endTime;
+	Color startColor, endColor;
 };
 
 /**
- * Smoothly increases or decreases list intensity between two intensities
+ * Blinkin lights
  */
 class StrobeTrajectory : public LightTrajectory {
 public:
 
-	inline StrobeTrajectory(double si, double st, double ei, double et, double bps) :
-			LightTrajectory(si,st,ei,et), beatsPerSecond(bps) {}
+	inline StrobeTrajectory(double si, Color sc, double st, double ei, Color ec, double et, double bpss, double bpse) :
+			LightTrajectory(si,sc,st,ei,ec,et),startBeatsPerSecond(bpss), endBeatsPerSecond(bpse) {}
 	virtual ~StrobeTrajectory() {}
 
 	// Gives the intensity at a given time between the start and end times
-	virtual double evaluate(double t);
+	virtual int evaluate(double t);
 
-	inline double getBeatsPerSecond() { return this->beatsPerSecond; }
 
 private:
 
-	double beatsPerSecond;
+	double startBeatsPerSecond;
+	double endBeatsPerSecond;
+};
+/**
+ * Fills space in timeline. Does nothing.
+ */
+class EmptyLightTrajectory : public LightTrajectory {
+public:
+	EmptyLightTrajectory(double start_time, double end_time) :
+			LightTrajectory(0,{0,0,0}, start_time, 0, {0,0,0}, end_time){}
+	virtual int evaluate(double t) {
+		return 0;
+	}
 };
 
 

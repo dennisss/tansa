@@ -7,6 +7,7 @@
 #include <boost/algorithm/string.hpp>
 namespace tansa {
 
+
 template<typename Out>
 void split(const std::string &s, char delim, Out result) {
 	std::stringstream ss;
@@ -46,6 +47,10 @@ ActionTypes parse_action_type(const std::string& data){
 		return ActionTypes::Arc;
 	else if (data == "trajectory")
 		return ActionTypes::TransformedTraj;
+	else if (data == "fade")
+		return ActionTypes::Fade;
+	else if(data == "strobe_dynamic")
+		return ActionTypes::DynamicStrobe;
 	else{
 		std::cout << "Unknown action type: " << data << std::endl;
 		return ActionTypes::None;
@@ -53,7 +58,7 @@ ActionTypes parse_action_type(const std::string& data){
 }
 
 bool is_light_action(ActionTypes type){
-	return type == ActionTypes::Strobe || type == ActionTypes::Light;
+	return type == ActionTypes::Strobe || type == ActionTypes::Light || type == ActionTypes::Fade || type == ActionTypes::DynamicStrobe;
 }
 
 std::vector<string> read_csv_line(std::string& line){
@@ -95,6 +100,9 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		ret->actions.resize(num_drones);
 		ret->lightActions.resize(num_drones);
+		for(int i = 0; i < num_drones; i++) {
+			ret->lightActions[i].resize(LightController::NUM_LIGHTS);
+		}
 		currentLine++;
 
 		getline(csv, line); //contains homes
@@ -108,7 +116,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 
 		while (getline(csv, line)) { //Iterate line by line
 			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
-
+			for(int i = 0; i < split_line.size(); i++)
+				boost::erase_all(split_line[i], "\r");
 			//Parse breakpoints
 			if (!split_line[csv_positions::BreakpointPos].empty()) {
 				ret->breakpoints.push_back(
@@ -131,7 +140,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 							drones[j],
 							std::vector<std::string>(split_line.begin() + csv_positions::ParamStartPos,
 													 split_line.end()));
-					ret->lightActions[drones[j]].push_back(light_action);
+					auto light_index = light_action->GetLightIndex();
+					ret->lightActions[drones[j]][light_index].push_back(light_action);
 				}
 			} else {
 				for (int j = 0; j < 1; j++) {
@@ -154,7 +164,11 @@ Choreography* parse_csv(const char* filepath, double scale){
 			currentLine++;
 		}
 		insert_transitions(ret->actions, ret->homes);
+		fill_light_gaps(ret->lightActions,(*(ret->actions[0].end()-1))->GetEndTime());
+		for (const auto& a : ret->lightActions[0][0]){
 
+			printf("%f %f \n", a->GetStartTime(), a->GetEndTime() );
+		}
 		return ret;
 
 	} catch (const std::exception& e) {
@@ -224,10 +238,16 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 	LightAction* ret = nullptr;
 	switch (type){
 		case ActionTypes::Light:
-			ret = parse_simple_light_action(start, end, droneid, split_line);
+			ret = parse_light_action(start, end, droneid, split_line);
 			break;
 		case ActionTypes::Strobe:
 			ret = parse_strobe_action(start, end, droneid, split_line);
+			break;
+		case ActionTypes::DynamicStrobe:
+			ret = parse_dynamic_strobe_action(start, end, droneid, split_line);
+			break;
+		case ActionTypes::Fade:
+			ret = parse_fade_action(start, end, droneid, split_line);
 			break;
 		default:
 			ret = nullptr;
@@ -501,12 +521,141 @@ Action* parse_trajectory_action(double start, double end, unsigned long droneid,
 	);
 }
 
-LightAction* parse_simple_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
-	return nullptr;
+LightAction* parse_light_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+	enum indices : unsigned {
+		index_loc = 1,
+		R_loc 	= 3,
+		G_loc 	= 5,
+		B_loc 	= 7,
+		i_loc 	= 9
+	};
+
+	if(split_line.size() < i_loc + 1) {
+		throw std::runtime_error("Not enough fields in the light action");
+	}
+
+	auto index = parse_light_index(split_line[index_loc]);
+	int r = std::atoi(split_line[R_loc].c_str());
+	int g = std::atoi(split_line[G_loc].c_str());
+	int b = std::atoi(split_line[B_loc].c_str());
+	double i = std::atof(split_line[i_loc].c_str());
+
+	Color col = Color::from_8bit_colors(r,g,b);
+
+	LightTrajectory::Ptr p = make_shared<LightTrajectory>(i, col, start, i, col, end);
+
+	return new LightAction(droneid, p, index);
+}
+
+LightAction* parse_fade_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+	enum indices : unsigned {
+		index_loc = 1,
+		sR_loc 	= 3,
+		sG_loc 	= 5,
+		sB_loc 	= 7,
+		si_loc 	= 9,
+		eR_loc 	= 11,
+		eG_loc 	= 13,
+		eB_loc 	= 15,
+		ei_loc 	= 17
+	};
+
+	if(split_line.size() < ei_loc + 1) {
+		throw std::runtime_error("Not enough fields in the fade action");
+	}
+	auto index = parse_light_index(split_line[index_loc]);
+	int sr = std::atoi(split_line[sR_loc].c_str());
+	int sg = std::atoi(split_line[sG_loc].c_str());
+	int sb = std::atoi(split_line[sB_loc].c_str());
+	double si = std::atof(split_line[si_loc].c_str());
+
+	int er = std::atoi(split_line[eR_loc].c_str());
+	int eg = std::atoi(split_line[eG_loc].c_str());
+	int eb = std::atoi(split_line[eB_loc].c_str());
+	double ei = std::atof(split_line[ei_loc].c_str());
+
+	Color sCol = Color::from_8bit_colors(sr,sg,sb);
+	Color eCol = Color::from_8bit_colors(er,eg,eb);
+
+	LightTrajectory::Ptr p = make_shared<LightTrajectory>(si, sCol, start, ei, eCol, end);
+	
+	return new LightAction(droneid, p, index);
 }
 
 LightAction* parse_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
-	return nullptr;
+	enum indices : unsigned {
+		index_loc = 1,
+		sR_loc 	= 3,
+		sG_loc 	= 5,
+		sB_loc 	= 7,
+		si_loc 	= 9,
+		eR_loc 	= 11,
+		eG_loc 	= 13,
+		eB_loc 	= 15,
+		ei_loc 	= 17,
+		cps_loc = 19,
+	};
+
+	if(split_line.size() < cps_loc + 1) {
+		throw std::runtime_error("Not enough fields in the fade action");
+	}
+	auto index = parse_light_index(split_line[index_loc]);
+	int sr = std::atoi(split_line[sR_loc].c_str());
+	int sg = std::atoi(split_line[sG_loc].c_str());
+	int sb = std::atoi(split_line[sB_loc].c_str());
+	double si = std::atof(split_line[si_loc].c_str());
+
+	int er = std::atoi(split_line[eR_loc].c_str());
+	int eg = std::atoi(split_line[eG_loc].c_str());
+	int eb = std::atoi(split_line[eB_loc].c_str());
+	double ei = std::atof(split_line[ei_loc].c_str());
+	double cps = std::atof(split_line[cps_loc].c_str());
+
+	Color sCol = Color::from_8bit_colors(sr,sg,sb);
+	Color eCol = Color::from_8bit_colors(er,eg,eb);
+
+	LightTrajectory::Ptr p = make_shared<StrobeTrajectory>(si, sCol, start, ei, eCol, end, cps, cps);
+
+	return new LightAction(droneid, p, index);
+}
+
+LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line){
+	enum indices : unsigned {
+		index_loc = 1,
+		sR_loc 	= 3,
+		sG_loc 	= 5,
+		sB_loc 	= 7,
+		si_loc 	= 9,
+		cpss_loc = 11,
+		eR_loc 	= 13,
+		eG_loc 	= 15,
+		eB_loc 	= 17,
+		ei_loc 	= 19,
+		cpse_loc = 21,
+	};
+
+	if(split_line.size() < cpse_loc + 1) {
+		throw std::runtime_error("Not enough fields in the fade action");
+	}
+	auto index = parse_light_index(split_line[index_loc]);
+	int sr = std::atoi(split_line[sR_loc].c_str());
+	int sg = std::atoi(split_line[sG_loc].c_str());
+	int sb = std::atoi(split_line[sB_loc].c_str());
+	double si = std::atof(split_line[si_loc].c_str());
+
+	int er = std::atoi(split_line[eR_loc].c_str());
+	int eg = std::atoi(split_line[eG_loc].c_str());
+	int eb = std::atoi(split_line[eB_loc].c_str());
+	double ei = std::atof(split_line[ei_loc].c_str());
+	double cpss = std::atof(split_line[cpss_loc].c_str());
+	double cpse = std::atof(split_line[cpse_loc].c_str());
+
+	Color sCol = Color::from_8bit_colors(sr,sg,sb);
+	Color eCol = Color::from_8bit_colors(er,eg,eb);
+
+	LightTrajectory::Ptr p = make_shared<StrobeTrajectory>(si, sCol, start, ei, eCol, end, cpss, cpse);
+
+	return new LightAction(droneid, p, index);
 }
 
 void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::vector<Point>& homes ){
@@ -576,4 +725,51 @@ Point parse_point(std::string point) {
 	return ret;
 }
 
+LightController::LightIndices parse_light_index(const std::string& in){
+	if(in == "Left")
+		return LightController::LightIndices::LEFT;
+	if(in == "Right")
+		return LightController::LightIndices::RIGHT;
+	if(in == "Internal")
+		return LightController::LightIndices::INTERNAL;
+	throw std::runtime_error("Failed to parse light index: " + in);
+}
+
+void fill_light_gaps(std::vector<std::vector<std::vector<LightAction*>>>& actions, double end_time){
+	//For each drone
+	for (auto i = 0; i < actions.size(); i++){
+		//For each light on each drone
+		for(auto j = 0; j < actions[i].size(); j++){
+			if(actions[i][j].size() == 0){
+				//TODO Fix drone ID I think i might not be correct. But it might not matter for light actions at this point.
+				// Maybe matters in future though?
+				actions[i][j].push_back(new LightAction(i, make_shared<EmptyLightTrajectory>(0.0, end_time),(LightController::LightIndices)j));
+			} else if(fabs((*(actions[i][j].end()-1))->GetEndTime() - end_time) > 0.01) {
+				actions[i][j].push_back(new LightAction(i, make_shared<EmptyLightTrajectory>((*(actions[i][j].end() - 1))->GetEndTime(), end_time), (LightController::LightIndices)j));
+			} else {
+				double et = actions[i][j][0]->GetEndTime();
+				//For each action for this light for this drone
+				for (auto k = 1; k < actions[i][j].size(); k++) {
+					double st = actions[i][j][k]->GetStartTime();
+					double temp = fabs(st - et);
+					if ( temp > 0.01) {
+						auto it = actions[i][j].begin() + k;
+ 						unsigned droneid = actions[i][j][k]->GetDrone();
+						double new_et = 0;
+						if (k < actions[i][j].size()) {
+							new_et = actions[i][j][k]->GetStartTime();
+						} else {
+							new_et = end_time;
+						}
+						actions[i][j].insert(it, new LightAction(droneid, make_shared<EmptyLightTrajectory>(et, new_et),
+																 (LightController::LightIndices) j));
+						et = new_et;
+					} else {
+						et = actions[i][j][k]->GetEndTime();
+					}
+				}
+			}
+		}
+	}
+}
 }

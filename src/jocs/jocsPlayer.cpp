@@ -32,6 +32,11 @@ namespace tansa {
 			posctls[i] = new PositionController(vehicles[i]);
 		}
 
+		lightCounters.resize(n);
+		for(auto &light : lightCounters) {
+			light.resize(LightController::NUM_LIGHTS, 0);
+		}
+
 		lightctls.resize(n);
 		for(int i = 0; i < n; i++) {
 			lightctls[i] = new LightController(vehicles[i]);
@@ -54,8 +59,8 @@ void JocsPlayer::reset() {
 	}
 
 	lightCounters.resize(n);
-	for(auto &lc : lightCounters) {
-		lc = 0;
+	for(auto &light : lightCounters) {
+		light.resize(LightController::NUM_LIGHTS, 0);
 	}
 
 	pauseIndices.resize(n);
@@ -304,19 +309,29 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					posctls[i]->track(motion);
 					posctls[i]->control(t);
 				}
-
-				if (lightCounters[i] < lightActions[chorI].size()) {
-					LightTrajectory *light = static_cast<LightAction *>(lightActions[chorI][lightCounters[i]])->GetPath();
-
-					if (t >= lightActions[chorI][lightCounters[i]]->GetStartTime()) {
-						lightctls[i]->track(light, light); //TODO: not just copy same light trajectory for both lights
-						lightctls[i]->control(t);
-						if (t >= lightActions[chorI][lightCounters[i]]->GetEndTime()) {
-							lightCounters[i]++;
+				for(int j = 0; j < LightController::NUM_LIGHTS; j++){
+					//Very important. Must handle the case where you don't specify anything for some of the lights
+					//Otherwise it WILL CRASH with an index out of bounds here.
+					if(j >= lightActions[chorI].size())
+						break;
+					int counter = lightCounters[i][j];
+					const std::vector<LightAction*> local_action_array = lightActions[chorI][j];
+					LightAction* local_action = local_action_array[counter];
+					if (counter < local_action_array.size()) {
+						auto traj = local_action->GetPath();
+						if (t >= local_action->GetStartTime()) {
+							lightctls[i]->track(traj, (LightController::LightIndices)j);
+							lightctls[i]->control(t);
+							if (t >= local_action->GetEndTime()) {
+								lightCounters[i][j]++;
+							}
 						}
 					}
 				}
 			} else if (s == StateLanding) {
+				std::vector<int> light_states;
+				light_states.resize(LightController::MAX_LIGHTS, 0);
+				v.set_lighting(light_states);
 				double t = Time::now().since(transitionStarts[i]).seconds();
 
 				// Special behavior near the ground. Stop trying to descend if we are hitting ground effects

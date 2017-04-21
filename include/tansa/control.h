@@ -99,12 +99,21 @@ public:
  */
 class LightController : public Controller {
 public:
+
+	enum LightIndices {
+		LEFT = 0,
+		RIGHT = 1,
+		INTERNAL = 2, 
+	};
+	static const int NUM_LIGHTS = 3;
+	static const int MAX_LIGHTS = 7;
+
 	LightController(Vehicle *v);
 
 	/**
-	 * Specifies which trajectory should do followed
+	 * Specifies which trajectory should be followed for which light
 	 */
-	void track(LightTrajectory *trajTop, LightTrajectory *trajBot);
+	void track(LightTrajectory::Ptr traj, LightIndices index) { trajectories[index] = traj; }
 
 
 	/**
@@ -114,12 +123,9 @@ public:
 
 private:
 	double EPSILON = 0.01;
-
+	std::vector<int> lightStates;
 	Vehicle *vehicle;
-	LightTrajectory *trajectoryTop;
-	LightTrajectory *trajectoryBot;
-	double currentIntensityTop = 0.0;
-	double currentIntensityBot = 0.0;
+	LightTrajectory::Ptr trajectories[NUM_LIGHTS];
 };
 
 }

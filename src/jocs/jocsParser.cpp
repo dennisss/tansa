@@ -57,9 +57,11 @@ Jocs::~Jocs() {
 			delete a;
 		}
 	}
-	for (const auto &vec : lightActions) {
-		for (const auto &a : vec) {
-			delete a;
+	for (const auto &light : lightActions) {
+		for (const auto &drone : light) {
+			for(const auto& action: drone){
+				delete action;
+			}
 		}
 	}
 }
@@ -183,7 +185,7 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 
 			if (type == ActionTypes::Light) {
 
-				// Get the lights that this action applies to
+				/*// Get the lights that this action applies to
 				//auto lights = actionsArrayElement[ACTION_DATA_KEY][LIGHTS_INCL_KEY];
 				//assert(lights.is_array());
 
@@ -193,28 +195,29 @@ double Jocs::parseAction(const nlohmann::json::reference data, double lastTime, 
 
 				float si = actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY];
 				float ei = actionsArrayElement[ACTION_DATA_KEY][END_INTENSITY_KEY];
-				lightActions[drone].push_back(new LightAction(
+				lightActions[0][drone].push_back(new LightAction(
 						drone,
-						new LightTrajectory(
+						make_shared<LightTrajectory>(
 								si,
 								lastTime + startTime,
 								ei,
 								lastTime + startTime + duration)
-				));
+				));*/
 			} else if (type == ActionTypes::Strobe) {
 
-				float si = actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY];
+				/*float si = actionsArrayElement[ACTION_DATA_KEY][START_INTENSITY_KEY];
 				float ei = actionsArrayElement[ACTION_DATA_KEY][END_INTENSITY_KEY];
 				float bps = actionsArrayElement[ACTION_DATA_KEY][BPS_KEY];
-				lightActions[drone].push_back(new LightAction(
+				//NOTE this is hack to get this to compile. JOCS only handled 1 light
+				lightActions[0][drone].push_back(new LightAction(
 						drone,
-						new StrobeTrajectory(
+						make_shared<StrobeTrajectory>(
 								si,
 								lastTime + startTime,
 								ei,
 								lastTime + startTime + duration,
 								bps)
-				));
+				));*/
 			} else {
 				Point startOffset(drones[j][DRONE_START_OFF_KEY][0], drones[j][DRONE_START_OFF_KEY][1], drones[j][DRONE_START_OFF_KEY][2]);
 				Point endOffset(drones[j][DRONE_END_OFF_KEY][0], drones[j][DRONE_END_OFF_KEY][1], drones[j][DRONE_END_OFF_KEY][2]);

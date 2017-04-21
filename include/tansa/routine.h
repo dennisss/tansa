@@ -35,7 +35,7 @@ public:
 	std::vector<std::vector<Action*>> actions;
 	std::vector<Breakpoint> breakpoints;
 	std::vector<Point> homes;
-	std::vector<std::vector<LightAction*>> lightActions;
+	std::vector<std::vector<std::vector<LightAction*>>> lightActions;
 	bool needConvertToMeters = false;
 	bool needConvertToRadians = false;
 

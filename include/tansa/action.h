@@ -2,6 +2,7 @@
 #define TANSA_ACTION_H
 
 #include "trajectory.h"
+#include "control.h"
 #include <memory>
 
 namespace tansa {
@@ -23,7 +24,9 @@ enum class ActionTypes : unsigned{
 	Arc 			= 9,
 	TransformedTraj = 10,
 	GradualCircle 	= 11,
-	Helix           = 12
+	Helix           = 12,
+	Fade,
+	DynamicStrobe,
 };
 
 typedef unsigned DroneId;
@@ -62,10 +65,7 @@ public:
 	 */
 	inline ActionTypes GetActionType() { return type; }
 
-	inline bool is_light_action() {
-		return type == ActionTypes::Strobe || type == ActionTypes::Light;
-	}
-
+	inline bool IsLightAction() { return isLightAction; }
 
 	/**
 	 * Line number, if applicable, (or -1) from the original file.
@@ -76,6 +76,7 @@ protected:
 	DroneId droneId;
 	ActionTypes type;
 	bool isCalculated = false;
+	bool isLightAction = false;
 };
 /**
  * Represents an action to be replaced by another action (usually for transitions)
@@ -139,6 +140,7 @@ public:
 	 * @return The end point of the trajectory obtained by evaluating the trajectory at its end time.
 	 */
 	inline Point GetEndPoint() const { return path->evaluate(path->endTime()).position; }
+	virtual bool IsLightAction() { return false; }
 
 private:
 	Trajectory::Ptr path;
@@ -155,14 +157,16 @@ public:
 	 * @param t The trajectory that the light should follow. In other words, how does the light change over time?
 	 * @return A LightAction instance that encapsulates the relevant trajectory and state.
 	 */
-	LightAction(DroneId did, LightTrajectory* t) :
-			Action(did, ActionTypes::Light), path(t)
-			{ isCalculated = true; }
+	LightAction(DroneId did, LightTrajectory::Ptr t, LightController::LightIndices light_index) :
+			Action(did, ActionTypes::Light), path(t), index(light_index) {
+		isCalculated = true;
+		isLightAction = true;
+	}
 	/**
 	 * Deletes its path on deletion. This object owns the trajectory.
 	 * TODO: Make this an owned pointer.
 	 */
-	virtual ~LightAction(){ delete path; }
+	virtual ~LightAction(){}
 
 	/**
 	 * Get intensity value of evaluating the path at a given time.
@@ -173,7 +177,7 @@ public:
 	/**
 	 * @return The lights trajectory, how it changes over time.
 	 */
-	inline LightTrajectory* GetPath() { return path; }
+	inline LightTrajectory::Ptr GetPath() { return path; }
 	/**
 	 * @return The start time for the trajectory
 	 */
@@ -193,10 +197,12 @@ public:
 	/**
 	 * @return Which light this action is referring to.
 	 */
-	//inline LightId GetLightId() { return lightId; }
+	inline LightController::LightIndices GetLightIndex() { return index; }
+	virtual bool IsLightAction() { return true; }
 
 private:
-	LightTrajectory* path;
+	LightController::LightIndices index;
+	LightTrajectory::Ptr path;
 	//LightId lightId;
 };
 

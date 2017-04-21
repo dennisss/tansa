@@ -5,6 +5,9 @@
 #include "tansa/csv.h"
 
 #include <boost/algorithm/string.hpp>
+#include <algorithm>
+
+
 namespace tansa {
 
 
@@ -726,11 +729,15 @@ Point parse_point(std::string point) {
 }
 
 LightController::LightIndices parse_light_index(const std::string& in){
-	if(in == "Left")
+
+	std::string str = in;
+	std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+
+	if(str == "left")
 		return LightController::LightIndices::LEFT;
-	if(in == "Right")
+	if(str == "right")
 		return LightController::LightIndices::RIGHT;
-	if(in == "Internal")
+	if(str == "internal")
 		return LightController::LightIndices::INTERNAL;
 	throw std::runtime_error("Failed to parse light index: " + in);
 }

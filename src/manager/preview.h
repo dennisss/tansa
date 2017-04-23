@@ -29,6 +29,7 @@ public:
 
 
 	vector<ModelState> get_states();
+	vector<int> get_light_states();
 
 private:
 

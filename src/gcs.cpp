@@ -155,6 +155,8 @@ void send_preview_status_message() {
 
 
 	std::vector<ModelState> states = previewPlayer->get_states();
+	std::vector<int> lightStates = previewPlayer->get_light_states();
+
 
 	json jsonVehicles = json::array();
 	for(int i = 0; i < states.size(); i++) {
@@ -181,7 +183,14 @@ void send_preview_status_message() {
 		jsonOrientation.push_back(states[i].orientation.z());
 		jsonVehicle["orientation"] = jsonOrientation;
 
-		jsonVehicle["lights"] = json::array();
+		json lightsArray = json::array();
+		if(lightStates.size() > i) {
+			int c = lightStates[i];
+			lightsArray.push_back( ((c >> 16) & 0xff) / (float)0xff );
+			lightsArray.push_back( ((c >> 8) & 0xff) / (float)0xff );
+			lightsArray.push_back( ((c >> 0) & 0xff) / (float)0xff );
+		}
+		jsonVehicle["lights"] = lightsArray;
 
 		json jsonBatteryStats = {
 			{"voltage", 8.4},

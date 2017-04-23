@@ -331,10 +331,10 @@ void *natnet_data_server(void *arg){
 		}
 
 
-		// Every half second, send a ping request
+		// Every half second, send a ping request to keep the data stream going
 		if(c->type == NatNetUnicast) {
 			tansa::Time t = tansa::Time::now();
-			if(t.since(c->lastping).seconds() >= 0.5) {
+			if(t.since(c->lastping).seconds() >= 0.1) {
 				c->ping();
 				c->lastping = t;
 			}

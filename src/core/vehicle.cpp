@@ -72,7 +72,7 @@ int Vehicle::connect(int lport, int rport, const char *laddr, const char *raddr)
 	memset((char *)&client_addr, 0, sizeof(client_addr));
 	client_addr.sin_family = AF_INET;
 	client_addr.sin_port = htons(rport);
-	inet_pton(AF_INET, "127.0.0.1", &client_addr.sin_addr);
+	inet_pton(AF_INET, raddr != NULL? raddr : "127.0.0.1", &client_addr.sin_addr);
 
 	running = true;
 	if(pthread_create(&thread, NULL, vehicle_thread, (void *) this) != 0) {

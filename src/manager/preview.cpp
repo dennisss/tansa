@@ -55,5 +55,30 @@ vector<ModelState> PreviewPlayer::get_states() {
 	return states;
 }
 
+vector<int> PreviewPlayer::get_light_states() {
+
+	vector<int> states;
+
+	states.resize(data->lightActions.size(), 0); // If no action, default to off
+
+	for(int i = 0; i < data->lightActions.size(); i++) {
+		for(int j = 0; j < data->lightActions[i][0].size(); j++) {
+
+			LightAction *m = data->lightActions[i][0][j];
+			LightTrajectory::Ptr path = m->GetPath();
+
+			if(path->getStartTime() <= this->time && path->getEndTime() > this->time) {
+				int ts = path->evaluate(this->time);
+				states[i] = ts;
+				break;
+			}
+		}
+	}
+
+
+	return states;
+
+}
+
 
 }

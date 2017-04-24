@@ -10,7 +10,6 @@
 
 namespace tansa {
 
-
 template<typename Out>
 void split(const std::string &s, char delim, Out result) {
 	std::stringstream ss;
@@ -64,11 +63,55 @@ bool is_light_action(ActionTypes type){
 	return type == ActionTypes::Strobe || type == ActionTypes::Light || type == ActionTypes::Fade || type == ActionTypes::DynamicStrobe;
 }
 
-std::vector<string> read_csv_line(std::string& line){
-	auto ret = split(line, ',');
-	return std::move(ret);
+// Credit to http://stackoverflow.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf
+std::istream& safeGetline(std::istream& is, std::string& t) {
+	t.clear();
 
+	// The characters in the stream are read one-by-one using a std::streambuf.
+	// That is faster than reading them one-by-one using the std::istream.
+	// Code that uses streambuf this way must be guarded by a sentry object.
+	// The sentry object performs various tasks,
+	// such as thread synchronization and updating the stream state.
+
+	std::istream::sentry se(is, true);
+	std::streambuf* sb = is.rdbuf();
+
+	for(;;) {
+		int c = sb->sbumpc();
+		switch (c) {
+			case '\n':
+				return is;
+			case '\r':
+				if(sb->sgetc() == '\n')
+					sb->sbumpc();
+				return is;
+			case EOF:
+				// Also handle the case when the last line has no line ending
+				if(t.empty())
+					is.setstate(std::ios::eofbit);
+				return is;
+			default:
+				t += (char)c;
+		}
+	}
 }
+
+bool read_csv_line(ifstream &file, std::vector<string> &split_line, unsigned skip_cols = 0){
+	std::string line;
+	if(safeGetline(file, line).eof()) {
+		return false;
+	}
+
+	auto ret = split(line, ',');
+	unsigned n = ret.size() - skip_cols;
+	split_line.resize(n);
+	for(unsigned i = 0; i < n; i++) {
+		split_line[i] = ret[i + skip_cols];
+	}
+
+	return true;
+}
+
 Choreography* parse_csv(const char* filepath, double scale){
 	Choreography* ret = nullptr;
 	int currentLine = 1; // Lines indexed at 1
@@ -76,10 +119,19 @@ Choreography* parse_csv(const char* filepath, double scale){
 		auto csv = ifstream(filepath);
 		ret = new Choreography();
 		auto drone_map = std::map<std::string, unsigned long>();
-		std::string line;
-		getline(csv, line); //Contains dronekey and meters/feet
 		std::vector<std::string> split_line;
-		split_line = split(line, ',');
+		read_csv_line(csv, split_line); //Contains dronekey and meters/feet
+		unsigned skip_cols = 0; // Number of columns to skip per line
+		for(unsigned i = 0; i < split_line.size(); i++) {
+			if(split_line[i] == "Breakpoint") { // Skip all extra columns before the breakpoints
+				skip_cols = i;
+				break;
+			}
+		}
+		// Remove skipped columns for the first line
+		for(unsigned i = 0; i < skip_cols; i++)
+			split_line.erase(split_line.begin());
+
 		unsigned break_num = 0;
 		double conversion_factor = scale;
 		double angle_conversion = 1.0;
@@ -108,8 +160,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		currentLine++;
 
-		getline(csv, line); //contains homes
-		auto home_split = split(line, ',');
+		std::vector<std::string> home_split;
+		read_csv_line(csv, home_split, skip_cols);
 		for (size_t i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
 			ret->homes.push_back(parse_point(home_split[i])*conversion_factor);
 			if (ret->homes.size() == num_drones)
@@ -117,8 +169,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		currentLine++;
 
-		while (getline(csv, line)) { //Iterate line by line
-			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
+		while (read_csv_line(csv, split_line, skip_cols)) { //Iterate line by line
+
 			for(int i = 0; i < split_line.size(); i++)
 				boost::erase_all(split_line[i], "\r");
 			//Parse breakpoints
@@ -581,7 +633,7 @@ LightAction* parse_fade_action(double start, double end, unsigned long droneid, 
 	Color eCol = Color::from_8bit_colors(er,eg,eb);
 
 	LightTrajectory::Ptr p = make_shared<LightTrajectory>(si, sCol, start, ei, eCol, end);
-	
+
 	return new LightAction(droneid, p, index);
 }
 

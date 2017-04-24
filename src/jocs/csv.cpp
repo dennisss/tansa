@@ -262,8 +262,8 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
 	enum indices : unsigned {
 		start_x_loc 	= 1,
-		start_y_loc 	= 3,
-		start_z_loc 	= 5,
+		start_y_loc 	= 2,
+		start_z_loc 	= 3,
 	};
 
 	if(split_line.size() < start_z_loc + 1) {
@@ -284,11 +284,11 @@ Action* parse_hover_action(double start, double end, unsigned long droneid, cons
 Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
 	enum indices : unsigned {
 		start_x_loc 	= 1,
-		start_y_loc 	= 3,
-		start_z_loc 	= 5,
-		end_x_loc 		= 7,
-		end_y_loc 		= 9,
-		end_z_loc 		= 11
+		start_y_loc 	= 2,
+		start_z_loc 	= 3,
+		end_x_loc 		= 5,
+		end_y_loc 		= 6,
+		end_z_loc 		= 7
 	};
 
 	if(split_line.size() < end_z_loc + 1) {
@@ -317,8 +317,8 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
 		theta1_loc 		= 3,
 		theta2_loc 		= 5,
 		x_loc 			= 7,
-		y_loc 			= 9,
-		z_loc 			= 11
+		y_loc 			= 8,
+		z_loc 			= 9
 	};
 
 	if(split_line.size() < z_loc + 1) {
@@ -346,8 +346,8 @@ Action* parse_ellipse_action(double start, double end, unsigned long droneid, co
 		theta1_loc 	 	= 5,
 		theta2_loc	 	= 7,
 		x_loc 		 	= 9,
-		y_loc			= 11,
-		z_loc 			= 13
+		y_loc			= 10,
+		z_loc 			= 11
 	};
 	Point origin;
 	double radius_x 	= std::atof(split_line[radius_x_loc].c_str()) * length_conversion;
@@ -370,11 +370,11 @@ Action* parse_helix_action(double start, double end, unsigned long droneid, cons
 		theta1_loc 	 	= 3,
 		theta2_loc	 	= 5,
 		x_loc 		 	= 7,
-		y_loc			= 9,
-		z_loc 			= 11,
-		x2_loc 		 	= 13,
-		y2_loc			= 15,
-		z2_loc 			= 17,
+		y_loc			= 8,
+		z_loc 			= 9,
+		x2_loc 		 	= 11,
+		y2_loc			= 12,
+		z2_loc 			= 13,
 	};
 
 	if(split_line.size() < z2_loc + 1) {
@@ -404,10 +404,10 @@ Action* parse_spiral_action(double start, double end, unsigned long droneid, con
 	enum indices : unsigned {
 		radius_loc 		= 1,
 		x_loc 		 	= 3,
-		y_loc			= 5,
-		z_loc 			= 7,
-		theta1_loc 	 	= 9,
-		theta2_loc	 	= 11
+		y_loc			= 4,
+		z_loc 			= 5,
+		theta1_loc 	 	= 7,
+		theta2_loc	 	= 9
 	};
 
 	if(split_line.size() < theta2_loc + 1) {
@@ -443,8 +443,8 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 		enum indices : unsigned {
 			time_loc 	= 1,
 			x_loc 		= 3,
-			y_loc		= 5,
-			z_loc 		= 7
+			y_loc		= 4,
+			z_loc 		= 5
 		};
 
 		Point p;
@@ -528,9 +528,9 @@ LightAction* parse_light_action(double start, double end, unsigned long droneid,
 	enum indices : unsigned {
 		index_loc = 1,
 		R_loc 	= 3,
-		G_loc 	= 5,
-		B_loc 	= 7,
-		i_loc 	= 9
+		G_loc 	= 4,
+		B_loc 	= 5,
+		i_loc 	= 7
 	};
 
 	if(split_line.size() < i_loc + 1) {
@@ -554,13 +554,13 @@ LightAction* parse_fade_action(double start, double end, unsigned long droneid, 
 	enum indices : unsigned {
 		index_loc = 1,
 		sR_loc 	= 3,
-		sG_loc 	= 5,
-		sB_loc 	= 7,
-		si_loc 	= 9,
-		eR_loc 	= 11,
-		eG_loc 	= 13,
-		eB_loc 	= 15,
-		ei_loc 	= 17
+		sG_loc 	= 4,
+		sB_loc 	= 5,
+		si_loc 	= 7,
+		eR_loc 	= 9,
+		eG_loc 	= 10,
+		eB_loc 	= 11,
+		ei_loc 	= 13
 	};
 
 	if(split_line.size() < ei_loc + 1) {
@@ -589,14 +589,14 @@ LightAction* parse_strobe_action(double start, double end, unsigned long droneid
 	enum indices : unsigned {
 		index_loc = 1,
 		sR_loc 	= 3,
-		sG_loc 	= 5,
-		sB_loc 	= 7,
-		si_loc 	= 9,
-		eR_loc 	= 11,
-		eG_loc 	= 13,
-		eB_loc 	= 15,
-		ei_loc 	= 17,
-		cps_loc = 19,
+		sG_loc 	= 4,
+		sB_loc 	= 5,
+		si_loc 	= 7,
+		eR_loc 	= 9,
+		eG_loc 	= 10,
+		eB_loc 	= 11,
+		ei_loc 	= 13,
+		cps_loc = 15,
 	};
 
 	if(split_line.size() < cps_loc + 1) {
@@ -626,15 +626,15 @@ LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long
 	enum indices : unsigned {
 		index_loc = 1,
 		sR_loc 	= 3,
-		sG_loc 	= 5,
-		sB_loc 	= 7,
-		si_loc 	= 9,
-		cpss_loc = 11,
-		eR_loc 	= 13,
-		eG_loc 	= 15,
-		eB_loc 	= 17,
-		ei_loc 	= 19,
-		cpse_loc = 21,
+		sG_loc 	= 4,
+		sB_loc 	= 5,
+		si_loc 	= 7,
+		cpss_loc = 9,
+		eR_loc 	= 11,
+		eG_loc 	= 12,
+		eB_loc 	= 13,
+		ei_loc 	= 15,
+		cpse_loc = 17,
 	};
 
 	if(split_line.size() < cpse_loc + 1) {

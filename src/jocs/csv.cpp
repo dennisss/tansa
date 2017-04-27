@@ -10,7 +10,6 @@
 
 namespace tansa {
 
-
 template<typename Out>
 void split(const std::string &s, char delim, Out result) {
 	std::stringstream ss;
@@ -64,11 +63,55 @@ bool is_light_action(ActionTypes type){
 	return type == ActionTypes::Strobe || type == ActionTypes::Light || type == ActionTypes::Fade || type == ActionTypes::DynamicStrobe;
 }
 
-std::vector<string> read_csv_line(std::string& line){
-	auto ret = split(line, ',');
-	return std::move(ret);
+// Credit to http://stackoverflow.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf
+std::istream& safeGetline(std::istream& is, std::string& t) {
+	t.clear();
 
+	// The characters in the stream are read one-by-one using a std::streambuf.
+	// That is faster than reading them one-by-one using the std::istream.
+	// Code that uses streambuf this way must be guarded by a sentry object.
+	// The sentry object performs various tasks,
+	// such as thread synchronization and updating the stream state.
+
+	std::istream::sentry se(is, true);
+	std::streambuf* sb = is.rdbuf();
+
+	for(;;) {
+		int c = sb->sbumpc();
+		switch (c) {
+			case '\n':
+				return is;
+			case '\r':
+				if(sb->sgetc() == '\n')
+					sb->sbumpc();
+				return is;
+			case EOF:
+				// Also handle the case when the last line has no line ending
+				if(t.empty())
+					is.setstate(std::ios::eofbit);
+				return is;
+			default:
+				t += (char)c;
+		}
+	}
 }
+
+bool read_csv_line(ifstream &file, std::vector<string> &split_line, unsigned skip_cols = 0){
+	std::string line;
+	if(safeGetline(file, line).eof()) {
+		return false;
+	}
+
+	auto ret = split(line, ',');
+	unsigned n = ret.size() - skip_cols;
+	split_line.resize(n);
+	for(unsigned i = 0; i < n; i++) {
+		split_line[i] = ret[i + skip_cols];
+	}
+
+	return true;
+}
+
 Choreography* parse_csv(const char* filepath, double scale){
 	Choreography* ret = nullptr;
 	int currentLine = 1; // Lines indexed at 1
@@ -76,10 +119,19 @@ Choreography* parse_csv(const char* filepath, double scale){
 		auto csv = ifstream(filepath);
 		ret = new Choreography();
 		auto drone_map = std::map<std::string, unsigned long>();
-		std::string line;
-		getline(csv, line); //Contains dronekey and meters/feet
 		std::vector<std::string> split_line;
-		split_line = split(line, ',');
+		read_csv_line(csv, split_line); //Contains dronekey and meters/feet
+		unsigned skip_cols = 0; // Number of columns to skip per line
+		for(unsigned i = 0; i < split_line.size(); i++) {
+			if(split_line[i] == "Breakpoint") { // Skip all extra columns before the breakpoints
+				skip_cols = i;
+				break;
+			}
+		}
+		// Remove skipped columns for the first line
+		for(unsigned i = 0; i < skip_cols; i++)
+			split_line.erase(split_line.begin());
+
 		unsigned break_num = 0;
 		double conversion_factor = scale;
 		double angle_conversion = 1.0;
@@ -108,8 +160,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		currentLine++;
 
-		getline(csv, line); //contains homes
-		auto home_split = split(line, ',');
+		std::vector<std::string> home_split;
+		read_csv_line(csv, home_split, skip_cols);
 		for (size_t i = csv_positions::ParamStartPos; i < home_split.size(); i++) {
 			ret->homes.push_back(parse_point(home_split[i])*conversion_factor);
 			if (ret->homes.size() == num_drones)
@@ -117,8 +169,8 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		currentLine++;
 
-		while (getline(csv, line)) { //Iterate line by line
-			split_line = std::move(read_csv_line(line)); //TODO: Probably inefficient.
+		while (read_csv_line(csv, split_line, skip_cols)) { //Iterate line by line
+
 			for(int i = 0; i < split_line.size(); i++)
 				boost::erase_all(split_line[i], "\r");
 			//Parse breakpoints
@@ -278,8 +330,8 @@ LightAction* parse_light_action(ActionTypes type, double start, double end, unsi
 Action* parse_hover_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
 	enum indices : unsigned {
 		start_x_loc 	= 1,
-		start_y_loc 	= 3,
-		start_z_loc 	= 5,
+		start_y_loc 	= 2,
+		start_z_loc 	= 3,
 	};
 
 	if(split_line.size() < start_z_loc + 1) {
@@ -300,11 +352,11 @@ Action* parse_hover_action(double start, double end, unsigned long droneid, cons
 Action* parse_line_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion) {
 	enum indices : unsigned {
 		start_x_loc 	= 1,
-		start_y_loc 	= 3,
-		start_z_loc 	= 5,
-		end_x_loc 		= 7,
-		end_y_loc 		= 9,
-		end_z_loc 		= 11
+		start_y_loc 	= 2,
+		start_z_loc 	= 3,
+		end_x_loc 		= 5,
+		end_y_loc 		= 6,
+		end_z_loc 		= 7
 	};
 
 	if(split_line.size() < end_z_loc + 1) {
@@ -333,8 +385,8 @@ Action* parse_circle_action(double start, double end, unsigned long droneid, con
 		theta1_loc 		= 3,
 		theta2_loc 		= 5,
 		x_loc 			= 7,
-		y_loc 			= 9,
-		z_loc 			= 11
+		y_loc 			= 8,
+		z_loc 			= 9
 	};
 
 	if(split_line.size() < z_loc + 1) {
@@ -362,8 +414,8 @@ Action* parse_ellipse_action(double start, double end, unsigned long droneid, co
 		theta1_loc 	 	= 5,
 		theta2_loc	 	= 7,
 		x_loc 		 	= 9,
-		y_loc			= 11,
-		z_loc 			= 13
+		y_loc			= 10,
+		z_loc 			= 11
 	};
 	Point origin;
 	double radius_x 	= std::atof(split_line[radius_x_loc].c_str()) * length_conversion;
@@ -386,11 +438,11 @@ Action* parse_helix_action(double start, double end, unsigned long droneid, cons
 		theta1_loc 	 	= 3,
 		theta2_loc	 	= 5,
 		x_loc 		 	= 7,
-		y_loc			= 9,
-		z_loc 			= 11,
-		x2_loc 		 	= 13,
-		y2_loc			= 15,
-		z2_loc 			= 17,
+		y_loc			= 8,
+		z_loc 			= 9,
+		x2_loc 		 	= 11,
+		y2_loc			= 12,
+		z2_loc 			= 13,
 	};
 
 	if(split_line.size() < z2_loc + 1) {
@@ -420,10 +472,10 @@ Action* parse_spiral_action(double start, double end, unsigned long droneid, con
 	enum indices : unsigned {
 		radius_loc 		= 1,
 		x_loc 		 	= 3,
-		y_loc			= 5,
-		z_loc 			= 7,
-		theta1_loc 	 	= 9,
-		theta2_loc	 	= 11
+		y_loc			= 4,
+		z_loc 			= 5,
+		theta1_loc 	 	= 7,
+		theta2_loc	 	= 9
 	};
 
 	if(split_line.size() < theta2_loc + 1) {
@@ -459,8 +511,8 @@ Action* parse_arc_action(double start, double end, unsigned long droneid, const 
 		enum indices : unsigned {
 			time_loc 	= 1,
 			x_loc 		= 3,
-			y_loc		= 5,
-			z_loc 		= 7
+			y_loc		= 4,
+			z_loc 		= 5
 		};
 
 		Point p;
@@ -544,9 +596,9 @@ LightAction* parse_light_action(double start, double end, unsigned long droneid,
 	enum indices : unsigned {
 		index_loc = 1,
 		R_loc 	= 3,
-		G_loc 	= 5,
-		B_loc 	= 7,
-		i_loc 	= 9
+		G_loc 	= 4,
+		B_loc 	= 5,
+		i_loc 	= 7
 	};
 
 	if(split_line.size() < i_loc + 1) {
@@ -570,13 +622,13 @@ LightAction* parse_fade_action(double start, double end, unsigned long droneid, 
 	enum indices : unsigned {
 		index_loc = 1,
 		sR_loc 	= 3,
-		sG_loc 	= 5,
-		sB_loc 	= 7,
-		si_loc 	= 9,
-		eR_loc 	= 11,
-		eG_loc 	= 13,
-		eB_loc 	= 15,
-		ei_loc 	= 17
+		sG_loc 	= 4,
+		sB_loc 	= 5,
+		si_loc 	= 7,
+		eR_loc 	= 9,
+		eG_loc 	= 10,
+		eB_loc 	= 11,
+		ei_loc 	= 13
 	};
 
 	if(split_line.size() < ei_loc + 1) {
@@ -597,7 +649,7 @@ LightAction* parse_fade_action(double start, double end, unsigned long droneid, 
 	Color eCol = Color::from_8bit_colors(er,eg,eb);
 
 	LightTrajectory::Ptr p = make_shared<LightTrajectory>(si, sCol, start, ei, eCol, end);
-	
+
 	return new LightAction(droneid, p, index);
 }
 
@@ -605,14 +657,14 @@ LightAction* parse_strobe_action(double start, double end, unsigned long droneid
 	enum indices : unsigned {
 		index_loc = 1,
 		sR_loc 	= 3,
-		sG_loc 	= 5,
-		sB_loc 	= 7,
-		si_loc 	= 9,
-		eR_loc 	= 11,
-		eG_loc 	= 13,
-		eB_loc 	= 15,
-		ei_loc 	= 17,
-		cps_loc = 19,
+		sG_loc 	= 4,
+		sB_loc 	= 5,
+		si_loc 	= 7,
+		eR_loc 	= 9,
+		eG_loc 	= 10,
+		eB_loc 	= 11,
+		ei_loc 	= 13,
+		cps_loc = 15,
 	};
 
 	if(split_line.size() < cps_loc + 1) {
@@ -642,15 +694,15 @@ LightAction* parse_dynamic_strobe_action(double start, double end, unsigned long
 	enum indices : unsigned {
 		index_loc = 1,
 		sR_loc 	= 3,
-		sG_loc 	= 5,
-		sB_loc 	= 7,
-		si_loc 	= 9,
-		cpss_loc = 11,
-		eR_loc 	= 13,
-		eG_loc 	= 15,
-		eB_loc 	= 17,
-		ei_loc 	= 19,
-		cpse_loc = 21,
+		sG_loc 	= 4,
+		sB_loc 	= 5,
+		si_loc 	= 7,
+		cpss_loc = 9,
+		eR_loc 	= 11,
+		eG_loc 	= 12,
+		eB_loc 	= 13,
+		ei_loc 	= 15,
+		cpse_loc = 17,
 	};
 
 	if(split_line.size() < cpse_loc + 1) {

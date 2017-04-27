@@ -707,6 +707,10 @@ void osc_on_message(OSCMessage &msg) {
 
 			// Assert that it is already prepared at the given cue
 
+			if(mocap != NULL) {
+				mocap->start_recording();
+			}
+
 			player->play();
 		}
 

@@ -48,6 +48,8 @@ void PositionController::control(double t) {
 	double yaw_angle = DEFAULT_YAW_ANGLE;
 
 	if(directAttitudeControl) {
+		vehicle->lastControlInput = a;
+
 		a += Vector3d(0, 0, GRAVITY_MS);
 
 		Quaterniond att = Quaterniond::FromTwoVectors(Vector3d(0,0,1), a.normalized());

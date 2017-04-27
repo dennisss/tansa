@@ -129,6 +129,22 @@ Choreography* parse_csv(const char* filepath, double scale){
 								   parse_time(split_line[csv_positions::StartTimePos])));
 			}
 
+			// Skipping any lines without time information (probably empty)
+			if(split_line.size() < csv_positions::DronesPos) {
+				continue;
+			}
+			bool emptyHead = true;
+			for(int i = 0; i <= csv_positions::DronesPos; i++) {
+				if(!split_line[i].empty()) {
+					emptyHead = false;
+					break;
+				}
+			}
+			if(emptyHead) {
+				continue;
+			}
+			
+
 			double start_time = parse_time(split_line[csv_positions::StartTimePos]);
 			double end_time = parse_time(split_line[csv_positions::EndTimePos]);
 			ActionTypes action_type = parse_action_type(split_line[csv_positions::ActionTypePos]);

@@ -17,7 +17,7 @@ namespace tansa {
  */
 class JocsPlayer {
 public:
-	JocsPlayer(bool inRealLife) { this->inRealLife = inRealLife; }
+	JocsPlayer(bool inRealLife, bool enableLighting) { this->inRealLife = inRealLife; this->enableLighting = enableLighting; }
 
 
 	/**
@@ -160,6 +160,7 @@ private:
 	double startOffset = 0.0;
 	bool looping = false;
 	bool inRealLife;
+	bool enableLighting;
 
 	ofstream logfile;
 

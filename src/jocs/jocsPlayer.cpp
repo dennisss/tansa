@@ -321,7 +321,9 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 						auto traj = local_action->GetPath();
 						if (t >= local_action->GetStartTime()) {
 							lightctls[i]->track(traj, (LightController::LightIndices)j);
-							lightctls[i]->control(t);
+							if(enableLighting) {
+								lightctls[i]->control(t);
+							}
 							if (t >= local_action->GetEndTime()) {
 								lightCounters[i][j]++;
 							}

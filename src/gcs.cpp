@@ -57,6 +57,8 @@ static vector<Vehicle *> vehicles;
 static std::vector<vehicle_config> vconfigs;
 static string worldMode;
 static bool inRealLife;
+static bool enableLighting;
+static int latestStartPoint;
 
 static bool previewMode = false;
 static PreviewPlayer *previewPlayer;
@@ -585,6 +587,8 @@ void loadConfiguration(const json &rawJsonArg) {
 	int startPoint = rawJson["startPoint"];
 	player->cleanup();
 
+	latestStartPoint = startPoint;
+
 	bool res = false;
 	if(routinePath == "custom") {
 		res = player->loadChoreography(custom_jocs(), activeRoles, startPoint);
@@ -707,11 +711,21 @@ void osc_on_message(OSCMessage &msg) {
 
 			// Assert that it is already prepared at the given cue
 
-			if(mocap != NULL) {
-				mocap->start_recording();
+			if(num < latestStartPoint) {
+				printf("Blocking early cue\n");
+				return;
+			}
+
+			if(player->isPlaying()) {
+				printf("Already playing\n");
+				return;
 			}
 
 			player->play();
+
+			if(mocap != NULL && player->isPlaying()) {
+				mocap->start_recording();
+			}
 		}
 
 	}
@@ -860,6 +874,7 @@ int main(int argc, char *argv[]) {
 	inRealLife = worldMode == "real";
 	bool enableMessaging = rawJson["enableMessaging"];
 	bool enableOSC = rawJson["enableOSC"];
+	bool enableLighting = rawJson["enableLighting"];
 
 	MocapOptions mocap_opts;
 	if (inRealLife) {
@@ -898,7 +913,7 @@ int main(int argc, char *argv[]) {
 		osc->set_listener(osc_on_message);
 	}
 
-	player = new JocsPlayer(inRealLife);
+	player = new JocsPlayer(inRealLife, enableLighting);
 
 	int i = 0;
 

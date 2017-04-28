@@ -5,7 +5,7 @@
 
 namespace tansa {
 
-HoverController::HoverController(Vehicle *v) : PositionController(v) {
+HoverController::HoverController(Vehicle::Ptr v) : PositionController(v) {
 	this->point = Point(0,0,0);
 
 	// Position controller gains + integral term

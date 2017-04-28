@@ -32,6 +32,7 @@
 
 */
 
+// dx / dt = (1 / tau) (target(t) - x(t))
 
 namespace tansa {
 
@@ -54,6 +55,9 @@ Motor::Motor(const DataObject &desc) {
 
 void Motor::update(MotorState &s, const Time &t) {
 
+	s.throttle = s.commandedThrottle;
+
+
 	double dt = s.time.since(t).seconds();
 
 	double tc;
@@ -63,13 +67,16 @@ void Motor::update(MotorState &s, const Time &t) {
 	else {
 		tc = this->timeConstantDown;
 	}
+/*
+	double a = exp(-dt / tc);
+	double b = 1.0 - a;
 
+	s.speed = a*s.speed + b*s.controlSpeed;
 
-
+	// TODO:
 	// TODO: Instead, use the exact integration of the system
 	s.throttle = s.throttle + ((s.commandedThrottle - s.throttle) / tc) * dt;
-
-		s.throttle = s.commandedThrottle;
+	*/
 }
 
 
@@ -89,12 +96,16 @@ Vector3d Motor::force(const MotorState &s) {
 	// TODO: Rotate by orientation
 	return Vector3d(0, 0, this->thrustCoeff * s.throttle); //(s.speed*s.speed));
 
+	double t = s.throttle;
+	double t2 = t*t;
+
+	return Vector3d(0, 0, 0.22846991*t2 + 0.10695395*t) * 9.81;
 }
 
 Vector3d Motor::torque(const MotorState &s) {
 	// Torque produced by thrust and moments due to propeller drag
 	return this->position.cross(this->force(s))
-		+ Vector3d(0, 0, -this->spin * this->torqueCoeff * s.throttle); //(s.speed*s.speed));
+		+ Vector3d(0, 0, -this->spin * this->thrustCoeff * 0.016 * s.throttle); //(s.speed*s.speed));
 }
 
 

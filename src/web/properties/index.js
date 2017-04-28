@@ -9,6 +9,8 @@ require('./style.css')
 
 var PropertiesPane = React.createClass({
 
+	// TODO: Make sure that we save the selection of filename, cue, and scale
+
 	onFileChanged: function(e) {
 		var p = this.props.parent;
 

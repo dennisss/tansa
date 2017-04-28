@@ -15,3 +15,5 @@ TEST(Jocs, Parse) {
 	ASSERT_TRUE(pts[0].isApprox(Vector3d(0, 0, 2), 0.001));
 
 }
+
+// TODO: Test CSV

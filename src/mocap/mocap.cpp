@@ -79,7 +79,6 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 	// Time at which the frame was acquired
 	tansa::Time t = Time::now().subtract( Time((frame->latency / 1000.0) + client->get_connection_latency()) );
 
-
 	for(int i = 0; i < frame->rigidBodies.size(); i++){
 
 		const optitrack::NatNetRigidBody *rb = &frame->rigidBodies[i];
@@ -185,7 +184,7 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 
 void Mocap::resync() {
 
-	
+
 }
 
 

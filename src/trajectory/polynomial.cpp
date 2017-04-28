@@ -56,7 +56,8 @@ PolynomialTrajectory::Ptr PolynomialTrajectory::compute(const vector<Point> &c1,
 		A.block(i + dts1.size(), 0, 1, n) = dts2[i].transpose();
 	}
 
-	// Invert it once for speed
+	// TODO: This gets unstable over large time intervals (need to implement smart timescaling)
+	// Additionally, lines should probably be just a constant velocity with a speedup and slowdown period
 	MatrixXd Ainv = A.inverse();
 
 	VectorXd xs[PointDims];

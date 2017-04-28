@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include <iostream>
 
 namespace tansa {
 
@@ -53,6 +54,18 @@ public:
 
 class Channel {
 public:
+
+/*
+	inline void subscribe(void (*func)(void *), void *data) {
+
+		int ID = V::ID;
+		if(listeners.count(ID) == 0) {
+			listeners[ID] = std::vector<Subscription *>();
+		}
+
+		listeners[ID].push_back(new Subscription(func, data));
+	}
+*/
 
 	template<class T, class V>
 	inline void subscribe(void (T::*func)(const V*), T *inst) {

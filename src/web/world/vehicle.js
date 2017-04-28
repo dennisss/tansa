@@ -1,5 +1,7 @@
 'use strict';
 
+// TODO: We should fix the orientation of the vehicles and make sure that forward is pointing in the right direction
+
 /**
  * Manages the 3d model of a single entity (so a drone body and its propellers)
  * This updates the position, orientation and

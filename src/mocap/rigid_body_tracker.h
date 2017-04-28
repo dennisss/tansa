@@ -2,7 +2,7 @@
 #define TANSA_MOCAP_RIGID_BODY_TRACKER_H_
 
 #include <tansa/vehicle.h>
-
+#include <mutex>
 
 #define PHASE_IDLE 0
 #define PHASE_MASK 1
@@ -86,6 +86,7 @@ public:
 
 	void track(Vehicle *v);
 
+	void reset();
 
 	// TODO: Currently we assume that this is called at least 100 times a second regardless of network connectivity
 	// TODO: Derive timestamp from OurTime -  Motive reported latency - NatNet ping time
@@ -119,7 +120,7 @@ private:
 	vector<Vehicle *> vehicles;
 
 
-
+	mutex mtx;
 
 };
 

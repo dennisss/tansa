@@ -35,9 +35,22 @@ void signal_sigint(int s) {
 }
 
 int main(int argc, char *argv[]) {
+/*
+	// TODO: Make this into a test
+
+	double start = 661, end = 662;
+
+
+	Trajectory *p = new LinearTrajectory({-3.5, 0, 0}, start, {-3.5, 0, 0}, end);
+
+	cout << "- Traj: " << p->evaluate(start).position << endl;
+
+	return 0;
+
+*/
 
 	Vehicle veh;
-	veh.connect(14550, 14555);
+	veh.connect(14550 + 10*11, 14555, NULL, "192.168.1.92");
 
 
 	signal(SIGINT, signal_sigint);
@@ -74,6 +87,7 @@ int main(int argc, char *argv[]) {
 		}
 
 
+//veh.set_beacon(true);
 		/*
 		if(dir > 0) {
 			veh.set_beacon(false);
@@ -82,7 +96,14 @@ int main(int argc, char *argv[]) {
 			veh.set_beacon(true);
 		}
 		*/
-		veh.set_lighting({ b | (g << 8) | (r << 16) });
+
+
+
+		int c = b | (g << 8) | (r << 16);
+		veh.set_lighting({ c, c, c });
+
+		//cout << veh.lightState[0] << " " << veh.lightState[1] << " " << veh.lightState[2] << endl;
+
 
 		i = i + dir * 0.01;
 

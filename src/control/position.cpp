@@ -6,7 +6,7 @@ namespace tansa {
 
 // TODO: Integrate forward the position, velocity and time based on connection latency (so that commmands are accurate for the cmoment at which they are received)
 
-PositionController::PositionController(Vehicle *v, bool directAttitudeControl) {
+PositionController::PositionController(Vehicle::Ptr v, bool directAttitudeControl) {
 	this->vehicle = v;
 
 	pid = new PID<PointDims>();
@@ -34,6 +34,12 @@ TrajectoryState PositionController::getTargetState(double t) {
 	return trajectory->evaluate(t);
 }
 
+/*
+	TODO: In case the trajectories are wrong for some reason, limit the Trajectory State's maximum acceleration and velocity in realtime
+
+	TODO: We should also limit the bounding box of allowable states to further protect against invalid states
+*/
+
 void PositionController::control(double t) {
 	// Evaluate trajectory
 	TrajectoryState s = this->getTargetState(t);
@@ -44,6 +50,9 @@ void PositionController::control(double t) {
 	Vector3d eV = s.velocity - cur.velocity;
 
 	Vector3d a = pid->compute(eP, eV, 0.01 /* TODO: Make this more dynamic */) + s.acceleration;
+
+	// TODO: Rotate to compensate for the offset between the onboard and offboard state
+	// AKA: Translate the vector for mocap-global frame to onboard-global frame
 
 	double yaw_angle = DEFAULT_YAW_ANGLE;
 

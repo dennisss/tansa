@@ -11,6 +11,7 @@ var LineSegments = THREE.LineSegments,
 	Color = THREE.Color;
 
 import { VertexColors } from '../../../node_modules/three/src/constants';
+import { MeshText2D, textAlign } from 'three-text2d';
 
 // Both size and divisions are 2d
 function GridHelper2D( size, divisions, color1, color2 ) {

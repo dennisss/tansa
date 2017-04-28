@@ -1,5 +1,5 @@
-#ifndef TANSA_VEHICLE_H
-#define TANSA_VEHICLE_H
+#ifndef TANSA_VEHICLE_H_
+#define TANSA_VEHICLE_H_
 
 #include "time.h"
 #include "estimation.h"
@@ -19,7 +19,6 @@
 #include <mutex>
 
 using namespace Eigen;
-using namespace std;
 
 namespace tansa {
 
@@ -51,6 +50,7 @@ struct TextMessage {
 
 struct VehicleParameters {
 
+	// TODO: Have separate ones for different controllers
 	struct {
 		Point p;
 		Point i;
@@ -69,32 +69,19 @@ struct VehicleForwarder {
 };
 
 
+class VehiclePool;
+
+typedef int VehicleId;
+
 /**
- * Reprents a single remote quadcopter connected via UDP
+ * Reprents a single remote quadcopter connected via MAVLink
  */
 class Vehicle : public Channel {
 
 public:
 	typedef std::shared_ptr<Vehicle> Ptr;
 
-	/**
-	 * Initializes a new vehicle and
-	 *
-	 */
-	Vehicle();
-
-	/**
-	 * Connect to the vehicle using the specified ports and ip address
-	 *
-	 * @param lport the port on which we should wait for messages
-	 * @param rport the port that is sending the messages (and should be sent outbound messages)
-	 * @param laddr the ip address of the local interface on which to listen for messages
-	 * @param raddr the ip address of the remote vehicle. if null, then this will be determined by the first message received matching the given ports
-	 */
-	int connect(int lport = 14550, int rport = 14555, const char *laddr = NULL, const char *raddr = NULL);
-
-	int disconnect();
-
+	~Vehicle();
 
 	/**
 	 * Forward messages to another program
@@ -145,7 +132,7 @@ public:
 	 * Sets the value of every lighting channel.
 	 * There are a max of 7, where all non-specified ones default to 0. On the current reference design, channel 0 is the left downward LED, 1 will be the right. 2 will be on internal center led (which only supports solid binary mixes of R, B, and G channels)
 	 */
-	void set_lighting(const vector<int> &channels);
+	void set_lighting(const std::vector<int> &channels);
 
 	/**
 	 * Toggles the state of the active IR beacon. Once it is on, the
@@ -193,28 +180,30 @@ public:
 	void hil_gps(const Vector3d &latLongAlt, const Vector3d &vel, const Time &t);
 
 
+	// TODO: We should mutex lock most of these things, (or make them atomic)
 	// Connection state
 	bool connected = false;
 	bool armed = false;
 	bool tracking = false;
-	string mode;
+	std::string mode;
 
 	// Physical State : used for visualization and trajectory control
 	ModelState state;
 	LinearComplementaryEstimator estimator;
 
+	// TODO: Make this a vector of control inputs with a time for each of them (where the time is the time at which they will take effect aka the arrival time at the time of creation)
 	ControlInput lastControlInput;
 	ControlInput lastRawControlInput;
 	Time lastControlTime;
 
 	double pingLatency;
 
-	bool overactuated = false;
+	bool overactuated = false; /**< Quick and dirty flag set if an attempt was made to exceed the actuator limits of the vehicle */
 
 	// State as observed by the onboard processor
 	Time onboardPositionTime = Time(0, 0);
 	ModelState onboardState;
-	vector<double> lightState;
+	std::vector<double> lightState;
 
 	BatteryStatus battery;
 
@@ -244,7 +233,10 @@ public:
 
 private:
 
-	friend void *vehicle_thread(void *arg);
+	friend class VehiclePool;
+	friend void *vehicle_pool_thread(void *arg);
+
+	Vehicle(VehiclePool *pool, VehicleId id);
 
 	void handle_message(mavlink_message_t *msg);
 	void handle_message_timesync(mavlink_message_t *msg);
@@ -254,20 +246,16 @@ private:
 
 	void send_heartbeat();
 
-	bool running = false; // Whether or not the server is running for this drone
+	VehiclePool *_pool;
+	VehicleId _id;
 
-	int netfd = 0;
 	mavlink_channel_t channel;
 
-	pthread_t thread = 0;
 
-	struct sockaddr_in server_addr;
-	struct sockaddr_in client_addr;
+	std::vector<VehicleForwarder> forwarders;
 
-	vector<VehicleForwarder> forwarders;
-
-	vector<TextMessage> messages;
-	mutex messagesLock;
+	std::vector<TextMessage> messages;
+	std::mutex messagesLock;
 
 	Time lastHeartbeatReceived;
 
@@ -287,10 +275,95 @@ private:
 	Time lastPingTime = Time(0,0); int pingSeq = 0;
 };
 
+
+struct VehiclePoolConnection {
+	VehicleId id;
+	Vehicle::Ptr vehicle;
+	struct sockaddr_in addr;
+	Time lastMessage;
+};
+
+/**
+ * A group of Vehicles sharing a single physical connection
+ * This is the class which abstracts away the direct vehicle communication layer (udp, usb vs serial etc.)
+ * This can be thought of as an object which listens on a single udp port for drones on different ips
+ */
+class VehiclePool {
+public:
+	typedef std::shared_ptr<VehiclePool> Ptr;
+
+
+	VehiclePool(/*VehicleIdScheme idMaker */);
+
+
+	/**
+	 * I guess this would connect to all vehicles in
+	 * Connect to the vehicle using the specified ports and ip address
+	 *
+	 * @param lport the port on which we should wait for messages
+	 * @param rport the port that is sending the messages (and should be sent outbound messages)
+	 * @param laddr the ip address of the local interface on which to listen for messages
+	 * @param raddr the ip address of the remote vehicle. if null, then this will be determined by the first message received matching the given ports
+	 */
+	int connect(int lport = 14550, int rport = 14555, const char *laddr = NULL, const char *raddr = NULL);
+
+	int disconnect();
+
+
+	/**
+	 * Gets a reference to a vehicle by id.
+	 * If it is not available, it will return an instance bound to this pool, but not currently connected
+	 */
+	Vehicle::Ptr get(VehicleId id);
+
+	/**
+	 * Get all vehicles that have been discovered on this pool and are currently connected
+	 */
+	std::vector<Vehicle::Ptr> available();
+
+
+
+	/**
+	 * Restricts the Vehicles in this bool to only originate from ips matching a single subnet
+	 * This is used with simulation mode to restrict access to only local instances and not use real vehicles accidently
+	 */
+	void set_subnet(const char *ip, const char *mask);
+
+
+private:
+
+	friend class Vehicle;
+	friend void *vehicle_pool_thread(void *arg);
+
+	void send_message(VehicleId id, mavlink_message_t *msg);
+
+	// TODO: We should alternatively support using a single mavlink channel and distinguishing by the
+	VehicleId get_id(const struct sockaddr_in &addr); /**< Gets the id of the vehicle from the remote address */
+
+
+	// TODO: Most of these will be going to the pool class
+	bool running = false; // Whether or not the server is running for this drone
+	int netfd = 0;
+	pthread_t thread = 0;
+
+	VehiclePool::Ptr self; /**< Used to create vehicles */
+
+	struct sockaddr_in server_addr;
+	struct sockaddr_in client_addr;
+
+	// TODO: Access to this needs to be mutex locked
+	// Maybe maintain a second copy in the vehicle_pool thread and only update the main one if a lock can be obtained quickly (although i'd need to handle bidirectional changes as well (so need a merge))
+	std::mutex connectionsLock;
+	std::map<VehicleId, VehiclePoolConnection> connections; /**< All vehicles detected in the pool organized by ip address */
+
+
+};
+
 /**
  * Don't use this directly. This is used internally by the Vehicle class
  */
-void *vehicle_thread(void *arg);
+void *vehicle_pool_thread(void *arg);
+
 
 
 }

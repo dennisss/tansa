@@ -99,6 +99,8 @@ var App = React.createClass({
 				this.setState({ duration: data.duration });
 			}
 			else if(data.type == 'list_reply') {
+				// TODO: Also set default values if the list no longer has the currently set value
+
 				this.setState({availableFiles: data.files});
 
 				var activeName = this._uploadedName || Settings.get('file.name');

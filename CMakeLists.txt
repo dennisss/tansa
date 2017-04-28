@@ -40,11 +40,13 @@ add_library(
 	src/core/vehicle.cpp
 	src/core/vehicle_time.cpp
 	src/core/vehicle_params.cpp
+	src/core/vehicle_pool.cpp
 	src/core/time.cpp
 	src/core/messaging.cpp
 	src/algorithm/assignment_solver.cpp
 	src/algorithm/rigid_transform.cpp
 	src/algorithm/rigid_point_correspondence_solver.cpp
+	src/algorithm/iterative_closest_point.cpp
 	src/server/osc.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
@@ -64,13 +66,13 @@ add_library(
 	src/jocs/csv.cpp
 	src/jocs/jocsParser.cpp
 	src/jocs/action.cpp
-	src/jocs/jocsPlayer.cpp
 	src/trajectory/light.cpp
 	src/trajectory/strobe.cpp
 	src/control/lightcontrol.cpp
 	src/model/feasibility.cpp
 	src/control/admittance.cpp
 
+	src/manager/manager.cpp
 	src/manager/preview.cpp
 	src/manager/calibration.cpp
 
@@ -134,8 +136,8 @@ add_executable(
 	test/core/time.cpp
 	test/algorithm/assignment_solver.cpp
 	test/algorithm/rigid_point_correspondence_solver.cpp
+	test/algorithm/iterative_closest_point.cpp
 	test/jocs/jocsParser.cpp
-	test/mocap/rigid_body_tracker.cpp
 )
 set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
 target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)

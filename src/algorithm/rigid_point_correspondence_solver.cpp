@@ -26,7 +26,7 @@ bool RigidPointCorrespondenceSolver::solve(const vector<Vector3d> &as, const vec
 		return false;
 	}
 
-
+	// TODO: For the constant query set, it may be useful to cache the eigen structure
 	/* Compute set centers */
 	Vector3d cA = centroid(as), cB = centroid(bs);
 

@@ -56,6 +56,7 @@ struct interface {
 	struct sockaddr_in broadcast;
 };
 
+// TODO: This doesn't work when i'm not humannet
 // Given some ip address on an interface's subnet, finds that interface. Returns wether or not it could be found
 bool find_iface(struct sockaddr_in *addr, interface *out) {
 
@@ -74,13 +75,15 @@ bool find_iface(struct sockaddr_in *addr, interface *out) {
 			}
 
 
-            //addr = strdup(inet_ntoa(sa->sin_addr));
-			//sab = (struct sockaddr_in *) ifa->ifa_broadaddr;
-			//baddr = inet_ntoa(sab->sin_addr);
-            //printf("Interface: %s\tAddress: %s\t Broadcast: %s\n", ifa->ifa_name, addr, baddr);
+            char *s_addr = strdup(inet_ntoa(sa->sin_addr));
+			auto sab = (struct sockaddr_in *) ifa->ifa_broadaddr;
+			char *s_baddr = inet_ntoa(sab->sin_addr);
+			char *s_mask = inet_ntoa(((sockaddr_in *) &ifa->ifa_netmask)->sin_addr);
+            printf("Interface: %s\tAddress: %s\t Broadcast: %s\t Mask: %s\n", ifa->ifa_name, s_addr, s_baddr, s_mask);
 
 			uint32_t mask = ((sockaddr_in *) &ifa->ifa_netmask)->sin_addr.s_addr;
 
+			// TODO: Bring our own mask
 			if((sa->sin_addr.s_addr & mask) == (addr->sin_addr.s_addr & mask)) {
 				memcpy(&out->addr, sa, sizeof(struct sockaddr_in));
 				memcpy(&out->broadcast, ifa->ifa_broadaddr, sizeof(struct sockaddr_in));
@@ -157,6 +160,7 @@ int NatNetClient::connect(const char *clientAddr, const char *serverAddr, NatNet
 	// Bind to data address
 	sa.sin_port = htons(data_port);
 	sa.sin_family = AF_INET;
+	//sa.sin_addr = iface.addr.sin_addr; // TODO: We should allow this to work in either case regardless of if the interface is known
 	sa.sin_addr.s_addr = htonl(INADDR_ANY); // TODO: This should be the interface ip
 	if(::bind(this->data_socket, (const struct sockaddr*)&sa, sizeof(sa)) < 0){
 		printf("NatNetClient: failed to bind data socket\n");
@@ -389,7 +393,7 @@ void *natnet_cmd_server(void *arg) {
 			break;
 		}
 		case NatNetPacket::Response:
-			printf("NatNet got respone\n");
+			//printf("NatNet got respone\n");
 			// payload is either a 4byte integer or a string
 			break;
 		case NatNetPacket::UnrecognizedRequest:

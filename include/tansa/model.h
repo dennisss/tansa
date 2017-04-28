@@ -18,6 +18,25 @@ namespace tansa {
 #define GRAVITY_MS 9.8
 
 
+
+/**
+ * Abstract representation of a control being input to the physical system
+ * We'd define a 'control' as something with a specific effect on a model
+ */
+// TODO: This is currently already defined in the simple case elsewhere
+/*
+struct ControlInput {
+
+	enum Type {
+		Attitude,
+		Acceleration
+	};
+
+
+};
+*/
+
+
 /**
  * Base class for all types of state data
  */
@@ -64,6 +83,10 @@ public:
 	virtual Vector3d force(const State &s) = 0;
 	virtual Vector3d torque(const State &s) = 0;
 
+
+private:
+
+	//void derivative
 
 private:
 

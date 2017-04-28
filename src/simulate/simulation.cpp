@@ -63,7 +63,7 @@ void *simulation_thread(void *arg) {
 
 	Simulation *s = (Simulation *) arg;
 
-
+	// TODO: These are just for
 	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 	std::default_random_engine gen = std::default_random_engine(seed);
 	std::normal_distribution<> posNoise(0, 0.001);
@@ -95,8 +95,8 @@ void *simulation_thread(void *arg) {
 		}
 		*/
 
-		if(i % 500 == 0) {
-			//Time::setTime(s->state.time, 1.0);
+		if(i % 100 == 0) {
+			//Time::setTime(s->state.time, 1.0); // TODO: I still need to write the new clock based method of doing this
 			if(s->tracked) {
 
 				std::shared_ptr<MultirotorModelState> ms = std::static_pointer_cast<MultirotorModelState>(s->state.models[0]);

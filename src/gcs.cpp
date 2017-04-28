@@ -53,7 +53,7 @@ static JocsPlayer* player = nullptr;
 static GazeboConnector *gazebo = nullptr;
 static Mocap *mocap = nullptr;
 static Simulation *sim = nullptr;
-static vector<Vehicle *> vehicles;
+static vector<Vehicle *> vehicles; // TODO: Change to a pool
 static std::vector<vehicle_config> vconfigs;
 static string worldMode;
 static bool inRealLife;
@@ -694,6 +694,7 @@ void socket_on_message(const json &data) {
 
 void osc_on_message(OSCMessage &msg) {
 
+	// TODO: Only consider if the cue number is at the current loaded breakpoint in the Routine
 	// Address will look something like: '/cue/0101/start'
 	if(msg.address[0] == "cue") {
 
@@ -768,8 +769,9 @@ void do_calibrate() {
 
 pthread_t console_handle;
 
+// TODO: Move as much of this as possible to the manager
 void *console_thread(void *arg) {
-	while (running) {
+	while(running) {
 		// Read a command
 		cout << "> ";
 		string line;
@@ -921,6 +923,8 @@ int main(int argc, char *argv[]) {
 			send_status_message();
 		}
 
+		// TODO: Also allow hardstops/pauses
+
 		if (killmode) {
 			player->failsafe();
 
@@ -930,6 +934,8 @@ int main(int argc, char *argv[]) {
 			*/
 		} else if (loadMode) {
 			printf("Still loading...\n");
+
+		// TODO: Get rid of the initialized flag
 		} else if (player == nullptr || !initialized) {
 			// Player not initialized: no-op
 		} else if (prepareMode) {

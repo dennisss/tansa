@@ -7,11 +7,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <unistd.h>
+
+// TODO: Try to move these to vehicle_pool.cpp
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <poll.h>
+
+using namespace std;
 
 namespace tansa {
 
@@ -19,10 +21,11 @@ namespace tansa {
 // The ground control system represented by this program
 static mavlink_system_t mavlink_system;
 
-static mavlink_channel_t nextChannel = MAVLINK_COMM_0;
+// This should be
+static bool channel_used[MAVLINK_COMM_NUM_BUFFERS] = {0};
 
 
-Vehicle::Vehicle() :
+Vehicle::Vehicle(VehiclePool *pool, VehicleId id) :
 	lastControlInput(0,0,0),
 	lastRawControlInput(0,0,0),
 	lastControlTime(0,0),
@@ -36,72 +39,36 @@ Vehicle::Vehicle() :
 	mavlink_system.sysid = 255;
 	mavlink_system.compid = MAV_COMP_ID_ALL;
 
-	this->channel = nextChannel;
-	nextChannel = (mavlink_channel_t) ((int)channel + 1);
+	this->_pool = pool;
+	this->_id = id;
+
+	// TODO: Move channel logic to pool as well?
+	int c = -1;
+	for(unsigned i = 0; i < MAVLINK_COMM_NUM_BUFFERS; i++) {
+		if(!channel_used[i]) {
+			c = i;
+			break;
+		}
+	}
+
+	if(c == -1) {
+		printf("[Vehicle] MAVLINK: No available channels\n");
+		return;
+	}
+
+	this->channel = (mavlink_channel_t) ((int)MAVLINK_COMM_0 + c);
+	channel_used[c] = true;
 }
 
-int Vehicle::connect(int lport, int rport, const char *laddr, const char *raddr) {
-
-	if((netfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		perror("cannot create socket");
-		return 1;
-	}
-
-	memset((char *)&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_addr.sin_port = htons(lport);
-
-	if (::bind(netfd, (struct sockaddr *) &server_addr, (socklen_t) sizeof(server_addr)) < 0) {
-		perror("bind failed");
-		close(netfd);
-		netfd = 0;
-		return 1;
-	}
-
-	int flags = fcntl(netfd, F_GETFL, 0);
-	if(fcntl(netfd, F_SETFL, flags | O_NONBLOCK)) {
-		perror("failed to make udp socket non-blocking");
-		close(netfd);
-		netfd = 0;
-		return 1;
-	}
-
-
-	// By default send to 127.0.0.1:rport
-	memset((char *)&client_addr, 0, sizeof(client_addr));
-	client_addr.sin_family = AF_INET;
-	client_addr.sin_port = htons(rport);
-	inet_pton(AF_INET, raddr != NULL? raddr : "127.0.0.1", &client_addr.sin_addr);
-
-	running = true;
-	if(pthread_create(&thread, NULL, vehicle_thread, (void *) this) != 0) {
-		running = false;
-		return 1;
-	}
-
-
-	return 0;
-}
-
-int Vehicle::disconnect() {
-	running = false;
-	close(netfd);
-	for(auto &f : forwarders) {
-		close(f.netfd);
-	}
-	forwarders.resize(0);
-
-	pthread_join(thread, NULL);
-	netfd = 0;
-	thread = 0;
-	return 0;
+Vehicle::~Vehicle() {
+	channel_used[this->channel] = false;
+	// TODO: Also reset channel statistics?
 }
 
 
 int Vehicle::forward(int lport, int rport) {
 
-	if(running) {
+	if(_pool->running) {
 		printf("Cannot initialize a forwarder while already connected\n");
 		return 1;
 	}
@@ -123,9 +90,9 @@ int Vehicle::forward(int lport, int rport) {
 	f.server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	f.server_addr.sin_port = htons(lport);
 
-	if (::bind(f.netfd, (struct sockaddr *) &f.server_addr, (socklen_t) sizeof(server_addr)) < 0) {
+	if (::bind(f.netfd, (struct sockaddr *) &f.server_addr, (socklen_t) sizeof(f.server_addr)) < 0) {
 		perror("forward(): bind failed");
-		close(netfd);
+		close(f.netfd);
 		return 1;
 	}
 
@@ -336,7 +303,7 @@ void Vehicle::setpoint_accel(const Vector3d &accel, double yaw) {
 
 	// Scale to -1 to 1 range and add hover point because PX4 doesn't take m s^-2 input but rather input proportional to thrust percentage
 	Vector3d accel_normal = accel * (hover / GRAVITY_MS) + Vector3d(0, 0, hover);
-	lastRawControlInput = accel_normal;
+	lastRawControlInput = accel_normal; // TODO: This isn't updated for the attitude based controller
 
 	Vector3d accel_ned = enuToFromNed() * accel_normal;
 
@@ -435,6 +402,13 @@ void Vehicle::param_read(const char *name) {
 
 
 void Vehicle::set_lighting(float top, float bottom) {
+
+	int v = 255*bottom;
+	v = (v << 16) | (v << 8) | v;
+
+	set_lighting({v, v});
+
+	/*
 	mavlink_message_t msg;
 	mavlink_msg_command_long_pack_chan(
 		255, 0, channel,
@@ -451,6 +425,7 @@ void Vehicle::set_lighting(float top, float bottom) {
 	lightState[0] = bottom;
 
 	send_message(&msg);
+	*/
 }
 
 void Vehicle::set_beacon(bool on) {
@@ -586,10 +561,7 @@ void Vehicle::calibrate_gyro() {
 
 
 void Vehicle::send_message(mavlink_message_t *msg) {
-	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-	//mavlink_finalize_message_chan(msg, mavlink_system.sysid, mavlink_system.compid, this->channel, msg->len);
-	uint16_t len = mavlink_msg_to_send_buffer(buf, msg);
-	sendto(netfd, buf, len, 0, (struct sockaddr *)&client_addr, sizeof(client_addr));
+	_pool->send_message(_id, msg);
 }
 
 void Vehicle::send_heartbeat() {
@@ -666,6 +638,8 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			break;
 		}
 
+		// TODO: Failsafe verify that the orientations match and that the mocap one isn't unside down
+		// Also maintain a windowed standard deviation of the mocap data and safety check against flickering
 		case MAVLINK_MSG_ID_ATTITUDE_QUATERNION: {
 
 			mavlink_attitude_quaternion_t aq;
@@ -677,6 +651,12 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			onboardState.orientation = orient;
 			onboardState.time = Time::now();
+
+			//orientationDeviation = state.orientation.inverse() * onboardState.orientation;
+
+			// TODO: Is it better to premultiple or post multiple
+			// Global = Deviation * Onboard
+			// Deviation would get a point in Global to a point in Onboard
 
 			break;
 
@@ -862,98 +842,6 @@ void Vehicle::cycle() {
 	}
 
 
-}
-
-
-void *vehicle_thread(void *arg) {
-	Vehicle *v = (Vehicle *) arg;
-
-	int res = 0;
-
-	mavlink_message_t msg; memset(&msg, 0, sizeof(msg));
-	mavlink_status_t status;
-
-
-	char *buf = (char *) malloc(512);
-
-	int nfds = 1 + v->forwarders.size();
-	struct pollfd *fds = (struct pollfd *) malloc(sizeof(struct pollfd) * nfds);
-
-	// First descriptor for udp socket
-	fds[0].fd = v->netfd;
-	fds[0].events = POLLIN; // TODO: Set netfd to non-blocking and allow the OS to buffer the sendto if needed
-
-	// Other ones for forwarders
-	for(int i = 0; i < v->forwarders.size(); i++) {
-		fds[1 + i].fd = v->forwarders[i].netfd;
-		fds[1 + i].events = POLLIN;
-	}
-
-	printf("Waiting for messages...\n");
-
-	// Poll for messages
-	while(v->running) {
-		res = poll(fds, nfds, 500);
-		if(res < 0) {
-			// Error
-		}
-		else if(res == 0) {
-			// timeout
-		}
-		else if(fds[0].revents & POLLIN) {
-			struct sockaddr_in addr;
-			socklen_t addrlen = sizeof(struct sockaddr_in);
-			int nread = recvfrom(v->netfd, buf, 512, 0, (struct sockaddr *)&addr, &addrlen);
-
-			// Register the client that is sending us messages
-			v->client_addr.sin_port = addr.sin_port;
-			v->client_addr.sin_addr = addr.sin_addr;
-
-			if(nread > 0) {
-				for(int i = 0; i < nread; i++) {
-					// TODO: Pick comm channel based on the ip/port from which the data was received
-
-					if(mavlink_parse_char(v->channel, buf[i], &msg, &status)) {
-						v->handle_message(&msg);
-					}
-				}
-
-				// Also send to all forwarding channels
-				for(auto &f : v->forwarders) {
-					sendto(f.netfd, buf, nread, 0, (struct sockaddr *) &f.client_addr, addrlen);
-				}
-			}
-		}
-		else { // Received data on one of the forwarder listeners
-
-			struct sockaddr_in addr;
-			socklen_t addrlen = sizeof(struct sockaddr_in);
-
-			for(int i = 0; i < v->forwarders.size(); i++) {
-				if(!(fds[1 + i].revents & POLLIN))
-					continue;
-
-				auto &f = v->forwarders[i];
-
-				int nread = recvfrom(f.netfd, buf, 512, 0, (struct sockaddr *)&addr, &addrlen);
-
-				// Register the client that is sending us messages
-				f.client_addr.sin_port = addr.sin_port;
-				f.client_addr.sin_addr = addr.sin_addr;
-
-				// Send to vehicle
-				sendto(v->netfd, buf, nread, 0, (struct sockaddr *)&v->client_addr, sizeof(v->client_addr));
-			}
-
-		}
-
-		v->cycle();
-	}
-
-	free(buf);
-	free(fds);
-
-	return NULL;
 }
 
 }

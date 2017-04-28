@@ -88,6 +88,9 @@ private:
 class RigidPointCorrespondenceSolver {
 public:
 
+	// TODO: We'd like to store some data for it so we can quickly run against a single dataset on multiple different point subsets
+	//RigidPointCorrespondenceSolver(const std::vector<Vector3d> &as);
+
 	/**
 	 * Given two sets of unlabeled points, this will compute the transform that best matches them,
 	 * So: b_j = M * a_i
@@ -119,6 +122,25 @@ private:
 
 };
 
+
+struct IterativeClosestPointOptions {
+	double max_error = 0.02; /**< The largest average amount of error that should be allowed between the best alignment and the original query set */
+
+	double max_distance = 0.4; /**< Only match to points within this distance of the original points */
+
+	double max_iterations = 3; /**< Max number of refinement iteratiosn to use. 3 is the recommended minimum for some outlier rejection */
+};
+
+
+class IterativeClosestPoint {
+public:
+	IterativeClosestPoint(const IterativeClosestPointOptions &options = IterativeClosestPointOptions()) { this->options = options; }
+
+	bool align(const std::vector<Vector3d> &query, const std::vector<Vector3d> &pts, Matrix3d *R, Vector3d *t, std::vector<int> *indices);
+
+private:
+	IterativeClosestPointOptions options;
+};
 
 
 }

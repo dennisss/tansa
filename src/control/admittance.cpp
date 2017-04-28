@@ -9,7 +9,7 @@
 namespace tansa {
 
 
-AdmittanceController::AdmittanceController(Vehicle *v) : HoverController(v) {
+AdmittanceController::AdmittanceController(Vehicle::Ptr v) : HoverController(v) {
 
 }
 

@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include <iostream>
+using namespace std;
 
 namespace tansa {
 
@@ -70,11 +72,15 @@ void Firmware::connectClient(Vehicle *v) {
 }
 
 void Firmware::onImuData(const IMUSensorData *data) {
-	sim_vehicle->hil_sensor(&data->accel, &data->gyro, &data->mag, data->time);
+	sim_vehicle->hil_sensor(&data->accel, &data->gyro, &data->mag, Time::now()); // data->time);
 }
 
 void Firmware::onGpsData(const GPSData *data) {
 	sim_vehicle->hil_gps(data->latLongAlt, data->vel, data->time);
+}
+
+void Firmware::onMocapData(const MocapSensorData *data) {
+	// TODO: The main issue with this is that we'd like to be able to direct the mocap data to the vehicle used by the controller as that one will be used for
 }
 
 void Firmware::onActuatorOutputs(const ActuatorOutputs *actuators) {

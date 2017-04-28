@@ -7,7 +7,7 @@ var Controls = React.createClass({
 		return (
 			<div className="ta-timeline-controls">
 				<div style={{display: 'inline-block', width: '33%'}}>
-					<div className="ta-control-btn">
+					<div className="ta-control-btn"> {/* TODO: Show as disabled until all drones are prepared */}
 						<i className="fa fa-play" />
 					</div>
 					<div className="ta-control-btn">
@@ -30,7 +30,7 @@ var Controls = React.createClass({
 
 				</div>
 				<div style={{display: 'inline-block', width: '33%', textAlign: 'right', color: '#888'}}>
-					0s / 5m
+					{'0s / 5m' /* update with real time */}
 				</div>
 
 

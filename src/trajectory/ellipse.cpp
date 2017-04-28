@@ -21,6 +21,7 @@ TrajectoryState EllipseTrajectory::evaluate(double t) {
 
 	double theta = ((t - t1) * dtheta) + theta1; // angle as a function of time
 
+	// TODO: Flip these
 	s.position = Point(radius_x*sin(theta), radius_y*cos(theta), 0) + origin; //1 + t / 10.0);
 	s.velocity = Point(radius_x*dtheta*cos(theta), -radius_y*dtheta*sin(theta), 0); //1.0 / 10.0);
 	s.acceleration = Point(-radius_x*dtheta*dtheta*sin(theta), -radius_y*dtheta*dtheta*cos(theta), 0);

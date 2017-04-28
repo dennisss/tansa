@@ -359,8 +359,10 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 
 				// TODO: If still tracking, try a nice controlled landing
 				// TODO: Geofence based on covariance to auto-hardkill
-				while(v.mode == "offboard") {
-					v.set_mode("landing");
+				if(stepTick % 50 == 0) {	
+					if(v.mode == "offboard") {
+						v.set_mode("landing");
+					}
 				}
 			}
 		}

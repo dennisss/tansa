@@ -2,12 +2,14 @@
 #include <tansa/control.h>
 #include <tansa/core.h>
 #include <tansa/config.h>
-#include <tansa/jocsPlayer.h>
+#include <tansa/manager.h>
+#include <tansa/routine.h>
 #include <tansa/mocap.h>
 #include <tansa/gazebo.h>
 #include <tansa/simulate.h>
 #include <tansa/osc.h>
-#include <tansa/csv.h>
+
+// TODO: Don't make these private headers
 #include "manager/preview.h"
 #include "manager/calibration.h"
 
@@ -40,7 +42,6 @@ static string routineConfigPath = "config/routine.json";
 
 
 static bool running = false;
-static bool initialized = false;
 static bool killmode = false;
 static bool pauseMode = false;
 static bool stopMode = false;
@@ -49,11 +50,13 @@ static bool prepareMode = false;
 static bool loadMode = false;
 static bool landMode = false;
 static float scale = 1.0;
-static JocsPlayer* player = nullptr;
+
+static Manager *manager = nullptr;
 static GazeboConnector *gazebo = nullptr;
 static Mocap *mocap = nullptr;
 static Simulation *sim = nullptr;
-static vector<Vehicle *> vehicles; // TODO: Change to a pool
+static VehiclePool *pool = nullptr;
+//static vector<Vehicle *> vehicles; // TODO: Change to a pool
 static std::vector<vehicle_config> vconfigs;
 static string worldMode;
 static bool inRealLife;
@@ -311,7 +314,7 @@ void send_status_message() {
 }
 
 /**
- * Return breakpoint information for a given jocsFile
+ * Return breakpoint information for a given file
  * @param routinePath	Path to a routine file.
  * @return	json array of breakpoint objects
  */
@@ -413,18 +416,20 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> ac
 	}
 
 #ifdef USE_GAZEBO
+	// TODO: Only do this if in gazebo mode
 	gazebo->clear();
 #endif
 
 	// Stop all vehicles
 	for (int vi = 0; vi < vehicles.size(); vi++) {
-		Vehicle *v = vehicles[vi]; vehicles[vi] = NULL;
+		Vehicle::Ptr v = vehicles[vi]; vehicles[vi] = NULL;
 		v->disconnect();
 		delete v;
 	}
 
 	vehicles.resize(n, NULL);
 
+	// TODO: This will mostly move to the manager -> So, the manager may need to know if we are in simulation mode
 	for (int i = 0; i < n; i++) {
 		const vehicle_config &v = vconfigs[i];
 
@@ -498,6 +503,7 @@ void constructLoadResponse() {
 
 	json paths = json::array();
 
+	// TODO: Move some of this path generation logic to the
 	std::vector<std::vector<tansa::Action*>> actions = player->getActions();
 	for(int i = 0; i < actions.size(); i++) {
 		json pts = json::array();
@@ -577,7 +583,7 @@ void loadConfiguration(const json &rawJsonArg) {
 	}
 
 
-	initialized = false;
+	//initialized = false;
 	string routinePath = rawJson["routinePath"];
 	vector<unsigned> activeRoles = rawJson["activeRoles"];
 	scale = rawJson["theaterScale"];
@@ -610,7 +616,7 @@ void loadConfiguration(const json &rawJsonArg) {
 
 	constructLoadResponse();
 
-	initialized = true;
+	//initialized = true;
 	loadMode = false;
 	printf("Finished loadConfiguration\n");
 }
@@ -635,9 +641,6 @@ void loadFromConfigFile(string configPath) {
 	loadConfiguration(rawJson);
 }
 
-void handle_preview_command(json data) {
-
-}
 
 
 void do_calibrate();
@@ -684,7 +687,7 @@ void socket_on_message(const json &data) {
 			mocap->resync();
 		}
 	} else if (type == "rearrange") {
-		player->rearrange();
+		manager->rearrange();
 	} else {
 		// TODO: Send an error message back to the browser
 		printf("Unexpected message type recieved!\n");
@@ -701,7 +704,7 @@ void osc_on_message(OSCMessage &msg) {
 		int num = std::stoi(msg.address[1]);
 
 		if(msg.address[2] == "load") {
-			player->prepare();
+			manager->prepare();
 		}
 		else if(msg.address[2] == "start") {
 			printf("Starting at cue #: %d\n", num);
@@ -712,7 +715,7 @@ void osc_on_message(OSCMessage &msg) {
 				mocap->start_recording();
 			}
 
-			player->play();
+			manager->play();
 		}
 
 	}
@@ -739,13 +742,14 @@ void do_calibrate() {
 	calibrationMode = true;
 	return;
 
-
+	/*
+	// TODO: Move this to the CalibrationHelper as another
 	if(vehicles.size() != 1) {
 		cout << "Can only calibrate one vehicle at a time" << endl;
 		return;
 	}
 
-	if(!player->isReady()) {
+	if(!manager->isReady()) {
 		cout << "Must be holding to start calibration" << endl;
 		return;
 	}
@@ -765,6 +769,7 @@ void do_calibrate() {
 	vehicles[0]->write_params(resolveWorkspacePath(paramsDir, calibId + ".calib.json"));
 
 	cout << "Done!" << endl;
+	*/
 }
 
 pthread_t console_handle;
@@ -800,8 +805,8 @@ void *console_thread(void *arg) {
 			cout << "Playing..." << endl;
 			playMode = true;
 		} else if (args[0] == "land") {
-			printf("landing...\n");
-			player->land();
+			printf("Landing...\n");
+			manager->land();
 		} else if (args[0] == "pause") {
 			cout << "Pausing..." << endl;
 			pauseMode = true;
@@ -900,7 +905,7 @@ int main(int argc, char *argv[]) {
 		osc->set_listener(osc_on_message);
 	}
 
-	player = new JocsPlayer(inRealLife);
+	manager = new Manager(inRealLife);
 
 	int i = 0;
 
@@ -926,7 +931,7 @@ int main(int argc, char *argv[]) {
 		// TODO: Also allow hardstops/pauses
 
 		if (killmode) {
-			player->failsafe();
+			manager->failsafe();
 
 			/*
 			for(Vehicle *v : vehicles)
@@ -935,15 +940,16 @@ int main(int argc, char *argv[]) {
 		} else if (loadMode) {
 			printf("Still loading...\n");
 
+		// Note: NULL could happen as the manager is created after the threads are made
 		// TODO: Get rid of the initialized flag
-		} else if (player == nullptr || !initialized) {
-			// Player not initialized: no-op
+		//} else if (player == nullptr || !initialized) {
+		//	// Player not initialized: no-op
 		} else if (prepareMode) {
 			prepareMode = false;
-			player->prepare();
+			manager->prepare();
 		} else if (landMode) {
 			landMode = false;
-			player->land();
+			manager->land();
 		} else if (playMode) {
 			playMode = false;
 
@@ -955,7 +961,7 @@ int main(int argc, char *argv[]) {
 				previewPlayer->play();
 			}
 			else {
-				player->play();
+				manager->play();
 			}
 		} else if (pauseMode) {
 			pauseMode = false;
@@ -973,7 +979,7 @@ int main(int argc, char *argv[]) {
 				delete previewPlayer;
 			}
 			else {
-				player->stop();
+				manager->stop();
 			}
 		// TODO: Always do a step if possible
 		} else if(previewMode) {
@@ -996,7 +1002,7 @@ int main(int argc, char *argv[]) {
 			}
 
 		} else {
-			player->step();
+			manager->step();
 		}
 
 		r.sleep();
@@ -1018,13 +1024,19 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Stop all vehicles
+	pool->disconnect();
+	delete pool;
+
+	/*
 	for (int vi = 0; vi < vehicles.size(); vi++) {
 		Vehicle *v = vehicles[vi];
 		v->disconnect();
 		delete v;
 	}
+	*/
 
-	player->cleanup();
+	manager->cleanup();
+	delete manager;
 
 	tansa::end();
 

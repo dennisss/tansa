@@ -191,17 +191,20 @@ public:
 	 * @return Are the drones currently in a paused state?
 	 */
 	inline bool isPaused() { return this->paused; }
+
+
 	/**
 	 * @return Have the drones landed?
 	 */
-	inline bool isLanded() { return this->landed; }
+	//inline bool isLanded() { return this->landed; }
+
 	/**
 	 * Gets the time relative to the start of the current file
 	 */
 	double currentTime();
 
 
-	inline std::vector<PlayerVehicleState> getStates() { return this->states; }
+	inline std::vector<ManagerVehicleState> getStates() { return this->states; }
 
 
 	/**
@@ -212,7 +215,7 @@ public:
 	/**
 	 * @return list of track/role numbers which will be used
 	 */
-	inline std::vector<unsigned> getActiveTracks() { return jocsActiveIds; }
+	inline std::vector<unsigned> getActiveTracks() { return activeIds; }
 
 
 

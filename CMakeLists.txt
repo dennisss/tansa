@@ -50,6 +50,9 @@ add_library(
 	src/server/osc.cpp
 	src/control/position.cpp
 	src/control/hover.cpp
+	src/control/admittance.cpp
+	src/control/lightcontrol.cpp
+
 	src/estimation/linear_complementary.cpp
 	src/trajectory/polynomial.cpp
 	src/trajectory/minsnap.cpp
@@ -57,20 +60,19 @@ add_library(
 	src/trajectory/ellipse.cpp
 	src/trajectory/point.cpp
 	src/trajectory/spiral.cpp
+	src/trajectory/light.cpp
+	src/trajectory/strobe.cpp
 	#src/trajectory/gradual_circle.cpp
 	src/mocap/mocap.cpp
 	src/mocap/optitrack/natnet.cpp
 	src/mocap/optitrack/natnet_client.cpp
 	src/mocap/rigid_body_tracker.cpp
-	src/jocs/routine.cpp
+	src/routine/routine.cpp
+	src/routine/routine_player.cpp
 	src/jocs/csv.cpp
 	src/jocs/jocsParser.cpp
-	src/jocs/action.cpp
-	src/trajectory/light.cpp
-	src/trajectory/strobe.cpp
-	src/control/lightcontrol.cpp
+
 	src/model/feasibility.cpp
-	src/control/admittance.cpp
 
 	src/manager/manager.cpp
 	src/manager/preview.cpp

@@ -81,6 +81,15 @@ std::vector<std::vector<Action*>> RoutinePlayer::getActions() {
 }
 
 
+/**
+ * Pause the choreography
+ */
+void RoutinePlayer::pause() {
+	pauseRequested = true;
+	// TODO: Determine a pause-at index (and maybe also a stop-at index)
+}
+
+
 
 void RoutinePlayer::reset() {
 	int n = vehicles.size();

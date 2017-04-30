@@ -89,6 +89,44 @@ void Manager::prepare() {
 }
 
 
+void Manager::play() {
+
+	// TODO: We should also check that the drones are in the right place (a Stop may get them to the wrong position)
+
+	for(auto s : states) {
+		if(s != StateHolding) {
+			printf("Cannot play: Some drones not ready\n");
+			return;
+		}
+	}
+
+	if (paused) {
+		paused = false;
+		pauseRequested = false;
+		stopRequested = false;
+		timeOffset += Time::now().since(pauseOffset).seconds();
+		int n = jocsActiveIds.size();
+		for (int i = 0; i < n; i++) {
+			plans[i] = pauseIndices[i];
+		}
+	} else {
+		start = Time::now();
+		reset();
+	}
+
+	for(auto &s : states) {
+		s = StateFlying;
+	}
+}
+
+double Manager::currentTime() {
+	if(!this->isPlaying()) {
+		return -1;
+	}
+
+	return Time::now().since(start).seconds() + startOffset;
+}
+
 void Manager::failsafe() {
 	for(auto &s : states) {
 		s = StateFailsafe;
@@ -326,7 +364,7 @@ void Manager::step() {
 }
 
 
-void JocsPlayer::cleanup() {
+void Manager::cleanup() {
 	for (int i = 0; i < posctls.size(); i++) {
 		delete posctls[i];
 	}

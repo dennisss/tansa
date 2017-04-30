@@ -5,6 +5,9 @@
 #include "breakpoint.h"
 #include "manager.h"
 
+// TODO: Eventually get rid of this header
+#include "config.h"
+
 #include <memory>
 #include <string>
 #include <vector>

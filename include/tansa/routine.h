@@ -42,6 +42,16 @@ public:
 
 };
 
+struct RoutineError {
+	int line;
+	std::string text;
+
+
+	bool operator <(const RoutineError &other) const {
+        return (this->line < other.line);
+    }
+};
+
 /**
  * Used to verify the correctness of a Routine by determining if it is physically possible
  */
@@ -51,11 +61,11 @@ public:
 
 
 	bool check(Routine &r);
-	bool check(Trajectory::Ptr traj);
+	bool check(Trajectory::Ptr traj, int line = -1);
 
 	void reset() { errors.resize(0); }
 
-	std::vector<std::string> errors;
+	std::vector<RoutineError> errors;
 
 
 };

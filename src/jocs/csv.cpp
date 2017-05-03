@@ -236,10 +236,13 @@ Choreography* parse_csv(const char* filepath, double scale){
 		}
 		insert_transitions(ret->actions, ret->homes);
 		fill_light_gaps(ret->lightActions,(*(ret->actions[0].end()-1))->GetEndTime());
+
+		/*
 		for (const auto& a : ret->lightActions[0][0]){
 
 			printf("%f %f \n", a->GetStartTime(), a->GetEndTime() );
 		}
+		*/
 		return ret;
 
 	} catch (const std::exception& e) {
@@ -497,7 +500,7 @@ Action* parse_spiral_action(double start, double end, unsigned long droneid, con
 }
 
 Action* parse_arc_action(double start, double end, unsigned long droneid, const std::vector<std::string>& split_line, double length_conversion){
-	constexpr unsigned NUM_PER_SEGMENT = 8;
+	constexpr unsigned NUM_PER_SEGMENT = 6;
 	std::vector<ConstrainedPoint> points;
 	std::vector<double> times;
 	std::vector<string> line = split_line;
@@ -735,6 +738,8 @@ void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::v
 		// Each entry in "actions" has a vector full of actions for that drone
 		for (unsigned j = 0; j < actions[i].size(); j++) {
 			if (!actions[i][j]->IsCalculated()) {
+				int line = actions[i][j]->line;
+
 				double thisStart = actions[i][j]->GetStartTime();
 				double thisEnd = actions[i][j]->GetEndTime();
 				if (j == 0) {
@@ -772,6 +777,9 @@ void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::v
 								thisEnd),
 							ActionTypes::Transition);
 				}
+
+				actions[i][j]->line = line;
+
 			}
 		}
 	}

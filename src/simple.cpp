@@ -37,7 +37,7 @@ void signal_sigint(int s) {
 int main(int argc, char *argv[]) {
 
 	Vehicle veh;
-	veh.connect(14550, 14555);
+	veh.connect(14550 + 12*10, 14555);
 
 
 	signal(SIGINT, signal_sigint);
@@ -82,7 +82,10 @@ int main(int argc, char *argv[]) {
 			veh.set_beacon(true);
 		}
 		*/
-		veh.set_lighting({ b | (g << 8) | (r << 16) });
+
+		//	veh.set_beacon(true);
+		int val = 0xffffff;  //b | (g << 8) | (r << 16);
+		veh.set_lighting({ val, val, val });
 
 		i = i + dir * 0.01;
 

@@ -475,6 +475,20 @@ void Vehicle::set_lighting(const vector<int> &channels) {
 	vector<int> channels_full = channels;
 	channels_full.resize(7, 0);
 
+	// Limit max to 70%
+	double percent = 0.7;
+	for(int i = 0; i < channels.size(); i++) {
+		int c = channels_full[i];
+		int r = ((c >> 16) & 0xff),
+			g = ((c >> 8) & 0xff),
+			b = ((c >> 0) & 0xff);
+
+		r *= percent;
+		g *= percent;
+		b *= percent;
+		channels_full[i] = (r << 16) | (g << 8) | (b);
+	}
+
 	mavlink_message_t msg;
 	mavlink_msg_command_long_pack_chan(
 		255, 0, channel,

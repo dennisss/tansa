@@ -123,6 +123,7 @@ public:
 
 private:
 	double EPSILON = 0.01;
+	double lastTime = -1;
 	std::vector<int> lightStates;
 	Vehicle *vehicle;
 	LightTrajectory::Ptr trajectories[NUM_LIGHTS];

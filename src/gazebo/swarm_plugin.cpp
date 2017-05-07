@@ -82,9 +82,7 @@ namespace gazebo {
 				}
 			}
 
-
-
-			std::ifstream t("config/gazebo/models/x340/x340.sdf");
+			std::ifstream t(msg->sdf_file());
 			std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
 			sdf::SDF file;
@@ -126,7 +124,7 @@ namespace gazebo {
 
 			world->SetPaused(false);
 
-			start_sitl(msg->vehicles_size());
+			start_sitl(msg->vehicles_size(), msg->rcs_file().c_str());
 		}
 
 
@@ -138,14 +136,18 @@ namespace gazebo {
 			waitpid(sitl_process, NULL, 0);
 		}
 
-		void start_sitl(int n) {
+		void start_sitl(int n, const char *rcs_file) {
 			int p = fork();
 			if(p == 0) { // Child
 				char *const bash = (char *const) "/bin/bash";
 				char *const script = (char *const) "scripts/start_many_instances.sh";
 				char num[16];
 				strcpy(num, std::to_string(n).c_str());
-				char *const argv[] = { bash, script, num, NULL};
+
+				char file[1024];
+				strcpy(file, rcs_file);
+
+				char *const argv[] = { bash, script, num, file, NULL};
 
 				execv(bash, argv);
 

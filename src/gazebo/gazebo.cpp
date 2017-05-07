@@ -138,7 +138,7 @@ void GazeboConnector::track(Vehicle *v, int id) {
 	tracked[id] = v;
 }
 
-void GazeboConnector::spawn(const vector<Point> &homes) {
+void GazeboConnector::spawn(const vector<Point> &homes, string sdf_file, string rcs_file) {
 
 	tansa::msgs::SpawnRequest req;
 
@@ -155,6 +155,9 @@ void GazeboConnector::spawn(const vector<Point> &homes) {
 		orient->set_y(0);
 		orient->set_z(0);
 	}
+
+	req.set_sdf_file(sdf_file);
+	req.set_rcs_file(rcs_file);
 
 	spawn_pub->Publish(req);
 }

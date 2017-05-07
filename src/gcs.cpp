@@ -466,7 +466,7 @@ void spawnVehicles(const json &rawJson, vector<Point> homes, vector<unsigned> ac
 
 		// Keeping preview mode fast by not spawning the processes
 		if(!previewMode)
-			gazebo->spawn(spawns);
+			gazebo->spawn(spawns, "config/gazebo/models/x340/x340.sdf", "config/models/x340/rcS");
 	}
 #endif
 

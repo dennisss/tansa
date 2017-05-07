@@ -6,6 +6,7 @@
 
 #include <map>
 #include <vector>
+#include <string>
 
 namespace tansa {
 
@@ -25,7 +26,7 @@ public:
 	/**
 	 * Places drone models into the simulation environment at the given positions
 	 */
-	void spawn(const vector<Point> &homes);
+	void spawn(const std::vector<Point> &homes, std::string sdf_file, std::string rcs_file);
 
 };
 

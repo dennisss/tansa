@@ -257,6 +257,13 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	q[3] = orient_ned.z();
 
 
+	if(this->armed) {
+		q[0] = 2.0;
+		q[1] = 2.0;
+		q[2] = 2.0;
+		q[3] = 2.0;
+	}
+
 	// Send at 50Hz
 	if(t.since(lastStateSent).seconds() < 0.02) {
 		return;

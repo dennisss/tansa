@@ -30,6 +30,13 @@ bool Vehicle::read_params(string file) {
 		params.latency = data["latency"];
 	}
 
+	if(data.count("mocapYawOffset")) {
+		params.mocapYawOffset = ((double) data["mocapYawOffset"]) * (M_PI / 180.0);
+	}
+	else {
+		params.mocapYawOffset = 0;
+	}
+
 	return true;
 }
 

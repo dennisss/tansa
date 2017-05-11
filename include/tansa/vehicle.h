@@ -60,6 +60,8 @@ struct VehicleParameters {
 	double hoverPoint;
 
 	double latency;
+
+	double mocapYawOffset;
 };
 
 struct VehicleForwarder {

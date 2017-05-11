@@ -244,11 +244,11 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	this->estimator.correct(this->state, pos, v, t);
 
 	// TODO: Filter this?
-	this->state.orientation = orient;
+	this->state.orientation = orient * AngleAxisd(this->params.mocapYawOffset, Vector3d::UnitZ());
 
 
 	Vector3d pos_ned = enuToFromNed() * pos;
-	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * orient * Quaterniond(baseToFromAirFrame());
+	Quaterniond orient_ned = Quaterniond(enuToFromNed()) * this->state.orientation * Quaterniond(baseToFromAirFrame());
 
 	float q[4];
 	q[0] = orient_ned.w();

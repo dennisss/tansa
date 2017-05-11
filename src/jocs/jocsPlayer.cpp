@@ -216,6 +216,9 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 						v.arm(true);
 						printf("Arming mode\n");
 					}
+
+					// Also ensure LEDs are off
+					v.set_lighting({0, 0, 0});
 				}
 
 

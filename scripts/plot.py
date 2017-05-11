@@ -34,7 +34,7 @@ plot1.plot(data[:, 4], data[:, 5], 'b')
 
 
 plot1.set_ylim(-2, 2)
-plot1.set_xlim(-10, 10)
+plot1.set_xlim(-3, 3)
 
 plot1.legend(['Target Position', 'Actual Position'], prop={'size':9})
 plot1.set_title('Position (meters)')
@@ -51,7 +51,7 @@ plot2.plot(data[:, 0], e[:, 0], 'r')
 plot2.plot(data[:, 0], e[:, 1], 'g')
 plot2.plot(data[:, 0], e[:, 2], 'b')
 
-#plot2.set_ylim(-0.5, 0.5)
+plot2.set_ylim(-0.5, 0.5)
 plot2.set_title('Axis Errors (meters)')
 plot2.plot([0, data[-1, 0]], [0,0], '--', color='0.75')
 

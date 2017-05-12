@@ -256,14 +256,6 @@ void Vehicle::mocap_update(const Vector3d &pos, const Quaterniond &orient, const
 	q[2] = orient_ned.y();
 	q[3] = orient_ned.z();
 
-
-	if(this->armed) {
-		q[0] = 2.0;
-		q[1] = 2.0;
-		q[2] = 2.0;
-		q[3] = 2.0;
-	}
-
 	// Send at 50Hz
 	if(t.since(lastStateSent).seconds() < 0.02) {
 		return;
@@ -366,22 +358,37 @@ void Vehicle::setpoint_accel(const Vector3d &accel, double yaw) {
 	);
 
 	send_message(&msg);
+
+	if(accel_normal.norm() > 0.01 && this->armed) {
+		this->flying = true;
+	}
 }
 
 void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
 
-	Quaterniond att_ned = Quaterniond(enuToFromNed()) * att * Quaterniond(baseToFromAirFrame());
+	Quaterniond att_enu = att;
+	if(this->params.orientationMismatchCorrection) {
+		att_enu = att_enu * onboardSkew;
+	}
+
+	Quaterniond att_ned = Quaterniond(enuToFromNed()) * att_enu * Quaterniond(baseToFromAirFrame());
 
 	// TODO: This is redundant with setpoint_accel
 	const double hover = params.hoverPoint;
 	double thrust = accel_z * (hover / GRAVITY_MS);
-	if(thrust < 0.001) // TODO: Verify if we can make this zero
-		thrust = 0.001;
 
-	if(thrust > 0.8) {
-		printf("Extremely large thrust, blocking!");
-		overactuated = true;
+	if(thrust > 0.9) {
+		printf("Extremely large thrust, blocking: %.2f!\n", thrust);
+		overactuatedCount++;
+
+		if(overactuatedCount >= 20) {
+			overactuated = true;
+		}
+
 		return;
+	}
+	else {
+		overactuatedCount = 0;
 	}
 
 	float att_arr[4];
@@ -403,9 +410,16 @@ void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
 	);
 
 	send_message(&msg);
+
+	// TODO: Make sure this doesn't conflict with a constant small hover during landing phase
+	if(accel_z > 0.05 && this->armed && !this->flying) {
+		this->flying = true;
+	}
 }
 
+// TODO: This should deactivate this->flying?
 void Vehicle::setpoint_zero() {
+	this->flying = false;
 	// The orientation doesn't matter as there is 0 thrust
 	this->setpoint_attitude(Quaterniond(1, 0, 0, 0), 0);
 }
@@ -640,6 +654,10 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			this->armed = hb.base_mode & MAV_MODE_FLAG_SAFETY_ARMED? true: false;
 
+			if(!this->armed) {
+				this->flying = false;
+			}
+
 			px4_custom_mode custom_mode;
 			custom_mode.data = hb.custom_mode;
 
@@ -698,6 +716,10 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 
 			onboardState.orientation = orient;
 			onboardState.time = Time::now();
+
+			double alpha = 0.9;
+			Quaterniond newSkew = this->state.orientation.inverse() * onboardState.orientation;
+			onboardSkew = Quaterniond( alpha*newSkew.coeffs() + (1.0 - alpha)*onboardSkew.coeffs() ).normalized();
 
 			break;
 

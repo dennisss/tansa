@@ -62,6 +62,8 @@ struct VehicleParameters {
 	double latency;
 
 	double mocapYawOffset;
+
+	bool orientationMismatchCorrection;
 };
 
 struct VehicleForwarder {
@@ -212,10 +214,12 @@ public:
 	double pingLatency;
 
 	bool overactuated = false;
+	bool flying = false; /**< Very simple indicator of whether or not we are flying based on armed state and the last sent actuator command */
 
 	// State as observed by the onboard processor
 	Time onboardPositionTime = Time(0, 0);
 	ModelState onboardState;
+	Quaterniond onboardSkew; /**< The rotation from the offboard orientation to the onboard one */
 	vector<double> lightState;
 
 	BatteryStatus battery;
@@ -287,6 +291,8 @@ private:
 	Time lastStateSent;
 	Time lastTrackTime = Time(0,0); int ntracks = 0;
 	Time lastPingTime = Time(0,0); int pingSeq = 0;
+
+	int overactuatedCount = 0;
 };
 
 /**

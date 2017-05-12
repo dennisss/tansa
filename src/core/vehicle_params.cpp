@@ -37,6 +37,13 @@ bool Vehicle::read_params(string file) {
 		params.mocapYawOffset = 0;
 	}
 
+	if(data.count("orientationMismatchCorrection")) {
+		params.orientationMismatchCorrection = (bool) data["orientationMismatchCorrection"];
+	}
+	else {
+		params.orientationMismatchCorrection = false;
+	}
+
 	return true;
 }
 

@@ -6,5 +6,6 @@
 	},
 	"hoverPoint": 0.21,
 	"latency": 0.012,
-	"mocapYawOffset": -90
+	"mocapYawOffset": -90,
+	"orientationMismatchCorrection": true
 }

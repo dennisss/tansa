@@ -13,7 +13,7 @@ using namespace std;
 
 namespace tansa {
 
-#define MAX_DEVIATION 0.02 // By default cap deviation at 20mm
+#define MAX_DEVIATION 0.12 // By default cap deviation at 80mm
 #define ICP_MAX_ERROR 0.02
 #define TIMEOUT 0.2 // Time in seconds after which to abandon a tracked entity
 
@@ -269,6 +269,8 @@ RigidBodyTracker::RigidBodyTracker(const RigidBodyTrackerSettings &s) {
 		model.push_back(Vector3d(p[0], p[1], p[2]));
 	}
 
+	// TODO: This is mainly for testing single marker
+	model.resize(1);
 }
 
 void RigidBodyTracker::track(Vehicle *v) {
@@ -331,6 +333,17 @@ void RigidBodyTracker::update(const vector<Vector3d> &cloud, const Time &t) {
 			// TODO: If ICP fails we should have special behavior when < 3 markers are visible
 			// -> For one dot, we are essentially reducing to a single marker tracking problem
 			// -> With only two markers, it becomes a Quaternion::FromTwoVectors problem
+			/*
+				If we have 2 markers, then we can determine auto-gyro bias estimation
+
+				- We record initial yaw orientation y0 with mocap orientation ym0 at time 0
+				- Later we record any set: yt and ymt at time 't'
+				- If the bias was perfect, then yt - y0 == ymt - ym0
+					- (yt - y0) - (ymt - ym0) = ydiff is the unexplained rotation angle integrated from the gyro
+					- differentiating, we get a bias of (ydiff / t) = b
+					- we will use gradient descent to incrementally add to the current gyro bias until
+			*/
+
 			if(iterative_closest_point(b.markers, pts, &Ri, &ti, &indices)) {
 
 				o_next = Quaterniond(Ri);
@@ -362,8 +375,28 @@ void RigidBodyTracker::update(const vector<Vector3d> &cloud, const Time &t) {
 			b.lastSeen = t;
 			b.nframes++;
 
+			// Single dot case: we don't directly have orientation
 			if(registrationInv.count(b.id) == 1) {
-				vehicles[registrationInv[b.id]]->mocap_update(b.position, b.orientation, t);
+
+				Vehicle *v = vehicles[registrationInv[b.id]];
+
+				Quaterniond orient;
+				if(b.markers.size() == 1) {
+
+					if(v->flying) {
+						orient = Quaterniond(2, 2, 2, 2); // An invalid orientation to indicate that we have no orientation data
+					}
+					else { // On the ground, we assume that the drone was placed facing forwards
+						float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+						r /= 100.0;
+						orient = AngleAxisd(r, Vector3d::UnitZ());
+					}
+
+					v->mocap_update(b.position, orient, t);
+				}
+				else {
+					v->mocap_update(b.position, b.orientation, t);
+				}
 			}
 		}
 
@@ -538,6 +571,7 @@ void RigidBodyTracker::update_active_registration(const Time &t) {
 			unsigned c = data.candidates[ci];
 
 			// Verify that the point
+			// TODO: Reject using points assigned to other bodies if they are single marker bodies
 			for(int i = 0; i < bodies.size(); i++) {
 				if(bodies[i].id == c) {
 					double lat = bodies[i].lastSeen.since(data.beaconToggle).seconds() * 1000;
@@ -572,6 +606,15 @@ void RigidBodyTracker::update_active_registration(const Time &t) {
 			data.phase = PHASE_IDLE;
 			return;
 		}
+
+		// Single dot case
+		if(model.size() == 1) {
+			registrations[data.activeVehicle] = data.candidates[0];
+			registrationInv[data.candidates[0]] = data.activeVehicle;
+			data.phase = PHASE_IDLE;
+			return;
+		}
+
 
 		vector<Vector3d> pts;
 		for(int i = 0; i < bodies.size(); i++) {

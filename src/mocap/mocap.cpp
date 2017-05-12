@@ -9,20 +9,12 @@
 
 namespace tansa {
 
-static Vector3d lastPosition(0,0,0);
-static bool found = false;
-static bool beaconOn = false;
-static Quaterniond startOrient;
-static int frameI = 0;
-
-static Vector3d velocity(0,0,0);
-
 
 Mocap::Mocap(const MocapOptions &options) {
 	client = nullptr;
 	this->options = options;
 
-	if(options.mode == MocapRigidBodyFromCloud || options.useActiveBeacon)
+	if(options.mode == MocapRigidBodyFromCloud /* || options.useActiveBeacon */)
 		tracker = new RigidBodyTracker();
 	else
 		tracker = NULL;
@@ -152,40 +144,15 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 	}
 
 
-	return;
-
 	if(tracker != NULL) {
 		tracker->update(markers, t);
 	}
-
-
-	/*
-		If we have 2 markers, then we can determine auto-gyro bias estimation
-
-		- We record initial yaw orientation y0 with mocap orientation ym0 at time 0
-		- Later we record any set: yt and ymt at time 't'
-		- If the bias was perfect, then yt - y0 == ymt - ym0
-			- (yt - y0) - (ymt - ym0) = ydiff is the unexplained rotation angle integrated from the gyro
-			- differentiating, we get a bias of (ydiff / t) = b
-			- we will use gradient descent to incrementally add to the current gyro bias until
-	*/
-
-	/*
-	// Toggle the beacon in short bursts
-	if(found && frameI % 120 == 0) {
-		v->set_beacon(true);
-		beaconOn = true;
-	}
-	else if((frameI - 30) % 120 == 0 && beaconOn) { // Turn off in 30 frames
-		v->set_beacon(false);
-		beaconOn = false;
-	}
-	*/
+	
 }
 
 void Mocap::resync() {
 
-	
+
 }
 
 

@@ -6,6 +6,7 @@
 	"mocap": {
 		"clientAddress": "192.168.1.1",
 		"serverAddress": "",
-		"useActiveBeacon": true
+		"useActiveBeacon": true,
+		"singleDot": false
 	}
 }

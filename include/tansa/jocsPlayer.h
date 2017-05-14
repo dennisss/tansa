@@ -54,11 +54,14 @@ public:
 	/**
 	 * Causes all vehicles to enter a failsafe landing mode
 	 */
-	void failsafe();
+	void failsafe(int role = -1);
+
+
+	void terminate(int role = -1);
 
 
 	/**
-	 * Reorder the drones to their closest tracks 
+	 * Reorder the drones to their closest tracks
 	 */
 	void rearrange();
 
@@ -135,7 +138,6 @@ private:
 	//separately
 	std::vector<std::vector<std::vector<LightAction*>>> lightActions;
 	std::vector<Point> homes;
-	std::vector<HoverController *> hovers;
 	std::vector<PositionController *> posctls;
 	std::vector<LightController *> lightctls;
 	std::vector<std::vector<int>> lightCounters;
@@ -161,6 +163,8 @@ private:
 	bool looping = false;
 	bool inRealLife;
 	bool enableLighting;
+
+	std::vector<bool> terminated; // For when in failsafe mode, whether or not drone should just turn off all motors immediately
 
 	ofstream logfile;
 

@@ -3,6 +3,9 @@ var React = require('react'),
 
 import { OverlayTrigger, Popover } from 'react-bootstrap'
 
+// TODO: This is the same as in renderer.js
+var trackColors = ['0000ff', 'ff0000', '00ff00', '00ffff', 'ff00ff', 'ffff00'];
+
 
 var VehicleRow = React.createClass({
 
@@ -29,13 +32,20 @@ var VehicleRow = React.createClass({
 			</Popover>
 		);
 
+		var color = trackColors[data.role];
+
+		var p = this.props.parent;
+
 		return (
 			<div className="ta-prop">
 				<table style={{width: '100%'}}>
 					<tbody>
 						<tr>
 							<td>
+								{/*
 								<input type="checkbox" checked style={{marginRight: 5}} />
+								*/}
+								<div style={{width: 10, height: 10, backgroundColor: ('#' + color), border: '1px solid #fff', marginRight: 6, display: 'inline-block'}}></div>
 								<span style={{fontWeight: 'bold', paddingRight: 10}}>
 									Track {data.role > 1000? 'NaN' : data.role}:
 								</span>
@@ -56,6 +66,26 @@ var VehicleRow = React.createClass({
 										<StatusSign pending={data.connected && data.tracking} good={data.armed && data.tracking} />
 									</span>
 								</OverlayTrigger>
+							</td>
+						</tr>
+						<tr>
+							<td colSpan="5" style={{paddingLeft: 20, paddingTop: 5, paddingBottom: 5}}>
+								{/*
+								{data.state == 'flying'? (
+									<button className="btn btn-xs" style={{marginRight: '2em'}}>Stop</button>
+								) : null}
+								{data.state == 'holding'? (
+									<button className="btn btn-xs" style={{marginRight: '2em'}}>Land</button>
+								) : null}
+								*/}
+
+								<div className="btn-group">
+									<button className="btn btn-xs btn-danger" onClick={() => p.kill(data.role * 1)}>Kill</button>
+									<button className="btn btn-xs btn-danger" onClick={() => p.halt(data.role * 1)}>Halt</button>
+								</div>
+
+
+
 							</td>
 						</tr>
 					</tbody>

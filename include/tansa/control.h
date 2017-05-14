@@ -45,6 +45,11 @@ public:
 	 */
 	void track(Trajectory::Ptr traj);
 
+	/**
+	 * Maintain a hover at a given position
+	 */
+	void track(Point point);
+
 	virtual TrajectoryState getTargetState(double t);
 
 	/**
@@ -56,35 +61,16 @@ protected:
 	Vehicle *vehicle;
 
 	PID<PointDims> *pid;
+	PID<PointDims> *hoverPid;
 
 private:
 	Trajectory::Ptr trajectory;
-	bool directAttitudeControl;
-};
-
-
-class HoverController : public PositionController {
-public:
-	HoverController(Vehicle *v);
-	virtual ~HoverController() {}
-
-	void setPoint(const Point &p) { this->point = p; }
-	Point getPoint() { return this->point; }
-
-	virtual TrajectoryState getTargetState(double t);
-
-	virtual void control(double t);
-
-	/**
-	 * Get the distance to the point being kept
-	 */
-	double distance();
-
-private:
 	Point point;
+	bool directAttitudeControl;
+	bool hoverMode;
 };
 
-
+/*
 class AdmittanceController : public HoverController {
 public:
 	AdmittanceController(Vehicle *v);
@@ -93,6 +79,7 @@ public:
 	virtual void control(double t);
 
 };
+*/
 
 /**
  * Controller for following Light Trajectory's
@@ -103,7 +90,7 @@ public:
 	enum LightIndices {
 		LEFT = 0,
 		RIGHT = 1,
-		INTERNAL = 2, 
+		INTERNAL = 2,
 	};
 	static const int NUM_LIGHTS = 3;
 	static const int MAX_LIGHTS = 7;

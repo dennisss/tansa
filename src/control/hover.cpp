@@ -5,8 +5,12 @@
 
 namespace tansa {
 
-HoverController::HoverController(Vehicle *v) : PositionController(v) {
+HoverController::HoverController(Vehicle *v, PositionController *base) : PositionController(v) {
 	this->point = Point(0,0,0);
+
+	// Share the same state as the position controller
+	delete pid->state;
+	pid->state = base->pid->state;
 
 	// Position controller gains + integral term
 	pid->setGains(
@@ -17,21 +21,13 @@ HoverController::HoverController(Vehicle *v) : PositionController(v) {
 }
 
 TrajectoryState HoverController::getTargetState(double t) {
-	TrajectoryState s;
-	s.position = point;
-	s.velocity = Point::Zero();
-	s.acceleration = Point::Zero();
-	return s;
+
 }
 
 void HoverController::control(double t) {
 
 	// If really low to the ground, do nothing
-	if(point.z() < 0.1) {
-		vehicle->setpoint_zero();
-		return;
-	}
-
+	
 	PositionController::control(t);
 
 	/*

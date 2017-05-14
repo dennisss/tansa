@@ -293,6 +293,7 @@ private:
 	Time lastPingTime = Time(0,0); int pingSeq = 0;
 
 	int overactuatedCount = 0;
+	int notOveractuatedCount = 0;
 };
 
 /**

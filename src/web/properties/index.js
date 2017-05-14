@@ -214,7 +214,7 @@ var Controls = React.createClass({
 
 					{preButtons}
 
-					<button className="btn btn-sm btn-danger" onClick={p.kill} style={{width: '100%', marginTop: 10}}>Kill</button>
+					<button className="btn btn-sm btn-danger" onClick={() => p.kill(-1)} style={{width: '100%', marginTop: 10}}>Kill</button>
 				</div>
 			</div>
 		)

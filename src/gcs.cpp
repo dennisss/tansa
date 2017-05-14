@@ -41,7 +41,8 @@ static string routineConfigPath = "config/routine.json";
 
 static bool running = false;
 static bool initialized = false;
-static bool killmode = false;
+static bool killmode = false; static int killRole = -1;
+static bool terminatemode = false; static int terminateRole = -1;
 static bool pauseMode = false;
 static bool stopMode = false;
 static bool playMode = false;
@@ -677,7 +678,23 @@ void socket_on_message(const json &data) {
 	} else if (type == "kill") {
 		bool enabled = data["enabled"];
 		printf("Killing...\n");
+
+		if(data.count("role") == 1) {
+			killRole = data["role"];
+		}
+		else {
+			killRole = -1;
+		}
+
 		killmode = enabled;
+	} else if (type == "halt") {
+		if(data.count("role") == 1) {
+			terminateRole = data["role"];
+		}
+		else {
+			terminateRole = -1;
+		}
+		terminatemode = true;
 	} else if (type == "land") {
 		printf("Landing...\n");
 		landMode = true;
@@ -821,6 +838,7 @@ void *console_thread(void *arg) {
 			cout << "Stopping..." << endl;
 			stopMode = true;
 		} else if (args[0] == "kill") {
+			killRole = -1;
 			killmode = args.size() <= 1 || !(args[1] == "off");
 		} else if (args[0] == "load" && args.size() > 1) {
 			cout << "Loading..." << endl;
@@ -940,13 +958,14 @@ int main(int argc, char *argv[]) {
 		}
 
 		if (killmode) {
-			player->failsafe();
+			player->failsafe(killRole);
+			killmode = false;
+		} else if (terminatemode) {
+			player->terminate(terminateRole);
+			terminatemode = false;
+		}
 
-			/*
-			for(Vehicle *v : vehicles)
-				v->terminate();
-			*/
-		} else if (loadMode) {
+		if (loadMode) {
 			printf("Still loading...\n");
 		} else if (player == nullptr || !initialized) {
 			// Player not initialized: no-op

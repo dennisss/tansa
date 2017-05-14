@@ -20,9 +20,13 @@ void LightController::control(double t) {
 
 	bool change = false;
 	for(i = 0; i < NUM_LIGHTS; i++){
-		if(trajectories[i] == nullptr) //TODO this is temporary need to figure out how to only do ones we have
-			continue;
-		values[i] = trajectories[i]->evaluate(t);
+		if(trajectories[i] == nullptr) { //TODO this is temporary need to figure out how to only do ones we have
+			values[i] = 0;
+		}
+		else {
+			values[i] = trajectories[i]->evaluate(t);
+		}
+		
 		if (abs(values[i] - lightStates[i]) >= EPSILON) {
 			change = true;
 			lightStates[i] = values[i];

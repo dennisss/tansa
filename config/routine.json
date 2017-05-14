@@ -1,5 +1,5 @@
 {
-	"routinePath": "data/singleDrone.jocs",
+	"routinePath": "data/circleSquare.csv",
 	"startPoint": -1,
 	"activeRoles": [0,1,2],
 	"theaterScale": 1.0,

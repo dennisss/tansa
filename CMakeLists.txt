@@ -47,7 +47,6 @@ add_library(
 	src/algorithm/rigid_point_correspondence_solver.cpp
 	src/server/osc.cpp
 	src/control/position.cpp
-	src/control/hover.cpp
 	src/estimation/linear_complementary.cpp
 	src/trajectory/polynomial.cpp
 	src/trajectory/minsnap.cpp
@@ -69,7 +68,7 @@ add_library(
 	src/trajectory/strobe.cpp
 	src/control/lightcontrol.cpp
 	src/model/feasibility.cpp
-	src/control/admittance.cpp
+	#src/control/admittance.cpp
 
 	src/manager/preview.cpp
 	src/manager/calibration.cpp

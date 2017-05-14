@@ -381,14 +381,19 @@ void Vehicle::setpoint_attitude(const Quaterniond &att, double accel_z) {
 		printf("Extremely large thrust, blocking: %.2f!\n", thrust);
 		overactuatedCount++;
 
-		if(overactuatedCount >= 20) {
+		if(overactuatedCount >= 10) {
 			overactuated = true;
 		}
 
+		notOveractuatedCount = 0;
+
 		return;
 	}
-	else {
-		overactuatedCount = 0;
+	else if(overactuatedCount > 0) {
+		notOveractuatedCount++;
+		if(notOveractuatedCount > 10) {
+			overactuatedCount = 0;
+		}
 	}
 
 	float att_arr[4];

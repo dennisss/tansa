@@ -44,7 +44,7 @@ var StatsSection = React.createClass({
 							Vehicles
 						</div>
 						<div>
-							{stats.vehicles.map((v, i) => <VehicleRow data={v} key={i} /> )}
+							{stats.vehicles.map((v, i) => <VehicleRow parent={p} data={v} key={i} /> )}
 						</div>
 
 					</div>

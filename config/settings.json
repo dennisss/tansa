@@ -1,8 +1,8 @@
 {
-	"world": "gazebo",
+	"world": "real",
 	"enableMessaging": true,
 	"enableOSC": true,
-	"enableLighting": false,
+	"enableLighting": true,
 	"mocap": {
 		"clientAddress": "192.168.1.1",
 		"serverAddress": "",

@@ -22,11 +22,6 @@ namespace tansa {
 
 		int n = vehicles.size();
 
-		hovers.resize(n);
-		for(int i = 0; i < n; i++) {
-			hovers[i] = new HoverController(vehicles[i]);
-		}
-
 		posctls.resize(n);
 		for(int i = 0; i < n; i++) {
 			posctls[i] = new PositionController(vehicles[i]);
@@ -48,6 +43,8 @@ namespace tansa {
 		}
 
 		transitionStarts.resize(n, Time(0,0));
+
+		terminated.resize(n, false);
 	}
 
 void JocsPlayer::reset() {
@@ -168,6 +165,13 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					Vector3d startPosition = vehicles[i]->state.position,
 							 endPosition = homes[jocsActiveIds[i]];
 
+					// Skip takeoff if the home position is on the ground
+					// Otherwise, the transition may become numerically unstable
+					if(endPosition.z() < 0.1) {
+						states[i] = StateHolding;
+						continue;
+					}
+
 					double dur = (startPosition - endPosition).norm() / VEHICLE_ASCENT_MS;
 					states[i] = StateTakeoff;
 					transitionStarts[i] = start;
@@ -191,8 +195,8 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 			int chorI = jocsActiveIds[i];
 
 			// Failsafe, land on motion capture lose
-			if(s != StateInit) {
-				if(!v.connected) {
+			if(s != StateInit && s != StateFailsafe) {
+				if(!v.connected) { // TODO: Either rate limit this or don't print it as much
 					// Flip out to the user!
 					cout << "UNCONTROLLABLE: VEHICLE NOT CONNECTED: THIS IS BAD!!" << endl;
 				}
@@ -258,8 +262,8 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					return;
 				}
 				// Do a hover
-				hovers[i]->setPoint(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
-				hovers[i]->control(t);
+				posctls[i]->track(holdpoints[chorI]); // TODO: Only do this on transitions (when holdpoints changes)
+				posctls[i]->control(t);
 			} else if (s == StateFlying) {
 				this->log();
 
@@ -305,13 +309,14 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 				}
 
 				if(motionAction->GetActionType() == ActionTypes::Hover) {
-					hovers[i]->setPoint(motion->evaluate(t).position); // TODO: This line will be a constant for this type of action
-					hovers[i]->control(t);
+					posctls[i]->track(motion->evaluate(t).position); // TODO: This line will be a constant for this type of action
+					posctls[i]->control(t);
 				}
 				else {
 					posctls[i]->track(motion);
 					posctls[i]->control(t);
 				}
+
 				for(int j = 0; j < LightController::NUM_LIGHTS; j++){
 					//Very important. Must handle the case where you don't specify anything for some of the lights
 					//Otherwise it WILL CRASH with an index out of bounds here.
@@ -320,19 +325,28 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 					int counter = lightCounters[i][j];
 					const std::vector<LightAction*> local_action_array = lightActions[chorI][j];
 					LightAction* local_action = local_action_array[counter];
+					bool channelActive = false;
 					if (counter < local_action_array.size()) {
 						auto traj = local_action->GetPath();
 						if (t >= local_action->GetStartTime()) {
 							lightctls[i]->track(traj, (LightController::LightIndices)j);
-							if(enableLighting) {
-								lightctls[i]->control(t);
-							}
+							channelActive = true;
 							if (t >= local_action->GetEndTime()) {
 								lightCounters[i][j]++;
 							}
 						}
 					}
+
+					// Explicitly disable the channel if no action
+					if(!channelActive) {
+						lightctls[i]->track(nullptr, (LightController::LightIndices)j);
+					}
 				}
+
+				if(enableLighting) {
+					lightctls[i]->control(t);
+				}
+
 			} else if (s == StateLanding) {
 				if(stepTick % 10 == 0) {
 					std::vector<int> light_states;
@@ -363,9 +377,15 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 			}
 			else if(s == StateFailsafe) {
 
+				if(terminated[i]) {
+					v.terminate();
+				}
 				// TODO: If still tracking, try a nice controlled landing
 				// TODO: Geofence based on covariance to auto-hardkill
-				if(stepTick % 50 == 0) {	
+				else if(stepTick % 20 == 0) {
+					if(v.tracking && v.state.position.z() < 0.2) { // If we know where we are, then disarm if it is safe
+						v.arm(false);
+					}
 					if(v.mode == "offboard") {
 						v.set_mode("landing");
 					}
@@ -460,9 +480,22 @@ bool JocsPlayer::loadChoreography(Routine *chor, const std::vector<unsigned> &jo
 	}
 
 
-void JocsPlayer::failsafe() {
-	for(auto &s : states) {
-		s = StateFailsafe;
+void JocsPlayer::failsafe(int role) {
+	for(int i = 0; i < vehicles.size(); i++) {
+		int chorI = jocsActiveIds[i];
+		if(role == -1 || chorI == role) {
+			states[i] = StateFailsafe;
+		}
+	}
+}
+
+void JocsPlayer::terminate(int role) {
+	for(int i = 0; i < vehicles.size(); i++) {
+		int chorI = jocsActiveIds[i];
+		if(role == -1 || chorI == role) {
+			states[i] = StateFailsafe;
+			terminated[i] = true;
+		}
 	}
 }
 
@@ -538,11 +571,19 @@ void JocsPlayer::rearrange() {
 	}
 
 	void JocsPlayer::stop() {
-		if (!paused) {
-			printf("Must already be paused.");
-			return;
+
+		for(auto s : states) {
+			if(s != StateFlying) {
+				printf("Must be playing in order to stop\n");
+				return;
+			}
 		}
-		stopRequested = true;
+
+		for(int i = 0; i < vehicles.size(); i++) {
+			int chorI = jocsActiveIds[i];
+			holdpoints[chorI] = vehicles[i]->state.position;
+			states[i] = StateHolding;
+		}
 	}
 
 	void JocsPlayer::land() {
@@ -579,10 +620,6 @@ void JocsPlayer::rearrange() {
 
 		for (int i = 0; i < lightctls.size(); i++) {
 			delete lightctls[i];
-		}
-
-		for (int i = 0; i < hovers.size(); i++) {
-			delete hovers[i];
 		}
 	}
 

@@ -180,8 +180,11 @@ var App = React.createClass({
 	play: function() { this.send({ type: 'play' }); },
 	pause: function() { this.send({ type: 'pause' }); },
 	stop: function() { this.send({ type: 'stop' }); },
-	kill: function() {
-		this.send({ type: 'kill', enabled: true });
+	kill: function(role) {
+		this.send({ type: 'kill', enabled: true, role: (role || -1) });
+	},
+	halt: function(role) {
+		this.send({ type: 'halt', role: (role || -1) });
 	},
 
 	calibrate: function() {

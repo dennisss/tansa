@@ -8,10 +8,11 @@ import math
 
 FILE = 'log/20170408-14_52_11.csv'
 
+ROLE = 0
 
 data = np.genfromtxt(FILE, delimiter=',', dtype=float)
 
-data = data[-10000:,:]
+#data = data[-10000:,:]
 
 print(data.shape)
 
@@ -23,11 +24,14 @@ plot2 = axarr[1]
 
 #plt.subplot(211)
 
+off = 6*ROLE
+
+
 # Target
-plot1.plot(data[:, 1], data[:, 2], 'r--')
+plot1.plot(data[:, (off+1)], data[:, (off+2)], 'r--')
 
 # Actual
-plot1.plot(data[:, 4], data[:, 5], 'b')
+plot1.plot(data[:, (off+4)], data[:, (off+5)], 'b')
 
 #plt.plot(x, magX, 'b')
 #plt.plot(x, p(current), 'r--')
@@ -45,7 +49,7 @@ plot1.set_aspect('equal', adjustable='box')
 
 #plt.show()
 
-e = data[:,1:4] - data[:, 4:7]
+e = data[:,(off+1):(off+4)] - data[:, (off+4):(off+7)]
 
 plot2.plot(data[:, 0], e[:, 0], 'r')
 plot2.plot(data[:, 0], e[:, 1], 'g')

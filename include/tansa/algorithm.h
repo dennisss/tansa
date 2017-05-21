@@ -121,6 +121,80 @@ private:
 
 
 
+
+class DisjointSets {
+public:
+
+	/**
+	 * Creates a new collection of disconnected elements
+	 */
+	DisjointSets(unsigned N) {
+		elements.resize(N);
+		this->clear();
+	}
+
+	inline void clear() {
+		for(unsigned i = 0; i < elements.size(); i++) {
+			elements[i].rank = 0;
+			elements[i].parent = i;
+			elements[i].min = i;
+		}
+	}
+
+	inline unsigned findSet(unsigned x) {
+		if(elements[x].parent != x)
+			elements[x].parent = findSet(elements[x].parent);
+		return elements[x].parent;
+	}
+
+	inline unsigned findSetMin(unsigned x) {
+		x = findSet(x);
+		return elements[x].min;
+	}
+
+	inline void unionSets(unsigned x, unsigned y) {
+		// Find root labels
+		x = findSet(x);
+		y = findSet(y);
+
+		// if x and y are already in the same set (i.e., have the same root or representative)
+		if(x == y)
+			return;
+
+		// x and y are not in same set, so we merge them
+		if(elements[x].rank < elements[y].rank)
+			elements[x].parent = y;
+		else if(elements[x].rank > elements[y].rank)
+			elements[y].parent = x;
+		else {
+			elements[y].parent = x;
+			elements[x].rank = elements[x].rank + 1;
+		}
+
+
+		// Update the min in the root of the new set
+		if(elements[x].min < elements[y].min) {
+			elements[y].min = elements[x].min;
+		}
+		else {
+			elements[x].min = elements[y].min;
+		}
+	}
+
+private:
+
+	struct ElementData {
+		unsigned parent;
+		unsigned min;
+		unsigned rank;
+	};
+
+	vector<ElementData> elements;
+
+};
+
+
+
 }
 
 #endif

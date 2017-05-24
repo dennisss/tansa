@@ -8,7 +8,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(CGAL REQUIRED)
+find_package(CGAL)
 find_package(Cplex)
 
 include_directories(
@@ -16,8 +16,10 @@ include_directories(
 	include
 )
 
-set(CGAL_DONT_OVERRIDE_CMAKE_FLAGS TRUE CACHE BOOL "Force CGAL to maintain CMAKE flags")
-include(${CGAL_USE_FILE})
+if(CGAL_FOUND)
+	set(CGAL_DONT_OVERRIDE_CMAKE_FLAGS TRUE CACHE BOOL "Force CGAL to maintain CMAKE flags")
+	include(${CGAL_USE_FILE})
+endif()
 
 
 ######## Headers and libraries for prebuilt socket.io client ########
@@ -90,10 +92,20 @@ target_link_libraries(
 
 	sioclient
 	${Boost_LIBRARIES}
-	${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} # TODO: Also add CGAL_CXX_* flags
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")
+
+
+
+if(CGAL_FOUND)
+	target_link_libraries(
+		tansa
+		${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} # TODO: Also add CGAL_CXX_* flags
+	)
+
+	add_definitions(-DUSE_CGAL)
+endif()
 
 
 ## We can optionally build with CPLEX

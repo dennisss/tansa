@@ -206,8 +206,11 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 
 #ifdef USE_CPLEX
 		bool success = qp_solve_cplex(Q, A, b, rels, x, cost);
-#else
+#elif defined(USE_CGAL)
 		bool success = qp_solve(Q, A, b, rels, x, cost);
+#else
+		cout << "No QP Solver available. Install CGAL or CPLEX" << endl;
+		bool success = false;
 #endif
 
 		if(!success) {

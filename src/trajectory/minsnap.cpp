@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cassert>
 
+#ifdef USE_CGAL
+
 #include <CGAL/basic.h>
 #include <CGAL/QP_models.h>
 #include <CGAL/QP_functions.h>
@@ -20,14 +22,32 @@ typedef CGAL::MP_Float ET;
 typedef CGAL::Quadratic_program<double> Program;
 typedef CGAL::Quadratic_program_solution<ET> Solution;
 
+#endif
 
-bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost);
+#ifdef USE_CPLEX
+
+#define IL_STD
+#include <ilcplex/ilocplex.h>
+ILOSTLBEGIN
+
+#endif
+
+
 
 
 namespace tansa {
 
+enum Relation {
+	EqualTo,
+	LessThan,
+	GreaterThan
+};
 
-bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost);
+
+bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<Relation> &rels, VectorXd &x, double &cost);
+
+bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<Relation> &rels, VectorXd &x, double &cost);
+
 
 
 bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector<double> &t, const vector<double> &corridors, Trajectory::Ptr *out, double *cost) {
@@ -111,7 +131,7 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 		// For holding the constrains (it is easier to vectorize them and put them in a matrix later as we don't know how many constraints there will be)
 		vector<MatrixXd> Arows;
 		vector<double> brows;
-		vector<CGAL::Comparison_result> rels; // relation between A and b
+		vector<Relation> rels; // relation between A and b
 
 		#define EmptyConstraintRow MatrixXd::Zero(1, M*N)
 
@@ -135,14 +155,14 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 					a.block(0, i*N, 1, N) = diffvec(tvecS, j).transpose();
 					double b = x[i][j](d);
 					Arows.push_back(a); brows.push_back(b);
-					rels.push_back(CGAL::EQUAL);
+					rels.push_back(EqualTo);
 				}
 				if(endConstrained) {
 					MatrixXd a = EmptyConstraintRow;
 					a.block(0, i*N, 1, N) = diffvec(tvecE, j).transpose();
 					double b = x[i+1][j](d);
 					Arows.push_back(a); brows.push_back(b);
-					rels.push_back(CGAL::EQUAL);
+					rels.push_back(EqualTo);
 				}
 
 				// Add continuity constraint for all internal points between segments
@@ -153,7 +173,7 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 
 					double b = 0;
 					Arows.push_back(a); brows.push_back(b);
-					rels.push_back(CGAL::EQUAL);
+					rels.push_back(EqualTo);
 
 				}
 			}
@@ -184,8 +204,8 @@ bool compute_minsnap_mellinger11(const vector<ConstrainedPoint> &x, const vector
 					double bp = corridors[i] + x[i][0](d) * (1 + ti(d)); // for d <= delta
 					double bn = -corridors[i] + x[i][0](d) * (1 + ti(d)); // for d >= -delta
 
-					Arows.push_back(a); brows.push_back(bp); rels.push_back(CGAL::SMALLER);
-					Arows.push_back(a); brows.push_back(bn); rels.push_back(CGAL::LARGER);
+					Arows.push_back(a); brows.push_back(bp); rels.push_back(LessThan);
+					Arows.push_back(a); brows.push_back(bn); rels.push_back(GreaterThan);
 				}
 			}
 		}
@@ -344,6 +364,8 @@ bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, doub
 }
 
 
+#ifdef USE_CGAL
+
 /*
 	Our QP is of the form:
 	argmin p^T Q p
@@ -353,7 +375,7 @@ bool compute_minsnap_optimal_mellinger11(const vector<ConstrainedPoint> &x, doub
 	Q becomes D
 */
 
-bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost) {
+bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<Relation> &rels, VectorXd &x, double &cost) {
 
 	Program qp(CGAL::EQUAL, false, 0, false, 0);
 
@@ -370,7 +392,19 @@ bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vec
 			qp.set_a(j, i, A(i, j));
 		}
 		qp.set_b(i, b(i));
-		qp.set_r(i, rels[i]);
+
+		CGAL::Comparison_result r = CGAL::EQUAL;
+		if(rels[i] == EqualTo) {
+			r = CGAL::EQUAL;
+		}
+		else if(rels[i] == LessThan) {
+			r = CGAL::SMALLER;
+		}
+		else if(rels[i] == GreaterThan) {
+			r = CGAL::LARGER;
+		}
+
+		qp.set_r(i, r);
 	}
 
 	// solve the program, using ET as the exact type
@@ -396,17 +430,12 @@ bool qp_solve(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vec
 
 }
 
+#endif
 
-}
 
 #ifdef USE_CPLEX
 
-#define IL_STD
-
-#include <ilcplex/ilocplex.h>
-ILOSTLBEGIN
-
-bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<CGAL::Comparison_result> &rels, VectorXd &x, double &cost) {
+bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, const vector<Relation> &rels, VectorXd &x, double &cost) {
 
 	IloEnv env;
 
@@ -438,11 +467,11 @@ bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, con
 			e += A(i, j) * vars[j];
 		}
 
-		if(rels[i] == CGAL::EQUAL)
+		if(rels[i] == EqualTo)
 			cons.add(IloRange(env, b(i), e, b(i)));
-		else if(rels[i] == CGAL::LARGER)
+		else if(rels[i] == GreaterThan)
 			cons.add(e >= b(i));
-		else if(rels[i] == CGAL::SMALLER) {
+		else if(rels[i] == LessThan) {
 			cons.add(e <= b(i));
 		}
 	}
@@ -478,3 +507,6 @@ bool qp_solve_cplex(const MatrixXd &Q, const MatrixXd &A, const VectorXd &b, con
 }
 
 #endif
+
+
+}

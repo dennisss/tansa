@@ -57,10 +57,6 @@ add_library(
 	src/trajectory/point.cpp
 	src/trajectory/spiral.cpp
 	#src/trajectory/gradual_circle.cpp
-	src/mocap/mocap.cpp
-	src/mocap/optitrack/natnet.cpp
-	src/mocap/optitrack/natnet_client.cpp
-	src/mocap/rigid_body_tracker.cpp
 	src/jocs/routine.cpp
 	src/jocs/csv.cpp
 	src/jocs/jocsParser.cpp
@@ -124,12 +120,16 @@ if(CPLEX_FOUND)
 endif()
 
 
+
+
 ######## Extensions ########
 if(BUILD_GAZEBO)
 	add_subdirectory(src/gazebo)
 
 	add_definitions(-DUSE_GAZEBO)
 endif()
+
+add_subdirectory(src/mocap)
 
 ######## Test Suite ########
 
@@ -144,6 +144,7 @@ add_executable(
 	test/main.cpp
 	test/core/time.cpp
 	test/algorithm/assignment_solver.cpp
+	test/algorithm/disjoint_sets.cpp
 	test/algorithm/rigid_point_correspondence_solver.cpp
 	test/jocs/jocsParser.cpp
 	test/mocap/rigid_body_tracker.cpp
@@ -168,6 +169,7 @@ target_link_libraries(
 
 	pthread
 	tansa
+	tansa_mocap
 )
 
 if(BUILD_GAZEBO)

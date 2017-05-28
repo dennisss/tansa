@@ -1,29 +1,61 @@
+#include "blob_detector.h"
+
+using namespace std;
+
 
 namespace tansa {
 
-
-void BlobDetector::detect() {
-	thresholdAndMask(&input, 200, &mask);
-	connected_components(&input, forest, &blobs);
-	component_analysis(&input, &blobs);
-	component_filter(&input, &blobs);
+BlobDetector::BlobDetector(unsigned width, unsigned height, unsigned nthreads) : forest(width*height) {
+	mask.width = width;
+	mask.height = height;
+	mask.data = (PixelType *) malloc(width * height);
+	this->clear_mask();
 }
 
+BlobDetector::~BlobDetector() {
+	free(mask.data);
+}
+
+
+
+void BlobDetector::detect(Image *img, vector<ImageBlob> *blobs) {
+	threshold_n_mask(img);
+	connected_components(img, blobs);
+	postprocess_components(img, blobs);
+	//component_filter(img, blobs);
+}
+
+
+void BlobDetector::auto_mask(Image *next) {
+	threshold_n_mask(next);
+
+	for(unsigned i = 0; i < next->width * next->height; i++) {
+		if(next->data[i] != 0) {
+			mask.data[i] = 0;
+		}
+	}
+}
+
+
+void BlobDetector::clear_mask() {
+	memset(mask.data, 0xff, mask.width * mask.height);
+}
 
 /**
  * Inplace thresholding of an image and masking such a pixel is zeroed if:
  * - it's value is less than or equal to the threshold
- * - the corresponding entry in the map is zero
+ * - or the corresponding entry in the map is zero
  */
-void BlobDetector::thresholdAndMask(Image *img, PixelType thresholdValue, Image *mask) {
+void BlobDetector::threshold_n_mask(Image *img) {
 	unsigned i;
 	unsigned N = img->height * img->width;
+	PixelType thresh = this->threshold;
 
 	PixelType *p = img->data;
-	PixelType *mp = mask->data;
+	PixelType *mp = mask.data;
 
 	for(i = 0; i < N; ++i) {
-		if(*p <= thresholdValue || *mp == 0) {
+		if(*p <= thresh || *mp == 0) {
 			*p = 0;
 		}
 		p++;
@@ -37,7 +69,7 @@ void BlobDetector::thresholdAndMask(Image *img, PixelType thresholdValue, Image 
 // Input: a binary image (8bit)
 // Output: a labeling (16bit)
 // NOTE: This will modify the image inplace
-void BlobDetector::connected_components(Image *img, DisjointSets &forest, vector<ImageBlob> *blobs) {
+void BlobDetector::connected_components(Image *img, vector<ImageBlob> *blobs) {
 
 	unsigned N = img->width * img->height;
 	blobs->resize(0);
@@ -52,6 +84,7 @@ void BlobDetector::connected_components(Image *img, DisjointSets &forest, vector
 	};
 
 	// First pass
+	// TODO: This can be parallelized easily by splitting up the image vertically and then doing a combine along all the edges once
 	for(unsigned i = 0; i < N; i++) {
 		uint8_t *p = img->data + i;
 
@@ -131,7 +164,7 @@ void BlobDetector::connected_components(Image *img, DisjointSets &forest, vector
 
 }
 
-void component_analysis(Image *img, vector<ImageBlob> *blobs) {
+void BlobDetector::postprocess_components(Image *img, vector<ImageBlob> *blobs) {
 
 
 	for(unsigned i = 0; i < blobs->size(); i++) {

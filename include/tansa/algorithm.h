@@ -135,10 +135,14 @@ public:
 
 	inline void clear() {
 		for(unsigned i = 0; i < elements.size(); i++) {
-			elements[i].rank = 0;
-			elements[i].parent = i;
-			elements[i].min = i;
+			makeSet(i);
 		}
+	}
+
+	inline void makeSet(unsigned x) {
+		elements[x].rank = 0;
+		elements[x].parent = x;
+		elements[x].min = x;
 	}
 
 	inline unsigned findSet(unsigned x) {
@@ -189,7 +193,7 @@ private:
 		unsigned rank;
 	};
 
-	vector<ElementData> elements;
+	std::vector<ElementData> elements;
 
 };
 

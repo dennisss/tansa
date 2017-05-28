@@ -11,6 +11,7 @@ namespace tansa {
 class RaspicamImagingInterface : public MocapCameraImagingInterface {
 public:
 
+	RaspicamImagingInterface();
 	virtual ~RaspicamImagingInterface();
 
 	virtual void start();
@@ -19,7 +20,9 @@ public:
 	virtual ImageSize getSize();
 
 private:
-	raspicam::Raspicam camera;
+	friend void raspicam_image_callback(void *arg);
+
+	raspicam::RaspiCam camera;
 };
 
 void raspicam_image_callback(void *arg);

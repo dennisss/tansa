@@ -10,16 +10,20 @@ RaspicamImagingInterface::RaspicamImagingInterface() {
 	camera.setUserCallback(raspicam_image_callback, this);
 }
 
+RaspicamImagingInterface::~RaspicamImagingInterface() {
+	this->stop();
+}
+
 
 void RaspicamImagingInterface::start() {
 
-	camera.setFormat(RASPICAM_FORMAT_GRAY);
+	camera.setFormat(raspicam::RASPICAM_FORMAT_GRAY);
 	camera.setCaptureSize(1640, 1232);
 	camera.setFrameRate(10);
 	camera.setShutterSpeed(8000);
 	// TODO: setBrightness, setSharpness, setContrast, setISO, setSaturation, setSaturation, setAWB_RB, setImageEffect
-	camera.setAWB(RASPICAM_AWB_OFF);
-	camera.setImageEffect(RASPICAM_IMAGE_EFFECT_NONE);
+	camera.setAWB(raspicam::RASPICAM_AWB_OFF);
+	camera.setImageEffect(raspicam::RASPICAM_IMAGE_EFFECT_NONE);
 	camera.setVideoStabilization(false);
 
 	// TODO: Set exposure compensation to 0
@@ -46,11 +50,13 @@ void raspicam_image_callback(void *arg) {
 	RaspicamImagingInterface *self = (RaspicamImagingInterface *) arg;
 
 	Image img;
-	img.data = (PixelType *) camera.getImageBufferData();
-	img.width = camera.getWidth();
-	img.height = camera.getHeight();
+	img.data = (PixelType *) self->camera.getImageBufferData();
+	img.width = self->camera.getWidth();
+	img.height = self->camera.getHeight();
 
-	node.handle_image(&img);
+	MocapCameraImage msg;
+	msg.image = &img;
+	self->publish(msg);
 }
 
 

@@ -58,6 +58,8 @@ if(EXISTS "/opt/vc/include/bcm_host.h")
 	find_package(raspicam REQUIRED)
 
 	add_definitions(-DUSE_RPI)
+
+	target_link_libraries(mocap_camera ${raspicam_LIBS})
 else()
 	set(BUILD_RPI OFF)
 endif()

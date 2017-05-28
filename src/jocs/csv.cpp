@@ -116,7 +116,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 	Choreography* ret = nullptr;
 	int currentLine = 1; // Lines indexed at 1
 	try {
-		auto csv = ifstream(filepath);
+		ifstream csv(filepath);
 		ret = new Choreography();
 		auto drone_map = std::map<std::string, unsigned long>();
 		std::vector<std::string> split_line;

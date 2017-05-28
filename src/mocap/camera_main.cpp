@@ -1,10 +1,13 @@
 #include "camera_node.h"
+#ifdef USE_OPENCV
 #include "interfaces/file.h"
+#endif
 #ifdef USE_RPI
 #include "interfaces/raspicam.h"
 #endif
 
 #include <unistd.h>
+#include <signal.h>
 #include <iostream>
 
 
@@ -32,7 +35,11 @@ int main(int argc, char** argv) {
 
 	// Parse cli arguments
 	for(int i = 1; i < argc; i++) {
-		if(strcmp(argv[i], "-file") == 0) {
+		if(false) {
+
+		}
+#ifdef USE_OPENCV
+		else if(strcmp(argv[i], "-file") == 0) {
 			if(interface != NULL) {
 				printf("To many interfaces selected\n");
 				return 1;
@@ -45,6 +52,7 @@ int main(int argc, char** argv) {
 			interface = new FileImagingInterface(argv[i + 1]);
 			i++;
 		}
+#endif
 #ifdef USE_RPI
 		else if(strcmp(argv[i], "-raspicam")) {
 			if(interface != NULL) {

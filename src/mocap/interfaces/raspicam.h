@@ -1,7 +1,7 @@
 #ifndef TANSA_MOCAP_INTERFACES_RASPICAM_H_
 #define TANSA_MOCAP_INTERFACES_RASPICAM_H_
 
-#include "../node.h"
+#include "../camera_node.h"
 
 #include <raspicam/raspicam.h>
 
@@ -15,6 +15,8 @@ public:
 
 	virtual void start();
 	virtual void stop();
+
+	virtual ImageSize getSize();
 
 private:
 	raspicam::Raspicam camera;

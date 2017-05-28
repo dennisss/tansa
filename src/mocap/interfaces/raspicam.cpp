@@ -34,6 +34,12 @@ void RaspicamImagingInterface::stop() {
 	camera.release();
 }
 
+ImageSize RaspicamImagingInterface::getSize() {
+	ImageSize s;
+	s.width = camera.getWidth();
+	s.height = camera.getHeight();
+	return s;
+}
 
 void raspicam_image_callback(void *arg) {
 

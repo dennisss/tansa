@@ -1,3 +1,5 @@
+#ifdef USE_OPENCV
+
 #include "file.h"
 
 using namespace std;
@@ -44,3 +46,6 @@ ImageSize FileImagingInterface::getSize() {
 
 
 }
+
+
+#endif

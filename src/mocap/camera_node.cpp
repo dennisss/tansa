@@ -165,7 +165,7 @@ void MocapCameraNode::display(Image *imgRaw, std::vector<ImageBlob> *blobs) {
 	}
 
 	cv::Mat imageSmall;
-	cv::resize(img, imageSmall, cv::Size(img.cols * 0.3, img.rows * 0.3), 0, 0, CV_INTER_LINEAR);
+	cv::resize(img, imageSmall, cv::Size(img.cols * 0.7, img.rows * 0.7), 0, 0, CV_INTER_LINEAR);
 
 	cv::namedWindow("Blobs", cv::WINDOW_AUTOSIZE);
 	cv::imshow("Blobs", imageSmall);
@@ -260,9 +260,6 @@ void *mocap_camera_node_thread(void *arg) {
 
 		n->cycle();
 	}
-
-	free(buf);
-	free(fds);
 
 	return NULL;
 

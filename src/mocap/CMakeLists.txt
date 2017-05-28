@@ -20,8 +20,7 @@ target_link_libraries(
 	tansa
 )
 
-set_target_properties(tansa_mocap PROPERTIES COMPILE_FLAGS "-std=c++11")
-
+set_target_properties(tansa_mocap PROPERTIES COMPILE_FLAGS "-std=c++11 -O3")
 
 
 

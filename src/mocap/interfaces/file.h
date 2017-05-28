@@ -2,6 +2,7 @@
 #define TANSA_MOCAP_INTERFACES_FILE_H_
 
 #include "../camera_node.h"
+#include <pthread.h>
 #include <opencv2/opencv.hpp>
 
 
@@ -25,9 +26,20 @@ public:
 
 private:
 
+	friend void *mocap_file_imaging_thread(void *);
+
+	void publish_image();
+
+	bool isImage;
+
 	cv::Mat gray;
 
+	cv::VideoCapture video;
+	pthread_t thread;
 };
+
+
+void *mocap_file_imaging_thread(void *);
 
 
 }

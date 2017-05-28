@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
 		}
 #endif
 #ifdef USE_RPI
-		else if(strcmp(argv[i], "-raspicam")) {
+		else if(strcmp(argv[i], "-raspicam") == 0) {
 			if(interface != NULL) {
 				printf("To many interfaces selected\n");
 				return 1;

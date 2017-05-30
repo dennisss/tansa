@@ -1,5 +1,10 @@
 #include "blob_detector.h"
 
+#ifdef __linux__
+#include <sched.h>
+#endif
+#include <algorithm>
+
 using namespace std;
 
 
@@ -10,24 +15,146 @@ BlobDetector::BlobDetector(unsigned width, unsigned height, unsigned nthreads) :
 	mask.height = height;
 	mask.data = (PixelType *) malloc(width * height);
 	this->clear_mask();
+
+
+	unsigned linesPerThread = height / nthreads;
+	if((height % nthreads) != 0)
+		linesPerThread++;
+
+	running = true;
+	workers.resize(nthreads);
+
+	for(unsigned i = 0; i < nthreads; i++) {
+		ImageSubRegion r;
+		unsigned line = i*linesPerThread;
+		r.offset = line * width;
+		r.start = 0;
+		r.size = min(linesPerThread, height - line) * width;
+		regions.push_back(r);
+
+		if(i > 0) {
+			ImageSubRegion s;
+			s.offset = (line - 1) * width;
+			s.start = width;
+			s.size = 2 * width;
+			seams.push_back(s);
+		}
+
+		workers[i].thread = move(std::thread(blob_detector_thread, this, i));
+	}
 }
 
 BlobDetector::~BlobDetector() {
+	running = false;
+	for(int i = 0; i < workers.size(); i++) {
+		workers[i].cvar.notify_one();
+		workers[i].thread.join();
+	}
+
 	free(mask.data);
 }
 
 
+void blob_detector_thread(BlobDetector *d, int num) {
 
-void BlobDetector::detect(Image *img, vector<ImageBlob> *blobs) {
-	threshold_n_mask(img);
-	connected_components(img, blobs);
-	postprocess_components(img, blobs);
-	//component_filter(img, blobs);
+#ifdef __linux__
+	// Assigning this thread to run on a unique core
+	cpu_set_t set;
+	CPU_ZERO(&set);
+	CPU_SET(num, &set);
+	sched_setaffinity(0, sizeof(cpu_set_t), &set);
+#endif
+
+	BlobDetector::Worker *w = &d->workers[num];
+	ImageSubRegion *reg = &d->regions[num];
+
+	while(true) {
+		// Wait for a notice from the master
+		std::unique_lock<std::mutex> lock(w->mtx);
+		w->cvar.wait(lock, [d, w](){ return !d->running ||  w->ready; });
+
+		if(!d->running) {
+			break;
+		}
+
+		// Otherwise, must be ready
+
+		// Do work
+		d->process_region(d->activeImage, reg);
+
+
+		// Notify master that we are done
+		w->ready = false;
+		w->done = true;
+		w->cvar.notify_one();
+	}
+
 }
 
 
+
+
+void BlobDetector::detect(Image *img, vector<ImageBlob> *blobs) {
+
+	unsigned i = 0;
+
+	this->activeImage = img;
+
+	// Notify all threads to get to work
+	for(i = 0; i < workers.size(); i++) {
+		notifyWorker(i);
+	}
+
+	// Do our part
+	//process_region(img, &regions[0]);
+
+	// Wait for all threads
+	// TODO: If >1 seam is available, then it can be done in parallel by the second thread in that set
+	for(i = 0; i < workers.size(); i++) {
+		waitForWorker(i);
+	}
+
+	// Combine along seams
+	for(i = 0; i < seams.size(); i++) {
+		connected_components_combine(img, &seams[i], false);
+	}
+
+	connected_components_extract(img, blobs);
+
+	postprocess_components(img, blobs);
+
+	//component_filter(img, blobs);
+}
+
+void BlobDetector::process_region(Image *img, ImageSubRegion *region) {
+	threshold_n_mask(img, region);
+	connected_components_combine(img, region);
+}
+
+
+void BlobDetector::notifyWorker(int i) {
+	Worker *w = &workers[i];
+
+	std::unique_lock<std::mutex> lock(w->mtx);
+	w->ready = true;
+	w->done = false;
+	w->cvar.notify_one();
+}
+
+void BlobDetector::waitForWorker(int i) {
+	Worker *w = &workers[i];
+
+	std::unique_lock<std::mutex> lock(w->mtx);
+	if(!w->done) {
+		w->cvar.wait(lock, [w]() { return w->done; });
+	}
+}
+
+
+
 void BlobDetector::auto_mask(Image *next) {
-	threshold_n_mask(next);
+	ImageSubRegion r = next->all();
+	threshold_n_mask(next, &r);
 
 	for(unsigned i = 0; i < next->width * next->height; i++) {
 		if(next->data[i] != 0) {
@@ -41,18 +168,13 @@ void BlobDetector::clear_mask() {
 	memset(mask.data, 0xff, mask.width * mask.height);
 }
 
-/**
- * Inplace thresholding of an image and masking such a pixel is zeroed if:
- * - it's value is less than or equal to the threshold
- * - or the corresponding entry in the map is zero
- */
-void BlobDetector::threshold_n_mask(Image *img) {
+void BlobDetector::threshold_n_mask(Image *img, ImageSubRegion *region) {
 	unsigned i;
-	unsigned N = img->height * img->width;
+	unsigned N = region->size - region->start; //img->height * img->width;
 	PixelType thresh = this->threshold;
 
-	PixelType *p = img->data;
-	PixelType *mp = mask.data;
+	PixelType *p = img->data + (region->offset + region->start);
+	PixelType *mp = mask.data + (region->offset + region->start);
 
 	for(i = 0; i < N; ++i) {
 		if(*p <= thresh || *mp == 0) {
@@ -68,11 +190,9 @@ void BlobDetector::threshold_n_mask(Image *img) {
 // We should reject components with only one pixel
 // Input: a binary image (8bit)
 // Output: a labeling (16bit)
-// NOTE: This will modify the image inplace
-void BlobDetector::connected_components(Image *img, vector<ImageBlob> *blobs) {
+void BlobDetector::connected_components_combine(Image *img, ImageSubRegion *region, bool init) {
 
-	unsigned N = img->width * img->height;
-	blobs->resize(0);
+	unsigned N = region->offset + region->size; //img->width * img->height;
 
 	// Previous neighbors in 8-connectivity
 	// These are ordered to go from lowest to highest index
@@ -85,7 +205,7 @@ void BlobDetector::connected_components(Image *img, vector<ImageBlob> *blobs) {
 
 	// First pass
 	// TODO: This can be parallelized easily by splitting up the image vertically and then doing a combine along all the edges once
-	for(unsigned i = 0; i < N; i++) {
+	for(unsigned i = (region->offset + region->start); i < N; i++) {
 		uint8_t *p = img->data + i;
 
 		// Ignore background
@@ -98,8 +218,8 @@ void BlobDetector::connected_components(Image *img, vector<ImageBlob> *blobs) {
 		for(unsigned j = 0; j < 4; j++) {
 			uint8_t *pj = p - negativeOffsets[j];
 
-			// Skip invalid or background neighbors
-			if(!(negativeOffsets[j] <= i && *pj != 0))
+			// Skip invalid (must stay inside of the region) or background neighbors
+			if(!(negativeOffsets[j] <= (i - region->offset) && *pj != 0))
 				continue;
 
 			unsigned nIdx = i - negativeOffsets[j];
@@ -123,7 +243,9 @@ void BlobDetector::connected_components(Image *img, vector<ImageBlob> *blobs) {
 
 		}
 
-		forest.makeSet(i);
+		if(init) {
+			forest.makeSet(i);
+		}
 
 		if(hasNeighbors) { // Merge with min neighbor
 			forest.unionSets(minLabel, i);
@@ -131,6 +253,13 @@ void BlobDetector::connected_components(Image *img, vector<ImageBlob> *blobs) {
 
 	}
 
+}
+
+void BlobDetector::connected_components_extract(Image *img, std::vector<ImageBlob> *blobs) {
+
+	unsigned N = img->width * img->height;
+
+	blobs->resize(0);
 
 	// Second pass
 	// Assigning ordered labels to each number

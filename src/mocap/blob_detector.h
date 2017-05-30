@@ -5,6 +5,9 @@
 
 #include <string.h>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 
 namespace tansa {
@@ -19,6 +22,12 @@ typedef PixelType LabelType;
 typedef unsigned PixelIndexType;
 
 
+struct ImageSubRegion {
+	unsigned offset; /**< Start pixel offset of very beginning of this region */
+	unsigned start; /**< Start pixel index relative to 'offset' of the first pixel which should be processed */
+	unsigned size; /**< Relative to offset, this is the total number of pixels in this part of the image */
+};
+
 // A grayscale image
 struct Image {
 	unsigned width;
@@ -30,6 +39,14 @@ struct Image {
 		memcpy(other->data, this->data, width*height);
 		other->width = width;
 		other->height = height;
+	}
+
+	ImageSubRegion all() {
+		ImageSubRegion r;
+		r.offset = 0;
+		r.start = 0;
+		r.size = width * height;
+		return r;
 	}
 
 };
@@ -56,7 +73,7 @@ struct ImageBlob {
 class BlobDetector {
 public:
 
-	BlobDetector(unsigned width, unsigned height, unsigned nthreads = 1);
+	BlobDetector(unsigned width, unsigned height, unsigned nthreads = 2);
 	~BlobDetector();
 
 	/**
@@ -83,9 +100,43 @@ public:
 
 private:
 
+	friend void blob_detector_thread(BlobDetector *d, int num);
+
+	void notifyWorker(int i);
+	void waitForWorker(int i);
+
+	// Process a single part of the image
+	void process_region(Image *img, ImageSubRegion *region);
+
 	// Detection pipeline
-	void threshold_n_mask(Image *img);
-	void connected_components(Image *img, std::vector<ImageBlob> *blobs);
+
+	/**
+	 * Step 1: Inplace thresholding of an image and masking such a pixel is zeroed if:
+	 * - it's value is less than or equal to the threshold
+	 * - or the corresponding entry in the map is zero
+	 * NOTE: Parallelized across threads
+	 */
+	void threshold_n_mask(Image *img, ImageSubRegion *region);
+
+	/**
+	 * Step 2: Pass 1: Combining pixels based on connectivity
+	 * NOTE: Parallelized across all threads
+	 *
+	 * @param img
+	 * @param region
+	 * @param init whether or not this should regenerate sets for each next pixel (what should happen with a new image)
+	 */
+	void connected_components_combine(Image *img, ImageSubRegion *region, bool init = true);
+
+	/**
+	 * Step 2: Pass 2: Generate a list of blobs from the connected component data
+	 * NOTE: This will modify the image inplace
+	 */
+	void connected_components_extract(Image *img, std::vector<ImageBlob> *blobs);
+
+	/**
+	 * Step 3: Generate useful metrics about the blobs
+	 */
 	void postprocess_components(Image *img, std::vector<ImageBlob> *blobs);
 
 	// Options
@@ -94,8 +145,29 @@ private:
 
 	DisjointSets forest;
 
+
+	struct Worker {
+		Worker() {}
+		Worker(const Worker &w) : ready(w.ready), done(w.done) {}
+
+
+		std::thread thread;
+		std::mutex mtx;
+		std::condition_variable cvar;
+
+		bool ready = false; /**< Whether or not there is data ready for this thread to process */
+		bool done = false; /**< Whether or not it is done processing the data */
+	};
+
+	bool running = false; /**< Whether or not the threads should be running */
+	Image *activeImage; /**< Reference to the current image being processed. To be shared across all worker threads */
+	std::vector<ImageSubRegion> regions; /**< All parts of the image that need to be processed. This is the division for each thread */
+	std::vector<ImageSubRegion> seams; /**< Regions between the regions which need to be re-processed to combine the components */
+	std::vector<Worker> workers;
+
 };
 
+void blob_detector_thread(BlobDetector *d, int num);
 
 
 

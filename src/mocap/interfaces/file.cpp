@@ -45,10 +45,12 @@ void FileImagingInterface::start() {
 
 
 void FileImagingInterface::publish_image() {
+	cv::Mat g = gray.clone();
+
 	Image input;
-	input.data = &gray.at<uint8_t>(0,0);
-	input.width = gray.cols;
-	input.height = gray.rows;
+	input.data = &g.at<uint8_t>(0,0);
+	input.width = g.cols;
+	input.height = g.rows;
 
 	MocapCameraImage msg;
 	msg.image = &input;
@@ -88,6 +90,8 @@ void *mocap_file_imaging_thread(void *arg) {
 		self->video.retrieve(img);
 		cv::cvtColor(img, self->gray, CV_BGR2GRAY);
 		self->publish_image();
+
+		r.sleep();
 	}
 
 

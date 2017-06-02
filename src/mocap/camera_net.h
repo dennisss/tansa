@@ -31,11 +31,12 @@ enum MocapCameraPacketType {
 struct __attribute__((__packed__)) MocapCameraPacket {
 	char magic[2]; /**< Should be 'TA' to distinguish the Tansa protocol */
 	uint8_t type;
+	uint64_t timestamp; /**< Nanoseconds since the network coordinated epoch. For frame data, this is the most accurate measure of the end of frame capture (also exposure and shutter) */
 	uint16_t size; /**< The length of the data section in bytes */
 	char data[];
 };
 
-struct MocapCameraPacketAdvertisement {
+struct __attribute__((__packed__)) MocapCameraPacketAdvertisement {
 	unsigned vendor; /**< Who designed the camera */
 	unsigned model; /**<  */
 	char serialNum[64]; /**< Should be a alphanumeric serial code upto 64 characters long */
@@ -45,48 +46,31 @@ struct MocapCameraPacketAdvertisement {
 };
 
 
-struct MocapCameraPacketBlob {
+struct __attribute__((__packed__)) MocapCameraPacketBlob {
 	uint16_t x;
 	uint16_t y;
 	uint16_t radius;
 };
 
-struct MocapCameraPacketBlobs {
+struct __attribute__((__packed__)) MocapCameraPacketBlobs {
 	uint32_t nblobs;
 	MocapCameraPacketBlob blobs[];
 };
 
-
-struct MocapCameraPacketConfig {
-
-
-};
-
 enum MocapCameraMode {
-	Off = 0, /**< Camera should be  */
-	Object = 1
-
-
+	Off = 0, /**< Camera should be doing nothing. */
+	Blob = 1,
+	Video = 2 /**< Camera */
 };
 
-struct MocapCameraPacketSettings {
-
-	MocapCameraMode mode;
-
-	uint32_t framerate;
-	uint32_t exposure; /**< In microseconds of open shutter time */
-
+struct __attribute__((__packed__)) MocapCameraPacketConfig {
+	uint8_t mode;
+	uint8_t submode; /**< Mode specific options */
 	uint8_t led_brightness; /**< If controllable, how bright the LEDs should be from 0-255 */
-
-	// Control resolution (available ones should be queriable from the device)
-
-	/*
-		TODO: Control ISO/brightness
-
-		Set fixed AWB gains and fixed metering mode
-		Will likely need to regulate
-	*/
-
+	uint8_t gain; /**< A camera defined gain between 0-255 which approximately maps to the ISO range of the camera sensor */
+	uint32_t framerate; /**< FPS */
+	uint32_t exposure; /**< In microseconds of open shutter time */
+	// TODO: Control resolution (available ones should be queriable from the device)
 };
 
 

@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <fcntl.h>
+#include <fstream>
 
 #ifdef USE_OPENCV
 #include <opencv2/opencv.hpp>
@@ -127,10 +128,15 @@ void MocapCameraNode::on_image(const MocapCameraImage *data) {
 #endif
 
 	vector<ImageBlob> blobs;
+
+
+	int start_s=clock();
+
 	detector->detect(data->image, &blobs);
 
-
-	printf("Got %d blobs\n", blobs.size());
+	// the code you wish to time goes here
+	int stop_s=clock();
+	cout << "time: " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << endl;
 
 	send_blobs(blobs);
 
@@ -211,6 +217,18 @@ void MocapCameraNode::cycle() {
 	}
 
 
+}
+
+
+void MocapCameraNode::toggle_throttling(bool enabled) {
+	ofstream f("/etc/default/cpufrequtils", ofstream::trunc);
+	if(!f.is_open()) {
+		cout << "Throttling failed!" << endl;
+		return;
+	}
+	f << "GOVERNER=\"" << (enabled? "ondemand" : "performance") << "\"" << endl;
+	f.close();
+	system("/etc/init.d/cpufrequtils restart"); // TODO: Check the return value
 }
 
 

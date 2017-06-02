@@ -70,6 +70,12 @@ private:
 	void send_advert();
 	void send_message(MocapCameraPacket *pkt);
 
+	/**
+	 * Enables/disables cpu throttling by the OS for improving latency when needed
+	 * NOTE: Only available on linux
+	 */
+	void toggle_throttling(bool enabled);
+
 	void display(Image *img, std::vector<ImageBlob> *blobs);
 
 	void handle_message(MocapCameraPacket *msg);

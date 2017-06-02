@@ -317,12 +317,15 @@ inline void BlobDetector::combine_all_blobs(Image *img, std::vector<ImageBlob> *
 			if(setId != subblobs[j].id) { // This blob was merged with an earlier blob
 				unsigned idx = img->data[setId] - 1;
 
-				img->data[subblobs[j].id] = idx; // TODO: This should not be needed
+				// Merging the indices of the blobs
+				(*blobs)[idx].indices.reserve( (*blobs)[idx].indices.size() + subblobs[j].indices.size() );
 				(*blobs)[idx].indices.insert( (*blobs)[idx].indices.end(), subblobs[j].indices.begin(), subblobs[j].indices.end() );
 			}
 			else { // Brand new blob
 				img->data[setId] = blobs->size();
-				blobs->push_back(subblobs[j]);
+
+				if(blobs->size() < MAX_BLOBS)
+					blobs->push_back(subblobs[j]);
 			}
 		}
 	}

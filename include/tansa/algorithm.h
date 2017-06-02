@@ -140,20 +140,25 @@ public:
 	}
 
 	inline void makeSet(unsigned x) {
-		elements[x].rank = 0;
-		elements[x].parent = x;
-		elements[x].min = x;
+		ElementData &e_x = elements[x];
+		e_x.rank = 0;
+		e_x.parent = x;
+		e_x.min = x;
 	}
 
 	inline unsigned findSet(unsigned x) {
-		if(elements[x].parent != x)
-			elements[x].parent = findSet(elements[x].parent);
-		return elements[x].parent;
+		ElementData &e_x = elements[x];
+
+		if(e_x.parent != x)
+			e_x.parent = findSet(e_x.parent);
+		return e_x.parent;
 	}
 
 	inline unsigned findSetMin(unsigned x) {
+		ElementData &e_x = elements[x];
+
 		x = findSet(x);
-		return elements[x].min;
+		return e_x.min;
 	}
 
 	inline void unionSets(unsigned x, unsigned y) {
@@ -165,23 +170,26 @@ public:
 		if(x == y)
 			return;
 
+		ElementData &e_x = elements[x],
+					&e_y = elements[y];
+
 		// x and y are not in same set, so we merge them
-		if(elements[x].rank < elements[y].rank)
-			elements[x].parent = y;
-		else if(elements[x].rank > elements[y].rank)
-			elements[y].parent = x;
+		if(e_x.rank < e_y.rank)
+			e_x.parent = y;
+		else if(e_x.rank > e_y.rank)
+			e_y.parent = x;
 		else {
-			elements[y].parent = x;
-			elements[x].rank = elements[x].rank + 1;
+			e_y.parent = x;
+			e_x.rank = e_x.rank + 1;
 		}
 
 
 		// Update the min in the root of the new set
-		if(elements[x].min < elements[y].min) {
-			elements[y].min = elements[x].min;
+		if(e_x.min < e_y.min) {
+			e_y.min = e_x.min;
 		}
 		else {
-			elements[x].min = elements[y].min;
+			e_x.min = e_y.min;
 		}
 	}
 

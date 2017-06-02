@@ -12,6 +12,8 @@
 
 namespace tansa {
 
+#define MAX_BLOBS 255
+#define MAX_PIXELS_PER_BLOB 2000
 
 
 typedef uint8_t PixelType;
@@ -58,6 +60,7 @@ struct ImageSize {
 
 
 struct ImageBlob {
+	unsigned id; /**< Unique to this blob of is the index of the very first pixel found that is in this blob */
 	std::vector<PixelIndexType> indices; /**< Indices of all pixels included in the blob */
 
 	unsigned area = 0;
@@ -106,7 +109,7 @@ private:
 	void waitForWorker(int i);
 
 	// Process a single part of the image
-	void process_region(Image *img, ImageSubRegion *region);
+	void process_region(Image *img, ImageSubRegion *region, std::vector<ImageBlob> *blobs);
 
 	// Detection pipeline
 
@@ -131,8 +134,14 @@ private:
 	/**
 	 * Step 2: Pass 2: Generate a list of blobs from the connected component data
 	 * NOTE: This will modify the image inplace
+	 * NOTE: This is parallelized across all threads
 	 */
-	void connected_components_extract(Image *img, std::vector<ImageBlob> *blobs);
+	void connected_components_extract(Image *img, ImageSubRegion *region, std::vector<ImageBlob> *blobs);
+
+	/**
+	 * Step 2: Part 3: Not another pass but instead this just combines all the results gathered by the workers in the main thread
+	 */
+	void combine_all_blobs(Image *img, std::vector<ImageBlob> *blobs);
 
 	/**
 	 * Step 3: Generate useful metrics about the blobs
@@ -150,10 +159,10 @@ private:
 		Worker() {}
 		Worker(const Worker &w) : ready(w.ready), done(w.done) {}
 
-
 		std::thread thread;
 		std::mutex mtx;
 		std::condition_variable cvar;
+		std::vector<ImageBlob> blobs;
 
 		bool ready = false; /**< Whether or not there is data ready for this thread to process */
 		bool done = false; /**< Whether or not it is done processing the data */

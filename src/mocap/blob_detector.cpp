@@ -40,6 +40,8 @@ BlobDetector::BlobDetector(unsigned width, unsigned height, unsigned nthreads) :
 			seams.push_back(s);
 		}
 
+		workers[i].blobs.reserve(MAX_BLOBS);
+
 		workers[i].thread = move(std::thread(blob_detector_thread, this, i));
 	}
 }
@@ -67,6 +69,7 @@ void blob_detector_thread(BlobDetector *d, int num) {
 
 	BlobDetector::Worker *w = &d->workers[num];
 	ImageSubRegion *reg = &d->regions[num];
+	std::vector<ImageBlob> *blobs = &w->blobs;
 
 	while(true) {
 		// Wait for a notice from the master
@@ -80,7 +83,7 @@ void blob_detector_thread(BlobDetector *d, int num) {
 		// Otherwise, must be ready
 
 		// Do work
-		d->process_region(d->activeImage, reg);
+		d->process_region(d->activeImage, reg, blobs);
 
 
 		// Notify master that we are done
@@ -95,6 +98,9 @@ void blob_detector_thread(BlobDetector *d, int num) {
 
 
 void BlobDetector::detect(Image *img, vector<ImageBlob> *blobs) {
+
+
+	// TODO: This may fail miserably if there is a blob that starts at pixel 0
 
 	unsigned i = 0;
 
@@ -119,20 +125,22 @@ void BlobDetector::detect(Image *img, vector<ImageBlob> *blobs) {
 		connected_components_combine(img, &seams[i], false);
 	}
 
-	connected_components_extract(img, blobs);
+	// Lastly combine the blobs that were found by all the child thread
+	combine_all_blobs(img, blobs);
 
 	postprocess_components(img, blobs);
 
 	//component_filter(img, blobs);
 }
 
-void BlobDetector::process_region(Image *img, ImageSubRegion *region) {
+inline void BlobDetector::process_region(Image *img, ImageSubRegion *region, std::vector<ImageBlob> *blobs) {
 	threshold_n_mask(img, region);
 	connected_components_combine(img, region);
+	connected_components_extract(img, region, blobs);
 }
 
 
-void BlobDetector::notifyWorker(int i) {
+inline void BlobDetector::notifyWorker(int i) {
 	Worker *w = &workers[i];
 
 	std::unique_lock<std::mutex> lock(w->mtx);
@@ -141,7 +149,7 @@ void BlobDetector::notifyWorker(int i) {
 	w->cvar.notify_one();
 }
 
-void BlobDetector::waitForWorker(int i) {
+inline void BlobDetector::waitForWorker(int i) {
 	Worker *w = &workers[i];
 
 	std::unique_lock<std::mutex> lock(w->mtx);
@@ -214,7 +222,7 @@ void BlobDetector::connected_components_combine(Image *img, ImageSubRegion *regi
 
 
 		bool hasNeighbors = false;
-		unsigned minLabel = 0;
+		unsigned firstLabel = 0;
 		for(unsigned j = 0; j < 4; j++) {
 			uint8_t *pj = p - negativeOffsets[j];
 
@@ -224,21 +232,13 @@ void BlobDetector::connected_components_combine(Image *img, ImageSubRegion *regi
 
 			unsigned nIdx = i - negativeOffsets[j];
 
-			unsigned nLbl = forest.findSet(nIdx);
-
 			// TODO: Because the DisjointSets keeps tracks of mins, we don't need to do that here
 			if(!hasNeighbors) { // This is the first neighbor
-				minLabel = nLbl;
+				firstLabel = forest.findSet(nIdx);
 				hasNeighbors = true;
 			}
 			else { // Merge the other
-				if(nLbl < minLabel) {
-					forest.unionSets(nLbl, minLabel);
-					minLabel = nLbl;
-				}
-				else {
-					forest.unionSets(minLabel, nIdx);
-				}
+				forest.unionSets(firstLabel, nIdx);
 			}
 
 		}
@@ -248,16 +248,16 @@ void BlobDetector::connected_components_combine(Image *img, ImageSubRegion *regi
 		}
 
 		if(hasNeighbors) { // Merge with min neighbor
-			forest.unionSets(minLabel, i);
+			forest.unionSets(firstLabel, i);
 		}
 
 	}
 
 }
 
-void BlobDetector::connected_components_extract(Image *img, std::vector<ImageBlob> *blobs) {
+void BlobDetector::connected_components_extract(Image *img, ImageSubRegion *region, std::vector<ImageBlob> *blobs) {
 
-	unsigned N = img->width * img->height;
+	unsigned N = region->offset + region->size; //img->width * img->height;
 
 	blobs->resize(0);
 
@@ -266,7 +266,7 @@ void BlobDetector::connected_components_extract(Image *img, std::vector<ImageBlo
 	// This converts the image into a labeling from 1-M where M is the number of components
 	LabelType nextLabel = 1;
 	LabelType *labels = img->data;
-	for(unsigned i = 0; i < N; i++) {
+	for(unsigned i = (region->offset + region->start); i < N; i++) {
 		if(img->data[i] == 0) // Skip background pixels
 			continue;
 
@@ -275,22 +275,57 @@ void BlobDetector::connected_components_extract(Image *img, std::vector<ImageBlo
 		if(s == i) { // We've encountered the first element of the set
 
 			// More labels than allowed
-			if(nextLabel == 0xff)
+			if(nextLabel == 0xff) {
+				labels[i] = 0;
 				continue;
+			}
 
 			labels[i] = nextLabel++;
 
 			// TODO: Keep blobs at an allocated size of 255 at all times
 			blobs->push_back(ImageBlob());
+			(*blobs)[labels[i] - 1].id = s;
 			(*blobs)[labels[i] - 1].indices.push_back(i);
 		}
 		else { // Otherwise, choose the label of the root
-			labels[i] = labels[s];
+
+			labels[i] = labels[s]; // TODO: This will likely do a lot of cache invalidation
+
+			// If part of an overflowed segment, stop
+			if(labels[i] == 0 || (*blobs)[labels[i] - 1].indices.size() > MAX_PIXELS_PER_BLOB) {
+				continue;
+			}
 
 			(*blobs)[labels[i] - 1].indices.push_back(i);
 		}
 	}
 
+}
+
+inline void BlobDetector::combine_all_blobs(Image *img, std::vector<ImageBlob> *blobs) {
+	// This works because the blob extractor sets the values of the image pixels equal to the index of the blob in the the worker's blob collection
+
+	// TODO: This function does not enforce our limit on the number of blobs and indices
+
+	*blobs = workers[0].blobs;
+	for(unsigned i = 1; i < workers.size(); i++) {
+
+		std::vector<ImageBlob> &subblobs = workers[i].blobs;
+
+		for(unsigned j = 0; j < subblobs.size(); j++) {
+			unsigned setId = forest.findSetMin(subblobs[j].id);
+			if(setId != subblobs[j].id) { // This blob was merged with an earlier blob
+				unsigned idx = img->data[setId] - 1;
+
+				img->data[subblobs[j].id] = idx; // TODO: This should not be needed
+				(*blobs)[idx].indices.insert( (*blobs)[idx].indices.end(), subblobs[j].indices.begin(), subblobs[j].indices.end() );
+			}
+			else { // Brand new blob
+				img->data[setId] = blobs->size();
+				blobs->push_back(subblobs[j]);
+			}
+		}
+	}
 }
 
 void BlobDetector::postprocess_components(Image *img, vector<ImageBlob> *blobs) {

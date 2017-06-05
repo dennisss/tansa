@@ -8,6 +8,9 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLUT REQUIRED)
+find_package(GLEW REQUIRED)
 find_package(CGAL)
 find_package(Cplex)
 
@@ -123,6 +126,9 @@ endif()
 
 
 ######## Extensions ########
+
+add_subdirectory(src/graphics)
+
 if(BUILD_GAZEBO)
 	add_subdirectory(src/gazebo)
 

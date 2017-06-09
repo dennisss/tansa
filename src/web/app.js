@@ -1,10 +1,8 @@
 var React = require('react'),
 	Navbar = require('./navbar'),
-	WorldView = require('./world'),
-	Timeline = require('./timeline'),
-	PropertiesPane = require('./properties'),
 	Socket = require('./socket'),
-	Settings = require('./settings');
+	Settings = require('./settings'),
+	MainPage = require('./main');
 
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
@@ -80,6 +78,7 @@ var App = React.createClass({
 	},
 
 
+	// TODO: Some of this logic should be moved
 	onRendererReady: function(renderer){
 		this.renderer = renderer;
 
@@ -203,126 +202,13 @@ var App = React.createClass({
 		}.bind(this))
 	},
 
-	changeView: function(name){
-
-		var cam = this.renderer.camera;
-
-		if(name == 'top') {
-			cam.position.y = 0;
-			cam.position.x = 0;
-			cam.position.z = 6;
-		}
-		else if(name == 'front') {
-			cam.position.y = -6;
-			cam.position.x = 0;
-			cam.position.z = 0;
-		}
-		else if(name == 'right') {
-			cam.position.y = 0;
-			cam.position.x = 6;
-			cam.position.z = 0;
-		}
-
-		this.renderer.controls.update();
-		this.renderer.render();
-
-
-	},
-
 	render: function(){
 
 		return (
 			<div className="ts-app">
 				<Navbar parent={this} />
 
-				<table style={{width: '100%', height: '100%', backgroundColor: '#444', color: '#fff'}}>
-					<tbody>
-						<tr>
-							<td>
-								<table style={{width: '100%', height: '100%'}}>
-									<tbody>
-										<tr>
-											<td style={{width: 250, borderRight: '2px solid #222', verticalAlign: 'top'}}>
-												{/*
-													Drone list
-													- I should be able to add another drone
-													- Double click on to open up a modal for more settings
-													- 'SetHome' by dragging in the world (or expert coordinates)
-												*/}
-
-												<PropertiesPane parent={this} />
-											</td>
-											<td style={{position: 'relative'}}>
-												<div style={{position: 'absolute', top: 10, right: 10, backgroundColor: '#fff', padding: 8, border: '1px solid #ccc', borderRadius: 4}}>
-													<div className="btn-group">
-														<button onClick={() => this.changeView('top')} className="btn btn-default">Top</button>
-														<button onClick={() => this.changeView('front')} className="btn btn-default">Front</button>
-														<button onClick={() => this.changeView('right')} className="btn btn-default">Right</button>
-													</div>
-
-
-													<div style={{color: '#444', marginTop: 5}}>
-														<div>
-															<input type="checkbox" checked={this.renderer? this.renderer.options.showTrajectories : false} onChange={(e) => { this.renderer.options.showTrajectories = e.target.checked; this.forceUpdate() } } /> Show Trajectory Line
-														</div>
-														<div>
-															<input type="checkbox" checked={this.renderer? this.renderer.options.showVehicles : false} onChange={(e) => { this.renderer.options.showVehicles = e.target.checked; this.forceUpdate() } } /> Show Vehicles
-														</div>
-														<div>
-															<input type="checkbox" checked={this.renderer? this.renderer.options.cameraMode == 'perspective' : false} onChange={(e) => { this.renderer.setCamera(e.target.checked? 'perspective' : 'orthogonal'); this.forceUpdate() } } /> Perspective
-														</div>
-
-													</div>
-
-
-												</div>
-
-												{/*
-												<div className="btn-group" style={{position: 'absolute', bottom: 10, right: 10}}>
-													<button onClick={() => this.player.addPoint()} className="btn btn-default">+</button>
-												</div>
-												*/}
-												{/*
-													For viewing the current state of the drones,
-													We will also want to:
-													- highlight which drones are active in the current plan
-													- show the stage bounds as a square grid
-													- allow drones to to dragged around (transform active point)
-													- stroke the current proposed trajectories for point-to-point plans
-												*/}
-												<WorldView onRendererReady={this.onRendererReady} />
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</td>
-						</tr>
-
-
-						<tr>
-							{/* TODO: This is originally 200px high */}
-							<td style={{height: 36, borderTop: '2px solid #222'}}>
-								{/*
-									Playback controls and timeline here
-
-									The timeline will allow the generation of plans.
-
-
-
-									For the timeline, we will have multiple tabs o.
-									- The first tab will be the root plan
-									- Each sequential tab will be
-
-								*/}
-								<Timeline parent={this} />
-
-							</td>
-						</tr>
-
-					</tbody>
-
-				</table>
-
+				<MainPage parent={this} />
 			</div>
 		);
 

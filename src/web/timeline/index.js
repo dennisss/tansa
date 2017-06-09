@@ -91,7 +91,6 @@ var Timeline = React.createClass({
 
 		return (
 			<div style={{width: '100%', height: '100%', display: 'table'}}>
-				{/*
 				<div style={{width: 300, display: 'table-cell', verticalAlign: 'top', borderRight: '1px solid #888'}}>
 
 					<div className="ta-timeline-row" style={{borderBottom: '1px solid #888', backgroundColor: '#222'}}>
@@ -106,11 +105,10 @@ var Timeline = React.createClass({
 						);
 					})}
 				</div>
-				*/}
 				<div ref="line" style={{display: 'table-cell', verticalAlign: 'top', position: 'relative', cursor: 'text'}} onClick={this.onLineClick}>
 					<TimelineTicks duration={this.duration} />
 
-					{/*this.tracks.map((t, i) => {
+					{this.tracks.map((t, i) => {
 						return (
 							<div key={i} className="ta-timeline-row">
 								{t.children.map((st, i) => {
@@ -126,7 +124,7 @@ var Timeline = React.createClass({
 								})}
 							</div>
 						);
-					})*/}
+					})}
 
 					{this.renderTimebar(t)}
 

@@ -20,30 +20,12 @@
 namespace tansa {
 namespace graphics {
 
-typedef void (*MenuCallback)(int value);
-typedef bool (*IdleCallback)();
-
-struct MenuItem {
-	char *name;
-	int value;
-	int nchildren;
-};
-
-
 
 /* Represents a drawing space either linked to a whole window or a viewport */
 class Window {
-
-	friend void window_display();
-	friend void window_idle();
-
 public:
 
-	static Window *Create(char *name, glm::vec2 size = glm::vec2(512,512));
-
-	Window *sub(int x, int y, int width, int height);
-	//Window *sub();
-
+	static Window *Create(const char *name, glm::vec2 size = glm::vec2(512,512));
 
 	Group scene;
 	Camera camera;
@@ -51,25 +33,23 @@ public:
 	glm::vec2 size;
 
 
-	void addMenu(MenuItem *root, MenuCallback callback);
+	void run();
+
+	void draw();
+
 	inline void setBackgroundColor(glm::vec4 color){ this->backgroundColor = color; };
 
-	inline void setActive(){ glutSetWindow(this->id); };
+	inline void setActive(){ glfwMakeContextCurrent(this->window); };
 
-	inline void setIdle(IdleCallback c){ this->onIdle = c; };
+	GLFWwindow *window;
+
 
 private:
 
-	Window(int id);
+	Window(GLFWwindow *window);
 	~Window();
 
-
-	int id;
-
 	glm::vec4 backgroundColor;
-
-
-	IdleCallback onIdle;
 
 };
 

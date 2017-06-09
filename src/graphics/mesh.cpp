@@ -98,7 +98,7 @@ void Mesh::draw(Camera *cam, Transform *modelview){
 }
 
 
-Mesh *Mesh::read(char *filename, Shader *shader){
+Mesh *Mesh::read(const char *filename, Shader *shader){
 
 
 	const char *ext = get_filename_ext(filename);

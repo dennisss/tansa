@@ -2,6 +2,6 @@
 #define TANSA_GRAPHICS_H_
 
 #include "graphics/draw.h"
-
+#include "graphics/shapes.h"
 
 #endif

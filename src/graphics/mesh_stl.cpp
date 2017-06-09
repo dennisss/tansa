@@ -11,7 +11,7 @@ namespace graphics {
 
 // TODO: What about the color?
 /// // TODO: Change the return type to bool to indicate success; pass a reference to a vector to use as a parameter
-Mesh *Mesh::read_stl(char *filename, Shader *shader){
+Mesh *Mesh::read_stl(const char *filename, Shader *shader){
 
 
 	FILE *file = fopen(filename, "rb");

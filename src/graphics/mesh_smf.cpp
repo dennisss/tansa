@@ -19,7 +19,7 @@ namespace graphics {
 
 // TODO: What about the color?
 /// // TODO: Change the return type to bool to indicate success; pass a reference to a vector to use as a parameter
-Mesh *Mesh::read_smf(char *filename, Shader *shader){
+Mesh *Mesh::read_smf(const char *filename, Shader *shader){
 
 	ifstream file(filename);
 

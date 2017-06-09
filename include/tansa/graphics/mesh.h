@@ -26,7 +26,7 @@ public:
 	~Mesh();
 
 	// TODO: Generalize this
-	static Mesh *read(char *filename, Shader *shader);
+	static Mesh *read(const char *filename, Shader *shader);
 
 
 	void draw(Camera *cam, Transform *modelview);
@@ -42,8 +42,8 @@ private:
 	int nindices;
 
 
-	static Mesh *read_smf(char *filename, Shader *shader);
-	static Mesh *read_stl(char *filename, Shader *shader);
+	static Mesh *read_smf(const char *filename, Shader *shader);
+	static Mesh *read_stl(const char *filename, Shader *shader);
 
 };
 

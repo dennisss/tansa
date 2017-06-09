@@ -21,15 +21,14 @@ target_link_libraries(
 	tansa_graphics
 
 	${OPENGL_LIBRARIES}
-	${GLUT_LIBRARY}
 	${GLEW_LIBRARIES}
+	glfw
 )
 
 target_include_directories(
 	tansa_graphics PRIVATE
 
 	${OPENGL_INCLUDE_DIRS}
-	${GLUT_INCLUDE_DIRS}
 	${GLEW_INCLUDE_DIRS}
 )
 

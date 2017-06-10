@@ -56,7 +56,17 @@ add_executable(
 	camera_main.cpp
 	interfaces/file.cpp
 	interfaces/raspicam.cpp
+	interfaces/virtual.cpp
 )
 
 set_target_properties(mocap_camera PROPERTIES COMPILE_FLAGS "-std=c++11 -O3")
-target_link_libraries(mocap_camera tansa tansa_mocap)
+target_link_libraries(
+	mocap_camera
+
+	tansa
+	tansa_mocap
+)
+
+if(BUILD_GRAPHICS)
+	target_link_libraries(mocap_camera tansa_graphics)
+endif()

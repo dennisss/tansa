@@ -58,7 +58,8 @@ int MocapCameraNode::connect(int lport, int rport) {
 
 
 	// By default send to 127.0.0.1:rport
-	// TODO: Perform broaddcasting
+	// TODO: Perform broadcasting
+	// Will need to pick an interface
 	memset((char *)&client_addr, 0, sizeof(client_addr));
 	client_addr.sin_family = AF_INET;
 	client_addr.sin_port = htons(rport);
@@ -122,9 +123,14 @@ void MocapCameraNode::send_message(MocapCameraPacket *pkt) {
 
 void MocapCameraNode::on_image(const MocapCameraImage *data) {
 
+	Time now = Time::now();
+	cout << 1.0 / now.since(lastFrame).seconds() << "fps" << endl;
+	lastFrame = now;
+
+
 #ifdef USE_OPENCV
-	Image original;
-	data->image->copyTo(&original);
+	//mage original;
+	//data->image->copyTo(&original);
 #endif
 
 	vector<ImageBlob> blobs;
@@ -141,8 +147,8 @@ void MocapCameraNode::on_image(const MocapCameraImage *data) {
 	send_blobs(blobs);
 
 #ifdef USE_OPENCV
-	this->display(&original, &blobs);
-	free(original.data);
+	//this->display(&original, &blobs);
+	//free(original.data);
 #endif
 }
 

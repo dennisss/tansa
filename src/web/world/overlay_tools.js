@@ -19,7 +19,7 @@ var OverlayTools = React.createClass({
 
 				<div style={{color: '#444', marginTop: 5}}>
 					<div>
-						<input type="checkbox" checked={p.renderer? this.renderer.options.showTrajectories : false} onChange={(e) => { p.renderer.options.showTrajectories = e.target.checked; p.forceUpdate() } } /> Show Trajectory Line
+						<input type="checkbox" checked={p.renderer? p.renderer.options.showTrajectories : false} onChange={(e) => { p.renderer.options.showTrajectories = e.target.checked; p.forceUpdate() } } /> Show Trajectory Line
 					</div>
 					<div>
 						<input type="checkbox" checked={p.renderer? p.renderer.options.showVehicles : false} onChange={(e) => { p.renderer.options.showVehicles = e.target.checked; p.forceUpdate() } } /> Show Vehicles

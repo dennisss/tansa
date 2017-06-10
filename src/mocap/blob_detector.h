@@ -1,6 +1,7 @@
 #ifndef TANSA_MOCAP_BLOB_DETECTOR
 #define TANSA_MOCAP_BLOB_DETECTOR
 
+#include <tansa/imaging.h>
 #include <tansa/algorithm.h>
 
 #include <string.h>
@@ -24,40 +25,6 @@ typedef PixelType LabelType;
 typedef unsigned PixelIndexType;
 
 
-struct ImageSubRegion {
-	unsigned offset; /**< Start pixel offset of very beginning of this region */
-	unsigned start; /**< Start pixel index relative to 'offset' of the first pixel which should be processed */
-	unsigned size; /**< Relative to offset, this is the total number of pixels in this part of the image */
-};
-
-// A grayscale image
-struct Image {
-	unsigned width;
-	unsigned height;
-	PixelType *data;
-
-	void copyTo(Image *other) {
-		other->data = (PixelType *) malloc(width*height);
-		memcpy(other->data, this->data, width*height);
-		other->width = width;
-		other->height = height;
-	}
-
-	ImageSubRegion all() {
-		ImageSubRegion r;
-		r.offset = 0;
-		r.start = 0;
-		r.size = width * height;
-		return r;
-	}
-
-};
-
-struct ImageSize {
-	unsigned width;
-	unsigned height;
-};
-
 
 struct ImageBlob {
 	unsigned id; /**< Unique to this blob of is the index of the very first pixel found that is in this blob */
@@ -76,7 +43,7 @@ struct ImageBlob {
 class BlobDetector {
 public:
 
-	BlobDetector(unsigned width, unsigned height, unsigned nthreads = 2);
+	BlobDetector(unsigned width, unsigned height, unsigned nthreads = 1);
 	~BlobDetector();
 
 	/**

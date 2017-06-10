@@ -41,7 +41,7 @@ var MainPage = React.createClass({
 												- allow drones to to dragged around (transform active point)
 												- stroke the current proposed trajectories for point-to-point plans
 											*/}
-											<WorldView onRendererReady={this.onRendererReady} />
+											<WorldView onRendererReady={p.onRendererReady} />
 										</td>
 									</tr>
 								</tbody>
@@ -90,4 +90,4 @@ var MainPage = React.createClass({
 
 });
 
-module.exports = CommandPage;
+module.exports = MainPage;

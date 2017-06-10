@@ -5,6 +5,9 @@
 #ifdef USE_RPI
 #include "interfaces/raspicam.h"
 #endif
+#ifdef BUILD_GRAPHICS
+#include "interfaces/virtual.h"
+#endif
 
 #include <unistd.h>
 #include <signal.h>
@@ -63,6 +66,12 @@ int main(int argc, char** argv) {
 			interface = new RaspicamImagingInterface();
 		}
 #endif
+#ifdef BUILD_GRAPHICS
+		else if(strcmp(argv[i], "-virtual") == 0) {
+			interface = new VirtualImagingInterface();
+		}
+#endif
+
 		else {
 			printf("Unknown option: %s\n", argv[i]);
 			return 1;

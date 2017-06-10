@@ -91,6 +91,7 @@ private:
 	bool active = false; /**< Whether or not we are  */
 	Time lastKeepalive; /**< The last time the master node has told us to keep going */
 	Time lastAdvertisement;
+	Time lastFrame;
 
 	MocapCameraImagingInterface *interface;
 

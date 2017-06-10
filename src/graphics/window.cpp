@@ -12,8 +12,7 @@ using namespace glm;
 
 
 // All defined windows; The index corresponds to the id
-static map<int, Window *> windows;
-
+static int nWindows = 0;
 /*
 void window_reshape(int w, int h){
 	int wid = glutGetWindow();
@@ -26,32 +25,22 @@ void window_reshape(int w, int h){
 }
 */
 
-void window_menuevent(int option){
-
-
-}
 
 
 
-Window::Window(GLFWwindow *window){
-	//this->id = id; windows[id] = this;
-
+Window::Window(GLFWwindow *window) {
 	this->window = window;
 
 	this->backgroundColor = vec4(0.0f, 0.0f, 0.0f, 1.0f); // Default color of black
-
-	//this->onIdle = NULL;
-
-//	glutDisplayFunc(window_display);
-//	glutReshapeFunc(window_reshape); // glfwSetFramebufferSizeCallback
-//	glutKeyboardFunc(keyboard);
-
 }
 
 Window::~Window(){
 	glfwDestroyWindow(this->window);
-	//glutDestroyWindow(this->id);
-	//windows.erase(this->id);
+
+	nWindows--;
+	if(nWindows == 0) {
+		glfwTerminate();
+	}
 }
 
 
@@ -79,18 +68,34 @@ void Window::draw() {
 }
 
 
-Window *Window::Create(const char *name, vec2 size) {
+Window *Window::Create(const char *name, vec2 size, bool visible) {
+
+	if(nWindows == 0) {
+		if(!glfwInit()) {
+			// Initialization failed
+			printf("GLFW Failed to initialize\n");
+		}
+
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+		glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+		// TODO: Ensure RGBA with depth buffer
+	}
+
+
+	nWindows++;
+
+
+	glfwWindowHint(GLFW_VISIBLE, visible? GLFW_TRUE : GLFW_FALSE);
 
 	// TODO: http://www.glfw.org/docs/latest/context_guide.html is very useful with documenting how to do off screen windows and windows that share context with other windows
 	GLFWwindow* window = glfwCreateWindow(size.x, size.y, name, NULL, NULL);
 
-	if(window == NULL) {
-		printf("Creation failed!\n");
-	}
-
 	glfwMakeContextCurrent(window);
-
-//	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
 
 	int res;

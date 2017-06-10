@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tansa)
 
+######## Dependency Resolution ########
+# Depending on which libraries are available on the system, we will build in support in support for them
+
 option(BUILD_GAZEBO "Builds support for the Gazebo simulator" ON)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -8,9 +11,9 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
-find_package(GLEW REQUIRED)
+find_package(OpenGL)
+find_package(glfw3 3.2)
+find_package(GLEW)
 find_package(CGAL)
 find_package(Cplex)
 
@@ -19,9 +22,15 @@ include_directories(
 	include
 )
 
+if((OpenGL_FOUND) AND (glfw3_FOUND) AND (GLEW_FOUND))
+	set(BUILD_GRAPHICS ON)
+	add_definitions(-DBUILD_GRAPHICS)
+endif()
+
 if(CGAL_FOUND)
 	set(CGAL_DONT_OVERRIDE_CMAKE_FLAGS TRUE CACHE BOOL "Force CGAL to maintain CMAKE flags")
 	include(${CGAL_USE_FILE})
+	add_definitions(-DUSE_CGAL)
 endif()
 
 
@@ -102,8 +111,6 @@ if(CGAL_FOUND)
 		tansa
 		${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} # TODO: Also add CGAL_CXX_* flags
 	)
-
-	add_definitions(-DUSE_CGAL)
 endif()
 
 
@@ -127,7 +134,9 @@ endif()
 
 ######## Extensions ########
 
-add_subdirectory(src/graphics)
+if(BUILD_GRAPHICS)
+	add_subdirectory(src/graphics)
+endif()
 
 if(BUILD_GAZEBO)
 	add_subdirectory(src/gazebo)

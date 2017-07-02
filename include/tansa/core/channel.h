@@ -1,5 +1,5 @@
-#ifndef TANSA_CHANNEL_H_
-#define TANSA_CHANNEL_H_
+#ifndef TANSA_CORE_CHANNEL_H_
+#define TANSA_CORE_CHANNEL_H_
 
 #include <map>
 #include <vector>

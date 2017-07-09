@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "time.h"
-#include "channel.h"
+#include "core/channel.h"
 
 #include <Eigen/Dense>
 #include <memory>

@@ -4,7 +4,7 @@
 #include "time.h"
 #include "estimation.h"
 #include "trajectory.h"
-#include "channel.h"
+#include "core/channel.h"
 #include "data.h"
 
 #include <stdint.h>

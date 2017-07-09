@@ -146,6 +146,8 @@ endif()
 
 add_subdirectory(src/mocap)
 
+add_subdirectory(src/beacon)
+
 ######## Test Suite ########
 
 enable_testing()

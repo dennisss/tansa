@@ -48,10 +48,10 @@ void GPS::observe(GPSState &s, const ModelState &ms) {
 		return;
 	}
 
-	GPSData data;
-	data.latLongAlt = latLongAlt(ms.position + noiseVector(noise, gen));
-	data.vel = ms.velocity + noiseVector(noise, gen);
-	data.time = s.time;
+	GPSData *data = new GPSData();
+	data->latLongAlt = latLongAlt(ms.position + noiseVector(noise, gen));
+	data->vel = ms.velocity + noiseVector(noise, gen);
+	data->time = s.time;
 	s.lastReading = s.time;
 	this->publish(data);
 }

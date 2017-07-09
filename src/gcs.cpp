@@ -865,6 +865,8 @@ void console_start() {
 
 
 int main(int argc, char *argv[]) {
+	tansa::Context ctx;
+
 	// Configure data and configuration folders
 	char *wpath = getenv("TANSA_PATH");
 	if(wpath != NULL)
@@ -917,14 +919,14 @@ int main(int argc, char *argv[]) {
 	// TODO: Have a better check for mocap initialization/health
 	if (inRealLife) {
 		mocap = new Mocap(mocap_opts);
-		mocap->connect(config.clientAddress, config.serverAddress);
+		mocap->connect(&ctx, config.clientAddress, config.serverAddress);
 #ifdef USE_GAZEBO
 	} else if(worldMode == "gazebo") {
 		gazebo = new GazeboConnector();
 		gazebo->connect();
 #endif
 	} else if(worldMode == "sim") {
-		sim = Simulation::Make();
+		sim = Simulation::Make(&ctx); // TODO: Instead run in another thread?
 		sim->start();
 	}
 

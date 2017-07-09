@@ -4,7 +4,7 @@
 #include "natnet.h"
 
 #include <tansa/time.h>
-#include <tansa/channel.h>
+#include <tansa/core.h>
 
 #include <pthread.h>
 #include <netinet/ip.h>

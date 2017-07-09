@@ -20,7 +20,7 @@ public:
 	 *
 	 * NOTE: It must be created in the main thread
 	 */
-	VirtualImagingInterface(/* Simulation *sim */);
+	VirtualImagingInterface(Vector3d position /* Simulation *sim */);
 	virtual ~VirtualImagingInterface();
 
 	virtual void start();
@@ -41,6 +41,7 @@ private:
 
 	graphics::Window *window;
 
+	Vector3d position;
 };
 
 

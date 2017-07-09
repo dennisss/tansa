@@ -32,7 +32,7 @@ bool MocapCameraPacketParser::parse(const char *c) {
 		s[state - 3] = *c;
 		state++;
 
-		if(pkt->size == 0) {
+		if(pkt->size == 0 && state == 5) {
 			state = 0;
 			return true;
 		}

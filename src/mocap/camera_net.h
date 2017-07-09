@@ -17,9 +17,9 @@ namespace tansa {
 #define MOCAP_CAMERA_NODE_DEFAULT_PORT 13001
 
 enum MocapCameraPacketType {
-	CameraPacketAdvertise = 1, // Idle cameras broadcast their id every second to let the host computer know to connect them; this also contains information as to the supported frame rates, resolutions, etc.
-	CameraPacketConfig = 2, // Sent from the host to a camera to (re-)initialize it. This also registers the host ip with the camera for data transmission
-	CameraPacketKeepalive = 3, // Must be sent every four seconds to each camera for it to continue sending back data
+	CameraPacketAdvertise = 1, /**< Idle cameras broadcast their id every second to let the host computer know to connect them; this also contains information as to the supported frame rates, resolutions, etc. */
+	CameraPacketConfig = 2, /**< Sent from the host to a camera to (re-)initialize it. This also registers the host ip with the camera for data transmission */
+	CameraPacketKeepalive = 3, /**< Must be sent every four seconds to each camera for it to continue sending back data */
 	CameraPacketBlobs = 4,
 	CameraPacketMJPEG = 5
 
@@ -31,7 +31,7 @@ enum MocapCameraPacketType {
 struct __attribute__((__packed__)) MocapCameraPacket {
 	char magic[2]; /**< Should be 'TA' to distinguish the Tansa protocol */
 	uint8_t type;
-	uint64_t timestamp; /**< Nanoseconds since the network coordinated epoch. For frame data, this is the most accurate measure of the end of frame capture (also exposure and shutter) */
+	//uint64_t timestamp; /**< Nanoseconds since the network coordinated epoch. For frame data, this is the most accurate measure of the end of frame capture (also exposure and shutter) */
 	uint16_t size; /**< The length of the data section in bytes */
 	char data[];
 };
@@ -40,6 +40,11 @@ struct __attribute__((__packed__)) MocapCameraPacketAdvertisement {
 	unsigned vendor; /**< Who designed the camera */
 	unsigned model; /**<  */
 	char serialNum[64]; /**< Should be a alphanumeric serial code upto 64 characters long */
+
+	unsigned image_width;
+	unsigned image_height;
+
+
 
 	// TODO: should include allowable resolutions, allowable framerates (this could be framerate dependent)
 

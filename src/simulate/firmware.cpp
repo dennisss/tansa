@@ -8,7 +8,7 @@
 namespace tansa {
 
 
-Firmware::Firmware(const DataObject &desc, MultirotorModel::Ptr model) {
+Firmware::Firmware(Context *ctx, const DataObject &desc, MultirotorModel::Ptr model) {
 	currentActuatorOutputs.resize(4, 0);
 
 	this->id = desc["id"];
@@ -18,8 +18,9 @@ Firmware::Firmware(const DataObject &desc, MultirotorModel::Ptr model) {
 	process = 0;
 
 	this->model = model;
-	model->imu->subscribe(&Firmware::onImuData, this);
-	model->gps->subscribe(&Firmware::onGpsData, this);
+	this->ctx = ctx;
+	model->imu->subscribe(ctx, &Firmware::onImuData, this);
+	model->gps->subscribe(ctx, &Firmware::onGpsData, this);
 }
 
 Firmware::~Firmware() {
@@ -47,7 +48,7 @@ void Firmware::start() {
 
 	this->sim_vehicle = new Vehicle();
 	this->sim_vehicle->connect(0, 14561 + 10*id);
-	this->sim_vehicle->subscribe(&Firmware::onActuatorOutputs, this);
+	this->sim_vehicle->subscribe(ctx, &Firmware::onActuatorOutputs, this);
 }
 
 void Firmware::stop() {

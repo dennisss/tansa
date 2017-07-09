@@ -12,7 +12,7 @@ using namespace std;
 namespace tansa {
 
 
-Simulation *Simulation::Make() {
+Simulation *Simulation::Make(Context *ctx) {
 
 	World w;
 	WorldState ws;
@@ -25,7 +25,7 @@ Simulation *Simulation::Make() {
 	for(int i = 0; i < n; i++) {
 		MultirotorModel::Ptr m( new MultirotorModel(desc) );
 		w.models.push_back(m);
-		w.firmwares.push_back( shared_ptr<Firmware>( new Firmware(desc["firmware"], m) ) );
+		w.firmwares.push_back( shared_ptr<Firmware>( new Firmware(ctx, desc["firmware"], m) ) );
 		w.firmwares[i]->start();
 		State::Ptr s = m->defaultState();
 		ws.models.push_back(s);

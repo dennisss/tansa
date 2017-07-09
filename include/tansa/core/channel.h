@@ -1,81 +1,78 @@
 #ifndef TANSA_CORE_CHANNEL_H_
 #define TANSA_CORE_CHANNEL_H_
 
+#include "subscription.h"
+#include "context.h"
+
 #include <map>
 #include <vector>
 
 namespace tansa {
 
-class Subscription {
-public:
-	Subscription(void (*func)(void *, void *), void *data) {
-		this->func = func;
-		this->data = data;
-	}
 
 
-	void call(void *raw) {
-		func(raw, data);
-	}
-
-private:
-	void (*func)(void *value, void *data);
-	void *data;
-};
-
-
-template<class T, class V>
-class ClassSubscription : public Subscription {
-
-public:
-
-	ClassSubscription(T* inst, void (T::*method)(const V*))
-	 : Subscription(&ClassSubscription<T, V>::callClassMethod, this) {
-
-		this->inst = inst;
-		this->method = method;
-	}
-
-	T *inst;
-	void (T::*method)(const V* value);
-
-
-	static void callClassMethod(void *raw, void *data) {
-		ClassSubscription *cs = (ClassSubscription *) data;
-
-		V *val = (V *) raw;
-		(cs->inst->*(cs->method))(val);
-	}
-
-
-};
-
-
+/**
+ * An object which broadcasts messages
+ */
 class Channel {
 public:
 
+	/**
+	 *
+	 */
 	template<class T, class V>
-	inline void subscribe(void (T::*func)(const V*), T *inst) {
+	inline void subscribe(Context *ctx, void (T::*func)(V*), T *inst) {
 
 		int ID = V::ID;
 		if(listeners.count(ID) == 0) {
 			listeners[ID] = std::vector<Subscription *>();
 		}
 
-		listeners[ID].push_back(new ClassSubscription<T, V>(inst, func));
+		Subscription *sub = new ClassSubscription<T, V>(ctx, inst, func);
+
+		void *key = (void *) this;
+		if(ctx->subs.count(key) == 0) {
+			ctx->subs[key] = std::vector<Subscription *>();
+		}
+
+		ctx->subs[this].push_back(sub);
+
+		listeners[ID].push_back(sub);
 	}
+
+	template<class V>
+	inline void subscribe(Context *ctx, void (*func)(V*, void *), void *arg = NULL) {
+
+		int ID = V::ID;
+		if(listeners.count(ID) == 0) {
+			listeners[ID] = std::vector<Subscription *>();
+		}
+
+		Subscription *sub = new Subscription(ctx, (void (*)(void *, void *)) func, arg);
+
+		void *key = (void *) this;
+		if(ctx->subs.count(key) == 0) {
+			ctx->subs[key] = std::vector<Subscription *>();
+		}
+
+		ctx->subs[this].push_back(sub);
+
+		listeners[ID].push_back(sub);
+	}
+
 
 protected:
 
 	template<class V>
-	inline void publish(const V &val) {
+	inline void publish(V *val) {
 
 		int ID = V::ID;
 		if(listeners.count(ID) == 0)
 			return;
 
 		for(auto subp : listeners[ID]) {
-			subp->call((void *) &val);
+			subp->post(val);
+			subp->ctx->notify(); // TODO: Eventually move back to Subscription
 		}
 
 	}
@@ -85,7 +82,7 @@ protected:
 private:
 
 
-	std::map<int, std::vector<Subscription *>> listeners;
+	std::map<int, std::vector<Subscription *>> listeners; /**< For each message id, this is all the entities that need to be noti */
 };
 
 

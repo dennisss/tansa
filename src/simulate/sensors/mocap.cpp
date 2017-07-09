@@ -38,10 +38,10 @@ void MocapSensor::observe(MocapSensorState &s, const ModelState &ms) {
 		return;
 	}
 
-	MocapSensorData data;
-	data.position = ms.position + noiseVector(posNoise, gen);
-	data.orientation = noiseQuaternion(orientNoise, gen) * ms.orientation
-	data.time = s.time;
+	MocapSensorData *data = new MocapSensorData();
+	data->position = ms.position + noiseVector(posNoise, gen);
+	data->orientation = noiseQuaternion(orientNoise, gen) * ms.orientation
+	data->time = s.time;
 	s.lastReading = s.time;
 	this->publish(data);
 }

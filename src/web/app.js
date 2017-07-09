@@ -83,52 +83,51 @@ var App = React.createClass({
 		this.renderer = renderer;
 
 		var it = 0;
-		Socket.on('msg', function(data) {
-			data = JSON.parse(data);
-
-			if(data.type == 'status') {
-				if((it++) % 20 == 0) {
-					this.setState({ stats: data, time: (new Date()) });
-				}
-				renderer.update({vehicles: data.vehicles, time: data.time});
+		Socket.msgs.on('status', (data) => {
+			if((it++) % 20 == 0) {
+				this.setState({ stats: data, time: (new Date()) });
 			}
-			else if(data.type == 'load_reply') {
-				renderer.setPaths(data.paths);
-				renderer.setHomes(data.target_positions);
-				this.setState({ duration: data.duration });
-			}
-			else if(data.type == 'list_reply') {
-				this.setState({availableFiles: data.files});
+			renderer.update({vehicles: data.vehicles, time: data.time});
+		});
 
-				var activeName = this._uploadedName || Settings.get('file.name');
-				// Right after an upload, set the new file as the default selected
-				if(activeName) {
-					for(var i = 0; i < data.files.length; i++) {
-						if(data.files[i].fileName == activeName) {
-							this.setState({filenameI: i});
+		Socket.msgs.on('load_reply', (data) => {
+			renderer.setPaths(data.paths);
+			renderer.setHomes(data.target_positions);
+			this.setState({ duration: data.duration });
+		})
 
-							var activeCue = Settings.get('file.cue');
-							if(activeCue) {
-								var cues = data.files[i].breakpoints;
-								for(var j = 0; j < cues.length; j++) {
-									if(cues[j].number == activeCue) {
-										this.setState({cue: activeCue});
-										break;
-									}
+		Socket.msgs.on('list_reply', (data) => {
+			this.setState({availableFiles: data.files});
+
+			var activeName = this._uploadedName || Settings.get('file.name');
+			// Right after an upload, set the new file as the default selected
+			if(activeName) {
+				for(var i = 0; i < data.files.length; i++) {
+					if(data.files[i].fileName == activeName) {
+						this.setState({filenameI: i});
+
+						var activeCue = Settings.get('file.cue');
+						if(activeCue) {
+							var cues = data.files[i].breakpoints;
+							for(var j = 0; j < cues.length; j++) {
+								if(cues[j].number == activeCue) {
+									this.setState({cue: activeCue});
+									break;
 								}
 							}
-
-
-							break;
 						}
+
+
+						break;
 					}
 				}
 			}
-			else if(data.type == 'calibrate_reply') {
-				this.setState({calibrating: false});
-			}
+		});
 
-		}.bind(this));
+		Socket.msgs.on('calibrate_reply', (data) => {
+			this.setState({calibrating: false});
+		});
+
 
 		// Get initial list of files
 		this.load_filelist();

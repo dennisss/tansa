@@ -4,7 +4,7 @@
 #include "time.h"
 #include "estimation.h"
 #include "trajectory.h"
-#include "core/channel.h"
+#include "core.h"
 #include "data.h"
 
 #include <stdint.h>
@@ -27,7 +27,7 @@ namespace tansa {
 
 #define MAV_CMD_RGBLED MAV_CMD_USER_2
 
-struct BatteryStatus {
+struct BatteryStatus : Message {
 	static const int ID = 1;
 
 	double voltage = -1;
@@ -35,13 +35,13 @@ struct BatteryStatus {
 
 };
 
-struct ActuatorOutputs {
+struct ActuatorOutputs : Message {
 	static const int ID = 2;
 
 	vector<float> outputs;
 };
 
-struct TextMessage {
+struct TextMessage : Message {
 	static const int ID = 3;
 
 	uint8_t severity;

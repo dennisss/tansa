@@ -25,6 +25,7 @@ add_library(
 	rigid_body_tracker.cpp
 	camera_net.cpp
 	camera_node.cpp
+	camera_pool.cpp
 
 	optitrack/natnet.cpp
 	optitrack/natnet_client.cpp

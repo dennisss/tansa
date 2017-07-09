@@ -274,13 +274,13 @@ void NatNetClient::send_message(const char *msg){
 void NatNetClient::handle_packet(const NatNetPacket *pkt) {
 
 	if(pkt->type == NatNetPacket::Frame) {
-		NatNetFrame f;
-		NatNetFrame::Parse(pkt->payload, natNetVersion, &f);
+		NatNetFrame *f = new NatNetFrame();
+		NatNetFrame::Parse(pkt->payload, natNetVersion, f);
 		this->publish(f);
 	}
 	else if(pkt->type == NatNetPacket::ModelDef) {
-		NatNetDescriptions d;
-		NatNetDescriptions::Parse(pkt->payload, natNetVersion, &d);
+		NatNetDescriptions *d = new NatNetDescriptions();
+		NatNetDescriptions::Parse(pkt->payload, natNetVersion, d);
 		this->publish(d);
 	}
 	else{

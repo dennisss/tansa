@@ -27,7 +27,7 @@ Mocap::~Mocap() {
 }
 
 
-int Mocap::connect(string iface_addr, string server_addr) {
+int Mocap::connect(Context *ctx, string iface_addr, string server_addr) {
 	client = new optitrack::NatNetClient();
 
 	if(client->connect((char *)iface_addr.c_str(), server_addr.c_str(), optitrack::NatNetUnicast) != 0){
@@ -35,7 +35,7 @@ int Mocap::connect(string iface_addr, string server_addr) {
 		return 1;
 	}
 
-	client->subscribe(&Mocap::onNatNetFrame, this);
+	client->subscribe(ctx, &Mocap::onNatNetFrame, this);
 
 	return 0;
 }

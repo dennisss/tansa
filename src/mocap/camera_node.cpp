@@ -16,9 +16,9 @@ using namespace std;
 namespace tansa {
 
 
-MocapCameraNode::MocapCameraNode(MocapCameraImagingInterface *interface) {
+MocapCameraNode::MocapCameraNode(Context *ctx, MocapCameraImagingInterface *interface) {
 	this->interface = interface;
-	interface->subscribe(&MocapCameraNode::on_image, this);
+	interface->subscribe(ctx, &MocapCameraNode::on_image, this);
 
 	ImageSize s = interface->getSize();
 
@@ -29,7 +29,7 @@ MocapCameraNode::MocapCameraNode(MocapCameraImagingInterface *interface) {
 // TODO: Unsubscribe in destructor
 
 
-int MocapCameraNode::connect(int lport, int rport) {
+int MocapCameraNode::connect(const char *laddr, int lport, int rport) {
 
 	if((netfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("cannot create socket");
@@ -71,8 +71,6 @@ int MocapCameraNode::connect(int lport, int rport) {
 		return 1;
 	}
 
-	// TODO: Instead this should wait for a network command
-	interface->start();
 }
 
 void MocapCameraNode::disconnect() {
@@ -109,7 +107,26 @@ void MocapCameraNode::send_blobs(const vector<ImageBlob> &blobs) {
 
 void MocapCameraNode::send_advert() {
 
+	int payloadSize = sizeof(MocapCameraPacketAdvertisement);
 
+	MocapCameraPacket *pkt = (MocapCameraPacket *) malloc(sizeof(MocapCameraPacket) + payloadSize);
+
+	pkt->type = CameraPacketAdvertise;
+	pkt->size = payloadSize;
+
+
+	// TODO: Populate with useful data
+	MocapCameraPacketAdvertisement *advert = (MocapCameraPacketAdvertisement *) pkt->data;
+	advert->vendor = 1;
+	advert->model = 1;
+
+	ImageSize s = interface->getSize();
+	advert->image_width = s.width;
+	advert->image_height = s.height;
+
+	send_message(pkt);
+
+	free(pkt);
 }
 
 void MocapCameraNode::send_message(MocapCameraPacket *pkt) {
@@ -124,7 +141,7 @@ void MocapCameraNode::send_message(MocapCameraPacket *pkt) {
 void MocapCameraNode::on_image(const MocapCameraImage *data) {
 
 	Time now = Time::now();
-	cout << 1.0 / now.since(lastFrame).seconds() << "fps" << endl;
+	//cout << 1.0 / now.since(lastFrame).seconds() << "fps" << endl;
 	lastFrame = now;
 
 
@@ -142,7 +159,7 @@ void MocapCameraNode::on_image(const MocapCameraImage *data) {
 
 	// the code you wish to time goes here
 	int stop_s=clock();
-	cout << "time: " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << endl;
+	//cout << "time: " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << endl;
 
 	send_blobs(blobs);
 
@@ -194,8 +211,10 @@ void MocapCameraNode::handle_message(MocapCameraPacket *msg) {
 			interface->stop();
 		}
 
+		cout << "Starting interface" << endl;
 		// TODO: Use the provided config
 		interface->start();
+		lastKeepalive = Time::now();
 		active = true;
 	}
 	else if(msg->type == CameraPacketKeepalive) {
@@ -211,6 +230,7 @@ void MocapCameraNode::cycle() {
 		if(now.since(lastKeepalive).seconds() >= 2) {
 			// TODO: Also reset to broadcast address for client
 			// Turn ourselves off
+			cout << "Stopping interface" << endl;
 			interface->stop();
 			active = false;
 		}

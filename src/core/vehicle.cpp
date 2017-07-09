@@ -847,10 +847,10 @@ void Vehicle::handle_message(mavlink_message_t *msg) {
 			mavlink_msg_hil_actuator_controls_decode(msg, &ac);
 
 			// ac.controls is an array of floats from 0..1 with the motor outputs commanded
-			ActuatorOutputs ao;
-			ao.outputs.resize(16, 0);
+			ActuatorOutputs *ao = new ActuatorOutputs();
+			ao->outputs.resize(16, 0);
 			for(int i = 0; i < 16; i++) {
-				ao.outputs[i] = ac.controls[i];
+				ao->outputs[i] = ac.controls[i];
 			}
 
 			this->publish(ao);

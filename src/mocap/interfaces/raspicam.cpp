@@ -62,8 +62,8 @@ void raspicam_image_callback(void *arg) {
 	img.width = self->camera.getWidth();
 	img.height = self->camera.getHeight();
 
-	MocapCameraImage msg;
-	msg.image = &img;
+	MocapCameraImage *msg = new MocapCameraImage();
+	msg->image = &img;
 	self->publish(msg);
 }
 

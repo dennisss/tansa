@@ -10,5 +10,5 @@ add_library(
 
 )
 
-target_link_libraries(beacon ${CERES_LIBRARIES})
-set_target_properties(beacon PROPERTIES COMPILE_FLAGS "-std=c++1y")
+target_link_libraries(tansa_beacon ${CERES_LIBRARIES})
+set_target_properties(tansa_beacon PROPERTIES COMPILE_FLAGS "-std=c++1y")

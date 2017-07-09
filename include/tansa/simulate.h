@@ -42,7 +42,7 @@ public:
  */
 class Simulation {
 public:
-	static Simulation *Make();
+	static Simulation *Make(Context *ctx);
 
 	Simulation(const DataObject &desc);
 
@@ -93,7 +93,7 @@ public:
 			- pair of mavlink ports with simulator interface
 			- pair of mavlink ports for regular interface
 	*/
-	Firmware(const DataObject &desc, MultirotorModel::Ptr model);
+	Firmware(Context *ctx, const DataObject &desc, MultirotorModel::Ptr model);
 	~Firmware();
 
 	void start();
@@ -109,6 +109,7 @@ public:
 	void update(State::Ptr s);
 
 private:
+	Context *ctx;
 
 	int id;
 	string rcScript;

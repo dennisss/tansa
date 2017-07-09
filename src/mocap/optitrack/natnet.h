@@ -4,6 +4,8 @@
 	Definitions and types for the NatNet protocol
 */
 
+#include <tansa/core.h>
+
 #include <stdint.h>
 #include <vector>
 #include <memory>
@@ -80,7 +82,7 @@ struct NatNetDescription {
 };
 
 // All data descriptions for current session (as defined by host app)
-struct NatNetDescriptions {
+struct NatNetDescriptions : Message {
 	static const int ID = 2;
 
 	static void Parse(const char *ptr, const NatNetVersion v, NatNetDescriptions *desc);
@@ -199,7 +201,7 @@ struct NatNetTimecode {
 
 };
 
-struct NatNetFrame {
+struct NatNetFrame : Message {
 	static const int ID = 1;
 
 	typedef std::shared_ptr<NatNetFrame> Ptr;

@@ -28,7 +28,7 @@ public:
 
 	bool operator==(const NetworkAddress &other) const;
 
-	const struct sockaddr_in *raw() { return &addr; }
+	const struct sockaddr_in *raw() const { return &addr; }
 
 private:
 	struct sockaddr_in addr;

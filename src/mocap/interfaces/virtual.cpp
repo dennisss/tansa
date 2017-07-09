@@ -3,6 +3,7 @@
 
 #include <tansa/time.h>
 
+#include <iostream>
 using namespace std;
 
 
@@ -11,7 +12,7 @@ namespace tansa {
 using namespace graphics;
 using namespace graphics::glm;
 
-VirtualImagingInterface::VirtualImagingInterface() {
+VirtualImagingInterface::VirtualImagingInterface(Vector3d position) {
 
 	window = Window::Create("Camera View", {1280, 720}, false);
 	glViewport(0, 0, 1280, 720); // On Mac at least, the pixel coordinates aren't the same as the screen coordinates
@@ -62,7 +63,7 @@ VirtualImagingInterface::VirtualImagingInterface() {
 	sphere3->setMaterial(reflective);
 	window->scene.addObject(sphere3);
 
-
+	this->position = position;
 	setup_camera();
 
 
@@ -76,17 +77,28 @@ VirtualImagingInterface::~VirtualImagingInterface() {
 
 void VirtualImagingInterface::setup_camera() {
 
+	/*
 	static float angle = 0;
 	static float radius = 0.5;
 	static float height = 0.2;
 
 	float x = radius*cos(angle);
 	float y = radius*sin(angle);
+	*/
+
+	float radius = 0.5; // TODO:
 
 
 	// The scaling is needed as glReadPixels reads it upside down
 	window->camera.proj = glm::scale(vec3(1, -1, 1)) * glm::perspective(M_PI/2.0, 1280.0 / 720.0, 0.1, radius + 5);
-	window->camera.view = glm::lookAt(glm::vec3(x, y, height), glm::vec3(0, 0, 0), glm::vec3(0, 0, 1));
+	window->camera.view = glm::lookAt(glm::vec3(position.x(), position.y(), position.z()), glm::vec3(0, 0, 0), glm::vec3(0, 0, 1));
+
+
+	glm::mat4 projview = (window->camera.proj * window->camera.view);
+
+	for(int i = 0; i < 4; i++) {
+		cout << projview.value[0][i] << " " << projview.value[1][i] << " " << projview.value[2][i] << " " << projview.value[3][i] << endl;
+	}
 }
 
 
@@ -136,8 +148,8 @@ void virtual_imaging_thread(VirtualImagingInterface *inst) {
 		take_image(&inst->img);
 
 
-		MocapCameraImage msg;
-		msg.image = &inst->img;
+		MocapCameraImage *msg = new MocapCameraImage();
+		msg->image = &inst->img;
 		inst->publish(msg);
 
 		//glfwPollEvents();

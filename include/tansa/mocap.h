@@ -37,9 +37,10 @@ public:
 	/**
 	 * Connect to the motion capture software
 	 *
+	 * @param ctx the thread context that will receive messages
 	 * @param iface_addr local ip address of the network interface through which the data is being streamed
 	 */
-	int connect(string iface_addr, string server_addr);
+	int connect(Context *ctx, string iface_addr, string server_addr);
 
 
 	int disconnect();

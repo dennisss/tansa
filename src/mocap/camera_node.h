@@ -2,7 +2,7 @@
 #define TANSA_MOCAP_CAMERA_NODE_H_
 
 #include <tansa/time.h>
-#include <tansa/channel.h>
+#include <tansa/core.h>
 #include "camera_net.h"
 #include "blob_detector.h"
 
@@ -12,7 +12,7 @@
 
 namespace tansa {
 
-struct MocapCameraImage {
+struct MocapCameraImage : Message {
 	static const int ID = 1;
 
 	Image *image;
@@ -52,9 +52,9 @@ protected:
 class MocapCameraNode {
 public:
 
-	MocapCameraNode(MocapCameraImagingInterface *interface);
+	MocapCameraNode(Context *ctx, MocapCameraImagingInterface *interface);
 
-	int connect(int lport = MOCAP_CAMERA_NODE_DEFAULT_PORT, int rport = MOCAP_CAMERA_MASTER_DEFAULT_PORT);
+	int connect(const char *laddr = NULL, int lport = MOCAP_CAMERA_NODE_DEFAULT_PORT, int rport = MOCAP_CAMERA_MASTER_DEFAULT_PORT);
 	void disconnect();
 
 

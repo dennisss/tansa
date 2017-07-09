@@ -52,8 +52,9 @@ void FileImagingInterface::publish_image() {
 	input.width = g.cols;
 	input.height = g.rows;
 
-	MocapCameraImage msg;
-	msg.image = &input;
+	// TODO: Copy the image
+	MocapCameraImage *msg = new MocapCameraImage();
+	msg->image = &input;
 
 	this->publish(msg);
 }

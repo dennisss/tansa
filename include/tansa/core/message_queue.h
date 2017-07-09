@@ -1,5 +1,5 @@
-#ifndef TANSA_CORE_MQ_H_
-#define TANSA_CORE_MQ_H_
+#ifndef TANSA_CORE_MESSAGE_QUEUE_H_
+#define TANSA_CORE_MESSAGE_QUEUE_H_
 
 #include <deque>
 #include <iostream>
@@ -62,29 +62,33 @@ public:
 	 *
 	 *
 	 */
-	T pop(bool blocking = true) {
+	bool pop(T *out, bool blocking = true) {
 		std::unique_lock<std::mutex> lock(this->mutex);
 
-		if(queue.size() > 0) {
-			return queue.pop_front(); // We don't need to
-		}
-
 		if(queue.size() == 0) {
-			cvar.wait(lock, [this]{ return this->queue.size() > 0; });
+			if(blocking)
+				cvar.wait(lock, [this]{ return this->queue.size() > 0; });
+			else
+				return false;
 		}
 
-		T ret = queue.front();
+		*out = queue.front();
 		queue.pop_front();
 
 		lock.unlock();
 		cvar.notify_one();
 
-		return ret;
+		return true;
+	}
+
+	bool empty() {
+		std::lock_guard<std::mutex> lock(this->mutex);
+		return queue.size() == 0;
 	}
 
 private:
 
-	std::deque<void *> queue;
+	std::deque<T> queue;
 	unsigned maxSize;
 
 	std::mutex mutex;

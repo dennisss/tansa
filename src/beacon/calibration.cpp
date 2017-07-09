@@ -41,16 +41,19 @@ bool BeaconCalibration::estimate_positions(const MatrixXd &distances, vector<Vec
 	// Estimates of point locations
 	// Initialize to random values for now
 	out->resize(N);
-	for(unsigned i = 0; i < N*3; i++) {
-		(*out)[i] = 5*Vector3d::Random();
-	}
+
 
 
 	ceres::Problem problem;
 
+	double maxDistance = 0;
 
 	for(unsigned i = 0; i < N; i++) {
 		for(unsigned j = i + 1; j < N; j++) {
+
+			if(distances(i, j) > maxDistance) {
+				maxDistance = distances(i, j);
+			}
 
 			DistanceFunctor *df = new DistanceFunctor(distances(i, j));
 
@@ -59,6 +62,10 @@ bool BeaconCalibration::estimate_positions(const MatrixXd &distances, vector<Vec
 		}
 	}
 
+	// Initialize to random values for now scaled by the size of the area
+	for(unsigned i = 0; i < N; i++) {
+		(*out)[i] = maxDistance*Vector3d::Random();
+	}
 
 
 	ceres::Solver::Options options;

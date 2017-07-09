@@ -50,6 +50,8 @@ add_library(
 	tansa SHARED
 
 	src/core/core.cpp
+	src/core/context.cpp
+	src/core/net.cpp
 	src/core/data.cpp
 	src/core/vehicle.cpp
 	src/core/vehicle_time.cpp
@@ -214,3 +216,21 @@ target_link_libraries(
 )
 
 set_target_properties(simple PROPERTIES COMPILE_FLAGS "-std=c++1y")
+
+
+###### Custom Mocap Testing ######
+add_executable(
+	mocap_test
+
+	src/mocap_test.cpp
+)
+
+target_link_libraries(
+	mocap_test
+
+	pthread
+	tansa
+	tansa_mocap
+)
+
+set_target_properties(mocap_test PROPERTIES COMPILE_FLAGS "-std=c++1y")

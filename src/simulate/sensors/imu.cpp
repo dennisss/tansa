@@ -85,11 +85,11 @@ void IMU::observe(IMUState &s, const ModelState &ms) {
 	Vector3d g = ms.angularVelocity + noiseVector(gyroNoise, gen); // + s.gyroBias;
 	Vector3d m = Ri * mref + noiseVector(magNoise, gen);
 
-	IMUSensorData data;
-	data.accel = a;
-	data.gyro = g;
-	data.mag = m;
-	data.time = s.time;
+	IMUSensorData *data = new IMUSensorData();
+	data->accel = a;
+	data->gyro = g;
+	data->mag = m;
+	data->time = s.time;
 	s.lastReading = s.time;
 	this->publish(data);
 }

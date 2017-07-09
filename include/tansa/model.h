@@ -3,7 +3,6 @@
 
 #include "core.h"
 #include "time.h"
-#include "core/channel.h"
 
 #include <Eigen/Dense>
 #include <memory>
@@ -153,7 +152,7 @@ struct IMUState : State {
 	Time lastReading;
 };
 
-struct IMUSensorData {
+struct IMUSensorData : Message {
 	static const int ID = 1;
 
 	Time time;
@@ -193,7 +192,7 @@ struct BarometerState : State {
 	Time lastReading;
 };
 
-struct BarometerData {
+struct BarometerData : Message {
 	static const int ID = 1;
 
 	Time time;
@@ -210,7 +209,7 @@ struct GPSState : State {
 	Time lastReading;
 };
 
-struct GPSData {
+struct GPSData : Message {
 	static const int ID = 1;
 
 	Time time;
@@ -243,7 +242,7 @@ struct MocapSensorState : State {
 	Time lastReading;
 };
 
-struct MocapSensorData {
+struct MocapSensorData : Message {
 	static const int ID = 1;
 
 	Time time;

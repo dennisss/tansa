@@ -1,6 +1,10 @@
 #ifndef TANSA_CORE_H
 #define TANSA_CORE_H
 
+#include "core/channel.h"
+#include "core/context.h"
+#include "core/message.h"
+
 #include "data.h"
 
 typedef void (*tansa_message_listener)(const json &data);

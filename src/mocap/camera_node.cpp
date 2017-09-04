@@ -162,8 +162,8 @@ void MocapCameraNode::display(Image *imgRaw, std::vector<ImageBlob> *blobs) {
 	for(size_t i = 0; i < blobs->size(); i++) {
 		//cout << blobs[i].cx << " " << blobs[i].cy << ": " << blobs[i].area << endl;
 
-		cv::Point center(cvRound((*blobs)[i].cx), cvRound((*blobs)[i].cy));
-		int radius = cvRound((*blobs)[i].radius);
+		cv::Point center((*blobs)[i].cx, (*blobs)[i].cy);
+		int radius = (*blobs)[i].radius;
 		// circle center
 		cv::circle(img, center, 3, cv::Scalar(0,255,0), -1, 8, 0);
 		// circle outline

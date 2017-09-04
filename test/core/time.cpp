@@ -16,7 +16,7 @@ TEST(Time, UnitDurations) {
 	Time diff = Time::now().since(start);
 
 	ASSERT_LT(fabs(0.25 - diff.seconds()), 0.025);
-	ASSERT_LT(abs(udur - diff.micros()), 25000);
+	ASSERT_LT(llabs((int64_t)udur - (int64_t)diff.micros()), 25000);
 }
 
 TEST(Time, scale) {

@@ -35,7 +35,7 @@ public:
 		return DataObject(data[key]);
 	}
 
-
+	const json& asJson() const { return data; }
 
 
 	template<int N, int M>

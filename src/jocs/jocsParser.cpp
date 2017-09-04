@@ -67,8 +67,8 @@ Jocs::~Jocs() {
 }
 
 Jocs* Jocs::Parse(std::string jocsPath, double scale) {
-	json rawJson = DataObject::LoadFile(jocsPath);
-	auto units = rawJson[UNITS_KEY];
+	json rawJson = DataObject::LoadFile(jocsPath).asJson();
+	json units = rawJson[UNITS_KEY];
 	bool needConvertToMeters = (units[LENGTH_KEY] == "feet");
 	bool needConvertToRadians = (units[ANGLE_KEY] == "degrees");
 

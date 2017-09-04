@@ -2,6 +2,7 @@
 #define TANSA_MOCAP_INTERFACES_VIRTUAL_H_
 
 #include "../camera_node.h"
+#include <tansa/vision/camera_model.h>
 #include <tansa/graphics.h>
 
 #include <thread>
@@ -20,7 +21,7 @@ public:
 	 *
 	 * NOTE: It must be created in the main thread
 	 */
-	VirtualImagingInterface(Vector3d position /* Simulation *sim */);
+	VirtualImagingInterface(const CameraModel &cam /* Simulation *sim */);
 	virtual ~VirtualImagingInterface();
 
 	virtual void start();
@@ -40,8 +41,9 @@ private:
 
 
 	graphics::Window *window;
+	double scale = 1.0;
 
-	Vector3d position;
+	CameraModel camera;
 };
 
 

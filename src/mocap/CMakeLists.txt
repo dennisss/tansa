@@ -26,7 +26,7 @@ add_library(
 	camera_net.cpp
 	camera_node.cpp
 	camera_pool.cpp
-
+	reconstruction.cpp
 	optitrack/natnet.cpp
 	optitrack/natnet_client.cpp
 )

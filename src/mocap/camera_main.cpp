@@ -27,7 +27,7 @@ static MocapCameraImagingInterface *interface = NULL;
 
 void signal_sigint(int s) {
 	running = false;
-	ctx.notify();
+	//ctx.notify();
 }
 
 void usage() {
@@ -71,16 +71,8 @@ int main(int argc, char** argv) {
 #endif
 #ifdef BUILD_GRAPHICS
 		else if(strcmp(argv[i], "-virtual") == 0) {
-			float angle = ((float)id)*M_PI / 3.0;
-			float radius = 0.5;
-			float height = 0.2;
-
-			float x = radius*cos(angle);
-			float y = radius*sin(angle);
-
-			cout << x << " " << y << " " << height << endl;
-
-			interface = new VirtualImagingInterface({x, y, height});
+			CameraModel m = CameraModel::Default(id);
+			interface = new VirtualImagingInterface(m);
 		}
 #endif
 		else if(strcmp(argv[i], "-n") == 0) {
@@ -108,7 +100,7 @@ int main(int argc, char** argv) {
 
 
 	// Select and init interface
-	node = new MocapCameraNode(&ctx, interface);
+	node = new MocapCameraNode(&ctx, interface, id);
 
 
 	// Run the server
@@ -117,18 +109,24 @@ int main(int argc, char** argv) {
 	node->connect(NULL, MOCAP_CAMERA_NODE_DEFAULT_PORT + id, MOCAP_CAMERA_MASTER_DEFAULT_PORT);
 
 
+	Rate r(2);
 	while(running) {
 		ctx.poll();
+
+		glfwPollEvents(); // Needed in order for the virtual window to respond to events (must be in the main thread)
+		r.sleep();
 	}
 
 
+/*
+	// TODO: Something in these causes a crash
 
-
+	interface->stop();
 	node->disconnect();
 
 
 	delete node;
 	delete interface;
-
+*/
 	return 0;
 }

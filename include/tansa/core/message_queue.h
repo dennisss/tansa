@@ -60,7 +60,9 @@ public:
 	/**
 	 * Retrieves one item from the beginning of the queue
 	 *
-	 *
+	 * @param out where to put the next element
+	 * @param blocking if true and no elements are available, it waits for an element to be pushed, otherwise it will act on the state of the queue at the current time
+	 * @return whether or not an element could be popped
 	 */
 	bool pop(T *out, bool blocking = true) {
 		std::unique_lock<std::mutex> lock(this->mutex);
@@ -81,6 +83,9 @@ public:
 		return true;
 	}
 
+	/**
+	 * Determines if the queue is empty
+	 */
 	bool empty() {
 		std::lock_guard<std::mutex> lock(this->mutex);
 		return queue.size() == 0;

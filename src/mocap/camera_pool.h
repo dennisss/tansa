@@ -24,6 +24,8 @@ struct MocapCamera {
 
 	unsigned id;
 
+	unsigned model;
+
 	NetworkAddress address;
 
 	unsigned image_height;

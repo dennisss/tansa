@@ -13,7 +13,7 @@ namespace graphics {
 class Window {
 public:
 
-	static Window *Create(const char *name, glm::vec2 size = glm::vec2(512,512), bool visible = true);
+	static Window *Create(const char *name, glm::vec2 size = glm::vec2(1280, 720), bool visible = true);
 
 	Group scene;
 	Camera camera;
@@ -24,6 +24,8 @@ public:
 	void run();
 
 	void draw();
+
+	void setSize(glm::vec2 size);
 
 	inline void setBackgroundColor(glm::vec4 color){ this->backgroundColor = color; };
 

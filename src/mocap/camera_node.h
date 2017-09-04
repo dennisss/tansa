@@ -52,7 +52,7 @@ protected:
 class MocapCameraNode {
 public:
 
-	MocapCameraNode(Context *ctx, MocapCameraImagingInterface *interface);
+	MocapCameraNode(Context *ctx, MocapCameraImagingInterface *interface, int model);
 
 	int connect(const char *laddr = NULL, int lport = MOCAP_CAMERA_NODE_DEFAULT_PORT, int rport = MOCAP_CAMERA_MASTER_DEFAULT_PORT);
 	void disconnect();
@@ -80,6 +80,8 @@ private:
 
 	void handle_message(MocapCameraPacket *msg);
 	void cycle();
+
+	int model;
 
 	bool running = false;
 	int netfd = 0;

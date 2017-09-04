@@ -133,12 +133,18 @@ public:
 		this->clear();
 	}
 
+	/**
+	 * Resets the datastructure such that all elements are disjoint
+	 */
 	inline void clear() {
 		for(unsigned i = 0; i < elements.size(); i++) {
 			makeSet(i);
 		}
 	}
 
+	/**
+	 * (Re)Initializes an element to be in its own set of size 1
+	 */
 	inline void makeSet(unsigned x) {
 		ElementData &e_x = elements[x];
 		e_x.rank = 0;
@@ -146,6 +152,12 @@ public:
 		e_x.min = x;
 	}
 
+	/**
+	 * Finds the unique number identifying a set
+	 *
+	 * @param x the index of one element of the set
+	 * @return number representing the index of the root element of the set containing x
+	 */
 	inline unsigned findSet(unsigned x) {
 		ElementData &e_x = elements[x];
 
@@ -154,6 +166,9 @@ public:
 		return e_x.parent;
 	}
 
+	/**
+	 * Like findSet, but uses the index of the smallest element in the set to identify it
+	 */
 	inline unsigned findSetMin(unsigned x) {
 		ElementData &e_x = elements[x];
 
@@ -161,6 +176,9 @@ public:
 		return e_x.min;
 	}
 
+	/**
+	 * Joins the sets consisting of the two given elements into one set
+	 */
 	inline void unionSets(unsigned x, unsigned y) {
 		// Find root labels
 		x = findSet(x);
@@ -206,6 +224,9 @@ private:
 };
 
 
+
+// TODO: Add in a templated ring buffer implementation
+// In some cases, it would be efficient to use the ring buffer rather than a deque for message storage
 
 }
 

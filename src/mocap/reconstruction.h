@@ -52,17 +52,27 @@ class PointReconstructor : public Channel {
 public:
 	// TODO: We also need to provide:
 	// - Database of Instrinsic and extrinsic parameters based on serial number
-	PointReconstructor(Context *ctx, MocapCameraPool &p);
+	PointReconstructor(Context *ctx, MocapCameraPool *p);
 
 
 private:
 
-	void onCameraData(MocapCameraBlobsMsg &msg);
-	void onCameraList(MocapCameraListMsg &msg);
+	void onCameraData(const MocapCameraBlobsMsg *msg);
+	void onCameraList(const MocapCameraListMsg *msg);
+
+	/**
+	 * Called once a complete set of frames is obtained for each camera
+	 * This will perform the triangulation into 3d points from the set of 2d measurements
+	 */
+	void processFrames();
+
+
+	MocapCameraPool *pool;
 
 	std::vector<MocapCamera> cameras; /**< Copy of cameras we are working with */
-	std::vector<MocapCameraBlobsMsg> buffer; /**< Recently received packets */
 
+	std::vector<MocapCameraBlobsMsg> frames; /**< Recently received packets (Same length as the number of cameras) */
+	std::vector<bool> received; /**< Whether or not each of the frames has been received yet */
 };
 
 

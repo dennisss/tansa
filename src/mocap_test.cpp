@@ -80,16 +80,21 @@ int main(int argc, char *argv[]) {
 	tansa::Context ctx;
 
 
-	MocapCameraPool p;
+	MocapCameraPool pool;
 
-	p.subscribe(&ctx, on_camera_list);
-	p.subscribe(&ctx, on_camera_blobs);
+	// TODO: Doesn't currently work for multiple subscribers
+	//pool.subscribe(&ctx, on_camera_list);
+	//pool.subscribe(&ctx, on_camera_blobs);
 
-	p.connect();
+	PointReconstructor recon(&ctx, &pool);
+
+	pool.connect();
 
 	running = true;
+	Rate r(30);
 	while(running) {
 		ctx.poll();
+		r.sleep(); // TODO: Only required right now as poll is setup like pollOnce right now
 	}
 
 

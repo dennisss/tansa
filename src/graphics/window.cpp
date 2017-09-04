@@ -67,6 +67,10 @@ void Window::draw() {
 	glfwSwapBuffers(window);
 }
 
+static void error_callback(int error, const char* description) {
+    printf("%s\n", description);
+}
+
 
 Window *Window::Create(const char *name, vec2 size, bool visible) {
 
@@ -75,6 +79,8 @@ Window *Window::Create(const char *name, vec2 size, bool visible) {
 			// Initialization failed
 			printf("GLFW Failed to initialize\n");
 		}
+
+		glfwSetErrorCallback(error_callback);
 
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -116,6 +122,11 @@ Window *Window::Create(const char *name, vec2 size, bool visible) {
 	w->size = size;
 
 	return w;
+}
+
+
+void Window::setSize(vec2 size) {
+	glfwSetWindowSize(this->window, size.x, size.y);
 }
 
 

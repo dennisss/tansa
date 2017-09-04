@@ -18,7 +18,7 @@ Context::~Context() {
 
 void Context::poll() {
 	unsigned out;
-	if(!status.pop(&out, true))
+	if(!status.pop(&out, false))
 		return;
 
 	// Loop through all subscribers and check which onces have messages

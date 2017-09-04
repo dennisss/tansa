@@ -70,6 +70,7 @@ void MocapCameraPool::handle_message(tansa::MocapCameraPacket *msg, const Networ
 
 		MocapCamera c;
 		c.id = lastCameraId++;
+		c.model = advert->model;
 		c.address = addr;
 		c.image_width = advert->image_width;
 		c.image_height = advert->image_height;

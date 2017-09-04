@@ -82,6 +82,9 @@ add_library(
 	src/model/feasibility.cpp
 	#src/control/admittance.cpp
 
+	src/vision/camera_model.cpp
+	src/vision/triangulation.cpp
+
 	src/manager/preview.cpp
 	src/manager/calibration.cpp
 

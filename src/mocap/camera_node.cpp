@@ -16,14 +16,16 @@ using namespace std;
 namespace tansa {
 
 
-MocapCameraNode::MocapCameraNode(Context *ctx, MocapCameraImagingInterface *interface) {
+MocapCameraNode::MocapCameraNode(Context *ctx, MocapCameraImagingInterface *interface, int model) {
 	this->interface = interface;
 	interface->subscribe(ctx, &MocapCameraNode::on_image, this);
 
 	ImageSize s = interface->getSize();
 
 	detector = new BlobDetector(s.width, s.height);
-	detector->set_threshold(200);
+	detector->set_threshold(250);
+
+	this->model = model;
 }
 
 // TODO: Unsubscribe in destructor
@@ -71,6 +73,7 @@ int MocapCameraNode::connect(const char *laddr, int lport, int rport) {
 		return 1;
 	}
 
+	//interface->start();
 }
 
 void MocapCameraNode::disconnect() {
@@ -118,7 +121,7 @@ void MocapCameraNode::send_advert() {
 	// TODO: Populate with useful data
 	MocapCameraPacketAdvertisement *advert = (MocapCameraPacketAdvertisement *) pkt->data;
 	advert->vendor = 1;
-	advert->model = 1;
+	advert->model = model;
 
 	ImageSize s = interface->getSize();
 	advert->image_width = s.width;
@@ -181,7 +184,7 @@ void MocapCameraNode::display(Image *imgRaw, std::vector<ImageBlob> *blobs) {
 	cv::Mat img;
 	cv::cvtColor(gray, img, CV_GRAY2BGR);
 
-
+/*
 	for(size_t i = 0; i < blobs->size(); i++) {
 		//cout << blobs[i].cx << " " << blobs[i].cy << ": " << blobs[i].area << endl;
 
@@ -192,6 +195,7 @@ void MocapCameraNode::display(Image *imgRaw, std::vector<ImageBlob> *blobs) {
 		// circle outline
 		cv::circle(img, center, radius, cv::Scalar(0,0,255), 3, 8, 0);
 	}
+*/
 
 	cv::Mat imageSmall;
 	cv::resize(img, imageSmall, cv::Size(img.cols * 0.7, img.rows * 0.7), 0, 0, CV_INTER_LINEAR);

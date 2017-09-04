@@ -2,7 +2,7 @@
 #include <tansa/model.h>
 
 #include <algorithm>
-
+#include <iostream>
 
 /*
 	Need to determine based on a model whether or not a trajectory is possible

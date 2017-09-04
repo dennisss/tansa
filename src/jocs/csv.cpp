@@ -6,7 +6,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
-
+#include <iostream>
 
 namespace tansa {
 

@@ -202,7 +202,7 @@ void MocapCameraNode::display(Image *imgRaw, std::vector<ImageBlob> *blobs) {
 
 	cv::namedWindow("Blobs", cv::WINDOW_AUTOSIZE);
 	cv::imshow("Blobs", imageSmall);
-	cv::waitKey(1);
+	cv::waitKey(1); // TODO: This needs to run in the main thread
 #endif
 
 }

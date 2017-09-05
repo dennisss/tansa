@@ -66,13 +66,31 @@ private:
 	 */
 	void processFrames();
 
+	void pairwiseMatch(unsigned camI, unsigned camJ);
+
 
 	MocapCameraPool *pool;
 
 	std::vector<MocapCamera> cameras; /**< Copy of cameras we are working with */
 
+	// Collecting data
 	std::vector<MocapCameraBlobsMsg> frames; /**< Recently received packets (Same length as the number of cameras) */
 	std::vector<bool> received; /**< Whether or not each of the frames has been received yet */
+
+	// For processing data
+
+	struct BlobIndex {
+		unsigned frame_i;
+		unsigned blob_i;
+	};
+
+	struct Track {
+		vector<BlobIndex> indices;
+		Vector3d point;
+	};
+
+	vector<Track> tracks;
+	vector<vector<int>> trackLabels; /**< Reverse mapping of tracks: for each point, we label which track it is in, or -1 */
 };
 
 

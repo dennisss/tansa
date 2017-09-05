@@ -147,7 +147,7 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 	if(tracker != NULL) {
 		tracker->update(markers, t);
 	}
-	
+
 }
 
 void Mocap::resync() {

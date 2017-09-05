@@ -22,9 +22,10 @@ CameraModel CameraModel::Default(int id) {
 
 
 	// First convert to ENU
+	// Make looking along +y
 	Matrix3d R;
 	R << 1, 0, 0,
-		0, 0, -1,
+		0, 0, 1,
 		0, -1, 0;
 
 	// Rotate about circle

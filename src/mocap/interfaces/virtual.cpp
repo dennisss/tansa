@@ -110,6 +110,11 @@ VirtualImagingInterface::VirtualImagingInterface(const CameraModel &cam) {
 
 	Mesh *sphere = SphereHelper({ 0, 0.13, 0.04 }, 0.005, 50, 50, shader);
 
+	/*
+	Vector3d a = cam.projection()*Vector4d(0, 0.13, 0.04, 1.0);
+	cout << "TARGET: " << a.x() / a.z() << " " << a.y() / a.z() << endl;
+	*/
+
 	Material *reflective = new Material();
 	reflective->shininess = 0.9;
 	reflective->diffuse = vec3(1, 1, 1);
@@ -121,11 +126,11 @@ VirtualImagingInterface::VirtualImagingInterface(const CameraModel &cam) {
 
 	Mesh *sphere2 = SphereHelper({ 0, -0.13, 0.04 }, 0.005, 50, 50, shader);
 	sphere2->setMaterial(reflective);
-	//window->scene.addObject(sphere2);
+	window->scene.addObject(sphere2);
 
 	Mesh *sphere3 = SphereHelper({ 0.13, 0, 0.04 }, 0.005, 50, 50, shader);
 	sphere3->setMaterial(reflective);
-	//window->scene.addObject(sphere3);
+	window->scene.addObject(sphere3);
 
 	this->camera = cam;
 	setup_camera();
@@ -138,23 +143,63 @@ VirtualImagingInterface::~VirtualImagingInterface() {
 
 }
 
+
+
 /*
-2.0 * fx / width	0						1.0 - 2.0 * cx / width				0
-0					-2.0 * fy / height		2.0 * cy / height - 1.0				0
-0					0						(zfar + znear) / (znear - zfar)		2*(zfar*znear)/(znear-zfar)
-0					0						-1.0								0
+	Tansa will obide by the OpenCV camera model which has the camera looking down the +z space
+	- All code outside of the OpenGL stuff will use the general pin hole camera model projection matrix for doing any
+
+
+	For a physical camera modeled by:
+	f_x 0 c_x
+	0 f_y c_y
+	0  0  1
+
+	3*4
+	4*1
+
+
+
+
+	The equivalent OpenGL projection matrix is:
+	Note: OpenGL cameras start looking at -z with +x to the right and +y up and the origin in the center of frame
+	Note: For OpenCV/Computer vision, our camera looks in the +z with +x to the right and +y down
+
+	2.0 * fx / width	0						1.0 - 2.0 * cx / width				0
+	0					-2.0 * fy / height		2.0 * cy / height - 1.0				0
+	0					0						(zfar + znear) / (znear - zfar)		2*(zfar*znear)/(znear-zfar)
+	0					0						-1.0								0
+
+	Note: The last two rows are equivalent to the usual OpenGL formulation
+
+
+	Why the above matrix:
+	- width maps to -1 to 1
+		- so scaling from width to 2 is a factor of 1 / (width / 2) = 2 / width
+
+	- flip y to be pointing up
+		- it points down in opencv
+
+	- Negate z to be looking down -z instead of +z
+		- This is why the third row is negated from usual
+
+
+	LATEST:
+	This matrix is pretty much the usual OpenGL matrix P but is instead :
+
+	Pnew = P* [ 1 0 0 0; 0 -1 0 0; 0 0 -1 0; 0 0 0 1 ] // Basically inverting y and z before projecting
 
 */
 /**
- * Generates an OpenGL compatible
+ * Generates an OpenGL compatible projection matrix simulating a real camera
  */
 glm::mat4 cameraModel(float fx, float fy, float cx, float cy, float height, float width, float zNear, float zFar) {
 
 	return glm::mat4(
-		(2.0*fx/width), 0, (1.0 - 2.0*cx/width), 0,
-		0, (-2.0*fy/height), (2.0*cy/height - 1.0), 0,
-		0, 0, ((zFar + zNear) / (zNear - zFar)), (2.0*(zFar*zNear)/(zNear - zFar)),
-		0, 0, -1.0, 0
+		(2.0*fx/width), 0, -(1.0 - 2.0*cx/width), 0,
+		0, (-2.0*fy/height), -(2.0*cy/height - 1.0), 0,
+		0, 0, ((zFar + zNear) / (zFar - zNear)), (-2.0*(zFar*zNear)/(zFar - zNear)),
+		0, 0, 1.0, 0
 	);
 }
 
@@ -177,7 +222,7 @@ void VirtualImagingInterface::setup_camera() {
 
 	// The scaling is needed as glReadPixels reads it upside down
 	// TODO: We really need to verify that the scaling is not needed
-	window->camera.proj = glm::scale(vec3(1, 1, 1)) * cameraModel(scale*camera.fx, scale*camera.fy, scale*camera.cx, scale*camera.cy, scale*camera.height, scale*camera.width, 0.1, 6); // glm::perspective(M_PI/2.0, 1280.0 / 720.0, 0.1, radius + 5);
+	window->camera.proj = cameraModel(scale*camera.fx, scale*camera.fy, scale*camera.cx, scale*camera.cy, scale*camera.height, scale*camera.width, 0.1, 6); // glm::perspective(M_PI/2.0, 1280.0 / 720.0, 0.1, radius + 5);
 
 	//window->camera.view = glm::lookAt(glm::vec3(camera.position.x(), camera.position.y(), 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, 1));
 	// Make rotation homogenous
@@ -232,6 +277,18 @@ void take_image(Image *img) {
 	// TODO: Possibly investigate doing: https://stackoverflow.com/questions/25127751/opengl-read-pixels-faster-than-glreadpixels
 	glReadPixels(0, 0, width, height, GL_BLUE /* GL_RGB */, GL_UNSIGNED_BYTE, img->data);
 
+	// glReadPixels reads with the start of the buffer at the bottom-left corner of the image,
+	// so this flips it vertically in place
+	for(int i = 0; i < height / 2; i++) {
+		for(int j = 0; j < width; j++) {
+			int a = i*width + j,
+				b = (height - i - 1)*width + j;
+
+			char tmp = img->data[a];
+			img->data[a] = img->data[b];
+			img->data[b] = tmp;
+		}
+	}
 
 
 }

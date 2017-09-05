@@ -69,3 +69,13 @@ Converting Orientation
 - We solve this by post-multiplying a rotation matrix `B` which performs the initial alignment before additional rotations
 - The equation `Ri = A * Identity * B` implies that `B = [1, 0, 0; 0, -1, 0; 0, 0, -1]`
 - So in general to convert a rotation, we do `R_ned = A * R_enu * B`
+
+
+Computer Vision Sidenote
+------------------------
+
+For the purposes of image processing we use a different coordinate frame in image coordinates.
+
+This frame is completely compatible with OpenCV (http://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html)
+
+The top-left of the image is (0,0), with +x going right, +y going down, and +z going away from the optical center

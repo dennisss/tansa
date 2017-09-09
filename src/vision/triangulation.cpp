@@ -44,9 +44,9 @@ Vector3d triangulatePoints(const std::vector<CameraModel> &cs, const std::vector
 		A.block<3, 1>(3*i, 4 + i) = Vector3d(zs[i].x(), zs[i].y(), 1);
 	}
 
-	JacobiSVD<Matrix4d> svd(A, ComputeFullU | ComputeFullV);
-	Vector4d S = svd.singularValues(); // Sorted in descending order
-	Matrix4d V = svd.matrixV();
+	JacobiSVD<MatrixXd> svd(A, ComputeFullU | ComputeFullV);
+	MatrixXd S = svd.singularValues(); // Sorted in descending order
+	MatrixXd V = svd.matrixV();
 
 	// TODO: Assert the rank of the nullspace is 1
 	Vector4d x = V.col(V.cols() - 1);

@@ -65,7 +65,7 @@ struct __attribute__((__packed__)) MocapCameraPacketBlobs {
 enum MocapCameraMode {
 	Off = 0, /**< Camera should be doing nothing. */
 	Blob = 1,
-	Video = 2 /**< Camera */
+	Video = 2 /**< Camera should stream back a video stream from the camera */
 };
 
 struct __attribute__((__packed__)) MocapCameraPacketConfig {

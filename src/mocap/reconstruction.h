@@ -80,17 +80,17 @@ private:
 	// For processing data
 
 	struct BlobIndex {
-		unsigned frame_i;
-		unsigned blob_i;
+		unsigned frameI;
+		unsigned blobI;
 	};
 
 	struct Track {
-		vector<BlobIndex> indices;
+		std::vector<BlobIndex> indices;
 		Vector3d point;
 	};
 
-	vector<Track> tracks;
-	vector<vector<int>> trackLabels; /**< Reverse mapping of tracks: for each point, we label which track it is in, or -1 */
+	std::vector<Track> tracks;
+	std::vector<std::vector<int>> trackLabels; /**< Reverse mapping of tracks: for each point, we label which track it is in, or -1 */
 };
 
 

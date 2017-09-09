@@ -138,13 +138,30 @@ void PointReconstructor::processFrames() {
 
 	// Step 1: Prepare tracks (being very picky about collisions)
 	for(unsigned camI = 0; camI < cameras.size(); camI++) {
-		for(unsigned camJ = camI + 1; camJ < camera.size(); camJ++) {
+		for(unsigned camJ = camI + 1; camJ < cameras.size(); camJ++) {
 			pairwiseMatch(camI, camJ);
 		}
 	}
 
 	// Step 2: Triangulate all tracks
+	for(unsigned i = 0; i < tracks.size(); i++) {
+		vector<CameraModel> ms;
+		vector<Vector2d> pts;
+		for(unsigned j = 0; j < tracks[i].indices.size(); j++) {
+			BlobIndex &idx = tracks[i].indices[j];
+			ms.push_back( CameraModel::Default(cameras[idx.frameI].model) );
+
+			ImageBlob b = frames[idx.frameI].blobs[idx.blobI];
+			pts.push_back({ b.cx, b.cy });
+		}
+
+		Vector3d X = triangulatePoints(ms, pts);
+		tracks[i].point = X;
+		cout << "Triangulate: " << X.transpose() << " with " << ms.size() << " measurements" << endl;
+	}
 	// TODO
+
+	// Step 2.5: Remove track points with high reprojection error
 
 	// Step 3: Reproject the triangulations to the frames and find more matches
 	// TODO
@@ -179,7 +196,18 @@ void PointReconstructor::pairwiseMatch(unsigned camI, unsigned camJ) {
 	Matrix3d F = skewSymetric( projectPoint(P2, c1) ) * P2 * pseudoInverse(P1);
 
 	// For each point in the first camera, find matches in the second camera
-	for(int i = 0; i < frames[camI].blobs.size(); i++) {
+	for(unsigned i = 0; i < frames[camI].blobs.size(); i++) {
+
+		int trackI = trackLabels[camI][i];
+		if(trackI >= 0) {
+			// Only allow going forward if this is the seed point of the track
+			bool isTrackHead = tracks[trackI].indices[0].frameI == camI && tracks[trackI].indices[0].blobI == i;
+			if(!isTrackHead) {
+				// If this blob already belongs to a track, then we are not likely to match it to any blobs which weren't matched by the previous frames
+				// This also gurantees thay we never pick more than 1 point from the same frame into a track
+				continue;
+			}
+		}
 
 		ImageBlob &b1 = frames[camI].blobs[i];
 
@@ -190,7 +218,17 @@ void PointReconstructor::pairwiseMatch(unsigned camI, unsigned camJ) {
 		Vector3d l = F*x1;
 
 
+		// Now we perform a greedy search for the best possibly match
+		int bestJ = -1;
+		double bestDistance = 20.0; // This represents the maximum pixel distance required for a match
+		double secondBestDistance = -1;
 		for(int j = 0; j < frames[camJ].blobs.size(); j++) {
+
+			int trackJ = trackLabels[camJ][j];
+			if(trackJ >= 0) {
+				continue;
+			}
+
 			ImageBlob &b2 = frames[camJ].blobs[j];
 
 			// Homogeneous 2d point in second camera
@@ -202,10 +240,34 @@ void PointReconstructor::pairwiseMatch(unsigned camI, unsigned camJ) {
 			//cout << "x1: " << x1.transpose() << endl;
 			//cout << "x2: " << x2.transpose() << endl;
 			//cout << d << endl;
-			if(d < 10) { // TODO: Base this thershold dynamically on the radius of the dots
-				Vector3d X = triangulatePoints(m1, m2, {b1.cx, b1.cy}, {b2.cx, b2.cy});
-				cout << "Triangulate: " << X.transpose() << endl;
+			if(d < bestDistance) { // TODO: Base this thershold dynamically on the radius of the dots
+				if(bestJ >= 0) {
+					secondBestDistance = bestDistance;
+				}
+				bestDistance = d;
+				bestJ = j;
 			}
+		}
+
+		if(bestJ >= 0) {
+			// Reject matches based on Lowe's Ratio Test
+			const double ratio = 0.7; // TODO: Tune this value
+			if(secondBestDistance >= 0 && bestDistance >= ratio*secondBestDistance) {
+				continue;
+			}
+
+
+			// Create a track if not already created
+			if(trackI < 0) {
+				tracks.push_back(Track());
+				trackI = tracks.size() - 1;
+				tracks[trackI].indices.push_back({ camI, i });
+				trackLabels[camI][i] = trackI;
+			}
+
+			// Add the point from the second camera into the mix
+			tracks[trackI].indices.push_back({ camJ, (unsigned) bestJ });
+			trackLabels[camJ][bestJ] = trackI;
 		}
 
 	}

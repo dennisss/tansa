@@ -55,7 +55,7 @@ void MocapCameraPool::connect(int lport) {
 
 
 
-void MocapCameraPool::handle_message(tansa::MocapCameraPacket *msg, const NetworkAddress &addr) {
+void MocapCameraPool::handleMessage(tansa::MocapCameraPacket *msg, const NetworkAddress &addr) {
 
 	if(msg->type == CameraPacketAdvertise) {
 		// If we get one from a non-registered camera, register the camera and send it a configuration
@@ -142,7 +142,7 @@ void MocapCameraPool::cycle() {
 		pkt.size = 0;
 
 		for(unsigned i = 0; i < cameras.size(); i++) {
-			this->send_message(cameras[i], &pkt);
+			this->sendMessage(cameras[i], &pkt);
 		}
 
 		lastKeepaliveSent = now;
@@ -188,14 +188,14 @@ void MocapCameraPool::configure(const MocapCamera &cam) {
 
 	// TODO: Populate configuration
 
-	this->send_message(cam, pkt);
+	this->sendMessage(cam, pkt);
 	free(pkt);
 }
 
 
 
 // TODO: This is very redundant with MocapCameraNode
-void MocapCameraPool::send_message(const MocapCamera &cam, MocapCameraPacket *msg) {
+void MocapCameraPool::sendMessage(const MocapCamera &cam, MocapCameraPacket *msg) {
 	msg->magic[0] = 'T';
 	msg->magic[1] = 'A';
 
@@ -239,7 +239,7 @@ void *mocap_camera_pool_thread(void *arg) {
 			if(nread > 0) {
 				for(int i = 0; i < nread; i++) {
 					if(parser.parse(&buf[i])) {
-						p->handle_message(parser.get_packet(), remote_addr);
+						p->handleMessage(parser.get_packet(), remote_addr);
 					}
 				}
 			}

@@ -84,6 +84,7 @@ add_library(
 
 	src/vision/camera_model.cpp
 	src/vision/triangulation.cpp
+	src/vision/solve_pnp.cpp
 
 	src/manager/preview.cpp
 	src/manager/calibration.cpp
@@ -105,6 +106,7 @@ target_link_libraries(
 
 	sioclient
 	${Boost_LIBRARIES}
+	${CERES_LIBRARIES}
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")

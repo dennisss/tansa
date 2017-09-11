@@ -45,6 +45,8 @@ CameraModel CameraModel::Default(int id) {
 	m.fy = DEFAULT_CAMERA_FY;
 	m.cx = DEFAULT_CAMERA_CX;
 	m.cy = DEFAULT_CAMERA_CY;
+	m.k1 = 0;
+	m.k2 = 0;
 	m.rotation = R;
 	m.position = {x, y, height};
 

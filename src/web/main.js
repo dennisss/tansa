@@ -53,31 +53,30 @@ var MainPage = React.createClass({
 
 					<tr>
 						<td style={{height: 200, borderTop: '2px solid #222'}}>
-							<CamerasPane />
+							<TabbedPane>
+								<Tab name="Cameras">
+									<CamerasPane />
+								</Tab>
+								<Tab name="Timeline">
+									{/*
+										Playback controls and timeline here
+
+										The timeline will allow the generation of plans.
+
+
+
+										For the timeline, we will have multiple tabs o.
+										- The first tab will be the root plan
+										- Each sequential tab will be
+
+										*/}
+										<Timeline parent={p} />
+								</Tab>
+
+							</TabbedPane>
+
 						</td>
 					</tr>
-
-
-					<tr>
-
-						{/* TODO: This is originally 200px high */}
-						<td style={{height: 40, borderTop: '2px solid #222'}}>
-							{/*
-								Playback controls and timeline here
-
-								The timeline will allow the generation of plans.
-
-
-
-								For the timeline, we will have multiple tabs o.
-								- The first tab will be the root plan
-								- Each sequential tab will be
-
-								*/}
-								<Timeline parent={p} />
-
-							</td>
-						</tr>
 
 				</tbody>
 
@@ -91,3 +90,54 @@ var MainPage = React.createClass({
 });
 
 module.exports = MainPage;
+
+
+var TabbedPane = React.createClass({
+
+	getInitialState: function() {
+		return {
+			_active: 0
+		}
+	},
+
+	render: function() {
+
+		var active = this.state._active;
+
+		return (
+			<table style={{width: '100%', height: '100%'}}>
+				<tr>
+					<td style={{borderBottom: '1px solid #ccc', height: 1}}>
+						{this.props.children.map((tab, i) => {
+
+							return (
+								<div key={i} style={{display: 'inline-block', padding: '5px 10px', backgroundColor: (active == i? '#000' : null), cursor: 'pointer'}} onClick={() => this.setState({_active: i})}>
+									{tab.props.name}
+								</div>
+							);
+						})}
+					</td>
+				</tr>
+				<tr>
+					<td style={{verticalAlign: 'top'}}>{this.props.children[this.state._active]}</td>
+				</tr>
+			</table>
+
+		);
+
+
+	}
+
+
+});
+
+var Tab = React.createClass({
+
+	render: function() {
+		return (
+			<div>
+				{this.props.children}
+			</div>
+		);
+	}
+})

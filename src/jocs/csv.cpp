@@ -4,7 +4,6 @@
 
 #include "tansa/csv.h"
 
-#include <boost/algorithm/string.hpp>
 #include <algorithm>
 
 
@@ -17,6 +16,17 @@ void split(const std::string &s, char delim, Out result) {
 	std::string item;
 	while (std::getline(ss, item, delim)) {
 		*(result++) = item;
+	}
+}
+
+// Remove all instances of c from the string
+// TODO: Make this more efficient
+void erase_all(std::string &s, char c) {
+	for(int i = 0; i < s.size(); i++) {
+		if(s[i] != c) {
+			s.erase(i, 1);
+			i--;
+		}
 	}
 }
 
@@ -172,7 +182,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 		while (read_csv_line(csv, split_line, skip_cols)) { //Iterate line by line
 
 			for(int i = 0; i < split_line.size(); i++)
-				boost::erase_all(split_line[i], "\r");
+				erase_all(split_line[i], '\r');
 			//Parse breakpoints
 			if (!split_line[csv_positions::BreakpointPos].empty()) {
 				ret->breakpoints.push_back(
@@ -195,7 +205,7 @@ Choreography* parse_csv(const char* filepath, double scale){
 			if(emptyHead) {
 				continue;
 			}
-			
+
 
 			double start_time = parse_time(split_line[csv_positions::StartTimePos]);
 			double end_time = parse_time(split_line[csv_positions::EndTimePos]);
@@ -257,10 +267,10 @@ double parse_time(std::string& time){
 }
 
 std::vector<unsigned long> parse_drones(std::string drone_field, const std::map<std::string, unsigned long>& drone_map) {
-	boost::erase_all(drone_field, "(");
-	boost::erase_all(drone_field, ")");
-	boost::erase_all(drone_field, "\"");
-	boost::erase_all(drone_field, " ");
+	erase_all(drone_field, '(');
+	erase_all(drone_field, ')');
+	erase_all(drone_field, '"');
+	erase_all(drone_field, ' ');
 	auto split_line = split(drone_field, ';');
 	std::vector<unsigned long> ret;
 	for(std::string s : split_line){
@@ -787,10 +797,10 @@ void insert_transitions(std::vector<std::vector<Action*>>& actions, const std::v
 
 Point parse_point(std::string point) {
 	std::string point_clean = point;
-	boost::erase_all(point_clean, "(");
-	boost::erase_all(point_clean, ")");
-	boost::erase_all(point_clean, "\"");
-	boost::erase_all(point_clean, " ");
+	erase_all(point_clean, '(');
+	erase_all(point_clean, ')');
+	erase_all(point_clean, '"');
+	erase_all(point_clean, ' ');
 	Point ret;
 	auto split_point 	= split(point_clean, ';');
 

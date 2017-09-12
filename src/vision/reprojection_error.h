@@ -29,8 +29,8 @@ public:
 
 		// Transform the point into camera space
 		T p[3];
-		ceres::AngleAxisRotatePoint(camera, point, p); // Uses camera[0,1,2]
-		p[0] += camera[3]; p[1] += camera[4]; p[2] += camera[5]; // Translate
+		ceres::AngleAxisRotatePoint(extrinsics, point, p); // Uses camera[0,1,2]
+		p[0] += extrinsics[3]; p[1] += extrinsics[4]; p[2] += extrinsics[5]; // Translate
 
 		// Project into 2d
 		T xp = p[0] / p[2];

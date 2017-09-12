@@ -1,5 +1,5 @@
 
-find_package(gazebo REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 include_directories(
 	${GAZEBO_INCLUDE_DIRS}

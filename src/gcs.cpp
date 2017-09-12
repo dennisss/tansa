@@ -22,11 +22,8 @@
 #include <unistd.h>
 #include <iostream>
 
-#include <boost/filesystem.hpp>
-
 using namespace std;
 using namespace tansa;
-namespace fs = boost::filesystem;
 
 // Working directory for configuration and choreo files
 static string defaultWorkspaceDir = ".";
@@ -72,14 +69,47 @@ void signal_sigint(int s) {
 	running = false;
 }
 
+string joinPaths(string a, string b) {
+	if(a.size() == 0) {
+		return b;
+	}
+	if(b.size() == 0) {
+		return a;
+	}
+
+	// TODO: Check that both parts have some length > 0
+	if(a[a.size() - 1] == '/') {
+		a = a.substr(0, a.length() - 1);
+	}
+	if(b[0] == '/') {
+		b = b.substr(1);
+	}
+
+	return a + "/" + b;
+}
+
+
+bool file_exists(const char *file) {
+	if(access(file, F_OK) != -1 ) {
+		return true;
+	}
+
+	return false;
+}
+
+bool file_exists(string file) {
+	return file_exists(file.c_str());
+}
+
+
 string resolvePath(string a, string b = "", string c = "", string d = "") {
-	fs::path p(a);
+	string p = a;
 
-	if(b != "") p = p / fs::path(b);
-	if(c != "") p = p / fs::path(c);
-	if(d != "") p = p / fs::path(d);
+	if(b != "") p = joinPaths(p, b);
+	if(c != "") p = joinPaths(p, c);
+	if(d != "") p = joinPaths(p, d);
 
-	return p.string();
+	return p;
 }
 
 // Gets the path in the current workspace (used for reading directories and writing files to )
@@ -93,7 +123,7 @@ string searchWorkspacePath(string a, string b = "", string c = "") {
 	string dflt = resolvePath(defaultWorkspaceDir, a, b, c);
 
 	// If nothing in current workspace, but there is a default, use the default
-	if(fs::exists(dflt) && !fs::exists(cur)) {
+	if(file_exists(dflt) && !file_exists(cur)) {
 		return dflt;
 	}
 

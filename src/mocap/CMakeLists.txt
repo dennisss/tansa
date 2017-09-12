@@ -35,21 +35,14 @@ target_link_libraries(
 	tansa_mocap
 
 	tansa
+	tansa_vision
+	${OpenCV_LIBS} # TODO: Move this type of stuff to tansa_vision?
 )
 
 set_target_properties(tansa_mocap PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 ${FLAGS}")
 
 
-
-find_package(OpenCV)
-if(OpenCV_FOUND)
-	target_link_libraries(tansa_mocap  ${OpenCV_LIBS})
-
-	add_definitions(-DUSE_OPENCV)
-endif()
-
-
-######## Targets for
+######## Targets for building the onboard camera software ######
 
 add_executable(
 	mocap_camera

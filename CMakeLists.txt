@@ -4,23 +4,44 @@ project(tansa)
 ######## Dependency Resolution ########
 # Depending on which libraries are available on the system, we will build in support in support for them
 
-option(BUILD_GAZEBO "Builds support for the Gazebo simulator" ON)
-
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+# Most of these are intentionally optional although not including some will limit the available functionality
 find_package(Eigen3 REQUIRED)
 find_package(OpenGL)
 find_package(glfw3 3.2)
 find_package(GLEW)
 find_package(CGAL)
 find_package(Cplex)
+find_package(OpenCV)
+find_package(gazebo)
+find_package(Ceres)
+find_package(JPEG)
+# TODO: Also use glog
+
 
 include_directories(
 	${EIGEN3_INCLUDE_DIR}
 	include
 )
+
+
+if(JPEG_FOUND)
+	include_directories(${JPEG_INCLUDE_DIR})
+endif()
+
+if(Ceres_FOUND)
+	include_directories(${CERES_INCLUDE_DIRS})
+	add_definitions(-DUSE_CERES)
+endif()
+
+if(OpenCV_FOUND)
+	add_definitions(-DUSE_OPENCV)
+endif()
+
+if(gazebo_FOUND)
+	set(BUILD_GAZEBO ON)
+endif()
 
 if((OpenGL_FOUND) AND (glfw3_FOUND) AND (GLEW_FOUND))
 	set(BUILD_GRAPHICS ON)
@@ -82,10 +103,6 @@ add_library(
 	src/model/feasibility.cpp
 	#src/control/admittance.cpp
 
-	src/vision/camera_model.cpp
-	src/vision/triangulation.cpp
-	src/vision/solve_pnp.cpp
-
 	src/manager/preview.cpp
 	src/manager/calibration.cpp
 
@@ -105,8 +122,6 @@ target_link_libraries(
 	pthread
 
 	sioclient
-	${Boost_LIBRARIES}
-	${CERES_LIBRARIES}
 )
 
 set_target_properties(tansa PROPERTIES COMPILE_FLAGS "-std=c++1y -Wall")
@@ -151,6 +166,8 @@ if(BUILD_GAZEBO)
 	add_definitions(-DUSE_GAZEBO)
 endif()
 
+add_subdirectory(src/vision)
+
 add_subdirectory(src/mocap)
 
 add_subdirectory(src/beacon)
@@ -172,9 +189,16 @@ add_executable(
 	test/algorithm/rigid_point_correspondence_solver.cpp
 	test/jocs/jocsParser.cpp
 	test/mocap/rigid_body_tracker.cpp
+	test/mocap/calibration.cpp
 )
 set_target_properties(test_tansa PROPERTIES COMPILE_FLAGS "-std=c++11 -O3 -w -g")
-target_link_libraries(test_tansa ${GTEST_BOTH_LIBRARIES} tansa)
+target_link_libraries(
+	test_tansa
+
+	${GTEST_BOTH_LIBRARIES}
+	tansa
+	tansa_vision
+)
 
 add_test(TansaTests test_tansa)
 
@@ -239,3 +263,8 @@ target_link_libraries(
 )
 
 set_target_properties(mocap_test PROPERTIES COMPILE_FLAGS "-std=c++1y")
+
+
+###### Other utilities ######
+
+add_subdirectory(scripts/camera_calibration)

@@ -1,5 +1,5 @@
-#ifndef TANSA_IMAGING_H_
-#define TANSA_IMAGING_H_
+#ifndef TANSA_VISION_IMAGE_H_
+#define TANSA_VISION_IMAGE_H_
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -46,6 +46,24 @@ struct Image {
 		return r;
 	}
 
+	inline void flipY() {
+		for(int i = 0; i < height / 2; i++) {
+			for(int j = 0; j < width; j++) {
+				int a = i*width + j,
+					b = (height - i - 1)*width + j;
+
+				char tmp = this->data[a];
+				this->data[a] = this->data[b];
+				this->data[b] = tmp;
+			}
+		}
+	}
+
+	/**
+	 * Encodes the image in JPEG format and puts the result into the supplied buffer
+	 * TODO: This currently only supports grayscale images
+	 */
+	void encodeJPEG(std::vector<char> *buffer)
 
 
 

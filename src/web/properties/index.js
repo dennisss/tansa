@@ -44,15 +44,17 @@ var PropertiesPane = React.createClass({
 		return (
 			<div className="ta-pane" style={{height: '100%', overflowY: 'scroll', overflowX: 'hidden', marginRight: -15 /* This margin will hide the scroll bar */}}>
 
+				{/* TODO: Rename this from ta-pane-* */}
 				<div className="ta-pane-header">
-					Input
+					Properties
 
 					<div style={{float: 'right'}}>
 						<i className="fa fa-caret-square-o-left" />
 					</div>
 				</div>
 
-				<div className="ta-pane-body" style={{padding: 5}}>
+
+				<PropertiesSection name="Input">
 					<div className="form-group">
 						<span>File</span>
 						<div className="input-group">
@@ -98,9 +100,12 @@ var PropertiesPane = React.createClass({
 						</span>
 					</div>
 
-				</div>
+				</PropertiesSection>
 
 				<Controls parent={p} />
+
+				<CameraSettings parent={p} />
+				<CameraCalibration parent={p} />
 
 				{p.state.stats? <StatsSection parent={p} /> : null}
 
@@ -198,30 +203,184 @@ var Controls = React.createClass({
 
 
 		return (
-			<div>
-				<div className="ta-pane-header">
-					Controls
+			<PropertiesSection name="Controls">
+				<div className="btn-group btn-group-sm" style={{width: '100%'}}>
+					{btns.map((b, i) => React.cloneElement(b, {key: i, style: {width: (100 / btns.length) + '%'}}))}
+					{btns.length == 0? (
+						<div style={{textAlign: 'center', color: '#ddd', width: '100%'}}>
+							{msg || 'Pending...'}
+						</div>
+					) : null}
 				</div>
-				<div className="ta-pane-body" style={{padding: 5}}>
-					<div className="btn-group btn-group-sm" style={{width: '100%'}}>
-						{btns.map((b, i) => React.cloneElement(b, {key: i, style: {width: (100 / btns.length) + '%'}}))}
-						{btns.length == 0? (
-							<div style={{textAlign: 'center', color: '#ddd', width: '100%'}}>
-								{msg || 'Pending...'}
-							</div>
-						) : null}
-					</div>
 
-					{preButtons}
+				{preButtons}
 
-					<button className="btn btn-sm btn-danger" onClick={() => p.kill(-1)} style={{width: '100%', marginTop: 10}}>Kill</button>
-				</div>
-			</div>
+				<button className="btn btn-sm btn-danger" onClick={() => p.kill(-1)} style={{width: '100%', marginTop: 10}}>Kill</button>
+			</PropertiesSection>
 		)
 
 	}
 
 
 });
+
+
+var CameraSettings = React.createClass({
+
+
+	getInitialState: function() {
+		return {
+			fps: 0,
+			exposure: 0,
+			threshold: 0,
+			led: 0,
+			mode: ''
+		};
+	},
+
+	componentWillMount: function() {
+		// Get inital settings from server
+		// TODO:
+	},
+
+
+	render: function() {
+
+		return (
+			<PropertiesSection name="Camera Settings">
+				<table style={{width: '100%'}}>
+					<tbody>
+						<tr>
+							<td>Video</td>
+							<td><input type="checkbox" checked={this.state.mode == 'video'} /></td>
+						</tr>
+						<tr>
+							<td>FPS</td>
+							<td>
+								<input type="number" className="transparent-input" min={1} step={1} max={90}
+									value={this.state.fps} />
+							</td>
+						</tr>
+						<tr>
+							<td>Exp.</td>
+							<td>
+								<input type="number" className="transparent-input" min={100} step={100} max={10000}
+									value={this.state.exposure} />
+							</td>
+						</tr>
+						<tr>
+							<td>Thr.</td>
+							<td>
+								<input type="number" className="transparent-input" min={0} step={1} max={255}
+									value={this.state.threshold} />
+							</td>
+						</tr>
+						<tr>
+							<td>LED</td>
+							<td>
+								<input type="number" className="transparent-input" min={0} step={1} max={100}
+									value={this.state.led} />
+							</td>
+						</tr>
+
+						<tr>
+							<td>Masking</td>
+							<td>
+								<div className="btn-group">
+									<button className="btn btn-xs btn-default"><i className="fa fa-plus" /></button>
+									<button className="btn btn-xs btn-default"><i className="fa fa-minus" /></button>
+								</div>
+							</td>
+						</tr>
+
+					</tbody>
+
+				</table>
+
+			</PropertiesSection>
+		);
+	}
+
+});
+
+var CameraCalibration = React.createClass({
+
+	getInitialState: function() {
+		return {
+			_started: false,
+			_ncaptured: 0
+		};
+	},
+
+	_startWanding: function() {
+		this.setState({_started: true, _ncaptured: 0});
+	},
+
+	_setGround: function() {
+
+
+
+	},
+
+	render: function() {
+
+		return (
+			<PropertiesSection name="Camera Calibration">
+				{this.state._started? (
+					<div>
+						<p>Captured: {this.state._ncaptured}</p>
+						<button className="btn btn-info">Take Image</button>
+						<br /><br />
+						<div className="btn-group">
+							<button className="btn btn-sm btn-primary">Finish</button>
+							<button className="btn btn-sm btn-default">Cancel</button>
+						</div>
+					</div>
+				) : (
+					<div className="btn-group">
+						<div className="btn btn-sm btn-default" onClick={this._startWanding}>Start Wanding</div>
+						<div className="btn btn-sm btn-default" onClick={this._setGround}>Set Ground Plane</div>
+					</div>
+				)}
+			</PropertiesSection>
+		);
+
+
+	}
+
+});
+
+
+
+var PropertiesSection = React.createClass({
+
+	getInitialState: function() {
+		return {
+			_open: true
+		}
+	},
+
+	render: function() {
+
+		return (
+			<div>
+				<div className="ta-pane-header" style={{cursor: 'pointer'}} onClick={() => this.setState({_open: !this.state._open})}>
+					{this.props.name}
+					<i className={this.state._open? 'fa fa-minus' : 'fa fa-plus'} style={{float: 'right', position: 'relative', top: 3}} />
+				</div>
+				{this.state._open? (
+					<div className="ta-pane-body" style={{padding: 5}}>
+						{this.props.children}
+					</div>
+				) : null}
+			</div>
+
+
+		);
+
+
+	}
+
+})
 
 module.exports = PropertiesPane;

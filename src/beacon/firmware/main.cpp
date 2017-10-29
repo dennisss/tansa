@@ -1,5 +1,4 @@
 #include <Arduino.h>
-
 #include <SPI.h>
 
 #include <DW1000.h>
@@ -7,160 +6,348 @@
 
 #include <IRremote.h>
 
-#include <WiFi.h>
-
-
 #include "driver/rtc_io.h"
 #include "driver/gpio.h"
 
-
-// NOTE: On the ESP32 Thing, VUSB is pulled down by a 10K resistor
-
-// Used to sense when the battery is charging (this is active high)
-// on the Sparkfun board, VUSB is conveniently pulled down by a 10k so we don't need any internal pulls on this
-const uint8_t PIN_VBAT_SCAL = 12; // V = 0.787*Vbat  +/- 1%  (V = 0 when no battery is connected)
-const uint8_t PIN_LED = 15;
-const uint8_t PIN_VUSB = 2; // High if connected
-const uint8_t PIN_IR_RCV = 4; // (this is active low and is pulled up in the receiver)
-const uint8_t PIN_DW_WAKEUP = 25;
-const uint8_t PIN_DW_RST = 26; // reset pin
-const uint8_t PIN_DW_IRQ = 27; // irq pin
-const uint8_t PIN_DW_SS = 5; // spi select pin
-
-// Based on this remote: https://learn.sparkfun.com/tutorials/ir-control-kit-hookup-guide?_ga=2.140662258.1359352254.1508469480-972263269.1469291776
-const uint32_t CODE_MASK = 0x10ef0000;
-const uint32_t CODE_POWER = 0xd827; // PWR button, turns on configuration mode
-const uint32_t CODE_A = 0xf807; // Turns on anchor mode
-const uint32_t CODE_B = 0x7887; // Turns off everything
-const uint32_t CODE_C = 0x58a7; // Turns on configuration/tag mode
-const uint32_t CODE_CENTER = 0x20df;
-const uint32_t CODE_LEFT = 0x10ef;
-const uint32_t CODE_UP = 0xa05f;
-const uint32_t CODE_RIGHT = 0x807f;
-const uint32_t CODE_DOWN = 0x00ff;
-
-const uint8_t NLED_PHASES = 8; // Number of LED phases per second (where each phase is a distinct high low value)
-const uint8_t LED_CHARGING = 0b11110000;
-const uint8_t LED_CONFIGURING = 0b1001000;
-const uint8_t LED_CHARGED = 0b11111111;
-const uint8_t LED_ANCHOR = 0b11111111;
+#include "config.h"
+#include "packet.h"
 
 
+enum BeaconState {
+	BeaconIdle = 0, /** Just listening for packets but not actually in the middle of sending anything */
+	BeaconSending = 1, /** Just sent out a packet, waiting for it to finish transmitting */
+	BeaconWaiting = 2, /** A packet was sent out and we are awaiting an acknowledgement */
+};
 
-const char *WIFI_SSID = "yourssid";
-const char *WIFI_PASS = "yourpasswd";
+typedef void (*BeaconCallback)();
 
-// Enable this whenever using this in public
-// This will prevent the controller from exiting anchor mode via an IR remote command
-const bool ANCHOR_LOCK = false;
+BeaconState beaconState = BeaconIdle;
+
+BeaconCallback beaconCallback = NULL; /**< Called when the request is complete  */
+bool beaconAwaitAck = false; /**< Whether or not we should wait for an ACK before calling the callback  */
+uint8_t beaconSeq = 0; /**< Current sequence number. Only received ACK packets with the current sequence number will be processed */
+uint8_t beaconTxBuffer[32]; BeaconPacket *beaconRxPacket;
+uint8_t beaconRxBuffer[32]; BeaconPacket *beaconTxPacket;
+
+uint8_t beaconLastRxBuffer[32];
 
 
-WiFiServer server(80);
+bool beaconEventSent = false;
+bool beaconEventReceived = false;
+
+DW1000Time beaconTxTime; /**< Time at which the most recent packet was sent out */
+DW1000Time beaconRxTime; /**< Time at which the most recent  */
+unsigned long beaconLastPing = 0; /**< A meta field recording the last time a ping request was received */
+uint32_t beaconLastActive = 0;
+
 
 IRrecv irRecv(PIN_IR_RCV);
 decode_results irResults;
 
+char serialBuffer[64];
+int serialBufferPosition = 0;
+int serialArgc = 0;
+char *serialArgv[8];
 
 
-bool isUsbConnected() {
-	return digitalRead(PIN_VUSB) == HIGH;
+// TODO: By default enable configuration mode (if we arent )
+//bool configMode = false;
+bool configMode = false; // Whether or not the beacon is turns on listening for packets
+//bool anchorMode = false;
+bool chargingMode = false, doneCharging = false;;
+
+
+
+
+
+void beaconDebug() {
+	char msg[128];
+	DW1000.getPrintableDeviceIdentifier(msg);
+	Serial.print("Device ID: "); Serial.println(msg);
+	DW1000.getPrintableExtendedUniqueIdentifier(msg);
+	Serial.print("Unique ID: "); Serial.println(msg);
+	DW1000.getPrintableNetworkIdAndShortAddress(msg);
+	Serial.print("Network ID & Device Address: "); Serial.println(msg);
+	DW1000.getPrintableDeviceMode(msg);
+	Serial.print("Device mode: "); Serial.println(msg);
 }
 
-float batteryVoltage() {
-	return 3.30f * (127.0f/100.0f) * float(analogRead(34)) / 4096.0f;  // LiPo battery
-    //Serial.print("Battery Voltage = "); Serial.print(VBAT, 2); Serial.println(" V");
+
+void beaconStart() {
+	DW1000.newReceive();
+	DW1000.setDefaults();
+	// so we don't need to restart the receiver manually
+	DW1000.receivePermanently(true);
+	DW1000.startReceive();
+
+	beaconLastActive = millis();
 }
 
-bool isCharging() {
-	float v = batteryVoltage();
-	return isUsbConnected() && v > 0.2;
+void beaconHandleSent() {
+	beaconEventSent = true;
 }
 
-bool isChargingDone() {
-	return batteryVoltage() > 4.1;
+void beaconHandleReceived() {
+	beaconEventReceived = true;
 }
 
-void wifiStart() {
-	Serial.println();
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(WIFI_SSID);
-
-	WiFi.setHostname("tansa-beacon-1");
-	// TODO: Also configure a
-	WiFi.setAutoReconnect(true);
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
+void beaconHandleError() {
+	Serial.println("Error!");
+}
 
 
-    while(WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
 
-	server.begin();
+// Send a message optionally at a certain time and optionally to a certain beacon
+/**
+ * Sends raw data over the radio
+ *
+ * The data should be put into the beaconTxBuffer before calling this
+ *
+ * @param len
+ * @param callback
+ *
+ * @param tx_time if NULL, send immediately, otherwise, send at this time (the physical time at which it will be sent will be this + antenna delay)
+ */
+void beaconSend(unsigned len, BeaconCallback callback = NULL, bool awaitAck = false, const DW1000Time *tx_time = NULL) {
 
+	// Setup state
+	beaconState = BeaconSending;
+	beaconAwaitAck = awaitAck;
+	beaconCallback = callback;
+
+	if(awaitAck) {
+		beaconTxPacket->seq = ++beaconSeq;
+	}
+
+	beaconTxPacket->src_addr = BEACON_ID;
+
+
+	// Do the transmission
+	DW1000.newTransmit();
+	DW1000.setDefaults();
+	DW1000.setData(beaconTxBuffer, len);
+	if(tx_time != NULL) {
+		DW1000.setDelay(*tx_time, true);
+	}
+	DW1000.startTransmit();
+	//delaySent = millis();
+}
+
+/**
+ * Like beaconSend, but prepares the packet as a response
+ */
+void beaconSendResponse(unsigned len, const DW1000Time *tx_time = NULL) {
+	BeaconPacket *p = beaconTxPacket;
+	p->type = beaconRxPacket->type | BEACON_PACKET_ACK;
+	p->seq = beaconRxPacket->seq; // TODO: Make sure that this isn't
+	p->dst_addr = beaconRxPacket->src_addr;
+
+	beaconSend(len, NULL, false, tx_time);
+}
+
+
+/**
+ *
+ */
+void beaconPing(uint8_t addr, BeaconCallback callback) {
+	BeaconPacket *p = beaconTxPacket;
+	p->type = BEACON_PACKET_PING;
+	p->dst_addr = addr;
+	beaconSend(sizeof(BeaconPacket), callback, true);
+}
+
+/**
+ * Respond to a ping that we just received
+ */
+void beaconPingRespond() {
+	BeaconPacket *p = beaconTxPacket;
+
+	// Respond exactly 1ms after it was received
+	beaconTxTime = beaconRxTime + DW1000Time(1, DW1000Time::MILLISECONDS);
+
+	beaconSendResponse(sizeof(BeaconPacket), &beaconTxTime);
+}
+
+// For the most recent ping, computes the time the signal took to get to the other beacon
+void beaconPingDelta(DW1000Time *t) {
+	DW1000Time deltaTime = beaconRxTime - beaconTxTime; // Raw delta
+
+	// Pong sets a trasmit time in the future of 2ms, but that delay only starts sending at that time (need to account for delay from start to emission)
+	deltaTime -= DW1000Time(1, DW1000Time::MILLISECONDS) + DW1000._antennaDelay;
+
+	deltaTime /= 2;
+
+	*t = deltaTime;
+}
+
+
+void beaconStat(uint8_t addr, BeaconCallback callback) {
+	BeaconPacket *p = beaconTxPacket;
+	p->type = BEACON_PACKET_STAT;
+	p->dst_addr = addr;
+	beaconSend(sizeof(BeaconPacket), callback, true);
+}
+
+void beaconStatRespond() {
+	BeaconPacket *p = beaconTxPacket;
+
+	BeaconPacketStat *s = (BeaconPacketStat *) p->data;
+
+	// TODO
+}
+
+//
+void beaconSwapBuffers() {
+	for(int i = 0; i < sizeof(beaconRxBuffer); i++) {
+		uint8_t temp = beaconRxBuffer[i];
+		beaconRxBuffer[i] = beaconLastRxBuffer[i];
+		beaconLastRxBuffer[i] = temp;
+	}
+}
+
+
+
+
+void beaconReceiver() {
+/*
+	DW1000.getData(message);
+    Serial.print("Received message ... #"); Serial.println(numReceived);
+    Serial.print("Data is ... "); Serial.println(message);
+    Serial.print("FP power is [dBm] ... "); Serial.println(DW1000.getFirstPathPower());
+    Serial.print("RX power is [dBm] ... "); Serial.println(DW1000.getReceivePower());
+    Serial.print("Signal quality is ... "); Serial.println(DW1000.getReceiveQuality());
+    received = false;
+*/
+}
+
+void beaconInit() {
+
+	beaconRxPacket = (BeaconPacket *) beaconRxBuffer;
+	beaconTxPacket = (BeaconPacket *) beaconTxBuffer;
+
+	// Initialize DW1000 (the .begin will also wakeup the device if it was previously asleep)
+	DW1000.begin(PIN_DW_IRQ, PIN_DW_RST, PIN_DW_WAKEUP);
+	DW1000.select(PIN_DW_SS);
+	Serial.println(F("DW1000 initialized ..."));
+
+	DW1000.newConfiguration();
+	DW1000.setDefaults();
+	DW1000.setDeviceAddress(6);
+	DW1000.setNetworkId(10);
+	DW1000.enableMode(DW1000.MODE_SHORTDATA_FAST_ACCURACY); // MODE_LONGDATA_RANGE_LOWPOWER
+	DW1000.interruptOnSent(true);
+	DW1000.interruptOnReceived(true);
+	DW1000.interruptOnReceiveFailed(true);
+	DW1000.interruptOnReceiveTimeout(true);
+	DW1000.commitConfiguration();
+	Serial.println(F("Committed configuration ..."));
+
+	//beaconDebug();
+
+	DW1000.attachSentHandler(beaconHandleSent);
+	DW1000.attachReceivedHandler(beaconHandleReceived);
+	DW1000.attachReceiveFailedHandler(beaconHandleError);
+	DW1000.attachErrorHandler(beaconHandleError);
+}
+
+void beaconProxyPingCallback() {
+	BeaconPacketProxyPingAck *p = (BeaconPacketProxyPingAck *) beaconTxPacket->data;
+	DW1000Time deltaTime;
+	beaconPingDelta(&deltaTime);
+
+	beaconSwapBuffers();
+	beaconSendResponse(sizeof(BeaconPacket) + sizeof(BeaconPacketProxyPingAck));
+}
+
+/**
+ * Called whenever a new packet was received
+ */
+void beaconHandlePacket() {
+
+	if(beaconRxPacket->type == BEACON_PACKET_PING) {
+		beaconLastPing = millis();
+		beaconPingRespond();
+	}
+	else if(beaconRxPacket->type == BEACON_PACKET_STAT) {
+		beaconStatRespond();
+	}
+	else if(beaconRxPacket->type == BEACON_PACKET_PROXY_PING) {
+		BeaconPacketProxyPing *p = (BeaconPacketProxyPing *) beaconRxPacket->data;
+		uint8_t addr = p->real_dst_addr;
+
+		beaconSwapBuffers(); // Save the proxy request
+		beaconPing(addr, beaconProxyPingCallback);
+	}
 
 }
 
-void wifiStop() {
-	server.end();
-	WiFi.setAutoReconnect(false);
-	WiFi.disconnect(true);
-}
 
-void wifiPoll() {
-	WiFiClient client = server.available();   // listen for incoming clients
+/**
+ * Runs a
+ */
+void beaconCycle() {
+	int32_t curMillis = millis();
+	if(!beaconEventSent && !beaconEventReceived) {
+		// check if inactive
+		if(curMillis - beaconLastActive > 250) {
+			beaconStart();
+		}
+		return;
+	}
 
-	if(client) {                             // if you get a client,
-		Serial.println("new client");           // print a message out the serial port
-		String currentLine = "";                // make a String to hold incoming data from the client
-		while(client.connected()) {            // loop while the client's connected
-			if (client.available()) {             // if there's bytes to read from the client,
-				char c = client.read();             // read a byte, then
 
-			Serial.write(c);                    // print it out the serial monitor
-			if(c == '\n') {                    // if the byte is a newline character
+	if(beaconEventSent) {
+		beaconLastActive = curMillis;
+		beaconEventSent = false;
+		DW1000.getTransmitTimestamp(beaconTxTime);
 
-				// if the current line is blank, you got two newline characters in a row.
-				// that's the end of the client HTTP request, so send a response:
-				if (currentLine.length() == 0) {
-					// HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-					// and a content-type so the client knows what's coming, then a blank line:
-					client.println("HTTP/1.1 200 OK");
-					client.println("Content-type:text/html");
-					client.println();
-
-					// the content of the HTTP response follows the header:
-					client.print("Click <a href=\"/H\">here</a> turn the LED on pin 5 on<br>");
-					client.print("Click <a href=\"/L\">here</a> turn the LED on pin 5 off<br>");
-
-					// The HTTP response ends with another blank line:
-					client.println();
-					// break out of the while loop:
-					break;
-				} else {    // if you got a newline, then clear currentLine:
-					currentLine = "";
-				}
-			} else if (c != '\r') {  // if you got anything else but a carriage return character,
-				currentLine += c;      // add it to the end of the currentLine
-			}
-
-			// Check to see if the client request was "GET /H" or "GET /L":
-			if (currentLine.endsWith("GET /H")) {
-				digitalWrite(5, HIGH);               // GET /H turns the LED on
-			}
-			if (currentLine.endsWith("GET /L")) {
-				digitalWrite(5, LOW);                // GET /L turns the LED off
+		if(beaconAwaitAck) {
+			beaconState = BeaconWaiting;
+		}
+		else {
+			beaconState = BeaconIdle;
+			if(beaconCallback != NULL) {
+				beaconCallback();
+				beaconCallback = NULL;
 			}
 		}
 	}
-	// close the connection:
-	client.stop();
-	Serial.println("client disonnected");
-}
+	else if(beaconEventReceived) {
+
+		// TODO: Assert beaconState == Beachon ||
+
+		beaconLastActive = curMillis;
+		beaconEventReceived = false;
+		int len = DW1000.getDataLength();
+		DW1000.getData(beaconRxBuffer, len);
+		DW1000.getReceiveTimestamp(beaconRxTime);
+
+		//
+		if(beaconRxPacket->dst_addr != BEACON_ID && beaconRxPacket->dst_addr != BEACON_ADDR_BROADCAST) {
+			return;
+		}
+
+		if(beaconRxPacket->type & BEACON_PACKET_ACK) {
+			if(beaconRxPacket->seq == beaconSeq && beaconAwaitAck && beaconCallback != NULL) {
+				beaconState = BeaconIdle;
+				beaconCallback();
+				beaconCallback = NULL;
+			}
+		}
+		else {
+			// handle unknown inbound packet
+			beaconHandlePacket();
+		}
+	}
+	else if(beaconState != BeaconIdle) {
+
+		// We may have to resend it
+
+	}
 }
 
 
+bool isUsbConnected();
 
 void goToSleep() {
 	// See https://github.com/espressif/arduino-esp32/blob/master/libraries/ESP32/examples/DeepSleep/ExternalWakeUp/ExternalWakeUp.ino
@@ -172,11 +359,158 @@ void goToSleep() {
 	rtc_gpio_pulldown_en((gpio_num_t) PIN_DW_WAKEUP);
 
 	// Configure wakeup triggers
-	esp_deep_sleep_enable_ext0_wakeup((gpio_num_t) PIN_VUSB, 1);
+	if(!isUsbConnected()) {
+		esp_deep_sleep_enable_ext0_wakeup((gpio_num_t) PIN_VUSB, 1);
+	}
 	esp_deep_sleep_enable_ext1_wakeup(1 << PIN_IR_RCV, ESP_EXT1_WAKEUP_ALL_LOW);
 
 	esp_deep_sleep_start();
 }
+
+
+bool isUsbConnected() {
+	return digitalRead(PIN_VUSB) == HIGH;
+}
+
+float batteryVoltage() {
+	float v = 3.30f * (127.0f/100.0f) * float(analogRead(PIN_VBAT_SCAL)) / 4096.0f;  // LiPo battery
+	return v;
+}
+
+bool isCharging() {
+	float v = batteryVoltage();
+	return isUsbConnected() && (v > 0.2);
+}
+
+bool isChargingDone() {
+	return false; // Voltage currently only accurate while not chargin
+	return batteryVoltage() > 4.1;
+}
+
+void remoteCycle() {
+	// Handle a remote control code
+	if(!irRecv.decode(&irResults)) {
+		return;
+	}
+
+	uint32_t v = irResults.value;
+
+	//Serial.print("Code: ");
+	//Serial.println(v, HEX);
+	v &= 0x0000ffff;
+
+
+	if((irResults.value & 0xffff0000) != CODE_MASK) {
+		// Unknown code group
+		goto remoteCycleExit;
+	}
+
+	if(v == CODE_POWER) {
+		if(!configMode) {
+			beaconStart();
+			configMode = true;
+		}
+
+		goto remoteCycleExit;
+	}
+
+	// Must be turned on to do anything else
+	if(!configMode) {
+		goto remoteCycleExit;
+	}
+
+	if(v == CODE_B) { // Turn all off
+		goToSleep();
+	}
+	// TODO:
+
+remoteCycleExit:
+	irRecv.resume(); // Receive the next value
+}
+
+
+
+void serialPingCallback() {
+	DW1000Time deltaTime;
+	beaconPingDelta(&deltaTime);
+
+	int64_t ticks = deltaTime.getTimestamp();
+
+	float meters = deltaTime.getAsMeters();
+
+	Serial.print("S ");
+	Serial.print((int) ticks);
+	Serial.print(" ");
+	Serial.println(meters, 4);
+}
+
+void serialHandleCommand() {
+	int argc = serialArgc;
+	char **argv = serialArgv;
+
+	char *func = argv[0];
+
+	if(strcmp(func, "ping") == 0) {
+		if(argc != 2) {
+			Serial.println("E Usage: ping [id]");
+			return;
+		}
+
+		int other = atoi(argv[1]);
+		beaconPing(other, serialPingCallback);
+	}
+
+}
+
+void serialCycle() {
+	if(Serial.available() <= 0) {
+		return;
+	}
+
+	char c = Serial.read();
+	if(c == '\n') {
+		c = '\0';
+	}
+
+	serialBuffer[serialBufferPosition++] = c;
+
+	// Overflow
+	if(serialBufferPosition >= sizeof(serialBuffer)) {
+		serialBufferPosition = 0;
+		return;
+	}
+
+
+	if(c != '\0') {
+		return;
+	}
+
+	Serial.print("> ");
+	Serial.println(serialBuffer);
+
+	// Otherwise, we got an entire line
+
+	serialArgc = 0;
+	serialBufferPosition = 0;
+
+	char *arg = strtok(serialBuffer, " ");
+	while(arg != NULL) {
+		serialArgv[serialArgc++] = arg;
+
+		// Overflow max number of args
+		if(serialArgc >= 8) {
+			return;
+		}
+
+		arg = strtok(NULL, " ");
+	}
+
+	if(serialArgc > 0) {
+		serialHandleCommand();
+	}
+
+}
+
 
 
 // the setup function runs once when you press reset or power the board
@@ -184,106 +518,76 @@ void setup() {
 	// Initialize pins
 	pinMode(PIN_LED, OUTPUT);
 	pinMode(PIN_VBAT_SCAL, INPUT);
-	Serial.begin(9600);
+	pinMode(PIN_VUSB, INPUT);
+	Serial.begin(115200);
+	delay(10);
 
+	// See https://github.com/espressif/esp-idf/blob/master/examples/peripherals/rmt_nec_tx_rx/main/infrared_nec_main.c for how to do this natively
 	// Initialize the IR receiver
 	irRecv.enableIRIn(); // Start the receiver
 
-	// Initialize DW1000 (the .begin will also wakeup the device if it was previously asleep)
-	DW1000.begin(PIN_DW_IRQ, PIN_DW_RST, PIN_DW_WAKEUP);
-	DW1000.select(PIN_DW_SS);
-	Serial.println(F("DW1000 initialized ..."));
-
-	DW1000.newConfiguration();
-	DW1000.enableMode(DW1000.MODE_SHORTDATA_FAST_ACCURACY); // MODE_LONGDATA_RANGE_LOWPOWER
-
-	DW1000.setNetworkId(10);
-	DW1000.setDeviceAddress(5);
-	DW1000.commitConfiguration();
-	Serial.println(F("Committed configuration ..."));
-
+	beaconInit();
 	// TODO: Use getTempAndVbat for calibration purposes
-
-	// TODO: By default enable configuration mode (if we arent )
-	bool configMode = false;
-	bool anchorMode = false;
-	bool chargingMode = false;
 
 	unsigned long startTime = millis();
 
+	int iter = 0;
 	while(true) {
 
 		// Update inputs
-		chargingMode = isCharging();
+		if(iter % 10000 == 0) {
+			chargingMode = isCharging();
+		}
 
-		// Handle a remote control code
-		if(irRecv.decode(&irResults) && (irResults.value & 0xffff0000 == CODE_MASK)) {
-			uint32_t v = irResults.value;
-			v &= 0xffff0000;
 
-			Serial.println(v, HEX);
+		remoteCycle();
 
-			if(v == CODE_POWER || v == CODE_C) { // Power on and start config mode
-				if(anchorMode) {
-					// stop anchor mode
-				}
+		if(configMode) {
+			beaconCycle();
+		}
 
-				if(!configMode) {
-					wifiStart();
-				}
-
-				anchorMode = false;
-				configMode = true;
-			}
-			else if(v == CODE_B) { // Turn all off
-				if(anchorMode) {
-					// stop
-				}
-				if(configMode) {
-					wifiStop();
-				}
-			}
-			else if(v == CODE_A) { // Anchor mode
-				if(configMode) {
-					wifiStop();
-				}
-				if(!anchorMode) {
-					// start
-				}
-
-				anchorMode = true;
-				configMode = false;
-			}
-
-			irRecv.resume(); // Receive the next value
+		if(chargingMode) { // Only need to check serial if the usb is plugged in
+			serialCycle();
 		}
 
 
 		// Operate based on current mode
 		uint8_t led_pattern = 0;
-		if(anchorMode) {
+		if(configMode) {
 			led_pattern = LED_ANCHOR;
-		}
-		else if(configMode) {
-			led_pattern = LED_ANCHOR;
-			wifiPoll();
 		}
 		else if(chargingMode) { // Charging mode takes lowest priority
-			led_pattern = isChargingDone()? LED_CHARGED : LED_CHARGING;
+			led_pattern = doneCharging? LED_CHARGED : LED_CHARGING;
 		}
 		else {
+			led_pattern = LED_INIT;
+
 			// If we haven't locked into any configuration since we've started, we should go back to sleep
 			// Most likely this is the first boot or there was a false interrupt
-			if(millis() - startTime > 200) { // TODO: Check for overflow?
+			if(millis() - startTime > 1000) { // TODO: Check for overflow?
 				break;
 			}
 		}
 
-		// Update the LED
-		uint8_t led_phase = (millis() % 1000L) / NLED_PHASES;
-		digitalWrite(PIN_LED, (led_pattern >> (7 - led_pattern)) & 1);
 
-		delay(5);
+		// Update the LED
+		if(iter % 1000 == 0) {
+			uint8_t led_phase = (millis() % 1000L) / (1000L / NLED_PHASES);
+
+			int value = (led_pattern >> (7 - led_phase)) & 1;
+
+			if(millis() - beaconLastPing < 250) {
+				value = 0;
+			}
+
+
+			digitalWrite(PIN_LED, value);
+		}
+
+		//Serial.println(millis());
+
+		//delay(20);
+		iter++;
 	}
 
 	goToSleep();

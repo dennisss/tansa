@@ -3,7 +3,9 @@
 */
 
 
-
+#define BEACON_ERROR_OK 0
+#define BEACON_ERROR_USAGE 1 /**< When a command was improperly called (typically over serial ) */
+#define BEACON_ERROR_TIMEOUT 2 /**< When a packet has timed out  */
 
 // These are used for simple
 // TODO: I think 1 millisecond woul be fine
@@ -17,7 +19,11 @@
 #define BEACON_PACKET_CONFIG 6 // Used to set some va
 #define BEACON_PACKET_ACK (1 << 7) // The upper bit in any message means it is an acknowledgement of the main message
 
-#define BEACON_ADDR_BROADCAST 0 /** Use this address to send to everyone */
+#define BEACON_ADDR_BROADCAST 0 /**< Use this address to send to everyone */
+// Addresses 1-10 are reserved for anchor ids
+// Addresses 11-14 are reserved for other two way communication nodes
+#define BEACON_ADDR_COMPUTER 15 /**< */
+#define BEACON_ADDR_ANONYMOUS 16 /**< Id for beacons that will NEVER send messages (but only act as TDoA tags) */
 
 /*
 	This the data that is sent over the transmitter (we do NOT use the MAC frameing)
@@ -53,9 +59,24 @@ typedef struct {
 	uint8_t delta_time[5];
 } __attribute__((packed)) BeaconPacketProxyPingAck;
 
+typedef struct {
+	uint8_t time[5]; /**< Time on the anchor's clock when this broadcast was sent */
+} __attribute__((packed)) BeaconPacketBroadcast;
 
 typedef struct {
-	uint8_t voltage;
+	uint8_t phase; /**<  */
+	uint8_t total; /**< The total number of anchors in the system */
+} __attribute__((packed)) BeaconPacketAnchorConfig;
+
+typedef struct {
+	// These two are sampled from the DW1000 directly
+	uint8_t voltage_reg;
 	uint8_t temperature;
+
+	// Measured by the adapter board
+	uint8_t voltage_battery;
+
+	// TODO: Implement these
+	uint8_t signal_strength;
 	uint8_t clock_skew; // A rough quality metric on how skewed the beacons time appears to be compared to ones around it
-} __attribute__((packed)) BeaconPacketStat;
+} __attribute__((packed)) BeaconPacketStatAck;

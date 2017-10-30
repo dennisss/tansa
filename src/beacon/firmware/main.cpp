@@ -181,6 +181,18 @@ void beaconPingDelta(DW1000Time *t) {
 }
 
 
+void beaconProxyPing(uint8_t src, uint8_t dst, BeaconCallback callback) {
+	BeaconPacket *p = beaconTxPacket;
+	p->type = BEACON_PACKET_PING;
+	p->dst_addr = src;
+
+	BeaconPacketProxyPing *pp = (BeaconPacketProxyPing *) beaconTxPacket->data;
+	pp->real_dst_addr = dst;
+
+	beaconSend(sizeof(BeaconPacket) + sizeof(BeaconPacketProxyPing), callback, true);
+}
+
+
 void beaconStat(uint8_t addr, BeaconCallback callback) {
 	BeaconPacket *p = beaconTxPacket;
 	p->type = BEACON_PACKET_STAT;
@@ -188,12 +200,40 @@ void beaconStat(uint8_t addr, BeaconCallback callback) {
 	beaconSend(sizeof(BeaconPacket), callback, true);
 }
 
-void beaconStatRespond() {
+float batteryVoltage();
+
+void beaconStatRespond(bool send = true) {
 	BeaconPacket *p = beaconTxPacket;
 
-	BeaconPacketStat *s = (BeaconPacketStat *) p->data;
+	BeaconPacketStatAck *s = (BeaconPacketStatAck *) p->data;
 
-	// TODO
+	float temp = 0, vbat = 0;
+	DW1000.getTempAndVbat(temp, vbat);
+
+	// TODO: Expand range
+	vbat -= 2.8f;
+	if(vbat < 0) { vbat = 0; }
+	vbat = (vbat / (4.2f - 2.8f))*255;
+
+	temp -= 10.0f;
+	if(temp < 0) { temp = 0; }
+	temp = (temp / 80.0f)*255;
+
+	s->voltage_reg = vbat;
+	s->temperature = temp;
+
+
+	// Realistically, we only care about the battery voltage from 3V to 4.2V, so we'll scale to around that range
+	float battery = batteryVoltage() - 2.8f;
+	if(battery < 0) { battery = 0; }
+	battery = (battery / (4.2f - 2.8f))*255;
+
+	s->voltage_battery = (uint8_t) battery;
+
+
+	if(send) {
+		beaconSendResponse(sizeof(BeaconPacketStatAck));
+	}
 }
 
 //
@@ -204,6 +244,50 @@ void beaconSwapBuffers() {
 		beaconLastRxBuffer[i] = temp;
 	}
 }
+
+void beaconBroadcast(const DW1000Time &tx_time) {
+	BeaconPacket *p = beaconTxPacket;
+	p->type = BEACON_PACKET_BROADCAST;
+	p->dst_addr = BEACON_ADDR_BROADCAST;
+
+	BeaconPacketBroadcast *b = (BeaconPacketBroadcast *) beaconTxPacket->data;
+	tx_time.getTimestamp(b->time);
+
+	// TODO: We might as well sequence these as well
+	beaconSend(sizeof(BeaconPacket) + sizeof(BeaconPacketBroadcast));
+}
+
+
+void beaconAnchorStart() {
+	/*
+		Anchor Protocol:
+		- First we assume that every beacon knows the exact distance to each other beacon
+			- This should be converted to ideal clock ticks
+		- Then we initialize each
+		- At the very beginning, ever anchor sits waiting for a message from another beacon
+
+		- The computer triggers one anchor to send a start pulse
+			- The time at which it transmits will be defined as global time 0
+
+		- Once the second anchor receives this time, it will send it's send it's pulse at:
+			- "Trecv0 - ToF_0_1 + (1/N)" where N is the total number of beacons
+			- Then it will schedule it's next
+
+		- Third anchor receives both
+
+
+		- After many cycles,
+			- Anchor considers last N-1 times received
+
+
+		- Basically, whenever an anchor receives any another anchor's broadcast, it is allowed to
+
+		The objective of the clock synchronization is to estimate the hidden ideal clock model
+
+	*/
+
+}
+
 
 
 
@@ -430,19 +514,59 @@ remoteCycleExit:
 
 
 
-void serialPingCallback() {
-	DW1000Time deltaTime;
-	beaconPingDelta(&deltaTime);
 
+void serialPrintDeltaTime(DW1000Time &deltaTime) {
 	int64_t ticks = deltaTime.getTimestamp();
 
 	float meters = deltaTime.getAsMeters();
 
-	Serial.print("S ");
+	Serial.print(BEACON_ERROR_OK);
+	Serial.print(" ");
 	Serial.print((int) ticks);
 	Serial.print(" ");
 	Serial.println(meters, 4);
 }
+
+void serialPingCallback() {
+	DW1000Time deltaTime;
+	beaconPingDelta(&deltaTime);
+
+	serialPrintDeltaTime(deltaTime);
+}
+
+void serialProxyPingCallback() {
+	BeaconPacketProxyPingAck *pp = (BeaconPacketProxyPingAck *) beaconRxPacket->data;
+
+	DW1000Time deltaTime;
+	deltaTime.setTimestamp(pp->delta_time);
+
+	serialPrintDeltaTime(deltaTime);
+}
+
+
+
+void serialStatPrint(BeaconPacketStatAck *s) {
+
+	float voltage_reg = (4.2 - 2.8)*(s->voltage_reg / 255.0f) + 2.8;
+	float voltage_battery = (4.2 - 2.8)*(s->voltage_battery / 255.0f) + 2.8;
+	float temp = 80.0*(s->temperature / 255.0f) + 10.0;
+
+	Serial.print(BEACON_ERROR_OK);
+	Serial.print("  VBat: ");
+	Serial.print(voltage_battery, 2);
+	Serial.print("  VReg: ");
+	Serial.print(voltage_reg, 2);
+	Serial.print("  Temp: ");
+	Serial.println(temp, 2);
+}
+
+void serialStatCallback() {
+	BeaconPacketStatAck *s = (BeaconPacketStatAck *) beaconRxPacket->data;
+	serialStatPrint(s);
+}
+
+
+
 
 void serialHandleCommand() {
 	int argc = serialArgc;
@@ -451,13 +575,37 @@ void serialHandleCommand() {
 	char *func = argv[0];
 
 	if(strcmp(func, "ping") == 0) {
-		if(argc != 2) {
-			Serial.println("E Usage: ping [id]");
+		if(argc != 2 && argc != 3) {
+			Serial.print(BEACON_ERROR_USAGE);
+			Serial.println(" Usage: ping [id] [id2]");
 			return;
 		}
 
-		int other = atoi(argv[1]);
-		beaconPing(other, serialPingCallback);
+		int id1 = atoi(argv[1]);
+		if(argc == 2) {
+			beaconPing(id1, serialPingCallback);
+		}
+		else if(argc == 3) {
+			int id2 = atoi(argv[2]);
+			beaconProxyPing(id1, id2, serialProxyPingCallback);
+		}
+	}
+	else if(strcmp(func, "stat") == 0) {
+		if(argc != 1 && argc != 2) {
+			Serial.print(BEACON_ERROR_USAGE);
+			Serial.println(" Usage: stat [id]");
+			return;
+		}
+
+		if(argc == 1) { // Stat self
+			beaconStatRespond(false);
+			serialStatPrint((BeaconPacketStatAck *) beaconTxPacket->data);
+		}
+		else {
+			int id = atoi(argv[1]);
+			beaconStat(id, serialStatCallback);
+		}
+
 	}
 
 }

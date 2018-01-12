@@ -108,6 +108,43 @@ void Mocap::onNatNetFrame(const optitrack::NatNetFrame *frame) {
 			rb->qz,
 			rb->qy
 		);
+		
+		if(this->lastPositions.count(id) != 0) {
+			// If we see that the new position is much closer to one of the other drones,
+			
+			double err = (this->lastPositions[id] - pos).norm();
+			if(err > 0.2) {
+				for(auto it = this->lastPositions.begin(); it != this->lastPositions.end(); ++it) {
+					
+					int other_id = it->first;
+					Vector3d other_pos = it->second;
+					
+					if(other_id == id) {
+						continue;
+					}
+					
+					double other_err = (other_pos - pos).norm();
+					if(other_err < 0.2 && other_err < err) {
+						cout << "Swap Detected: " << id << " with " << other_id << endl;
+						
+						if(this->options.swapMitigation) {
+							// Swap in tracked and lastPositions
+							Vector3d pos_temp = this->lastPositions[id];
+							this->lastPositions[id] = this->lastPositions[other_id];
+							this->lastPositions[other_id] = pos_temp;
+							
+							Vehicle *v_temp = this->tracked[id];
+							this->tracked[id] = this->tracked[other_id];
+							this->tracked[other_id] = v_temp;
+						}
+						
+						break;
+					}
+				}
+			}
+		}
+		
+		this->lastPositions[id] = pos;
 
 		this->tracked[id]->mocap_update(pos, quat, t);
 

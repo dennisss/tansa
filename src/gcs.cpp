@@ -898,6 +898,7 @@ int main(int argc, char *argv[]) {
 	if (inRealLife) {
 		nlohmann::json hardwareConfig = rawJson["mocap"];
 		mocap_opts.useActiveBeacon = hardwareConfig["useActiveBeacon"];
+		mocap_opts.swapMitigation = hardwareConfig["swapMitigation"];
 		if(hardwareConfig["singleDot"]) {
 			mocap_opts.mode = MocapRigidBodyFromCloud;
 		}

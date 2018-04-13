@@ -5,7 +5,7 @@
 #include "tansa/csv.h"
 
 #include <algorithm>
-
+#include <iostream>
 
 namespace tansa {
 

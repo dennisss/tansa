@@ -7,6 +7,7 @@
 		"clientAddress": "192.168.1.1",
 		"serverAddress": "",
 		"useActiveBeacon": true,
-		"singleDot": false
+		"singleDot": false,
+		"swapMitigation": false
 	}
 }

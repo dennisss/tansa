@@ -1,5 +1,6 @@
 #include <tansa/data.h>
 
+#include <iostream>
 #include <cstdlib>
 #include <fstream>
 

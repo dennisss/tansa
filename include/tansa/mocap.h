@@ -23,6 +23,7 @@ enum MocapMode {
 
 struct MocapOptions {
 	bool useActiveBeacon = false;
+	bool swapMitigation = false;
 	MocapMode mode = MocapPassthrough;
 };
 
@@ -65,6 +66,8 @@ private:
 
 	map<int, Vehicle *> tracked;
 	optitrack::NatNetClient *client;
+
+	map<int, Vector3d> lastPositions;
 
 	RigidBodyTracker *tracker;
 

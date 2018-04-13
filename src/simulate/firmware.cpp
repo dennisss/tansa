@@ -12,8 +12,7 @@ Firmware::Firmware(Context *ctx, const DataObject &desc, MultirotorModel::Ptr mo
 	currentActuatorOutputs.resize(4, 0);
 
 	this->id = desc["id"];
-	json d = desc;
-	this->rcScript = d["rc"];
+	this->rcScript = desc.asJson()["rc"].get<string>();
 
 	process = 0;
 

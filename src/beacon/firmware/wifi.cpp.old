@@ -1,0 +1,150 @@
+
+#include <WiFi.h>
+
+#include "esp_wifi.h"
+
+const char *WIFI_SSID = "Persinger WiFi";
+const char *WIFI_PASS = "B3KY2PW6";
+const char *WIFI_IP = "192.168.86.71";
+const char *WIFI_GATEWAY = "192.168.86.1";
+const char *WIFI_SUBNET = "255.255.255.0";
+const char *WIFI_HOSTNAME = "tansa-beacon-1";
+const uint16_t WIFI_PORT = 80;
+
+
+
+WiFiServer server(WIFI_PORT);
+
+
+bool wifiConnected = false;
+
+
+
+void wifiEvent(WiFiEvent_t event)
+{
+    Serial.printf("[WiFi-event] event: %d\n", event);
+
+    switch(event) {
+    case SYSTEM_EVENT_STA_CONNECTED:
+        Serial.println("WiFi connected");
+		server.begin();
+		wifiConnected = true;
+        break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+		wifiConnected = false;
+        Serial.println("WiFi lost connection");
+        break;
+    }
+}
+
+void wifiStart() {
+
+	// TODO: Currently must disable the IR receiver's interrupts to use WiFi?
+	//irRecv.disableIRIn();
+
+
+
+	wifiConnected = false;
+	//WiFi.disconnect(true);
+	delay(500);
+
+	Serial.println();
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(WIFI_SSID);
+/*
+	IPAddress ip, gateway, subnet;
+	ip.fromString(WIFI_IP);
+	gateway.fromString(WIFI_GATEWAY);
+	subnet.fromString(WIFI_SUBNET);
+
+	esp_wifi_set_max_tx_power(20);
+	WiFi.config(ip, gateway, subnet, 0U, 0U);
+*/
+	//WiFi.onEvent(wifiEvent);
+/*
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+	WiFi.setHostname(WIFI_HOSTNAME);
+	WiFi.setAutoReconnect(true);
+	WiFi.setAutoConnect(true);
+	*/
+}
+
+void wifiStop() {
+	wifiConnected = false;
+	server.end();
+	WiFi.setAutoReconnect(false);
+	WiFi.setAutoConnect(false);
+	WiFi.disconnect(true);
+}
+
+/*
+	We need to support
+	- /off
+	- /set/master/1 : specifies which beacon is the primary (first to send each cycle)
+	- /broadcast/on
+	- /broadcast/off
+	- /ping/6?n=100 : get a time of flight from another beacon taking some number of measurements with some delay
+	- /status : report on active modes, temperature, voltage, battery level
+*/
+void wifiPoll() {
+
+	WiFiClient client = server.available(); // listen for incoming clients
+
+	if(!client) {
+		return;
+	}
+
+	Serial.println("new client"); // print a message out the serial port
+	String currentLine = ""; // make a String to hold incoming data from the client
+	while(client.connected()) { // loop while the client's connected
+		if(client.available()) { // if there's bytes to read from the client,
+			char c = client.read(); // read a byte, then
+
+			//Serial.write(c); // print it out the serial monitor
+			if(c == '\n') {
+
+				// if the current line is blank, you got two newline characters in a row.
+				// that's the end of the client HTTP request, so send a response:
+				if(currentLine.length() == 0) {
+					// HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+					// and a content-type so the client knows what's coming, then a blank line:
+					client.println("HTTP/1.1 200 OK");
+					client.println("Content-type:text/html");
+					client.println();
+
+					// the content of the HTTP response follows the header:
+					client.print("Click <a href=\"/H\">here</a> turn the LED on pin 5 on<br>");
+					client.print("<a href=\"/off\"><button>Turn Off</button></a><br />");
+
+					// The HTTP response ends with another blank line:
+					client.println();
+					// break out of the while loop:
+					break;
+				}
+				else {    // if you got a newline, then clear currentLine:
+					currentLine = "";
+				}
+			}
+			else if(c != '\r') {  // if you got anything else but a carriage return character,
+				currentLine += c;      // add it to the end of the currentLine
+			}
+
+			// Check to see if the client request was "GET /H" or "GET /L":
+			if(currentLine.endsWith("GET /H")) {
+				digitalWrite(15, HIGH);               // GET /H turns the LED on
+			}
+			if(currentLine.endsWith("GET /L")) {
+				digitalWrite(15, LOW);                // GET /L turns the LED off
+			}
+			if(currentLine.endsWith("GET /off")) {
+				goToSleep();
+			}
+		}
+	}
+
+	// close the connection:
+	client.stop();
+	Serial.println("client disconnected");
+}

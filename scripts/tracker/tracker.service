@@ -1,0 +1,10 @@
+[Unit]
+Description=Tansa Tracker
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/home/pi/tansa/build/src/mocap/mocap_camera -raspicam > /home/pi/tracker.log 2>&1
+
+[Install]
+WantedBy=multi-user.target

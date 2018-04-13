@@ -2,10 +2,11 @@
 add_library(
 	tansa_vision SHARED
 
-
 	camera_model.cpp
 	triangulation.cpp
 	solve_pnp.cpp
+
+	#formats/jpeg.cpp
 )
 
 

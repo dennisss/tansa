@@ -24,6 +24,14 @@ public:
 
 	virtual ImageSize getSize();
 
+	virtual int getModel() {
+		return 0;
+	}
+	
+	virtual std::string getSerial() {
+		return "";
+	}
+
 private:
 
 	friend void *mocap_file_imaging_thread(void *);

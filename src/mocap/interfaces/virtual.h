@@ -29,6 +29,13 @@ public:
 
 	virtual ImageSize getSize();
 
+	virtual int getModel() {
+		return 0;
+	}
+	
+	virtual std::string getSerial() {
+		return "";
+	}
 
 private:
 

@@ -19,7 +19,7 @@ var CamerasPane = React.createClass({
 
 		Socket.msgs.on('camera_packet', (data) => {
 			this._packets[data.id] = data;
-			this.forceUpdate();
+			this.forceUpdate(); // TODO: We should try to bundle all the camera updates together per timestep
 		});
 	},
 

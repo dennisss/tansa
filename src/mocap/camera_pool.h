@@ -34,7 +34,7 @@ struct MocapCamera {
 	Vector3d position;
 	Quaterniond orientation;
 
-	Time lastReceived;
+	Time lastReceived; /**< Last  */
 	bool configured = false;
 };
 
@@ -63,6 +63,12 @@ struct MocapCameraBlobsMsg : Message {
 class MocapCameraPool : public Channel {
 public:
 
+	/**
+	 * Change the configured settings used by all the cameras
+	 */
+	void setSettings();
+
+
 	void connect(int lport = MOCAP_CAMERA_MASTER_DEFAULT_PORT);
 	void disconnect();
 
@@ -76,12 +82,12 @@ private:
 
 	friend void *mocap_camera_pool_thread(void *);
 
-	void handle_message(MocapCameraPacket *msg, const NetworkAddress &addr);
+	void handleMessage(MocapCameraPacket *msg, const NetworkAddress &addr);
 	void cycle();
 
 	void configure(const MocapCamera &cam);
 
-	void send_message(const MocapCamera &cam, MocapCameraPacket *msg);
+	void sendMessage(const MocapCamera &cam, MocapCameraPacket *msg);
 
 	void publish_list();
 

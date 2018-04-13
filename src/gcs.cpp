@@ -777,7 +777,6 @@ void osc_on_message(OSCMessage &msg) {
 
 	}
 
-	/*
 	printf("Address:\n");
 	for(auto str : msg.address)
 		printf("- %s\n", str.c_str());
@@ -785,7 +784,6 @@ void osc_on_message(OSCMessage &msg) {
 	printf("\nArgs:\n");
 	for(auto str : msg.args)
 		printf("- %s\n", str.c_str());
-	*/
 
 }
 
@@ -1061,6 +1059,8 @@ int main(int argc, char *argv[]) {
 		} else {
 			player->step();
 		}
+
+		// TODO: Poll for events
 
 		r.sleep();
 		i++;

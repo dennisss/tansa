@@ -57,6 +57,8 @@ void FileImagingInterface::publish_image() {
 	msg->image = &input;
 
 	this->publish(msg);
+
+	// TODO: Using input
 }
 
 void FileImagingInterface::stop() {

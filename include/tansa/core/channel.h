@@ -28,7 +28,7 @@ public:
 			listeners[ID] = std::vector<Subscription *>();
 		}
 
-		Subscription *sub = new ClassSubscription<T, V>(ctx, inst, func);
+		Subscription *sub = new ClassSubscription<T, V>(ctx, ID, inst, func);
 
 		void *key = (void *) this;
 		if(ctx->subs.count(key) == 0) {
@@ -38,17 +38,17 @@ public:
 		ctx->subs[this].push_back(sub);
 
 		listeners[ID].push_back(sub);
-	}
+	}	
 
 	template<class V>
-	inline void subscribe(Context *ctx, void (*func)(V*, void *), void *arg = NULL) {
+	inline Subscription *subscribe(Context *ctx, void (*func)(const V*, void *), void *arg = NULL) {
 
 		int ID = V::ID;
 		if(listeners.count(ID) == 0) {
 			listeners[ID] = std::vector<Subscription *>();
 		}
 
-		Subscription *sub = new Subscription(ctx, (void (*)(void *, void *)) func, arg);
+		Subscription *sub = new Subscription(ctx, ID, (void (*)(void *, void *)) func, arg);
 
 		void *key = (void *) this;
 		if(ctx->subs.count(key) == 0) {
@@ -59,6 +59,14 @@ public:
 
 		listeners[ID].push_back(sub);
 	}
+
+
+	/*
+	template<class T, class V>
+	inline void unsubscribe(Subscription *s) {
+		auto &subs = ctx->subs[this];
+	}
+	*/
 
 
 protected:
@@ -70,8 +78,16 @@ protected:
 		if(listeners.count(ID) == 0)
 			return;
 
+			
+		Message::Ptr msg(val);
+
+		// First post all messages and then notify so that listeners in the same context are processed in one cycle
 		for(auto subp : listeners[ID]) {
-			subp->post(val);
+			subp->post(msg);
+		}
+		
+		// TODO: We really just need to notify the unique set of contexts in the list
+		for(auto subp : listeners[ID]) {
 			subp->ctx->notify(); // TODO: Eventually move back to Subscription
 		}
 

@@ -314,10 +314,21 @@ void beaconInit() {
 	DW1000.select(PIN_DW_SS);
 	Serial.println(F("DW1000 initialized ..."));
 
+	DW1000.enableADCClock();
+
+	DW1000._tmeas23C = 114;
+
 	DW1000.newConfiguration();
+	DW1000.setChannel(3);
 	DW1000.setDefaults();
 	DW1000.setDeviceAddress(6);
 	DW1000.setNetworkId(10);
+	
+	// What bitcraze uses:
+	//    MODE_SHORTDATA_FAST_ACCURACY
+	//    Channel 2
+	//    PREAMBLE_CODE_64MHZ_9
+	// dwUseSmartPower true
 	DW1000.enableMode(DW1000.MODE_SHORTDATA_FAST_ACCURACY); // MODE_LONGDATA_RANGE_LOWPOWER
 	DW1000.interruptOnSent(true);
 	DW1000.interruptOnReceived(true);
@@ -325,13 +336,34 @@ void beaconInit() {
 	DW1000.interruptOnReceiveTimeout(true);
 	DW1000.commitConfiguration();
 	Serial.println(F("Committed configuration ..."));
+/*
+	// Step 7
+	byte pmscctrl0 = 0x22;
+	DW1000.writeBytes(0x36, 0x00, &pmscctrl0, 1);
 
+
+	#define TC_PGTEST_SUB 0x0C
+
+	// Step 8
+	byte pmsc_txfseq[4];
+	memset(pmsc_txfseq, 0, 4);
+	DW1000.writeBytes(0x36, 0x26, pmsc_txfseq, 4);
+
+	// Step 9 (/ 10?)
+	byte rf_conf[4] = { 0x00, 0x5f, 0xff, 0x00 };
+	DW1000.writeBytes(0x28, 0x00, rf_conf, 4);
+
+	// Final step
+	byte pgtest = 0x13;
+	DW1000.writeBytes(0x2A, TC_PGTEST_SUB, &pgtest, 1);
+*/
 	//beaconDebug();
 
 	DW1000.attachSentHandler(beaconHandleSent);
 	DW1000.attachReceivedHandler(beaconHandleReceived);
 	DW1000.attachReceiveFailedHandler(beaconHandleError);
 	DW1000.attachErrorHandler(beaconHandleError);
+
 }
 
 void beaconProxyPingCallback() {
@@ -379,6 +411,7 @@ void beaconCycle() {
 		return;
 	}
 
+	beaconPing(1, NULL);
 
 	if(beaconEventSent) {
 		beaconLastActive = curMillis;
@@ -679,6 +712,8 @@ void setup() {
 
 	unsigned long startTime = millis();
 
+	unsigned long lastTemp = 0;
+
 	int iter = 0;
 	while(true) {
 
@@ -730,6 +765,22 @@ void setup() {
 
 
 			digitalWrite(PIN_LED, value);
+
+
+			if(millis() - lastTemp > 1000) {
+				float temp = 0, vbat = 0;
+				DW1000.getTempAndVbat(temp, vbat);
+
+				lastTemp = millis();
+				Serial.print(DW1000._tmeas23C);
+				Serial.print(" ");
+				Serial.print(lastTemp);
+				Serial.print(" ");
+				Serial.print(temp, 2);
+				Serial.print(" ");
+
+				Serial.println(vbat, 2);
+			}
 		}
 
 		//Serial.println(millis());

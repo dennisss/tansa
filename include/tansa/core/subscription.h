@@ -11,8 +11,9 @@ class Context;
 
 class Subscription {
 public:
-	Subscription(Context *ctx, void (*func)(void *, void *), void *data, unsigned size = 10) : queue(size) {
+	Subscription(Context *ctx, int msgId, void (*func)(void *, void *), void *data, unsigned size = 10) : queue(size) {
 		this->ctx = ctx;
+		this->msgId = msgId;
 		this->func = func;
 		this->data = data;
 	}
@@ -27,8 +28,8 @@ public:
 	 *
 	 * @param raw a pointer to the dynamically allocated message. the subscription takes ownership of the memory backing it
 	 */
-	void post(Message *raw) {
-		queue.push(Message::Ptr(raw), false);
+	void post(Message::Ptr &msg) {
+		queue.push(msg, false);
 		//ctx->notify(); // For now moved to the Channel class
 	}
 
@@ -48,6 +49,7 @@ public:
 	}
 
 	Context *ctx;
+	int msgId;
 
 private:
 	MessageQueue<Message::Ptr> queue;
@@ -64,8 +66,8 @@ class ClassSubscription : public Subscription {
 
 public:
 
-	ClassSubscription(Context *ctx, T* inst, void (T::*method)(const V*))
-	 : Subscription(ctx, &ClassSubscription<T, V>::callClassMethod, this) {
+	ClassSubscription(Context *ctx, int msgId, T* inst, void (T::*method)(const V*))
+	 : Subscription(ctx, msgId, &ClassSubscription<T, V>::callClassMethod, this) {
 
 		this->inst = inst;
 		this->method = method;

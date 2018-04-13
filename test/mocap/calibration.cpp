@@ -27,7 +27,8 @@ TEST(MocapCalibrationTest, findWandProjection) {
 		observed.push_back(cam.projectPoint(pattern[i]));
 		cout << observed[i] << endl;
 	}
-
+	
+	// Currently this assumes proper correspondense
 	solvePnP(pattern, observed, &cam);
 
 

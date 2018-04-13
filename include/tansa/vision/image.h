@@ -63,7 +63,7 @@ struct Image {
 	 * Encodes the image in JPEG format and puts the result into the supplied buffer
 	 * TODO: This currently only supports grayscale images
 	 */
-	void encodeJPEG(std::vector<char> *buffer)
+	//void encodeJPEG(std::vector<char> *buffer);
 
 
 

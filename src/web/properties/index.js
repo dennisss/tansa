@@ -313,8 +313,24 @@ var CameraCalibration = React.createClass({
 	},
 
 	_startWanding: function() {
+		this.props.parent.send({ type: 'calibration_start' });
 		this.setState({_started: true, _ncaptured: 0});
 	},
+	
+	_takeImage: function() {
+		// TODO: This should be made a full RPC call
+		this.props.parent.send({ type: 'calibration_sample' });
+		this.setState({ _ncaptured: this.state._ncaptured + 1 });
+	},
+	
+	_finishWanding: function() {
+		this.props.parent.send({ type: 'calibration_finish' });
+		this._cancelWanding();
+	},
+	
+	_cancelWanding: function() {
+		this.setState({ _ncaptured: this.state._ncaptured + 1 });
+	},	
 
 	_setGround: function() {
 
@@ -329,11 +345,11 @@ var CameraCalibration = React.createClass({
 				{this.state._started? (
 					<div>
 						<p>Captured: {this.state._ncaptured}</p>
-						<button className="btn btn-info">Take Image</button>
+						<button className="btn btn-info" onClick={this._takeImage}>Take Image</button>
 						<br /><br />
 						<div className="btn-group">
-							<button className="btn btn-sm btn-primary">Finish</button>
-							<button className="btn btn-sm btn-default">Cancel</button>
+							<button className="btn btn-sm btn-primary" onClick={this._finishWanding}>Finish</button>
+							<button className="btn btn-sm btn-default" onClick={this._cancelWanding}>Cancel</button>
 						</div>
 					</div>
 				) : (

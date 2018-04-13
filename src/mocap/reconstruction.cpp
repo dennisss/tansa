@@ -16,6 +16,13 @@ PointReconstructor::PointReconstructor(Context *ctx, MocapCameraPool *p) {
 	p->subscribe(ctx, &PointReconstructor::onCameraList, this);
 }
 
+/*
+PointReconstructor::~PointReconstructor() {
+	this->pool->unsubscribe()
+	//p->unsubscribe(ctx, &PointReconstructor::onCameraData, this);
+}
+*/
+
 // This is essentially meant for grabbing potentially out of order frames and
 void PointReconstructor::onCameraData(const MocapCameraBlobsMsg *msg) {
 
@@ -159,6 +166,8 @@ void PointReconstructor::processFrames() {
 		tracks[i].point = X;
 		cout << "Triangulate: " << X.transpose() << " with " << ms.size() << " measurements" << endl;
 	}
+	
+	
 	// TODO
 
 	// Step 2.5: Remove track points with high reprojection error
@@ -173,6 +182,13 @@ void PointReconstructor::processFrames() {
 	// NOTE: This step should always be done at the very end
 
 
+
+	PointCloudMsg out;
+	for(int i = 0; i < tracks.size(); i++) {
+		out.points.push_back(tracks[i].point);
+	}
+	
+	this->publish(&out);
 }
 
 

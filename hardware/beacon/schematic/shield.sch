@@ -2963,11 +2963,6 @@ LED</description>
 </net>
 <net name="VBAT_SCAL" class="0">
 <segment>
-<pinref part="B1" gate="G$1" pin="12"/>
-<wire x1="38.1" y1="45.72" x2="15.24" y2="45.72" width="0.1524" layer="91"/>
-<label x="15.24" y="45.72" size="1.778" layer="95"/>
-</segment>
-<segment>
 <pinref part="R3" gate="G$1" pin="1"/>
 <pinref part="R2" gate="G$1" pin="2"/>
 <wire x1="63.5" y1="111.76" x2="63.5" y2="109.22" width="0.1524" layer="91"/>
@@ -2975,6 +2970,11 @@ LED</description>
 <wire x1="63.5" y1="109.22" x2="86.36" y2="109.22" width="0.1524" layer="91"/>
 <junction x="63.5" y="109.22"/>
 <label x="73.66" y="109.22" size="1.778" layer="95"/>
+</segment>
+<segment>
+<pinref part="B1" gate="G$1" pin="14"/>
+<wire x1="38.1" y1="48.26" x2="15.24" y2="48.26" width="0.1524" layer="91"/>
+<label x="15.24" y="48.26" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="VBAT" class="0">
@@ -3061,6 +3061,13 @@ LED</description>
 <pinref part="R5" gate="G$1" pin="2"/>
 <pinref part="B1" gate="G$1" pin="2"/>
 <wire x1="86.36" y1="50.8" x2="63.5" y2="50.8" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="DO_NOT_CONNECT" class="0">
+<segment>
+<pinref part="B1" gate="G$1" pin="12"/>
+<wire x1="38.1" y1="45.72" x2="15.24" y2="45.72" width="0.1524" layer="91"/>
+<label x="15.24" y="45.72" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>

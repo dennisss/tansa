@@ -39,6 +39,8 @@ void usage() {
 // "/Users/dennis/Workspace/tansa/ext/pi-ir/verylong.jpg"
 int main(int argc, char** argv) {
 
+	bool hasGui = false;
+
 	// Parse cli arguments
 	for(int i = 1; i < argc; i++) {
 		if(false) {
@@ -73,6 +75,7 @@ int main(int argc, char** argv) {
 		else if(strcmp(argv[i], "-virtual") == 0) {
 			CameraModel m = CameraModel::Default(id);
 			interface = new VirtualImagingInterface(m);
+			hasGui = true;
 		}
 #endif
 		else if(strcmp(argv[i], "-n") == 0) {
@@ -113,7 +116,11 @@ int main(int argc, char** argv) {
 	while(running) {
 		ctx.poll();
 
-		glfwPollEvents(); // Needed in order for the virtual window to respond to events (must be in the main thread)
+#ifdef BUILD_GRAPHICS
+		if(hasGui) {
+			glfwPollEvents(); // Needed in order for the virtual window to respond to events (must be in the main thread)
+		}
+#endif
 		r.sleep();
 	}
 

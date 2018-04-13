@@ -31,6 +31,9 @@ public:
 	virtual void start() = 0;
 	virtual void stop() = 0;
 
+	virtual int getModel() = 0;
+	virtual std::string getSerial() = 0;
+
 	/**
 	 * Should return the size of each expected frame
 	 */

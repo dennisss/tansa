@@ -10,6 +10,7 @@ using namespace std;
 
 namespace tansa {
 
+// TODO: If only one thread, streamline and perform all work on the main thread
 BlobDetector::BlobDetector(unsigned width, unsigned height, unsigned nthreads) : forest(width*height) {
 	mask.width = width;
 	mask.height = height;
@@ -224,6 +225,8 @@ void BlobDetector::connected_components_combine(Image *img, ImageSubRegion *regi
 		bool hasNeighbors = false;
 		unsigned firstLabel = 0;
 		for(unsigned j = 0; j < 4; j++) {
+
+			// TODO: perform a vector subtraction
 			uint8_t *pj = p - negativeOffsets[j];
 
 			// Skip invalid (must stay inside of the region) or background neighbors
@@ -283,7 +286,7 @@ void BlobDetector::connected_components_extract(Image *img, ImageSubRegion *regi
 			labels[i] = nextLabel++;
 
 			// TODO: Keep blobs at an allocated size of 255 at all times
-			blobs->push_back(ImageBlob());
+			blobs->push_back(ImageBlob()); // TODO: This is an unnecessary copy?
 			(*blobs)[labels[i] - 1].id = s;
 			(*blobs)[labels[i] - 1].indices.push_back(i);
 		}
@@ -307,7 +310,7 @@ inline void BlobDetector::combine_all_blobs(Image *img, std::vector<ImageBlob> *
 
 	// TODO: This function does not enforce our limit on the number of blobs and indices
 
-	*blobs = workers[0].blobs;
+	*blobs = workers[0].blobs; // TODO: Can we optimize this out and just return the first worker's blobs
 	for(unsigned i = 1; i < workers.size(); i++) {
 
 		std::vector<ImageBlob> &subblobs = workers[i].blobs;
@@ -333,6 +336,10 @@ inline void BlobDetector::combine_all_blobs(Image *img, std::vector<ImageBlob> *
 
 void BlobDetector::postprocess_components(Image *img, vector<ImageBlob> *blobs) {
 
+
+	// TODO: There'sa lot of optimization that can go on here
+
+	// We can also parallelize this as each blob is independent
 
 	for(unsigned i = 0; i < blobs->size(); i++) {
 		ImageBlob &b = (*blobs)[i];

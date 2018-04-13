@@ -12,7 +12,10 @@ using namespace std;
 namespace tansa {
 
 
+void MocapCameraPool::setSettings() {
 
+
+}
 
 
 void MocapCameraPool::connect(int lport) {
@@ -164,6 +167,7 @@ void MocapCameraPool::cycle() {
 		// Resend configuration
 		// TODO: Currently this will also do a single resend attempt
 		else if(!cameras[i].configured &&  now.since(cameras[i].lastReceived).seconds() > 0.5) {
+			// TODO: In order to work with settings that can change, we need to support acknowledgement by the camera that the settings were applied (and reserve last)
 			configure(cameras[i]);
 		}
 

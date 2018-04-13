@@ -257,6 +257,7 @@ void VirtualImagingInterface::start() {
 void VirtualImagingInterface::stop() {
 
 
+	free(img.data);
 }
 
 ImageSize VirtualImagingInterface::getSize() {
@@ -279,18 +280,7 @@ void take_image(Image *img) {
 
 	// glReadPixels reads with the start of the buffer at the bottom-left corner of the image,
 	// so this flips it vertically in place
-	for(int i = 0; i < height / 2; i++) {
-		for(int j = 0; j < width; j++) {
-			int a = i*width + j,
-				b = (height - i - 1)*width + j;
-
-			char tmp = img->data[a];
-			img->data[a] = img->data[b];
-			img->data[b] = tmp;
-		}
-	}
-
-
+	img->flipY();
 }
 
 

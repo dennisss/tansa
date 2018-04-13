@@ -70,6 +70,9 @@ private:
 
 
 	MocapCameraPool *pool;
+	Subscription *dataSub;
+	Subscription *listSub;
+
 
 	std::vector<MocapCamera> cameras; /**< Copy of cameras we are working with */
 

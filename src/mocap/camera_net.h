@@ -21,9 +21,31 @@ enum MocapCameraPacketType {
 	CameraPacketConfig = 2, /**< Sent from the host to a camera to (re-)initialize it. This also registers the host ip with the camera for data transmission */
 	CameraPacketKeepalive = 3, /**< Must be sent every four seconds to each camera for it to continue sending back data */
 	CameraPacketBlobs = 4,
-	CameraPacketMJPEG = 5
+	CameraPacketMJPEG = 5,
+	CameraPacketVirtualSetState = 6 /** For a virtual camera, sets the position of the drone */
 
 };
+
+enum MocapCameraVendor {
+	CameraVendorSelf = 1 /**< Cameras included in this repository */
+};
+
+/*
+	These are formed by doing VENDOR*1000 + (Model #)
+*/
+enum MocapCameraModel {
+	CameraModelVirtual = 1000, /**< Represents a simulated camera. The model number will correspond to the simulation position index  */
+	CameraModelTracker0_1 = 1001, /**< A tracker v0.1 fitted with a Raspberry Pi Camera v1 */
+	CameraModelTracker0_2 = 1002 /**< A tracker v0.2 fitted with a Raspberry Pi Camera v2 */
+};
+
+
+#define CAMERA_VENDOR_VIRTUAL 0
+#define CAMERA_VENDOR_SELF 1
+#define CAMERA_MODEL_SELF_RPICAM1 1
+#define CAMERA_MODEL_SELF_RPICAM1 2
+
+
 
 /**
  * Note: integers are little endian in the packets
@@ -37,14 +59,11 @@ struct __attribute__((__packed__)) MocapCameraPacket {
 };
 
 struct __attribute__((__packed__)) MocapCameraPacketAdvertisement {
-	unsigned vendor; /**< Who designed the camera */
-	unsigned model; /**<  */
+	uint16_t model; /**<  */
 	char serialNum[64]; /**< Should be a alphanumeric serial code upto 64 characters long */
 
 	unsigned image_width;
 	unsigned image_height;
-
-
 
 	// TODO: should include allowable resolutions, allowable framerates (this could be framerate dependent)
 
@@ -60,6 +79,11 @@ struct __attribute__((__packed__)) MocapCameraPacketBlob {
 struct __attribute__((__packed__)) MocapCameraPacketBlobs {
 	uint32_t nblobs;
 	MocapCameraPacketBlob blobs[];
+};
+
+struct __attribute__((__packed__)) MocapCameraPacketSetState {
+	double position[3];
+	double orientation[4];
 };
 
 enum MocapCameraMode {

@@ -23,7 +23,7 @@ MocapCameraNode::MocapCameraNode(Context *ctx, MocapCameraImagingInterface *inte
 	ImageSize s = interface->getSize();
 
 	detector = new BlobDetector(s.width, s.height);
-	detector->set_threshold(250);
+	detector->set_threshold(250); // TODO: This needs to be configurable
 
 	this->model = model;
 }
@@ -120,7 +120,6 @@ void MocapCameraNode::send_advert() {
 
 	// TODO: Populate with useful data
 	MocapCameraPacketAdvertisement *advert = (MocapCameraPacketAdvertisement *) pkt->data;
-	advert->vendor = 1;
 	advert->model = model;
 
 	ImageSize s = interface->getSize();

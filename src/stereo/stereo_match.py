@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# See https://github.com/willdzeng/zed_cpu_ros/blob/master/src/zed_cpu_ros.cpp for the calibration parameters
+# http://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+
 '''
 Simple example of stereo image matching and point cloud generation.
 
@@ -35,16 +38,16 @@ def write_ply(fn, verts, colors):
 
 if __name__ == '__main__':
     print('loading images...')
-    imgL = cv2.pyrDown( cv2.imread('left.jpg') )  # downscale images for faster processing
-    imgR = cv2.pyrDown( cv2.imread('right.jpg') )
+    imgR = cv2.imread('wand-calibration-left.png')  # downscale images for faster processing
+    imgL = cv2.imread('wand-calibration-right.png')
 
     # disparity range is tuned for 'aloe' image pair
     window_size = 3
-    min_disp = 16
-    num_disp = 112-min_disp
+    min_disp = 5
+    num_disp = 128
     stereo = cv2.StereoSGBM_create(minDisparity = min_disp,
         numDisparities = num_disp,
-        blockSize = 16,
+        blockSize = 32,
         P1 = 8*3*window_size**2,
         P2 = 32*3*window_size**2,
         disp12MaxDiff = 1,

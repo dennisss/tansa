@@ -53,6 +53,8 @@ CameraModel CameraModel::Default(int id) {
 	return m;
 }
 
+// TODO: Move the OpenGL conversion to here
+
 
 Matrix<double, 3, 4> CameraModel::projection() const {
 

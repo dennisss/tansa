@@ -1,7 +1,7 @@
 #ifndef TANSA_MOCAP_BLOB_DETECTOR
 #define TANSA_MOCAP_BLOB_DETECTOR
 
-#include <tansa/imaging.h>
+#include <tansa/vision/image.h>
 #include <tansa/algorithm.h>
 
 #include <string.h>
@@ -37,6 +37,7 @@ struct ImageBlob {
 	unsigned radius = 0;
 };
 
+// TODO: Move this code to the vision library
 /**
  * Finds blobs : connected regions of similar pixels
  */

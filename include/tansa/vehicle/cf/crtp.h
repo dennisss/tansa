@@ -1,6 +1,8 @@
 
 #pragma once
 
+// Documentation available here: https://wiki.bitcraze.io/doc:crazyflie:crtp:index
+
 
 #include <stdint.h>
 

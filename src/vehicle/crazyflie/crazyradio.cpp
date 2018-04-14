@@ -271,34 +271,18 @@ void crazyradio_transfer_callback(struct libusb_transfer *transfer) {
 				// Check status
 				int ackReceived = radio->inbuf.status & 1;
 
-				// Monitor connection status
-				if(ackReceived) {
-					radio->success_count++;
-					radio->fail_count = 0;
-					if(radio->success_count > 20 && !radio->connected){
-						radio->connected = true;
-						printf("Connected!\n");
-					}
-				}
-				else {
-					radio->success_count = 0;
-					radio->fail_count++;
-					if(radio->fail_count > 20 && radio->connected){
-						radio->connected = false;
-						printf("Lost connection!\n");
-					}
-				}
 
+				crtp_message_t *out;
 
 				if(transfer->actual_length > 1){
 					crtp_message_t cmsg;
 					cmsg.size = transfer->actual_length - 1;
 					memcpy(&cmsg.header, radio->inbuf.data, cmsg.size);
-
-					radio->handler(ackReceived, &radio->active_config, &cmsg, radio->arg);
-
-					// We got non-empty packets, so trigger more to be sent
+					out = &cmsg;
 				}
+
+				radio->handler(ackReceived, &radio->active_config, out, radio->arg);
+
 
 				// Trigger a new transfer if needed
 

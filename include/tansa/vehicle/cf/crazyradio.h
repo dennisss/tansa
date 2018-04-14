@@ -23,6 +23,11 @@
 #define CRAZYRADIO_PA_PID 0x7777
 
 
+namespace tansa {
+namespace cf {
+
+
+
 /**
  * Describes a single configuration state of the radio. Each Crazyflie will requires a unique configuration to be matched by the radio for it to receive data.
  */
@@ -32,7 +37,6 @@ struct RadioUri {
 	uint8_t rate; /**< Desired rate */
 	uint64_t addr; /**< Desired address (only the 5 least significant bytes of this are used). Set to 0 to broadcast */
 };
-
 
 /**
  * Called by the radio to get a new message to send
@@ -49,7 +53,7 @@ typedef int (*CrazyradioFetcher)(RadioUri *uri, crtp_message_t *buf, void *arg);
  *
  * @param status
  * @param uri the configuration on which a message was received
- * @param msg the raw message that was received
+ * @param msg the raw message that was received (or null if an empty packet was received)
  * @param arg
  * @return whether or not we should
  */
@@ -175,7 +179,8 @@ private:
 	libusb_device_handle *handle;
 	cfradio_state state;
 
-	RadioUri active_config;
+	// 
+	RadioUri *active_config;
 	int number;
 
 	struct libusb_transfer *transfer;
@@ -183,11 +188,7 @@ private:
 	crtp_message_t outbuf; bool outvalid;
 	unsigned char cfgbuf[16];
 
-	int connected;
 
-	int success_count, fail_count;
-
-	//
 	CrazyradioFetcher fetcher;
 	CrazyradioHandler handler;
 	void *arg;
@@ -196,5 +197,9 @@ private:
 
 // Used internally. Don't use directly
 void crazyradio_transfer_callback(struct libusb_transfer *transfer);
+
+
+}
+}
 
 #endif

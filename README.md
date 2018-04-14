@@ -2,7 +2,28 @@ Tansa: Dancing Robotics Platform
 ================================
 [![Build Status](https://travis-ci.org/dennisss/tansa.svg?branch=master)](https://travis-ci.org/dennisss/tansa)
 
-An open platform for making drones dance! This project includes the following:
+<link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" >
+
+An open platform for making drones dance!
+
+| We designed and built a 260mm quadcopter with 2 RGB spot lights and 20+ min battery life  | We have smooth transitions and minimum snap trajectories between waypoints | The controllers are optimized for high speed maneuvers
+|-|-|-|
+| ![](https://storage.googleapis.com/tansa/imgs/dronecad.png) | ![](https://storage.googleapis.com/tansa/imgs/minsnap.gif) | ![](https://storage.googleapis.com/tansa/imgs/fastsnippets.gif) |
+
+
+| We can seamlessly fly a whole swarm (up to 6 over WiFi) | Did I mention lights? |  Before we break our drones, we always test using our web based GUI
+|-|-|-|
+| ![](https://storage.googleapis.com/tansa/imgs/coordinatedcircle.gif) | ![](https://storage.googleapis.com/tansa/imgs/coordinatedlights.gif) | ![](https://storage.googleapis.com/tansa/imgs/gui.gif) |
+
+
+
+
+
+Overview
+--------
+
+This project includes the following:
+
 
 1. Reference quadcopter electrical/mechanical designs used for developing the system
 	- Around $500 BOM cost. Requires a drill, saw, 3d printer, off the shelf parts, and time to replicate.
